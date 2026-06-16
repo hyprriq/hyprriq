@@ -1,15 +1,19 @@
 # HyprrIQ — Deployment Runbook (Session 1)
 
-**Honest status right now:**
+**Status: VERIFIED LIVE — confirmed 2026-06-16 via `/api/health`:**
+```json
+{"status":"ok","checks":{"database":{"ok":true},"storage":{"ok":true}}}
+```
 
 | Thing | State |
 |---|---|
-| Code (scaffold, schema file, clients, proxy) | ✅ built, tested, pushed to `staging` |
-| Database **applied to Supabase** | ❌ **NOT yet** — migration file is in the repo but unapplied. 0 tables in Supabase until you run Step 1. |
-| Env vars **in Vercel** | ❌ Clerk + Inngest almost certainly missing → **staging deploy will be RED** until added (Step 2). |
-| Vercel staging deploy green | ❌ unknown / likely failing until Step 2 done |
+| Code (scaffold, schema file, clients, proxy) | ✅ built, tested, pushed to `staging` (`de08e9a`) |
+| Database **applied to Supabase** | ✅ confirmed — `/api/health` queries `clients` live |
+| Storage buckets (`case-documents`, `reports`) | ✅ confirmed present |
+| Env vars **in Vercel** | ✅ confirmed — deploy booted + Supabase service-role key resolved |
+| Vercel staging deploy green | ✅ confirmed |
 
-Do Step 1 and Step 2. Everything else is verification.
+Session 1 infrastructure is fully live. Steps below are kept as a runbook/reference for redeploys or a fresh environment — not action items anymore.
 
 ---
 

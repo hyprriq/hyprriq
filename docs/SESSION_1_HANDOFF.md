@@ -1,8 +1,8 @@
 # HyprrIQ — Session 1 Foundation: Build & Handoff
 
-**Status:** Code complete, built, tested, pushed to `staging`.
-**Database:** ⚠️ NOT yet applied to Supabase (needs a manual step — see [DEPLOYMENT.md](./DEPLOYMENT.md)).
-**Commit:** `d1f176a` on branch `staging`.
+**Status:** ✅ Code complete, built, tested, deployed, and **verified live** — see [DEPLOYMENT.md](./DEPLOYMENT.md).
+**Database:** ✅ Applied to Supabase, confirmed live via `/api/health` (2026-06-16).
+**Commit:** `de08e9a` on branch `staging`.
 **Stack (verified installed):** Next.js 16.2.9 · React 19 · Clerk v7.5.3 · Tailwind v4 · Supabase-js 2 · Inngest 4 · TypeScript 5 · Vitest 4.
 
 > Read this with [DEPLOYMENT.md](./DEPLOYMENT.md). This file = what exists and how it's built. DEPLOYMENT.md = the runbook to get it live.
