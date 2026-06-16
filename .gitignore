@@ -33,6 +33,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# claude code local machine state (permissions allowlist)
+.claude/settings.local.json
+# installed skills are reproducible via skills-lock.json (npx skills add)
+.claude/skills/
+
 # vercel
 .vercel
 

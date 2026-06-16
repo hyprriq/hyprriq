@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tooling/context dirs — not application source:
+    ".claude/**",
+    ".impeccable/**",
+    "supabase/**",
   ]),
 ]);
 
