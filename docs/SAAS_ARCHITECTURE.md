@@ -68,6 +68,38 @@ it.
 
 (The `stripe_events` table already exists for idempotent webhook handling.)
 
+### ⚠️ `clients` row lifecycle — the rule that prevents billing corruption
+
+**The `clients` row is created ONLY by Stripe webhooks, NEVER at Clerk signup.**
+
+Why: the schema has `billing_status DEFAULT 'active'` with **no `pending`/`none`
+state**, and `id` is the Clerk `user_id`. A row created at signup would be a
+fake `active` customer with no plan/credits — it pollutes every "active
+subscribers" query. An authenticated Clerk user with **no** `clients` row is the
+correct representation of "signed up, hasn't purchased" → portal sends them to
+choose-plan.
+
+Hard rules for the webhook handler (do not deviate):
+
+1. **No `clients` insert on Clerk `user.created`.** If lead tracking is ever
+   wanted, use a separate table — never `clients`.
+2. **Key the row on `clerk_user_id`.** Account-first checkout MUST pass it as the
+   Checkout Session `client_reference_id` (and/or `metadata.clerk_user_id`); the
+   webhook sets `clients.id = client_reference_id`. Never key solely on
+   `stripe_customer_id` — that lets identity and payment drift apart.
+3. **Idempotent + order-independent.** Dedupe every event via `stripe_events`
+   (insert `event.id`, skip if seen). Use `INSERT ... ON CONFLICT (id) DO UPDATE`.
+   Stripe delivers at-least-once and out of order — `customer.subscription.created`
+   may arrive before `checkout.session.completed`, so every handler must upsert
+   and tolerate a missing-or-existing row, never assume creation order.
+4. **Guest single-report path:** no prior Clerk user, so the webhook provisions a
+   Clerk user via the Backend API first, then upserts the row with that new id.
+   Still webhook-owned, still keyed by `clerk_user_id`.
+
+Minor follow-up: `billing_status` lacks Stripe's `incomplete` state (failed
+initial payment). Map `incomplete` → leave row uncreated/`past_due` for now, or
+add the enum value when wiring the handler.
+
 ## 5. Pages — what we build vs what Stripe hosts
 
 | Page | Owner |
