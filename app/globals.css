@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* HyprrIQ design tokens — synthesis direction (locked 2026-06-17, see DESIGN.md).
+   Light-first, warm-neutral base; deep-blue brand; verdict colors are the
+   loudest moment on any screen. */
+@theme {
+  /* Base — warm-neutral, never cream, never stark white */
+  --color-base: #faf9f7;
+  --color-surface: #ffffff;
+  --color-subtle: #f2f1ed;
+  --color-ink: #1a1917;
+  --color-ink-2: #56544e;
+  --color-muted: #8a887f;
+  --color-line: #e6e4de;
+  --color-line-strong: #d6d3cb;
+
+  /* Brand — deep confident blue (between electric #2563EB and navy #1B4B8A) */
+  --color-brand: #1e40af;
+  --color-brand-hover: #1a3793;
+  --color-brand-ink: #16307e;
+  --color-brand-tint: #eaeefb;
+  --color-accent-warm: #b8731a;
+
+  /* Verdict semantics — bg fill + ink text. The reveal the product builds to. */
+  --color-clear-bg: #eaf6ef;
+  --color-clear-ink: #1a6b3a;
+  --color-conditional-bg: #f7f1dc;
+  --color-conditional-ink: #846412;
+  --color-verify-bg: #faeedf;
+  --color-verify-ink: #9a551f;
+  --color-deny-bg: #f8e9e6;
+  --color-deny-ink: #9a332c;
+
+  --radius-card: 14px;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-schibsted);
+  --font-sans: var(--font-hanken);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "cv01", "ss01";
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Numeric / case-id figures align in tables */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scroll-reveal: visible by default (no JS / no observer = full content).
+   The client <Reveal> arms the hidden state on mount, then releases it in view. */
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s var(--ease-out-quint),
+    transform 0.7s var(--ease-out-quint);
+}
+
+/* Hero artifact load choreography */
+@keyframes hq-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hq-verdict-settle {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hq-rise {
+  animation: hq-rise 0.6s var(--ease-out-quint) both;
+}
+.hq-verdict {
+  animation: hq-verdict-settle 0.7s var(--ease-out-quint) 0.5s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .hq-rise,
+  .hq-verdict {
+    animation: none !important;
+  }
 }

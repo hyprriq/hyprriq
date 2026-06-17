@@ -1,44 +1,48 @@
 # Design
 
-*Seed version — written pre-implementation (no real code/tokens to extract yet). Re-run `/impeccable document` once the portal has real pages and components, to replace these hypotheses with extracted, verified tokens.*
+*Direction LOCKED 2026-06-17: **Synthesis** — resolved the warm/electric-blue (old DESIGN.md) vs cool/navy (`hyprriq_ux_v2.html`) conflict. This file is now the single source of truth; the v2 HTML and the old warm-only tokens are superseded by what's below. Re-run `/impeccable document` once real components exist to replace any remaining hypotheses with extracted tokens.*
 
 ## Visual Theme
 
-**Light-first, warm, evidence-driven.** Not dark-SaaS-by-default — dark mode can exist later as an opt-in, never the identity. The feeling to hit: a knowledgeable advisor's office, not a security operations center. Minimalist layout, generous whitespace, but warmed up with color (multi-color icon system) and a confident electric-blue brand accent so it never tips into cold/clinical.
+**Light-first, warm-neutral, evidence-driven — disciplined.** Not dark-SaaS-by-default (dark is an opt-in, never the identity). Not cold-clinical, not cream-AI-default either. The feeling to hit: a knowledgeable advisor's office, not a security operations center. Minimalist layout, generous whitespace, a **warm-neutral** base (just off cool — humane, not sterile), and a single **deep, confident blue** brand for authority. Color is *restrained*: the four verdict colors are the loudest moment on any screen — the reveal the whole product builds to. Icons are mostly neutral; hue is added only where it genuinely speeds category scanning, never carnival.
 
-Reference anchor: **Mercury/Ramp's confident data-forward polish**, translated to a light, optimistic palette instead of their dark mode — same precision and trust signals, different temperature.
+Reference anchor: **Mercury/Ramp's confident data-forward polish** — same precision and trust signals, translated to a light, warm-neutral palette with a deep-blue (not electric, not navy) brand.
 
 ## Color Palette
 
-### Base
+### Base (warm-neutral — just off cool, never cream, never stark white)
 | Token | Hex | Usage |
 |---|---|---|
-| `bg-base` | `#FAFAF9` | Page background — warm off-white, not stark white |
+| `bg-base` | `#FAF9F7` | Page background — warm-neutral off-white |
 | `bg-surface` | `#FFFFFF` | Cards, panels, raised surfaces |
-| `bg-subtle` | `#F1F0EE` | Subtle section separation, hover backgrounds |
-| `text-primary` | `#1C1B1A` | Body/headline text — warm near-black, not pure `#000` |
-| `text-secondary` | `#5B5854` | Supporting text, captions, metadata |
-| `border-default` | `#E5E3DF` | Card borders, dividers — soft, warm gray |
+| `bg-subtle` | `#F2F1ED` | Inset/sidebar, hover backgrounds, section separation |
+| `text-primary` | `#1A1917` | Body/headline text — warm near-black, not pure `#000` |
+| `text-secondary` | `#56544E` | Supporting text, captions, metadata |
+| `text-muted` | `#8A887F` | Placeholders, timestamps, least-important metadata |
+| `border-default` | `#E6E4DE` | Card borders, dividers — soft, warm gray |
 
-### Brand
+### Brand (deep confident blue — between electric `#2563EB` and navy `#1B4B8A`)
 | Token | Hex | Usage |
 |---|---|---|
-| `brand-primary` | `#2563EB` | Electric blue — primary CTAs, links, active states, key data highlights |
-| `brand-primary-hover` | `#1D4ED8` | Hover/pressed state |
-| `brand-accent-warm` | `#F59E0B` | Sparing use — "hope/optimism" highlight, positive emphasis distinct from verdict colors |
+| `brand-primary` | `#1E40AF` | Deep blue — primary CTAs, links, active states, key data highlights |
+| `brand-primary-hover` | `#1A3793` | Hover/pressed state |
+| `brand-tint` | `#EAEEFB` | Selected rows, tags, badges, subtle highlights |
+| `brand-accent-warm` | `#B8731A` | Rare — "hope/optimism" highlight; must never compete with verdict colors |
 
-### Verdict semantics (desaturated — distinguishable, never alarming)
-| Verdict | Token | Hex |
+### Verdict semantics (the LOUDEST color on any screen — the reveal; calm evidence, never a klaxon)
+Badge pattern = `ink` text + icon on `bg` fill. Color is the *third* signal after label + icon, but it is the strongest color moment on the page.
+
+| Verdict | `bg` | `ink` |
 |---|---|---|
-| Source Clear | `verdict-clear` | `#3F9468` (muted sage green) |
-| Usable With Conditions | `verdict-conditional` | `#C99A2E` (muted gold) |
-| Verify Before Purchase | `verdict-verify` | `#C2742F` (muted terracotta-orange) |
-| Do Not Rely On This Source | `verdict-doNotRely` | `#B5524A` (muted brick-red, deliberately *not* fire-engine red) |
+| Source Clear | `#EAF6EF` | `#1A6B3A` (sage green) |
+| Usable With Conditions | `#F7F1DC` | `#846412` (muted gold) |
+| Verify Before Purchase | `#FAEEDF` | `#9A551F` (terracotta) |
+| Do Not Rely On This Source | `#F8E9E6` | `#9A332C` (muted brick — deliberately *not* fire-engine red) |
 
-All four sit at matched lightness/saturation so none visually "shouts" louder than the others — the verdict is communicated by label + icon first, color second.
+The four sit at matched weight so none "shouts" louder than another — the verdict is communicated by label + icon first, color second. But against the neutral page, the verdict badge is unmistakably the most colorful element in view.
 
-### Multi-color icon system
-Icons get category-coded hues (not all brand-blue) to reinforce warmth and quick visual scanning — e.g. vendor-identity icons in one hue, brand-posture icons in another, document/evidence icons in a third. Keep all icon hues inside a shared muted/mid-saturation family so the page still feels cohesive, not carnival-colored. Exact hue-per-category assignments to be finalized when building the icon set (Session 2+).
+### Icon system (restrained — neutral by default, hue only to aid scanning)
+Default icon color is `text-secondary`/`text-primary` (neutral). Category hue is applied **only** where it genuinely speeds scanning of a repeated set — e.g. the research-dimension icons (Supplier Identity / Supply Chain / Brand Risk / Document / Sourcing Logic) each get one stable hue so a returning user reads them at a glance. Outside those defined sets, icons stay neutral. All hues live in a shared muted/mid-saturation family (no neon, no full-saturation). This is the synthesis position: warmth and quick scanning where it earns its keep, discipline everywhere else — never carnival-colored. Exact per-category hue assignments finalized when the icon set is built (Session 2+).
 
 ## Typography
 
