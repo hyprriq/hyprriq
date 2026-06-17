@@ -205,9 +205,9 @@ export default function Home() {
 
       {/* ─────────────────── Where sellers lose money ─────────────────── */}
       <section className="border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Where wholesale sellers actually lose money.
             </h2>
             <p className="mt-4 max-w-xl text-lg text-ink-2">
@@ -216,7 +216,7 @@ export default function Home() {
             </p>
           </Reveal>
 
-          <div className="mt-12 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="mt-10 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
             <Reveal>
               <figure className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-base">
                 <figcaption className="flex items-center gap-2.5 bg-[#232F3E] px-5 py-3">
@@ -267,7 +267,7 @@ export default function Home() {
           </div>
 
           <Reveal>
-            <div className="mt-12 flex gap-3 rounded-[var(--radius-card)] bg-brand-tint px-6 py-5">
+            <div className="mt-10 flex gap-3 rounded-[var(--radius-card)] bg-brand-tint px-6 py-5">
               <ShieldQuestion size={22} className="mt-0.5 flex-none text-brand-ink" aria-hidden="true" />
               <p className="text-[15px] leading-relaxed text-brand-ink">
                 <span className="font-bold">HyprrIQ can&rsquo;t undo any of this.</span>{" "}
@@ -281,13 +281,13 @@ export default function Home() {
 
       {/* ─────────────────────── The stakes ─────────────────────── */}
       <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               The math nobody runs before they buy.
             </h2>
           </Reveal>
-          <div className="mt-12 grid items-stretch gap-5 md:grid-cols-[1fr_auto_1fr]">
+          <div className="mt-10 grid items-stretch gap-5 md:grid-cols-[1fr_auto_1fr]">
             <Reveal className="flex">
               <div className="flex w-full flex-col rounded-[var(--radius-card)] border border-line bg-surface p-7">
                 <p className="text-sm font-semibold uppercase tracking-wide text-clear-ink">
@@ -323,9 +323,9 @@ export default function Home() {
 
       {/* ─────────────────────── How it works ─────────────────────── */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-line">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Three steps. Five business days. One clear answer.
             </h2>
             <p className="mt-4 max-w-xl text-lg text-ink-2">
@@ -340,18 +340,21 @@ export default function Home() {
 
       {/* ──────────────────── The four outcomes ──────────────────── */}
       <section id="outcomes" className="scroll-mt-20 bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Every report ends in one of four plain-English verdicts.
             </h2>
             <p className="mt-4 max-w-xl text-lg text-ink-2">
               No scores to decode, no false certainty. Just where the evidence
               lands — and what to do next.
             </p>
+            <div className="mt-7 max-w-md">
+              <VerdictSpectrum withLabels />
+            </div>
           </Reveal>
 
-          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
+          <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
             <div className="grid gap-4 sm:grid-cols-2">
               {(Object.keys(VERDICTS) as Verdict[]).map((v, i) => {
                 const meta = VERDICTS[v];
@@ -383,7 +386,7 @@ export default function Home() {
 
       {/* ─────────────────── The depth / intelligence edge ─────────────────── */}
       <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <div className="grid items-center gap-14 lg:grid-cols-2">
             <Reveal>
               <div>
@@ -395,7 +398,7 @@ export default function Home() {
             </Reveal>
             <div>
               <Reveal>
-                <h2 className="max-w-xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+                <h2 className="max-w-xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
                   The depth behind the one page.
                 </h2>
                 <p className="mt-4 max-w-md text-lg text-ink-2">
@@ -433,14 +436,14 @@ export default function Home() {
       </section>
 
       {/* ─────────────────── Honesty manifesto (brand drench) ─────────────────── */}
-      <section className="bg-brand">
-        <div className="mx-auto max-w-4xl px-5 py-24 text-center lg:px-8 lg:py-28">
+      <section className="bg-brand-ink">
+        <div className="mx-auto max-w-4xl px-5 py-16 text-center lg:px-8 lg:py-20">
           <Reveal>
-            <ScanEye size={32} strokeWidth={1.75} className="mx-auto text-white/80" aria-hidden="true" />
-            <h2 className="mx-auto mt-6 max-w-3xl text-[clamp(2rem,4vw,3.2rem)] font-bold leading-tight text-white">
+            <ScanEye size={30} strokeWidth={1.75} className="mx-auto text-white/75" aria-hidden="true" />
+            <h2 className="mx-auto mt-5 max-w-3xl text-[clamp(1.9rem,3.6vw,2.8rem)] font-bold leading-tight text-white">
               We will never tell you a source is safe.
             </h2>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80">
+            <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-white/80">
               Authorization and authenticity can&rsquo;t be confirmed from the
               outside — and anyone who promises otherwise is guessing with your
               money. We show you what&rsquo;s observable, say plainly what we
@@ -453,13 +456,13 @@ export default function Home() {
 
       {/* ─────────────────────── Who it's for ─────────────────────── */}
       <section>
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Built for sellers with real money on the line.
             </h2>
           </Reveal>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
             {PROFILES.map((p, i) => (
               <Reveal key={p.title} delay={i * 90}>
                 <div className="h-full rounded-[var(--radius-card)] border border-line bg-surface p-6">
@@ -474,10 +477,10 @@ export default function Home() {
 
       {/* ───────────────────────── Pricing ───────────────────────── */}
       <section id="pricing" className="scroll-mt-20 border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+              <h2 className="text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
                 Costs less than one bad buy.
               </h2>
               <p className="mt-4 text-lg text-ink-2">
@@ -487,7 +490,7 @@ export default function Home() {
             </div>
           </Reveal>
 
-          <div className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
             {PLANS.map((plan, i) => (
               <Reveal key={plan.name} delay={i * 90}>
                 <div
@@ -546,9 +549,9 @@ export default function Home() {
 
       {/* ───────────────────────── FAQ ───────────────────────── */}
       <section id="faq" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
           <Reveal>
-            <h2 className="text-center text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Questions, answered straight.
             </h2>
           </Reveal>
@@ -564,7 +567,7 @@ export default function Home() {
       <section className="border-t border-line bg-brand-tint">
         <div className="mx-auto max-w-4xl px-5 py-20 text-center lg:px-8">
           <Reveal>
-            <h2 className="text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-tight text-ink">
+            <h2 className="text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Run the check before you run the risk.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-ink-2">

@@ -107,3 +107,8 @@ Scroll storytelling adopted, scoped: sticky/pinned "how it works" where the Deci
 
 ### Information architecture & SEO (structure now, build later)
 Marketing route plan so programmatic SEO slots in without re-platforming: `/`, `/how-it-works`, `/pricing`, `/about`, `/contact`, `/use-cases/[slug]`, `/industries/[slug]` (amazon-wholesale, walmart-wholesale), `/compare/[slug]`, `/glossary/[term]` (gated-brand, ungating, ip-complaint — long-tail), `/resources`, `/blog/[slug]`. Each page: one `<h1>`, semantic landmarks, per-route metadata, JSON-LD (Organization / Product / FAQPage), sitemap + canonical. The Home ships FAQ + Organization JSON-LD now.
+
+### Flexible for future content (layout locked 2026-06-17, expand without redesign)
+- **Array-driven, add entries anytime:** pain modes, depth list + stat counters, buyer profiles, pricing plans, FAQ items.
+- **Drop-in full sections between existing ones:** logo/social-proof strip, customer outcomes/case studies, industry sections, comparison ("vs doing it yourself"), resources/blog teasers.
+- **Swappable artifacts (one slot each, marked `SWAP POINT`):** `DecisionSnapshot`, `DashboardPreview`, `ReportPreview`, and the scroll-story stage visuals → replace mock with a real screenshot, no layout change.

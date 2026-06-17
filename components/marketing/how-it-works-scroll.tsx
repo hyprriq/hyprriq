@@ -8,17 +8,32 @@ const STEPS = [
   {
     icon: FileSearch,
     title: "Submit the vendor",
-    body: "Vendor name, the brands you're evaluating, and an invoice or LOA if you have one. About two minutes — no account setup gymnastics.",
+    body: "About two minutes — no account-setup gymnastics. You give us what you already have:",
+    detail: [
+      "Vendor name and website",
+      "The brands you're evaluating",
+      "An invoice or LOA, if you have one",
+    ],
   },
   {
     icon: UserCheck,
     title: "We research, then a human reviews",
-    body: "An AI pipeline works 60+ public data points across five dimensions. Then the founder reviews and approves every finding before anything ships. No black box.",
+    body: "An AI pipeline works 60+ public data points across five dimensions. Then the founder reviews and approves every finding before anything ships — no black box.",
+    detail: [
+      "Is the supplier a real, operating wholesale business?",
+      "Any observable link between supplier and brand?",
+      "How does the brand actually enforce on the marketplace?",
+    ],
   },
   {
     icon: ScrollText,
     title: "You get a Decision Snapshot",
-    body: "A one-page verdict, the evidence behind it, and a checklist of exactly what to ask your vendor before you commit the capital.",
+    body: "A one-page answer you can act on the same day it lands:",
+    detail: [
+      "One of four plain-English verdicts",
+      "The evidence behind it, dimension by dimension",
+      "Exactly what to ask your vendor before you buy",
+    ],
   },
 ];
 
@@ -177,7 +192,7 @@ export function HowItWorksScroll() {
             ref={(el) => {
               refs.current[i] = el;
             }}
-            className="flex min-h-[55vh] flex-col justify-center py-6 lg:min-h-[70vh]"
+            className="flex min-h-[46vh] flex-col justify-center py-6 lg:min-h-[58vh]"
           >
             <div
               className="transition-opacity duration-300 motion-reduce:transition-none"
@@ -195,6 +210,14 @@ export function HowItWorksScroll() {
               <p className="mt-3 max-w-md text-[15px] leading-relaxed text-ink-2">
                 {s.body}
               </p>
+              <ul className="mt-4 space-y-2.5">
+                {s.detail.map((d) => (
+                  <li key={d} className="flex max-w-md gap-2.5 text-[15px] text-ink-2">
+                    <Check size={17} strokeWidth={2.5} className="mt-1 flex-none text-brand" aria-hidden="true" />
+                    <span className="leading-snug">{d}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Inline visual on mobile */}
