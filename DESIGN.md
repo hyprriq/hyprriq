@@ -75,3 +75,35 @@ Scale: standard modular scale, headline weight 600–700, body weight 400–500.
 ## Accessibility
 
 WCAG 2.1 AA baseline: all color pairs above need contrast verification at implementation time (the muted verdict colors especially — desaturation can hurt contrast, so each needs to be checked against its background, not just visually approved). Full keyboard navigation and visible focus rings on every interactive element.
+
+---
+
+## v2 marketing decisions (locked 2026-06-17)
+
+Resolved after a design-system review (refs: 21st.dev simplistic-saas & synth-ai; benchmarks Stripe/Linear/Mercury). These govern all marketing surfaces.
+
+### Narrative arc (the spine)
+Hook → **Pain** (where sellers lose money) → Stakes (why pre-purchase) → How it works (sticky scroll story) → The four outcomes → The depth → **Honesty manifesto** ("we never say safe") → Who it's for → Pricing → FAQ → Final CTA. Lead with the buyer's fear, not the feature list. Compliance: pain is always framed as "what happens when you don't check first," **never** "we protect your account."
+
+### Background system (segmentation by meaning, not decoration)
+Disciplined 4-tier rhythm — no gradients-everywhere, no dark sections:
+- `bg-base #FAF9F7` — default narrative sections
+- `bg-surface #FFFFFF` — sections anchored by an artifact/proof (alternates for rhythm)
+- `bg-subtle #F2F1ED` — quieter/supporting sections
+- **`brand #1E40AF` drench** — the honesty manifesto only (the single bold moment; light text) + a restrained brand band for the final CTA
+Hero may carry one barely-perceptible warm→white wash. Nothing more.
+
+### Color — verdict system IS the multi-accent
+Reject Google-style rainbow accents: the four verdict colors are the controlled multi-accent and must stay the loudest color moment. Single deep-blue brand + verdict semantics (Stripe-trust / Linear-restraint lineage). One tightly-scoped neutral data accent allowed:
+| Token | Hex | Usage |
+|---|---|---|
+| `accent-data` | `#2F6F6A` | muted teal-ink — process/neutral data accents only; never adjacent to a verdict color |
+
+### Typography (locked)
+Display/headlines **Schibsted Grotesk** (editorial/newsroom authority — signals "intelligence firm," uncommon in SaaS). Body/UI **Hanken Grotesk** (humanist, warm, readable). Data **Geist Mono**. Rejected as AI-default tells: Inter, Geist (sans), Plus Jakarta Sans, Instrument Sans.
+
+### Motion
+Scroll storytelling adopted, scoped: sticky/pinned "how it works" where the Decision Snapshot assembles as you scroll; count-up only on **real product facts** (60+ data points, 5 dimensions, 14 doc standards — never vanity metrics); subtle section reveals; CTA micro-interactions. Transform/opacity only; `prefers-reduced-motion` → static. No decorative parallax.
+
+### Information architecture & SEO (structure now, build later)
+Marketing route plan so programmatic SEO slots in without re-platforming: `/`, `/how-it-works`, `/pricing`, `/about`, `/contact`, `/use-cases/[slug]`, `/industries/[slug]` (amazon-wholesale, walmart-wholesale), `/compare/[slug]`, `/glossary/[term]` (gated-brand, ungating, ip-complaint — long-tail), `/resources`, `/blog/[slug]`. Each page: one `<h1>`, semantic landmarks, per-route metadata, JSON-LD (Organization / Product / FAQPage), sitemap + canonical. The Home ships FAQ + Organization JSON-LD now.

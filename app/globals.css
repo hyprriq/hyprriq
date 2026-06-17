@@ -20,6 +20,10 @@
   --color-brand-ink: #16307e;
   --color-brand-tint: #eaeefb;
   --color-accent-warm: #b8731a;
+  /* Tightly-scoped neutral data accent — process/neutral data only, never
+     adjacent to a verdict color (see DESIGN.md v2 decisions). */
+  --color-accent-data: #2f6f6a;
+  --color-accent-data-tint: #e9f2f1;
 
   /* Verdict semantics — bg fill + ink text. The reveal the product builds to. */
   --color-clear-bg: #eaf6ef;
@@ -66,6 +70,22 @@ h1, h2, h3, h4 {
 
 p {
   text-wrap: pretty;
+}
+
+/* Visible focus ring on every interactive element (WCAG 2.1 AA) */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Numeric / case-id figures align in tables */
