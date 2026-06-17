@@ -192,7 +192,7 @@ export function HowItWorksScroll() {
             ref={(el) => {
               refs.current[i] = el;
             }}
-            className="flex min-h-[46vh] flex-col justify-center py-6 lg:min-h-[58vh]"
+            className="flex min-h-[42vh] flex-col justify-start py-2 lg:min-h-[54vh]"
           >
             <div
               className="transition-opacity duration-300 motion-reduce:transition-none"

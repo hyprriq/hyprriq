@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
@@ -15,23 +15,11 @@ const NAV = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-40 border-b bg-base/85 backdrop-blur-md transition-colors ${
-        scrolled ? "border-line" : "border-transparent"
-      }`}
-    >
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="font-display text-lg font-bold tracking-tight text-ink">
+        <Link href="/" className="font-display text-xl font-bold tracking-tight text-ink">
           Hyprr<span className="text-brand">IQ</span>
         </Link>
 

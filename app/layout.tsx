@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Schibsted_Grotesk, Hanken_Grotesk, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 // Display / headlines — news-grade authority, distinctive (anti-slop).
@@ -34,14 +33,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // ClerkProvider is intentionally NOT at the root — it's scoped to the
+  // (portal) and (admin) layouts so public marketing pages ship zero auth
+  // JavaScript (faster LCP, better SEO, no third-party auth call on landing).
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${schibsted.variable} ${hanken.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col">{children}</body>
-      </html>
-    </ClerkProvider>
+    <html
+      lang="en"
+      className={`${schibsted.variable} ${hanken.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
   );
 }

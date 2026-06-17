@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { ClerkProvider } from "@clerk/nextjs";
 
 // Admin layout — founder/admin dashboard (/admin/*). Requires an
 // authenticated Clerk session. Admin UI pages are built in Session 5.
@@ -16,5 +17,5 @@ export default async function AdminLayout({
 }) {
   await auth.protect();
   // TODO(Session 5): enforce admin role (clients.is_admin === true).
-  return <>{children}</>;
+  return <ClerkProvider>{children}</ClerkProvider>;
 }

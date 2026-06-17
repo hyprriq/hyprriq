@@ -145,7 +145,7 @@ export default function Home() {
         className="relative overflow-hidden"
         style={{ background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)" }}
       >
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:px-8 lg:py-16">
           <div className="hq-rise">
             <span className="inline-block rounded-full bg-brand-tint px-3 py-1.5 text-xs font-semibold text-brand-ink">
               Pre-purchase source intelligence
@@ -205,7 +205,7 @@ export default function Home() {
 
       {/* ─────────────────── Where sellers lose money ─────────────────── */}
       <section className="border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Where wholesale sellers actually lose money.
@@ -281,7 +281,7 @@ export default function Home() {
 
       {/* ─────────────────────── The stakes ─────────────────────── */}
       <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               The math nobody runs before they buy.
@@ -323,7 +323,7 @@ export default function Home() {
 
       {/* ─────────────────────── How it works ─────────────────────── */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-line">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Three steps. Five business days. One clear answer.
@@ -340,7 +340,7 @@ export default function Home() {
 
       {/* ──────────────────── The four outcomes ──────────────────── */}
       <section id="outcomes" className="scroll-mt-20 bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Every report ends in one of four plain-English verdicts.
@@ -386,7 +386,7 @@ export default function Home() {
 
       {/* ─────────────────── The depth / intelligence edge ─────────────────── */}
       <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <div className="grid items-center gap-14 lg:grid-cols-2">
             <Reveal>
               <div>
@@ -456,7 +456,7 @@ export default function Home() {
 
       {/* ─────────────────────── Who it's for ─────────────────────── */}
       <section>
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Built for sellers with real money on the line.
@@ -477,7 +477,7 @@ export default function Home() {
 
       {/* ───────────────────────── Pricing ───────────────────────── */}
       <section id="pricing" className="scroll-mt-20 border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
@@ -549,7 +549,7 @@ export default function Home() {
 
       {/* ───────────────────────── FAQ ───────────────────────── */}
       <section id="faq" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Questions, answered straight.
