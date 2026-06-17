@@ -1,3 +1,4 @@
+import { AnnouncementBar } from "@/components/marketing/announcement-bar";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 
@@ -11,6 +12,7 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-full flex-col">
+      <AnnouncementBar />
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />

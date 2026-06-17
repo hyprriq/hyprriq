@@ -23,12 +23,12 @@ export function SiteHeader() {
           Hyprr<span className="text-brand">IQ</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-ink-2 transition-colors hover:text-ink"
+              className="text-[15px] font-medium text-ink-2 transition-colors hover:text-ink"
             >
               {item.label}
             </a>
@@ -37,17 +37,17 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <Link
-            href="/portal"
-            className="rounded-full px-4 py-2 text-sm font-medium leading-none text-ink-2 transition-colors hover:bg-subtle hover:text-ink"
+            href="/sign-in"
+            className="rounded-full px-4 py-2 text-[15px] font-medium leading-none text-ink-2 transition-colors hover:bg-subtle hover:text-ink"
           >
             Sign in
           </Link>
-          <a
-            href="#pricing"
-            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:bg-brand-hover"
+          <Link
+            href="/sign-up"
+            className="rounded-full bg-brand px-4 py-2 text-[15px] font-semibold leading-none text-white transition-colors hover:bg-brand-hover"
           >
             Get started
-          </a>
+          </Link>
         </div>
 
         <button
@@ -76,19 +76,19 @@ export function SiteHeader() {
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-line pt-3">
               <Link
-                href="/portal"
+                href="/sign-in"
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-2 py-2.5 text-base font-medium text-ink-2 hover:bg-subtle hover:text-ink"
               >
                 Sign in
               </Link>
-              <a
-                href="#pricing"
+              <Link
+                href="/sign-up"
                 onClick={() => setOpen(false)}
                 className="rounded-full bg-brand px-4 py-2.5 text-center text-base font-semibold text-white hover:bg-brand-hover"
               >
                 Get started
-              </a>
+              </Link>
             </div>
           </nav>
         </div>

@@ -138,6 +138,33 @@ html {
   animation: hq-verdict-settle 0.7s var(--ease-out-quint) 0.5s both;
 }
 
+/* Announcement bar — premium subtle motion: a slow light sweep + soft dot pulse */
+@keyframes hq-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+.hq-sweep {
+  animation: hq-sweep 7s ease-in-out infinite;
+}
+@keyframes hq-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+.hq-pulse-dot {
+  animation: hq-pulse-dot 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
     opacity: 1 !important;
@@ -145,7 +172,9 @@ html {
     transition: none !important;
   }
   .hq-rise,
-  .hq-verdict {
+  .hq-verdict,
+  .hq-sweep,
+  .hq-pulse-dot {
     animation: none !important;
   }
 }
