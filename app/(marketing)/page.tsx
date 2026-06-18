@@ -207,10 +207,10 @@ export default function Home() {
       <section className="border-y border-line bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Where wholesale sellers actually lose money.
             </h2>
-            <p className="mt-4 max-w-xl text-lg text-ink-2">
+            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
               It&rsquo;s rarely the price. It&rsquo;s the things you couldn&rsquo;t
               see before you bought.
             </p>
@@ -283,7 +283,7 @@ export default function Home() {
       <section className="bg-subtle">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               The math nobody runs before they buy.
             </h2>
           </Reveal>
@@ -325,10 +325,10 @@ export default function Home() {
       <section id="how-it-works" className="scroll-mt-20 border-y border-line">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Three steps. Five business days. One clear answer.
             </h2>
-            <p className="mt-4 max-w-xl text-lg text-ink-2">
+            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
               Watch a case go from a vendor name to a verdict.
             </p>
           </Reveal>
@@ -342,14 +342,14 @@ export default function Home() {
       <section id="outcomes" className="scroll-mt-20 bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Every report ends in one of four plain-English verdicts.
             </h2>
-            <p className="mt-4 max-w-xl text-lg text-ink-2">
+            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
               No scores to decode, no false certainty. Just where the evidence
               lands — and what to do next.
             </p>
-            <div className="mt-7 max-w-md">
+            <div className="mx-auto mt-7 max-w-md">
               <VerdictSpectrum withLabels />
             </div>
           </Reveal>
@@ -361,7 +361,7 @@ export default function Home() {
                 const Icon = meta.icon;
                 return (
                   <Reveal key={v} delay={i * 80}>
-                    <div className="flex h-full flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-base p-5">
+                    <div className="flex h-full flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-base p-5 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-12px_rgba(26,25,23,0.18)]">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-full ${meta.bg} ${meta.ink}`}>
                         <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
                       </div>
@@ -458,14 +458,14 @@ export default function Home() {
       <section>
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
-            <h2 className="max-w-2xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
               Built for sellers with real money on the line.
             </h2>
           </Reveal>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {PROFILES.map((p, i) => (
               <Reveal key={p.title} delay={i * 90}>
-                <div className="h-full rounded-[var(--radius-card)] border border-line bg-surface p-6">
+                <div className="h-full rounded-[var(--radius-card)] border border-line bg-surface p-6 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-12px_rgba(26,25,23,0.18)]">
                   <h3 className="text-lg font-semibold text-ink">{p.title}</h3>
                   <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{p.body}</p>
                 </div>
