@@ -16,6 +16,10 @@ export const FAQ_ITEMS = [
     a: "A one-page Decision Snapshot with one of four plain-English verdicts, the evidence behind it across five research dimensions, and a checklist of what to ask your vendor. Full reports include the detailed findings.",
   },
   {
+    q: "How do credits work?",
+    a: "One credit = one complete report — one supplier and up to 5 brands, across all five dimensions. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
+  },
+  {
     q: "How long does a report take?",
     a: "Five business days on standard plans, three on Scale. Every report is reviewed and approved by the founder before it reaches you.",
   },

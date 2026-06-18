@@ -83,7 +83,11 @@ export function PricingPlans() {
         ))}
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
+      <div
+        className={`mx-auto mt-10 grid gap-5 ${
+          mode === "subscription" ? "max-w-3xl sm:grid-cols-2" : "max-w-sm"
+        }`}
+      >
         {plans.map((plan) => (
           <PlanCard key={plan.id} plan={plan} />
         ))}

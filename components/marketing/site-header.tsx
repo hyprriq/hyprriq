@@ -42,7 +42,7 @@ export function SiteHeader() {
             href="/sign-up"
             className="rounded-full bg-brand px-4 py-2 text-[15px] font-semibold leading-none text-white transition-colors hover:bg-brand-hover"
           >
-            Get started
+            Vet a supplier
           </Link>
         </div>
 
@@ -83,7 +83,7 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className="rounded-full bg-brand px-4 py-2.5 text-center text-base font-semibold text-white hover:bg-brand-hover"
               >
-                Get started
+                Vet a supplier
               </Link>
             </div>
           </nav>

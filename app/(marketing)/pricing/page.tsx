@@ -55,7 +55,7 @@ export default function PricingPage() {
                       <th
                         key={col}
                         className={`border-b border-line px-4 py-3 text-sm font-bold ${
-                          i >= 2 ? "text-brand-ink" : "text-ink"
+                          i >= 1 ? "text-brand-ink" : "text-ink"
                         }`}
                       >
                         {col}
@@ -74,7 +74,7 @@ export default function PricingPage() {
                           key={i}
                           className={`border-b border-line px-4 py-3 text-sm ${
                             v === "—" ? "text-muted" : "text-ink-2"
-                          } ${i >= 2 ? "bg-brand-tint/40" : ""}`}
+                          } ${i >= 1 ? "bg-brand-tint/40" : ""}`}
                         >
                           {v}
                         </td>

@@ -93,18 +93,18 @@ const PROFILES = [
 const PLANS = [
   {
     name: "Growth",
-    price: "$249",
+    price: "$279",
     cadence: "/mo",
-    credits: "5 research credits a month",
-    points: ["Up to 3 brands per case", "Full five-dimension review", "Case history & report archive"],
+    credits: "5 reports a month",
+    points: ["Up to 5 brands per report", "Full five-dimension review", "Full portal + case history"],
     popular: false,
   },
   {
     name: "Scale",
     price: "$499",
     cadence: "/mo",
-    credits: "12 research credits a month",
-    points: ["Up to 5 brands per case", "Deep analysis + contradiction checks", "3-business-day priority SLA"],
+    credits: "12 reports a month",
+    points: ["Everything in Growth", "Deep analysis + Keepa data", "3-business-day priority SLA"],
     popular: true,
   },
 ];
@@ -161,18 +161,18 @@ export default function Home() {
               We don&rsquo;t promise &ldquo;safe&rdquo; &mdash; we help you decide.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#how-it-works"
+              <Link
+                href="/sign-up"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
               >
-                See how it works
+                Vet a supplier
                 <ArrowRight size={18} aria-hidden="true" />
-              </a>
+              </Link>
               <a
-                href="#pricing"
+                href="#sample-report"
                 className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
               >
-                See pricing
+                View sample report
               </a>
             </div>
             <div className="mt-9 max-w-xs">
@@ -200,6 +200,27 @@ export default function Home() {
             />
             <DecisionSnapshot />
           </div>
+        </div>
+      </section>
+
+      {/* ─────────────────── Trust-topic strip ─────────────────── */}
+      <section className="border-y border-line bg-surface">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-2 px-5 py-4 lg:px-8">
+          {[
+            "Amazon wholesale",
+            "Supplier vetting",
+            "IP risk analysis",
+            "Invoice review",
+            "Account health",
+            "Brand enforcement",
+          ].map((topic) => (
+            <span
+              key={topic}
+              className="rounded-full bg-subtle px-3 py-1 text-xs font-medium text-ink-2"
+            >
+              {topic}
+            </span>
+          ))}
         </div>
       </section>
 
@@ -321,6 +342,29 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─────────────────────── Why HyprrIQ exists ─────────────────────── */}
+      <section className="bg-surface">
+        <div className="mx-auto max-w-3xl px-5 py-12 text-center lg:px-8 lg:py-16">
+          <Reveal>
+            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
+              Why HyprrIQ exists.
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-ink-2">
+              Founded by an Amazon wholesale seller with 15+ years buying
+              inventory — handling invoices, brand restrictions, authenticity
+              complaints, and account-health fights. One lesson kept repeating:{" "}
+              <span className="font-medium text-ink">
+                the invoice isn&rsquo;t the risk &mdash; the unknowns behind it
+                are.
+              </span>{" "}
+              A supplier can be real, the invoice genuine, and the brand can
+              still reject the source. HyprrIQ investigates what sellers usually
+              discover only after the money&rsquo;s already gone.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ─────────────────────── How it works ─────────────────────── */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-line">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
@@ -373,11 +417,18 @@ export default function Home() {
               })}
             </div>
             <Reveal delay={120}>
-              <div>
+              <div id="sample-report" className="scroll-mt-24">
                 <ReportPreview />
                 <p className="mt-3 text-center text-sm text-muted">
                   A real Source Intelligence Report — anonymized.
                 </p>
+                <a
+                  href="/sample-report.pdf"
+                  className="mt-4 flex items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-5 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
+                >
+                  <FileText size={18} aria-hidden="true" />
+                  Download the sample report
+                </a>
               </div>
             </Reveal>
           </div>
@@ -539,8 +590,8 @@ export default function Home() {
             <p className="mt-8 flex items-center justify-center gap-2 text-center text-[15px] text-ink-2">
               <FileText size={17} className="text-muted" aria-hidden="true" />
               Not ready to subscribe?{" "}
-              <Link href="/sign-up" className="font-semibold text-brand hover:text-brand-hover">
-                Try a single report from $79
+              <Link href="/pricing" className="font-semibold text-brand hover:text-brand-hover">
+                Try a single report — $99
               </Link>
             </p>
           </Reveal>
@@ -575,19 +626,19 @@ export default function Home() {
               verdict.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <a
-                href="#pricing"
+              <Link
+                href="/sign-up"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
               >
-                Get started
+                Vet a supplier
                 <ArrowRight size={18} aria-hidden="true" />
-              </a>
-              <a
-                href="#how-it-works"
+              </Link>
+              <Link
+                href="/pricing"
                 className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
               >
-                See how it works
-              </a>
+                See pricing
+              </Link>
             </div>
           </Reveal>
         </div>
