@@ -4,13 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
-// Anchor links target in-page sections until the dedicated /how-it-works and
-// /pricing routes ship (next builds in this session sequence) — keeps the nav
-// free of dead links in the meantime.
 const NAV = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "The four outcomes", href: "#outcomes" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 export function SiteHeader() {
@@ -25,13 +21,13 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="text-[15px] font-medium text-ink-2 transition-colors hover:text-ink"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -65,14 +61,14 @@ export function SiteHeader() {
         <div className="border-t border-line bg-base px-5 py-4 md:hidden">
           <nav className="flex flex-col gap-1">
             {NAV.map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-2 py-2.5 text-base font-medium text-ink-2 hover:bg-subtle hover:text-ink"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-line pt-3">
               <Link

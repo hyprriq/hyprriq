@@ -520,7 +520,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <Link
-                    href="/portal"
+                    href="/sign-up"
                     className={`mt-7 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold transition-colors ${
                       plan.popular
                         ? "bg-brand text-white hover:bg-brand-hover"
@@ -539,7 +539,7 @@ export default function Home() {
             <p className="mt-8 flex items-center justify-center gap-2 text-center text-[15px] text-ink-2">
               <FileText size={17} className="text-muted" aria-hidden="true" />
               Not ready to subscribe?{" "}
-              <Link href="/portal" className="font-semibold text-brand hover:text-brand-hover">
+              <Link href="/sign-up" className="font-semibold text-brand hover:text-brand-hover">
                 Try a single report from $79
               </Link>
             </p>
