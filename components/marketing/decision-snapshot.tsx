@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
 
 // The hero artifact: a tasteful mock of HyprrIQ's one-page Decision Snapshot.
@@ -74,6 +75,13 @@ export function DecisionSnapshot() {
             </li>
           ))}
         </ul>
+        <a
+          href="#sample-report"
+          className="mt-4 flex items-center justify-center gap-1.5 rounded-lg border border-brand bg-surface px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand-tint"
+        >
+          View full report preview
+          <ArrowRight size={15} aria-hidden="true" />
+        </a>
       </div>
     </div>
   );

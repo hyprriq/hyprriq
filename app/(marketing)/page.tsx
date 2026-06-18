@@ -11,7 +11,19 @@ import {
   Check,
   ScanEye,
   FileText,
+  Store,
+  UserCheck,
+  Activity,
 } from "lucide-react";
+
+const TRUST_TOPICS = [
+  { icon: Store, label: "Amazon Wholesale Experts", color: "text-brand" },
+  { icon: UserCheck, label: "Supplier Vetting", color: "text-accent-data" },
+  { icon: ShieldAlert, label: "IP Risk Analysis", color: "text-verify-ink" },
+  { icon: FileText, label: "Invoice Review", color: "text-brand-ink" },
+  { icon: Activity, label: "Account Health", color: "text-clear-ink" },
+  { icon: Gavel, label: "Brand Enforcement", color: "text-deny-ink" },
+];
 import { Reveal } from "@/components/marketing/reveal";
 import { Counter } from "@/components/marketing/counter";
 import { DecisionSnapshot } from "@/components/marketing/decision-snapshot";
@@ -205,21 +217,14 @@ export default function Home() {
 
       {/* ─────────────────── Trust-topic strip ─────────────────── */}
       <section className="border-y border-line bg-surface">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-2 px-5 py-4 lg:px-8">
-          {[
-            "Amazon wholesale",
-            "Supplier vetting",
-            "IP risk analysis",
-            "Invoice review",
-            "Account health",
-            "Brand enforcement",
-          ].map((topic) => (
-            <span
-              key={topic}
-              className="rounded-full bg-subtle px-3 py-1 text-xs font-medium text-ink-2"
-            >
-              {topic}
-            </span>
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-5 px-5 py-6 sm:grid-cols-3 lg:flex lg:items-center lg:justify-between lg:px-8">
+          {TRUST_TOPICS.map((t) => (
+            <div key={t.label} className="flex items-center gap-2.5">
+              <t.icon size={22} strokeWidth={1.75} className={t.color} aria-hidden="true" />
+              <span className="text-[13px] font-semibold leading-tight text-ink">
+                {t.label}
+              </span>
+            </div>
           ))}
         </div>
       </section>
@@ -314,7 +319,7 @@ export default function Home() {
                 <p className="text-sm font-semibold uppercase tracking-wide text-clear-ink">
                   Checking first
                 </p>
-                <p className="mt-3 font-display text-3xl font-bold text-ink">From $79</p>
+                <p className="mt-3 font-display text-3xl font-bold text-ink">From $99</p>
                 <p className="mt-2 text-[15px] text-ink-2">
                   One report. Five business days. A clear verdict and the
                   questions to ask — before a dollar moves.
@@ -424,7 +429,7 @@ export default function Home() {
                 </p>
                 <a
                   href="/sample-report.pdf"
-                  className="mt-4 flex items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-5 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
+                  className="mt-4 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
                 >
                   <FileText size={18} aria-hidden="true" />
                   Download the sample report
@@ -483,25 +488,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ─────────────────── Honesty manifesto (brand drench) ─────────────────── */}
-      <section className="bg-brand-ink">
-        <div className="mx-auto max-w-4xl px-5 py-16 text-center lg:px-8 lg:py-20">
-          <Reveal>
-            <ScanEye size={30} strokeWidth={1.75} className="mx-auto text-white/75" aria-hidden="true" />
-            <h2 className="mx-auto mt-5 max-w-3xl text-[clamp(1.9rem,3.6vw,2.8rem)] font-bold leading-tight text-white">
-              We will never tell you a source is safe.
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-white/80">
-              Authorization and authenticity can&rsquo;t be confirmed from the
-              outside — and anyone who promises otherwise is guessing with your
-              money. We show you what&rsquo;s observable, say plainly what we
-              couldn&rsquo;t confirm, and give you the questions to verify it
-              yourself. That honesty is the entire product.
-            </p>
-          </Reveal>
         </div>
       </section>
 
@@ -614,32 +600,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────────────── Final CTA ───────────────────────── */}
-      <section className="border-t border-line bg-brand-tint">
-        <div className="mx-auto max-w-4xl px-5 py-20 text-center lg:px-8">
+      {/* ──────────── Honesty manifesto — final CTA (brand drench) ──────────── */}
+      <section className="bg-brand-ink">
+        <div className="mx-auto max-w-4xl px-5 py-20 text-center lg:px-8 lg:py-24">
           <Reveal>
-            <h2 className="text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Run the check before you run the risk.
+            <ScanEye size={32} strokeWidth={1.75} className="mx-auto text-white/75" aria-hidden="true" />
+            <h2 className="mx-auto mt-6 max-w-3xl text-[clamp(1.9rem,3.8vw,3rem)] font-bold leading-tight text-white">
+              We will never tell you a source is safe.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-ink-2">
-              Your next wholesale decision is worth five minutes and a clear
-              verdict.
+            <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-white/80">
+              We&rsquo;ll tell you what we found, what we couldn&rsquo;t verify,
+              and what questions remain. That&rsquo;s the entire product.
             </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <div className="mt-8 flex justify-center">
               <Link
                 href="/sign-up"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-base font-semibold text-brand-ink transition-colors hover:bg-white/90"
               >
                 Vet a supplier
                 <ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
-              >
-                See pricing
-              </Link>
             </div>
+            <p className="mt-4 text-sm text-white/55">
+              Takes about 2 minutes. View a sample report first if you like.
+            </p>
           </Reveal>
         </div>
       </section>
