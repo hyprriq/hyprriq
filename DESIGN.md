@@ -24,8 +24,9 @@ Reference anchor: **Mercury/Ramp's confident data-forward polish** — same prec
 ### Brand (deep confident blue — between electric `#2563EB` and navy `#1B4B8A`)
 | Token | Hex | Usage |
 |---|---|---|
-| `brand-primary` | `#1E40AF` | Deep blue — primary CTAs, links, active states, key data highlights |
-| `brand-primary-hover` | `#1A3793` | Hover/pressed state |
+| `brand-primary` | `#1B4B8A` | Deep blue (prototype brand, final) — primary CTAs, links, active states, key data highlights |
+| `brand-primary-hover` | `#2A6ACC` | Hover/pressed state |
+| `brand-ink` | `#0F2A4E` | Darkest blue — brand drench (manifesto), brand-panel gradient end |
 | `brand-tint` | `#EAEEFB` | Selected rows, tags, badges, subtle highlights |
 | `brand-accent-warm` | `#B8731A` | Rare — "hope/optimism" highlight; must never compete with verdict colors |
 
@@ -90,7 +91,7 @@ Disciplined 4-tier rhythm — no gradients-everywhere, no dark sections:
 - `bg-base #FAF9F7` — default narrative sections
 - `bg-surface #FFFFFF` — sections anchored by an artifact/proof (alternates for rhythm)
 - `bg-subtle #F2F1ED` — quieter/supporting sections
-- **`brand #1E40AF` drench** — the honesty manifesto only (the single bold moment; light text) + a restrained brand band for the final CTA
+- **`brand-ink #0F2A4E` drench** — the honesty manifesto only (the single bold moment; light text) + a restrained brand band for the final CTA
 Hero may carry one barely-perceptible warm→white wash. Nothing more.
 
 ### Color — verdict system IS the multi-accent

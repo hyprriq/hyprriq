@@ -4,7 +4,9 @@
 // card chrome is stripped — the form sits flush in our right panel.
 export const clerkAppearance = {
   variables: {
-    colorPrimary: "#1e40af",
+    // Must mirror --color-brand in globals.css (Clerk needs a literal; it does
+    // color math it can't do on a CSS var).
+    colorPrimary: "#1b4b8a",
     colorText: "#1a1917",
     colorTextSecondary: "#56544e",
     colorBackground: "#ffffff",

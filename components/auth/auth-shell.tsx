@@ -15,7 +15,10 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
   return (
     <div
       className="relative hidden flex-col justify-between overflow-hidden p-12 text-white md:flex"
-      style={{ background: "linear-gradient(155deg, #1E40AF 0%, #0F2350 100%)" }}
+      style={{
+        background:
+          "linear-gradient(155deg, var(--color-brand) 0%, var(--color-brand-ink) 100%)",
+      }}
     >
       <div
         aria-hidden="true"

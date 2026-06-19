@@ -15,10 +15,12 @@
   --color-line-strong: #d6d3cb;
 
   /* Brand — deep confident blue (between electric #2563EB and navy #1B4B8A) */
-  --color-brand: #1e40af;
-  --color-brand-hover: #1a3793;
-  --color-brand-ink: #16307e;
-  --color-brand-tint: #eaeefb;
+  /* Brand blue — prototype values (final, single source of truth). Any literal
+     blue elsewhere (Clerk colorPrimary) must mirror these. */
+  --color-brand: #1b4b8a;
+  --color-brand-hover: #2a6acc;
+  --color-brand-ink: #0f2a4e;
+  --color-brand-tint: #e8f0fb;
   --color-accent-warm: #b8731a;
   /* Tightly-scoped neutral data accent — process/neutral data only, never
      adjacent to a verdict color (see DESIGN.md v2 decisions). */
