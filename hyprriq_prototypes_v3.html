@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyprrIQ — Prototypes v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ──
+   BUG FIX 1: --ink3 #7A7870→#6A6860 (was failing WCAG 4.5:1 on --s2: 4.1:1, now 4.7:1)
+   BUG FIX 2: admin sidebar opacity 0.48→0.65 (was 3.4:1, now 4.7:1)
+   PRICING: Growth $279, Single Report $99 (was $249/$79)
+   NEW: --purple, --purpleb for review badge; --bx-action for scope/action state
+*/
+:root{
+  --bg:#FAFAF8;--s:#FFFFFF;--s2:#F4F3EF;--b:#E5E3DC;--bst:#C8C5BB;
+  --ink:#1A1916;--ink2:#3D3C38;--ink3:#6A6860;
+  --ac:#1B4B8A;--ac2:#2A6ACC;--ac3:#0F2A4E;--acl:#E8F0FB;--acll:#F0F5FF;
+  --vc:#1A6B3A;--vcb:#EDFAF3;--vce:#8ECFAA;
+  --vu:#4A5E10;--vub:#F3F8E6;--vue:#A8C060;
+  --vv:#7A4E00;--vvb:#FEF6E8;--vve:#E5C06A;
+  --vd:#7A1818;--vdb:#FDEAEA;--vde:#E5AAAA;
+  --navy4:#081A30;--purple:#5B21B6;--purpleb:#EDE9FF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#161614;font-family:'Inter',-apple-system,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* PROTO NAV */
+.pnav{background:#0C0C0A;border-bottom:1px solid #222;padding:10px 20px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;position:sticky;top:0;z-index:999;}
+.pnav-lbl{font-size:11px;font-weight:700;color:#444;letter-spacing:.5px;margin-right:4px;}
+.pb{background:none;border:1px solid #2A2A2A;color:#777;font-size:11px;font-weight:500;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.pb:hover{border-color:#444;color:#bbb;}
+.pb.on{background:var(--ac);border-color:var(--ac);color:#fff;}
+.scr{display:none;}.scr.on{display:block;}
+
+/* SHARED SIDEBAR — BUG FIX 4: .si now button */
+.sidebar{width:240px;flex-shrink:0;background:var(--s);border-right:1px solid var(--b);display:flex;flex-direction:column;position:sticky;top:41px;height:calc(100vh - 41px);overflow-y:auto;}
+.sb-top{padding:16px;border-bottom:1px solid var(--b);}
+.sb-logo{font-size:17px;font-weight:800;color:var(--ac);letter-spacing:-.5px;}
+.sb-plan{display:inline-flex;align-items:center;gap:5px;background:var(--acl);color:var(--ac);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;margin-top:6px;}
+.sb-plan::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ac2);}
+.sb-nav{padding:8px;flex:1;}
+.sb-sec{font-size:9.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.9px;padding:12px 10px 4px;}
+.si{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;margin-bottom:1px;transition:background .1s,color .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.si:hover{background:var(--s2);color:var(--ink);}
+.si.on{background:var(--acl);color:var(--ac);font-weight:600;}
+.si-sub{padding-left:26px;font-size:12.5px;color:var(--ink3);}
+.si-sub.on{background:var(--acll);color:var(--ac);font-weight:500;}
+.si .sbadge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.sbadge-bl{background:var(--acl);color:var(--ac);}
+.sbadge-rd{background:var(--vdb);color:var(--vd);}
+.sbadge-am{background:var(--vvb);color:var(--vv);}
+.sb-credits{padding:14px 16px;border-top:1px solid var(--b);background:var(--s2);}
+.sbc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.sbc-lbl{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+.sbc-add{font-size:11px;font-weight:600;color:var(--ac);text-decoration:none;}
+.sbc-num{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-1px;}
+.sbc-sub{font-size:11px;color:var(--ink3);margin-top:1px;margin-bottom:8px;}
+.cbar{height:5px;background:var(--b);border-radius:10px;overflow:hidden;}
+.cbf{height:100%;border-radius:10px;}
+.cb-g{background:var(--vc);}.cb-a{background:var(--vv);}.cb-r{background:var(--vd);}
+
+/* PORTAL LAYOUT */
+.portal{min-height:100vh;background:var(--bg);display:flex;}
+.pmain{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{background:var(--s);border-bottom:1px solid var(--b);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:41px;z-index:20;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.tb-title{font-size:14px;font-weight:700;color:var(--ink);}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-bell{width:32px;height:32px;border-radius:7px;background:var(--s2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative;}
+.bell-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--vd);border:1.5px solid var(--s);}
+.tb-av{width:32px;height:32px;border-radius:7px;background:var(--ac);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.btn-new{background:var(--ac);color:#fff;border:none;padding:0 14px;height:32px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-new:hover{background:var(--ac2);}
+
+/* BADGES */
+.bx{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.bx-research{background:var(--acl);color:var(--ac);}
+.bx-review{background:var(--purpleb);color:var(--purple);}
+.bx-ready{background:var(--vcb);color:var(--vc);}
+.bx-done{background:var(--s2);color:var(--ink3);border:1px solid var(--b);}
+.bx-action{background:var(--vvb);color:var(--vv);border:1px solid var(--vve);}
+.bx-new{background:var(--s2);color:var(--ink2);border:1px solid var(--b);}
+.vbx{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;}
+.vbx-c{background:var(--vcb);color:var(--vc);}
+.vbx-u{background:var(--vub);color:var(--vu);}
+.vbx-v{background:var(--vvb);color:var(--vv);}
+.vbx-d{background:var(--vdb);color:var(--vd);}
+.vbx-p{background:var(--s2);color:var(--ink3);border:1px solid var(--b);}
+.sla-ok{font-size:12px;font-weight:600;color:var(--vc);}
+.sla-warn{font-size:12px;font-weight:600;color:var(--vv);}
+.sla-late{font-size:12px;font-weight:600;color:var(--vd);}
+
+/* AUTH — unchanged from v2 */
+.auth-wrap{min-height:calc(100vh - 41px);display:grid;grid-template-columns:40% 60%;}
+.auth-brand{background:linear-gradient(155deg,#1B4B8A 0%,#0F2A4E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;position:relative;overflow:hidden;}
+.auth-brand::before{content:'';position:absolute;top:-100px;right:-100px;width:340px;height:340px;background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 70%);border-radius:50%;}
+.brand-c{position:relative;z-index:2;text-align:center;max-width:300px;}
+.brand-wm{font-size:28px;font-weight:800;color:#fff;letter-spacing:-.8px;}
+.brand-wm span{color:rgba(255,255,255,0.4);}
+.brand-sub{font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:2.5px;margin-top:4px;}
+.brand-div{width:28px;height:2px;background:rgba(255,255,255,0.15);margin:26px auto;}
+.brand-tag{font-size:16px;font-weight:500;color:rgba(255,255,255,0.8);line-height:1.6;}
+.brand-tag strong{color:#fff;font-weight:700;}
+.vpills{display:flex;flex-direction:column;gap:7px;margin-top:26px;}
+.vpill{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 13px;}
+.vpdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.vp-c{background:#4ADE80;}.vp-u{background:#A3E635;}.vp-v{background:#FBBF24;}.vp-d{background:#F87171;}
+.vp-nm{font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);flex:1;text-align:left;}
+.vp-ds{font-size:11px;color:rgba(255,255,255,0.32);}
+.auth-ft{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.18);}
+.auth-form{background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;}
+.auth-inner{width:100%;max-width:380px;}
+.auth-ew{font-size:11px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.auth-h{font-size:26px;font-weight:800;color:var(--ink);letter-spacing:-.6px;margin-bottom:6px;}
+.auth-p{font-size:14px;color:var(--ink3);margin-bottom:26px;line-height:1.55;}
+.btn-google{width:100%;padding:11px 16px;background:var(--s);border:1.5px solid var(--b);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;font-family:inherit;}
+.btn-google:hover{border-color:var(--bst);background:var(--s2);}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--b);}
+.divider span{font-size:12px;color:var(--ink3);}
+.fg{margin-bottom:13px;}
+.fl{font-size:12.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:5px;}
+.fi{width:100%;padding:10px 13px;background:var(--s);border:1.5px solid var(--b);border-radius:9px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
+.fi:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--acl);}
+.fi::placeholder{color:var(--ink3);}
+.btn-p{width:100%;padding:11px 16px;background:var(--ac);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;font-family:inherit;}
+.btn-p:hover{background:var(--ac2);}
+.auth-note{font-size:12px;color:var(--ink3);text-align:center;margin-top:16px;line-height:1.7;}
+.auth-note a{color:var(--ac);text-decoration:none;font-weight:600;}
+.auth-sw{text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--b);font-size:13px;color:var(--ink3);}
+.auth-sw a{color:var(--ac);text-decoration:none;font-weight:600;}
+
+/* ONBOARDING — NEW */
+.ob-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.ob-card{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:36px 40px;width:100%;max-width:500px;}
+.ob-progress{display:flex;justify-content:center;gap:8px;margin-bottom:32px;}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--b);transition:background .2s;}
+.ob-dot.on{background:var(--ac);}
+.ob-step{display:none;}.ob-step.on{display:block;}
+.ob-eyebrow{font-size:11px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.ob-h{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.4px;margin-bottom:8px;}
+.ob-p{font-size:14px;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
+.ob-plan-card{background:var(--acll);border:1px solid #B3C9EE;border-radius:11px;padding:18px 20px;margin-bottom:20px;}
+.ob-plan-name{font-size:18px;font-weight:800;color:var(--ac);letter-spacing:-.3px;}
+.ob-plan-price{font-size:13px;color:var(--ac);opacity:.8;margin-top:2px;margin-bottom:14px;}
+.ob-plan-items{display:flex;flex-direction:column;gap:7px;}
+.ob-plan-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);}
+.ob-item-dot{width:6px;height:6px;border-radius:50%;background:var(--ac);flex-shrink:0;}
+.ob-cta{width:100%;padding:13px;background:var(--ac);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;transition:background .15s;}
+.ob-cta:hover{background:var(--ac2);}
+.ob-skip{width:100%;padding:9px;background:none;border:none;color:var(--ink3);font-size:13px;cursor:pointer;font-family:inherit;}
+.ob-skip:hover{color:var(--ink);}
+.ob-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.ob-back{background:none;border:none;color:var(--ink3);font-size:13px;cursor:pointer;font-family:inherit;padding:8px 0;}
+.ob-next{background:var(--ac);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.ob-next:hover{background:var(--ac2);}
+.ob-what{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:16px 18px;margin-bottom:20px;}
+.ob-what-t{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.ob-step-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;}
+.ob-step-item:last-child{margin-bottom:0;}
+.ob-step-n{width:20px;height:20px;border-radius:50%;background:var(--ac);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ob-step-t{font-size:13px;color:var(--ink2);line-height:1.5;}
+
+/* DASHBOARD — mostly unchanged, sidebar updated */
+.dash-body{padding:26px 28px 48px;}
+.greeting{margin-bottom:24px;}
+.greeting-name{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.5px;}
+.greeting-sub{font-size:13.5px;color:var(--ink3);margin-top:3px;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px;}
+.kpi{background:var(--s);border:1px solid var(--b);border-radius:11px;padding:16px 18px;}
+.kpi.k-ac{border-color:#B3C9EE;background:var(--acll);}
+.kpi.k-ok{border-color:var(--vce);background:var(--vcb);}
+.kpi.k-wn{border-color:var(--vve);background:var(--vvb);}
+.kpi-lbl{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.kpi-val{font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-1.5px;line-height:1;}
+.kpi.k-ac .kpi-val{color:var(--ac);}
+.kpi.k-ok .kpi-val{color:var(--vc);}
+.kpi.k-wn .kpi-val{color:var(--vv);}
+.kpi-sub{font-size:11.5px;color:var(--ink3);margin-top:4px;}
+.dash-grid{display:grid;grid-template-columns:1fr 296px;gap:22px;align-items:start;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-t{font-size:13.5px;font-weight:700;color:var(--ink);}
+.sec-a{font-size:12.5px;color:var(--ac);text-decoration:none;font-weight:600;}
+.tbl{background:var(--s);border:1px solid var(--b);border-radius:11px;overflow:hidden;}
+.tbl-hd{display:grid;background:var(--s2);border-bottom:1px solid var(--b);padding:9px 16px;gap:10px;}
+.tbl-hd span{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+.trow{display:grid;padding:13px 16px;gap:10px;border-bottom:1px solid var(--b);align-items:center;cursor:pointer;transition:background .1s;}
+.trow:last-child{border-bottom:none;}
+.trow:hover{background:var(--acll);}
+.tbl-hd.c5,.trow.c5{grid-template-columns:100px 1fr 120px 140px 90px;}
+.tbl-hd.c6,.trow.c6{grid-template-columns:100px 1fr 110px 130px 80px 80px;}
+.case-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);}
+.cv{font-size:13px;font-weight:600;color:var(--ink);}
+.cb{font-size:11.5px;color:var(--ink3);margin-top:2px;}
+.trow-action{border-left:3px solid var(--vve);}
+.widget{background:var(--s);border:1px solid var(--b);border-radius:11px;overflow:hidden;margin-bottom:14px;}
+.wh{padding:11px 15px;border-bottom:1px solid var(--b);background:var(--s2);display:flex;align-items:center;justify-content:space-between;}
+.wh h3{font-size:13px;font-weight:700;color:var(--ink);}
+.wh-a{font-size:12px;color:var(--ac);text-decoration:none;font-weight:600;}
+.dl-item{padding:10px 15px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:10px;}
+.dl-item:last-child{border-bottom:none;}
+.dl-id{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink3);display:block;margin-bottom:2px;}
+.dl-nm{font-size:12.5px;font-weight:600;color:var(--ink);}
+.dl-br{font-size:11px;color:var(--ink3);}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px;}
+.qa-btn{background:var(--s2);border:1px solid var(--b);border-radius:7px;padding:10px 11px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .12s;}
+.qa-btn:hover{background:var(--acl);border-color:#B3C9EE;color:var(--ac);}
+.act-item{padding:10px 15px;border-bottom:1px solid var(--b);display:flex;gap:10px;align-items:flex-start;}
+.act-item:last-child{border-bottom:none;}
+.adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.a-ok{background:var(--vc);}.a-bl{background:var(--ac);}.a-wn{background:var(--vv);}.a-gr{background:var(--ink3);}
+.act-tx{font-size:12.5px;color:var(--ink2);flex:1;line-height:1.5;}
+.act-tx strong{color:var(--ink);font-weight:600;}
+.act-tm{font-size:11px;color:var(--ink3);flex-shrink:0;margin-top:2px;}
+
+/* MY CASES — NEW */
+.cases-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.cases-main{padding:26px 28px;flex:1;}
+.filter-tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;}
+.ftab{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;border:1px solid transparent;background:none;font-family:inherit;transition:all .12s;}
+.ftab:hover{background:var(--s2);color:var(--ink);}
+.ftab.on{background:var(--acl);color:var(--ac);font-weight:600;border-color:#B3C9EE;}
+.ftab-red{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--vd);color:#fff;font-size:10px;font-weight:700;margin-left:4px;}
+.queue-pos-badge{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--b);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--ink3);font-weight:600;}
+.qp-num{color:var(--ac);font-weight:700;}
+
+/* CASE DETAIL — scope banner new, tab content new */
+.cd-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.cd-main{padding:26px 28px;flex:1;min-width:0;}
+.breadcrumb{font-size:12.5px;color:var(--ink3);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+.breadcrumb a{color:var(--ac);text-decoration:none;font-weight:500;}
+
+/* SCOPE CONFIRMATION BANNER — new, critical missing element */
+.scope-banner{background:var(--vvb);border:1.5px solid var(--vve);border-radius:11px;padding:16px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;}
+.sb-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.sb-body{flex:1;}
+.sb-title{font-size:14px;font-weight:700;color:var(--vv);margin-bottom:5px;}
+.sb-text{font-size:13px;color:var(--ink2);line-height:1.55;margin-bottom:12px;}
+.sb-brands{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.brand-cmp{display:flex;align-items:center;gap:6px;background:var(--s);border:1px solid var(--b);border-radius:7px;padding:6px 11px;font-size:12.5px;}
+.bmc-label{font-size:9.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;}
+.bmc-val{font-weight:600;color:var(--ink);}
+.bmc-arrow{color:var(--vv);font-size:16px;margin:0 2px;}
+.sb-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-confirm{background:var(--vv);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-confirm:hover{background:#6A4000;}
+.btn-update-scope{background:var(--s);color:var(--ink2);border:1px solid var(--b);padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-update-scope:hover{border-color:var(--bst);}
+.sb-sla{font-size:11.5px;color:var(--vv);margin-top:8px;font-weight:600;}
+
+.cd-hdr{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px 22px;margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.cd-hdr h2{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;}
+.cd-meta{font-size:12.5px;color:var(--ink3);margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.cd-meta .mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+.meta-dot{width:3px;height:3px;background:var(--bst);border-radius:50%;}
+.cd-status-row{display:flex;align-items:center;gap:9px;margin-top:12px;}
+.verdict-panel{display:flex;align-items:flex-start;gap:22px;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px 22px;margin-bottom:18px;}
+.vi{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.vi-c{background:var(--vcb);}.vi-u{background:var(--vub);}.vi-v{background:var(--vvb);}.vi-d{background:var(--vdb);}
+.v-lbl{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.v-name{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:3px;}
+.vn-c{color:var(--vc);}.vn-u{color:var(--vu);}.vn-v{color:var(--vv);}.vn-d{color:var(--vd);}
+.v-conf{font-size:12px;color:var(--ink3);font-weight:600;margin-bottom:9px;}
+.v-snap{font-size:13.5px;color:var(--ink2);line-height:1.65;max-width:520px;}
+.v-acts{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;}
+.btn-dl{background:var(--ac);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-dl:hover{background:var(--ac2);}
+.btn-gh{background:var(--s);color:var(--ink2);border:1px solid var(--b);padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-gh:hover{border-color:var(--bst);}
+
+/* TABS — BUG FIX 3: panels now show/hide via JS, tab is button */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--b);margin-bottom:18px;}
+.tab{padding:9px 15px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s;border-left:none;border-right:none;border-top:none;background:none;font-family:inherit;}
+.tab:hover{color:var(--ink);}
+.tab.on{color:var(--ac);font-weight:600;border-bottom:2px solid var(--ac);}
+.tab-panel{display:none;}.tab-panel.on{display:block;}
+.dims{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:18px;}
+.dim{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:13px;}
+.dim-nm{font-size:12px;font-weight:600;color:var(--ink2);line-height:1.4;margin-bottom:8px;}
+.dim-st{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;}
+.ds-v{background:var(--vcb);color:var(--vc);}
+.ds-i{background:var(--acl);color:var(--ac);}
+.ds-w{background:var(--vvb);color:var(--vv);}
+.ds-q{background:var(--s2);color:var(--ink3);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+/* Evidence tab */
+.ev-item{padding:12px 16px;border-bottom:1px solid var(--b);display:flex;gap:11px;align-items:flex-start;}
+.ev-item:last-child{border-bottom:none;}
+.ev-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px;}
+.ev-ok{background:var(--vcb);}.ev-inf{background:var(--acl);}.ev-warn{background:var(--vvb);}
+.ev-title{font-size:13px;font-weight:600;color:var(--ink);}
+.ev-detail{font-size:12.5px;color:var(--ink3);margin-top:2px;line-height:1.5;}
+.ev-cert{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;flex-shrink:0;margin-left:auto;}
+.ec-v{background:var(--vcb);color:var(--vc);}
+.ec-i{background:var(--acl);color:var(--ac);}
+.ec-w{background:var(--vvb);color:var(--vv);}
+
+/* Questions tab */
+.q-item{padding:12px 16px;border-bottom:1px solid var(--b);display:flex;gap:10px;align-items:flex-start;}
+.q-item:last-child{border-bottom:none;}
+.q-num{width:22px;height:22px;border-radius:50%;background:var(--acl);color:var(--ac);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.q-text{font-size:13px;color:var(--ink);line-height:1.5;font-weight:500;}
+.q-why{font-size:12px;color:var(--ink3);margin-top:3px;}
+
+/* Timeline tab */
+.tl-wrap{padding:16px;}
+.tl-item{display:flex;gap:14px;padding-bottom:20px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:24px;}
+.tl-dot{width:12px;height:12px;border-radius:50%;}
+.tld-done{background:var(--vc);border:2px solid var(--vcb);}
+.tld-act{background:var(--ac);border:2px solid var(--acl);}
+.tld-pend{background:var(--b);border:2px solid var(--s2);}
+.tl-line{width:2px;flex:1;margin-top:4px;}
+.tll-done{background:var(--vce);}
+.tll-pend{background:var(--b);}
+.tl-content{}
+.tl-title{font-size:13px;font-weight:600;color:var(--ink);}
+.tl-pend .tl-title{color:var(--ink3);}
+.tl-time{font-size:11.5px;color:var(--ink3);margin-top:2px;}
+.tl-note{font-size:12.5px;color:var(--ink2);margin-top:6px;background:var(--s2);border-radius:7px;padding:8px 11px;border-left:3px solid var(--vce);}
+
+/* CHANGE REQUEST — NEW */
+.cr-wrap{padding:26px 28px;}
+.cr-window{background:var(--vdb);border:1px solid var(--vde);border-radius:10px;padding:13px 15px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;}
+.cr-win-icon{font-size:16px;flex-shrink:0;}
+.cr-win-title{font-size:13px;font-weight:700;color:var(--vd);}
+.cr-win-text{font-size:12.5px;color:var(--ink2);margin-top:3px;line-height:1.5;}
+.cr-form-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;margin-bottom:16px;}
+.cr-form-t{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b);}
+.cr-note{font-size:12.5px;color:var(--ink3);background:var(--s2);border-radius:8px;padding:10px 12px;margin-top:14px;line-height:1.55;}
+
+/* SUBMIT — mostly unchanged, brand count updated to 5 */
+.submit-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.sub-main{padding:28px 36px;max-width:680px;}
+.sub-main h2{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;margin-bottom:4px;}
+.sub-main>p{font-size:14px;color:var(--ink3);margin-bottom:24px;}
+.stepper{display:flex;align-items:center;margin-bottom:26px;}
+.step{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.step-dot{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--b);background:var(--s);color:var(--ink3);}
+.step.s-done .step-dot{background:var(--ac);border-color:var(--ac);color:#fff;}
+.step.s-act .step-dot{border-color:var(--ac);color:var(--ac);}
+.step-lbl{font-size:11px;font-weight:600;color:var(--ink3);white-space:nowrap;}
+.step.s-done .step-lbl,.step.s-act .step-lbl{color:var(--ac);}
+.step-ln{flex:1;height:2px;background:var(--b);margin:0 8px;margin-bottom:16px;}
+.step-ln.done{background:var(--ac);}
+.fcard{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;margin-bottom:18px;}
+.fcard-t{font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b);}
+.frow{margin-bottom:14px;}
+.fl2{font-size:12.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:5px;}
+.fi2{width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b);border-radius:8px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;resize:vertical;transition:border-color .15s;}
+.fi2:focus{border-color:var(--ac);background:var(--s);box-shadow:0 0 0 3px var(--acl);}
+.brand-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 11px;background:var(--s2);border:1.5px solid var(--b);border-radius:8px;min-height:43px;}
+.btag{background:var(--acl);color:var(--ac);font-size:12px;font-weight:600;padding:3px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;}
+.btx{cursor:pointer;opacity:.6;font-size:13px;}.btx:hover{opacity:1;}
+.bti{border:none;background:none;outline:none;font-size:13px;color:var(--ink);font-family:inherit;min-width:80px;flex:1;}
+.bcnt{font-size:11.5px;color:var(--ink3);margin-top:5px;}
+.uzone{border:2px dashed var(--b);border-radius:9px;padding:24px 20px;text-align:center;cursor:pointer;background:var(--s2);transition:all .15s;}
+.uzone:hover{border-color:var(--ac);background:var(--acll);}
+.uzone-ic{font-size:22px;opacity:.35;margin-bottom:7px;}
+.uzone-t{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.uzone-s{font-size:12px;color:var(--ink3);}
+.cprev{background:var(--acll);border:1px solid #B3C9EE;border-radius:9px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;margin-top:13px;}
+.cp-l{font-size:13px;font-weight:600;color:var(--ac);}
+.cp-s{font-size:11.5px;color:var(--ac);opacity:.7;margin-top:2px;}
+.cp-v{font-size:20px;font-weight:800;color:var(--ac);}
+.snav{display:flex;justify-content:space-between;margin-top:4px;}
+.btn-bk{background:var(--s);color:var(--ink2);border:1px solid var(--b);padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-bk:hover{border-color:var(--bst);}
+.btn-nx{background:var(--ac);color:#fff;border:none;padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-nx:hover{background:var(--ac2);}
+.sel-input{width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b);border-radius:8px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;transition:border-color .15s;}
+.sel-input:focus{border-color:var(--ac);}
+.ta-input{width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b);border-radius:8px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;resize:vertical;min-height:100px;transition:border-color .15s;}
+.ta-input:focus{border-color:var(--ac);background:var(--s);box-shadow:0 0 0 3px var(--acl);}
+.ta-input::placeholder{color:var(--ink3);}
+
+/* SUPPORT — NEW */
+.sup-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.sup-main{padding:26px 28px;flex:1;min-width:0;}
+.sup-layout{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start;}
+.sup-form-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:22px;margin-bottom:14px;}
+.sup-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.sup-sub{font-size:13px;color:var(--ink3);margin-bottom:20px;}
+.crisp-hint{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--acll);border:1px solid #B3C9EE;border-radius:8px;margin-top:12px;}
+.crisp-text{font-size:12.5px;color:var(--ac);flex:1;}
+.btn-crisp{background:var(--ac);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-submit-req{width:100%;padding:12px;background:var(--ac);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:background .15s;}
+.btn-submit-req:hover{background:var(--ac2);}
+.req-item{padding:11px 15px;border-bottom:1px solid var(--b);display:flex;align-items:flex-start;gap:10px;}
+.req-item:last-child{border-bottom:none;}
+.req-id{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink3);display:block;margin-bottom:2px;}
+.req-subj{font-size:13px;font-weight:600;color:var(--ink);}
+.req-cat{font-size:11px;color:var(--ink3);margin-top:2px;}
+.req-st{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;}
+.rst-open{background:var(--vvb);color:var(--vv);}
+.rst-prog{background:var(--acl);color:var(--ac);}
+.rst-res{background:var(--vcb);color:var(--vc);}
+
+/* HELP CENTRE — NEW */
+.help-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.help-main{padding:26px 28px;flex:1;min-width:0;max-width:820px;}
+.help-section{margin-bottom:32px;}
+.help-t{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.3px;margin-bottom:5px;}
+.help-sub{font-size:13.5px;color:var(--ink3);margin-bottom:16px;line-height:1.55;}
+.video-slot{background:var(--ac3);border-radius:11px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;margin-bottom:16px;max-width:560px;}
+.video-play{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;}
+.video-label{font-size:13px;color:rgba(255,255,255,.6);font-weight:500;}
+.video-soon{font-size:11px;color:rgba(255,255,255,.3);}
+.verdict-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.verdict-card{background:var(--s);border:1px solid var(--b);border-radius:11px;padding:16px 18px;}
+.vc-badge{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.vc-dot{width:10px;height:10px;border-radius:50%;}
+.vc-name{font-size:14px;font-weight:700;}
+.vc-c .vc-name{color:var(--vc);}.vc-c .vc-dot{background:var(--vc);}
+.vc-u .vc-name{color:var(--vu);}.vc-u .vc-dot{background:var(--vu);}
+.vc-v .vc-name{color:var(--vv);}.vc-v .vc-dot{background:var(--vv);}
+.vc-d .vc-name{color:var(--vd);}.vc-d .vc-dot{background:var(--vd);}
+.vc-desc{font-size:13px;color:var(--ink2);line-height:1.55;margin-bottom:8px;}
+.vc-action{font-size:12px;font-weight:600;color:var(--ink3);}
+.dim-cards{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.dim-row{background:var(--s);border:1px solid var(--b);border-radius:9px;padding:12px 15px;display:flex;gap:12px;align-items:flex-start;}
+.dim-icon{width:32px;height:32px;border-radius:8px;background:var(--acl);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.dim-nm2{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.dim-desc{font-size:12.5px;color:var(--ink3);line-height:1.5;}
+.faq-list{display:flex;flex-direction:column;gap:1px;overflow:hidden;border-radius:11px;border:1px solid var(--b);}
+.faq-item{background:var(--s);}
+.faq-q{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);}
+.faq-q:hover{background:var(--acll);}
+.faq-chev{font-size:11px;color:var(--ink3);transition:transform .2s;flex-shrink:0;}
+.faq-chev.open{transform:rotate(180deg);}
+.faq-a{padding:0 16px 14px;font-size:13px;color:var(--ink2);line-height:1.65;display:none;}
+.faq-a.on{display:block;}
+.help-cta{background:var(--s);border:1px solid var(--b);border-radius:11px;padding:18px 20px;display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap;}
+.hcta-t{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.hcta-sub{font-size:12.5px;color:var(--ink3);}
+.hcta-acts{display:flex;gap:8px;margin-left:auto;}
+.hcta-p{background:var(--ac);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.hcta-s{background:var(--s);color:var(--ink2);border:1px solid var(--b);padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+/* BILLING — NEW */
+.billing-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.billing-main{padding:26px 28px;flex:1;min-width:0;max-width:800px;}
+.bill-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px 22px;margin-bottom:16px;}
+.bill-card-t{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--b);}
+.bill-plan-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.bill-plan-name{font-size:20px;font-weight:800;color:var(--ac);letter-spacing:-.3px;}
+.bill-plan-price{font-size:13px;color:var(--ink3);margin-top:3px;}
+.bill-plan-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.btn-upgrade{background:var(--ac);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-upgrade:hover{background:var(--ac2);}
+.btn-cancel{background:none;border:none;color:var(--vd);font-size:12.5px;cursor:pointer;font-family:inherit;text-decoration:underline;}
+.bill-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+.bmi{background:var(--s2);border-radius:8px;padding:10px 12px;}
+.bmi-lbl{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.bmi-val{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-.5px;}
+.bmi-sub{font-size:11.5px;color:var(--ink3);margin-top:1px;}
+.inv-row{display:grid;grid-template-columns:90px 1fr 80px 60px;gap:10px;padding:10px 0;border-bottom:1px solid var(--b);align-items:center;font-size:13px;}
+.inv-row:last-child{border-bottom:none;}
+.inv-date{color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+.inv-desc{color:var(--ink2);}
+.inv-amt{font-weight:700;color:var(--ink);}
+.inv-pdf{color:var(--ac);font-size:12px;font-weight:600;text-decoration:none;}
+.pay-row{display:flex;align-items:center;gap:10px;margin-top:4px;}
+.card-chip{background:var(--s2);border:1px solid var(--b);border-radius:5px;padding:3px 8px;font-size:12px;font-weight:700;color:var(--ink);}
+.card-num{font-size:14px;color:var(--ink2);}
+.btn-manage-pay{margin-left:auto;background:var(--s2);border:1px solid var(--b);padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink2);transition:all .15s;}
+.btn-manage-pay:hover{border-color:var(--bst);}
+.topup-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.topup-card{background:var(--s2);border:1px solid var(--b);border-radius:9px;padding:14px;}
+.topup-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.topup-detail{font-size:12px;color:var(--ink3);margin-bottom:10px;}
+.topup-price{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin-bottom:10px;}
+.btn-topup{width:100%;padding:9px;background:var(--ac);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-topup:hover{background:var(--ac2);}
+.btn-topup:disabled{background:var(--bst);cursor:not-allowed;}
+
+/* ADMIN SIDEBAR — BUG FIX 2: opacity 0.48→0.65, .ai now button, Support Queue added */
+.adm-sb{width:240px;flex-shrink:0;background:var(--navy4);display:flex;flex-direction:column;position:sticky;top:41px;height:calc(100vh - 41px);overflow-y:auto;}
+.adm-sb-top{padding:16px;border-bottom:1px solid rgba(255,255,255,.07);}
+.adm-logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.4px;}
+.adm-badge{display:inline-flex;background:rgba(255,255,255,.12);color:rgba(255,255,255,.55);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:5px;letter-spacing:.8px;}
+.adm-nav{padding:8px;flex:1;}
+.adm-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:1px;padding:12px 10px 4px;}
+.ai{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:all .12s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.ai:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);}
+.ai.on{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
+.ai .aic{margin-left:auto;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.aic-r{background:#7A1818;color:#F87171;}
+.aic-a{background:#7A4E00;color:#FBBF24;}
+.adm-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.adm-main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.adm-topbar{background:var(--s);border-bottom:1px solid var(--b);padding:0 26px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:41px;z-index:20;}
+.adm-tb-t{font-size:15px;font-weight:700;color:var(--ink);}
+.adm-tb-r{display:flex;align-items:center;gap:10px;}
+.adm-av{width:32px;height:32px;border-radius:7px;background:var(--ac);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.adm-date{font-size:12px;color:var(--ink3);}
+.kpi-strip{background:var(--s);border-bottom:1px solid var(--b);display:flex;}
+.akpi{padding:18px 20px 16px;border-right:1px solid var(--b);flex:1;min-width:0;}
+.akpi:last-child{border-right:none;}
+.ak-lbl{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.ak-val{font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-1.2px;line-height:1;}
+.ak-val.pos{color:var(--vc);}.ak-val.neg{color:var(--vd);}.ak-val.warn{color:var(--vv);}
+.ak-dl{font-size:11px;color:var(--ink3);margin-top:4px;display:flex;align-items:center;gap:3px;}
+.dl-up{color:var(--vc);font-weight:600;}.dl-dn{color:var(--vd);font-weight:600;}
+.adm-body{padding:22px 24px 48px;}
+.adm-grid{display:grid;grid-template-columns:1fr 304px;gap:20px;align-items:start;}
+.queue{background:var(--s);border:1px solid var(--b);border-radius:11px;overflow:hidden;}
+.q-hdr{padding:13px 16px;border-bottom:1px solid var(--b);background:var(--s2);display:flex;align-items:center;justify-content:space-between;}
+.q-hdr h3{font-size:13px;font-weight:700;color:var(--ink);}
+.q-hdr span{font-size:12px;color:var(--ink3);}
+.q-th{display:grid;grid-template-columns:88px 1fr 72px 108px 96px 76px 76px;padding:8px 15px;gap:8px;border-bottom:1px solid var(--b);background:var(--s2);}
+.q-th span{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;}
+.qrow{display:grid;grid-template-columns:88px 1fr 72px 108px 96px 76px 76px;padding:11px 15px;gap:8px;border-bottom:1px solid var(--b);align-items:center;cursor:pointer;transition:background .1s;}
+.qrow:last-child{border-bottom:none;}
+.qrow:hover{background:var(--acll);}
+.pr{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;}
+.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.p-sc{background:#7C3AED;}.p-gr{background:var(--ac);}.p-si{background:var(--ink3);}
+.pr-sc{color:var(--purple);}.pr-gr{color:var(--ac);}.pr-si{color:var(--ink3);}
+.trdots{display:flex;gap:3px;}
+.td{width:8px;height:8px;border-radius:50%;}
+.td-d{background:var(--vc);}.td-p{background:var(--ac);}.td-w{background:var(--b);}.td-f{background:var(--vv);}
+.btn-rv{background:var(--ac);color:#fff;border:none;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap;}
+.btn-rv:hover{background:var(--ac2);}
+.btn-rv.urg{background:var(--vd);}
+.btn-rv.urg:hover{background:#A52020;}
+.aw{background:var(--s);border:1px solid var(--b);border-radius:11px;overflow:hidden;margin-bottom:14px;}
+.aw-h{padding:11px 15px;border-bottom:1px solid var(--b);background:var(--s2);display:flex;justify-content:space-between;align-items:center;}
+.aw-h h3{font-size:13px;font-weight:700;color:var(--ink);}
+.cli{padding:10px 15px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:9px;}
+.cli:last-child{border-bottom:none;}
+.cli-av{width:30px;height:30px;border-radius:7px;background:var(--ac);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cli-nm{font-size:12.5px;font-weight:600;color:var(--ink);}
+.cli-pl{font-size:11px;color:var(--ink3);}
+.cli-cc{margin-left:auto;text-align:right;}
+.cc-n{font-size:13px;font-weight:700;color:var(--ink);}
+.cc-l{font-size:10.5px;color:var(--ink3);}
+.sla-bars{padding:14px 15px;display:flex;gap:18px;align-items:center;}
+.slabr{flex:1;}
+.slabr-row{margin-bottom:8px;}
+.slabr-row:last-child{margin-bottom:0;}
+.slabr-lbl{display:flex;justify-content:space-between;margin-bottom:4px;}
+.slabr-nm{font-size:12px;font-weight:600;color:var(--ink2);}
+.slabr-trk{height:5px;background:var(--b);border-radius:10px;overflow:hidden;}
+.slabr-fill{height:100%;border-radius:10px;}
+.sup-q-th{display:grid;grid-template-columns:110px 90px 1fr 100px 80px;padding:8px 15px;gap:8px;border-bottom:1px solid var(--b);background:var(--s2);}
+.sup-q-th span{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;}
+.sup-qrow{display:grid;grid-template-columns:110px 90px 1fr 100px 80px;padding:11px 15px;gap:8px;border-bottom:1px solid var(--b);align-items:center;cursor:pointer;transition:background .1s;font-size:13px;}
+.sup-qrow:last-child{border-bottom:none;}
+.sup-qrow:hover{background:var(--acll);}
+
+/* CASE REVIEW — BUG FIX 5: vopts now buttons; BUG FIX 7: rtab now buttons */
+.rev-wrap{min-height:calc(100vh - 41px);background:var(--bg);display:flex;}
+.rev-topbar{background:var(--s);border-bottom:1px solid var(--b);padding:0 22px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:41px;z-index:20;}
+.rtb-l{display:flex;align-items:center;gap:10px;}
+.rtb-bk{font-size:12.5px;color:var(--ac);font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;}
+.rtb-div{color:var(--b);font-size:18px;}
+.rtb-case{font-size:14px;font-weight:800;color:var(--ink);}
+.rtb-r{display:flex;gap:8px;align-items:center;}
+.btn-draft{background:var(--s2);color:var(--ink2);border:1px solid var(--b);padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-approve{background:var(--vc);color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-approve:hover{background:#1A7A42;}
+.btn-approve:disabled{background:var(--bst);cursor:not-allowed;}
+.rev-hint{font-size:12px;color:var(--ink3);}
+.rev-layout{display:grid;grid-template-columns:212px 1fr 252px;min-height:calc(100vh - 95px);}
+.rev-col{border-right:1px solid var(--b);}
+.rev-col:last-child{border-right:none;}
+.rinfo{padding:16px;}
+.rinfo-sec{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--b);}
+.rinfo-sec:last-child{border-bottom:none;margin-bottom:0;}
+.rinfo-lbl{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px;}
+.rf{margin-bottom:8px;}
+.rf-k{font-size:11px;font-weight:600;color:var(--ink3);margin-bottom:1px;}
+.rf-v{font-size:13px;font-weight:600;color:var(--ink);}
+.rf-v.mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+.flag-box{background:var(--vvb);border:1px solid var(--vve);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--vv);line-height:1.55;}
+.rcenter{padding:18px 22px;overflow-y:auto;}
+.rtabs{display:flex;gap:2px;border-bottom:1px solid var(--b);margin-bottom:18px;}
+.rtab{padding:8px 13px;font-size:12.5px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s;border-left:none;border-right:none;border-top:none;background:none;font-family:inherit;}
+.rtab:hover{color:var(--ink);}
+.rtab.on{color:var(--ac);font-weight:600;border-bottom:2px solid var(--ac);}
+.dim-list{display:flex;flex-direction:column;gap:9px;}
+.dim-item{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:13px 15px;}
+.di-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.di-nm{font-size:13px;font-weight:700;color:var(--ink);}
+.di-opts{display:flex;gap:4px;}
+.sopt{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--b);background:var(--s2);color:var(--ink3);cursor:pointer;transition:all .12s;font-family:inherit;}
+.sopt:hover{border-color:var(--bst);color:var(--ink);}
+.sopt.s-pass{background:var(--vcb);border-color:var(--vce);color:var(--vc);}
+.sopt.s-infer{background:var(--acl);border-color:#B3C9EE;color:var(--ac);}
+.sopt.s-flag{background:var(--vvb);border-color:var(--vve);color:var(--vv);}
+.sopt.s-fail{background:var(--vdb);border-color:var(--vde);color:var(--vd);}
+.di-note{width:100%;padding:7px 9px;border:1.5px solid var(--b);border-radius:7px;font-size:12px;color:var(--ink);background:var(--s2);outline:none;font-family:inherit;resize:none;margin-top:7px;}
+.di-note:focus{border-color:var(--ac);background:var(--s);}
+.conf-box{margin-top:14px;background:var(--s);border:1px solid var(--b);border-radius:10px;padding:13px 15px;}
+.conf-lbl{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;}
+.conf-opts{display:flex;gap:7px;}
+.copt{flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--b);background:var(--s2);text-align:center;cursor:pointer;transition:all .12s;}
+.copt.on{border-color:var(--ac);background:var(--acl);}
+.copt-lbl{font-size:12px;font-weight:700;color:var(--ink2);}
+.copt.on .copt-lbl{color:var(--ac);}
+.rverd{padding:18px 16px;}
+.rv-lbl{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:11px;}
+.vopts{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.vopt{padding:11px 13px;border-radius:9px;border:1.5px solid var(--b);background:var(--s2);cursor:pointer;transition:all .15s;width:100%;text-align:left;font-family:inherit;}
+.vopt:hover{border-color:var(--bst);background:var(--s);}
+.vopt.sel{border-width:2px;}
+.vopt-c.sel{border-color:var(--vce);background:var(--vcb);}
+.vopt-u.sel{border-color:var(--vue);background:var(--vub);}
+.vopt-v.sel{border-color:var(--vve);background:var(--vvb);}
+.vopt-d.sel{border-color:var(--vde);background:var(--vdb);}
+.vo-nm{font-size:13px;font-weight:700;}
+.vopt-c .vo-nm{color:var(--vc);}.vopt-u .vo-nm{color:var(--vu);}.vopt-v .vo-nm{color:var(--vv);}.vopt-d .vo-nm{color:var(--vd);}
+.vo-ds{font-size:11.5px;color:var(--ink3);margin-top:2px;line-height:1.4;}
+.prog-box{background:var(--s2);border:1px solid var(--b);border-radius:9px;padding:11px 13px;margin-bottom:12px;}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.prog-row:last-child{margin-bottom:0;}
+.pk{font-size:12px;color:var(--ink3);}
+.pv{font-size:12px;font-weight:700;color:var(--ink);}
+.pv.ok{color:var(--vc);}
+.btn-gen{width:100%;padding:11px;background:var(--ac);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-bottom:8px;}
+.btn-gen:hover{background:var(--ac2);}
+.btn-ready{width:100%;padding:10px;background:var(--s2);color:var(--ink2);border:1px solid var(--b);border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-ready:hover{border-color:var(--bst);}
+</style>
+</head>
+<body>
+
+<!-- PROTO NAV — 13 screens -->
+<div class="pnav">
+  <span class="pnav-lbl">HyprrIQ v3</span>
+  <button class="pb on" onclick="show('signin',this)">1·Sign In</button>
+  <button class="pb" onclick="show('signup',this)">2·Sign Up</button>
+  <button class="pb" onclick="show('onboarding',this)">3·Onboarding ✦</button>
+  <button class="pb" onclick="show('dash',this)">4·Dashboard</button>
+  <button class="pb" onclick="show('mycases',this)">5·My Cases ✦</button>
+  <button class="pb" onclick="show('casedetail',this)">6·Case Detail</button>
+  <button class="pb" onclick="show('changereq',this)">7·Change Request ✦</button>
+  <button class="pb" onclick="show('submit',this)">8·Submit</button>
+  <button class="pb" onclick="show('support',this)">9·Support ✦</button>
+  <button class="pb" onclick="show('help',this)">10·Help Centre ✦</button>
+  <button class="pb" onclick="show('billing',this)">11·Billing ✦</button>
+  <button class="pb" onclick="show('admin',this)">12·Admin</button>
+  <button class="pb" onclick="show('casereview',this)">13·Case Review</button>
+</div>
+
+<!-- ===== SCREEN 1: SIGN IN (unchanged from v2) ===== -->
+<div id="signin" class="scr on">
+<div class="auth-wrap">
+  <div class="auth-brand">
+    <div class="brand-c">
+      <div class="brand-wm">Hyprr<span>IQ</span></div>
+      <div class="brand-sub">Source Intelligence</div>
+      <div class="brand-div"></div>
+      <div class="brand-tag">Know what you're buying<br><strong>before you commit capital.</strong></div>
+      <div class="vpills">
+        <div class="vpill"><div class="vpdot vp-c"></div><div class="vp-nm">Source Clear</div><div class="vp-ds">Proceed</div></div>
+        <div class="vpill"><div class="vpdot vp-u"></div><div class="vp-nm">Usable With Conditions</div><div class="vp-ds">With caveats</div></div>
+        <div class="vpill"><div class="vpdot vp-v"></div><div class="vp-nm">Verify Before Purchase</div><div class="vp-ds">Due diligence</div></div>
+        <div class="vpill"><div class="vpdot vp-d"></div><div class="vp-nm">Do Not Rely</div><div class="vp-ds">High risk</div></div>
+      </div>
+    </div>
+    <div class="auth-ft">hyprriq.com &mdash; by HyprrX</div>
+  </div>
+  <div class="auth-form">
+    <div class="auth-inner">
+      <div class="auth-ew">Client Portal</div>
+      <h1 class="auth-h">Welcome back</h1>
+      <p class="auth-p">Sign in to access your research portal and reports.</p>
+      <button class="btn-google"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      <div class="divider"><span>or continue with email</span></div>
+      <div class="fg"><label class="fl">Email address</label><input class="fi" type="email" placeholder="you@company.com"/></div>
+      <button class="btn-p">Send magic link &rarr;</button>
+      <p class="auth-note">We'll email you a secure, passwordless sign-in link.<br><a href="#">Forgot your email?</a></p>
+      <div class="auth-sw">Don't have an account? <a href="#">Sign up free</a></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 2: SIGN UP (unchanged from v2) ===== -->
+<div id="signup" class="scr">
+<div class="auth-wrap">
+  <div class="auth-brand">
+    <div class="brand-c">
+      <div class="brand-wm">Hyprr<span>IQ</span></div>
+      <div class="brand-sub">Source Intelligence</div>
+      <div class="brand-div"></div>
+      <div class="brand-tag">Start vetting suppliers<br><strong>in minutes, not days.</strong></div>
+      <div class="vpills">
+        <div class="vpill"><div class="vpdot" style="background:#6EE7B7"></div><div class="vp-nm">Human-reviewed reports</div></div>
+        <div class="vpill"><div class="vpdot" style="background:#93C5FD"></div><div class="vp-nm">60+ public data sources</div></div>
+        <div class="vpill"><div class="vpdot" style="background:#FCD34D"></div><div class="vp-nm">Clear, unbiased verdicts</div></div>
+        <div class="vpill"><div class="vpdot" style="background:#C4B5FD"></div><div class="vp-nm">Built by operators</div></div>
+      </div>
+    </div>
+    <div class="auth-ft">hyprriq.com &mdash; by HyprrX</div>
+  </div>
+  <div class="auth-form">
+    <div class="auth-inner">
+      <div class="auth-ew">Get started</div>
+      <h1 class="auth-h">Create your account</h1>
+      <p class="auth-p">Start vetting suppliers in minutes.</p>
+      <button class="btn-google"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      <div class="divider"><span>or create with email</span></div>
+      <div class="fg"><label class="fl">Full name</label><input class="fi" type="text" placeholder="Gautam Agarwal"/></div>
+      <div class="fg"><label class="fl">Email address</label><input class="fi" type="email" placeholder="you@company.com"/></div>
+      <button class="btn-p">Create account &rarr;</button>
+      <p class="auth-note" style="margin-top:14px">By creating an account, you agree to our<br><a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+      <div class="auth-sw">Already have an account? <a href="#">Sign in</a></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 3: ONBOARDING (NEW) ===== -->
+<div id="onboarding" class="scr">
+<div class="ob-wrap">
+  <div class="ob-card">
+    <div class="ob-progress"><div class="ob-dot on" id="od1"></div><div class="ob-dot" id="od2"></div><div class="ob-dot" id="od3"></div></div>
+    <!-- Step 1: Confirm name -->
+    <div class="ob-step on" id="obs1">
+      <div class="ob-eyebrow">Welcome to HyprrIQ</div>
+      <h2 class="ob-h">Let's confirm your details</h2>
+      <p class="ob-p">We'll use these to address your reports correctly.</p>
+      <div class="fg"><label class="fl">Your name</label><input class="fi" type="text" value="Gautam Agarwal"/></div>
+      <div class="fg"><label class="fl">Company name <span style="color:var(--ink3);font-weight:400">(optional)</span></label><input class="fi" type="text" placeholder="e.g. Agarwal Trading LLC"/></div>
+      <div style="margin-top:6px"><button class="ob-cta" onclick="obNext(2)">Continue &rarr;</button></div>
+      <button class="ob-skip" onclick="obSkip()">Skip for now</button>
+    </div>
+    <!-- Step 2: Plan summary -->
+    <div class="ob-step" id="obs2">
+      <h2 class="ob-h">You're on the Growth Plan</h2>
+      <p class="ob-p">Here's what's included with your subscription.</p>
+      <div class="ob-plan-card">
+        <div class="ob-plan-name">Growth Plan</div>
+        <div class="ob-plan-price">$279 / month &bull; renews monthly</div>
+        <div class="ob-plan-items">
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>5 research reports per month</div>
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>Up to 5 brands per report</div>
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>Full 5-dimension research</div>
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>14-field document review if uploaded</div>
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>5 business day delivery</div>
+          <div class="ob-plan-item"><div class="ob-item-dot"></div>Up to 2 credits roll over each month</div>
+        </div>
+      </div>
+      <div class="ob-nav"><button class="ob-back" onclick="obNext(1)">&#8592; Back</button><button class="ob-next" onclick="obNext(3)">Continue &rarr;</button></div>
+    </div>
+    <!-- Step 3: What happens next + CTA -->
+    <div class="ob-step" id="obs3">
+      <h2 class="ob-h">You're ready to go</h2>
+      <p class="ob-p">Submit your first request and receive a structured verdict on your supplier within 5 business days.</p>
+      <div class="ob-what">
+        <div class="ob-what-t">What happens when you submit</div>
+        <div class="ob-step-item"><div class="ob-step-n">1</div><div class="ob-step-t">Tell us the supplier, website, and the brands you're sourcing</div></div>
+        <div class="ob-step-item"><div class="ob-step-n">2</div><div class="ob-step-t">Upload an invoice or LOA if you have one — improves accuracy</div></div>
+        <div class="ob-step-item"><div class="ob-step-n">3</div><div class="ob-step-t">We research across 5 dimensions, founder reviews, and delivers your verdict</div></div>
+      </div>
+      <button class="ob-cta" onclick="obSkip()">Submit my first research request &rarr;</button>
+      <button class="ob-skip" onclick="obSkip()">Explore the portal first</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 4: DASHBOARD (sidebar updated: Support section, $279, 5 brands) ===== -->
+<div id="dash" class="scr">
+<div class="portal">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si on">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub">&#128196;&nbsp; Active Cases <span class="sbadge sbadge-bl">2</span></button>
+      <button class="si si-sub">&#10003;&nbsp; Completed Reports</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits">
+      <div class="sbc-hdr"><span class="sbc-lbl">Credits</span><a href="#" class="sbc-add">Add more</a></div>
+      <div class="sbc-num">4</div>
+      <div class="sbc-sub">of 5 remaining &bull; renews 18 days</div>
+      <div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div>
+    </div>
+  </div>
+  <div class="pmain">
+    <div class="topbar">
+      <div class="tb-left"><div class="tb-title">Dashboard</div></div>
+      <div class="tb-right">
+        <button class="btn-new">&#43; New Research</button>
+        <div class="tb-bell">&#128276;<div class="bell-dot"></div></div>
+        <div class="tb-av">G</div>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="greeting">
+        <div class="greeting-name">Good morning, Gautam &#128075;</div>
+        <div class="greeting-sub">Here's what's happening with your research today.</div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi k-ac"><div class="kpi-lbl">Credits Left</div><div class="kpi-val">4</div><div class="kpi-sub">Renews in 18 days</div></div>
+        <div class="kpi"><div class="kpi-lbl">Active Cases</div><div class="kpi-val">3</div><div class="kpi-sub">In progress</div></div>
+        <div class="kpi k-ok"><div class="kpi-lbl">Reports Ready</div><div class="kpi-val">1</div><div class="kpi-sub">Ready to download</div></div>
+        <div class="kpi"><div class="kpi-lbl">SLA Risk</div><div class="kpi-val">0</div><div class="kpi-sub">No cases at risk</div></div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="sec-hdr"><span class="sec-t">Recent Cases</span><a href="#" class="sec-a">View all &rarr;</a></div>
+          <div class="tbl" style="margin-bottom:22px">
+            <div class="tbl-hd c5"><span>Case ID</span><span>Supplier / Brands</span><span>Status</span><span>Verdict</span><span>SLA</span></div>
+            <div class="trow c5"><div class="case-id">HQ-2024-041</div><div><div class="cv">Primo Wholesale LLC</div><div class="cb">Milwaukee Tool &bull; DeWalt &bull; Bosch</div></div><div><span class="bx bx-ready">&#10003; Ready</span></div><div><span class="vbx vbx-c">Source Clear</span></div><div class="sla-ok">Delivered</div></div>
+            <div class="trow c5"><div class="case-id">HQ-2024-042</div><div><div class="cv">Elite Dist. Group</div><div class="cb">Samsung &bull; LG</div></div><div><span class="bx bx-research">In Research</span></div><div><span class="vbx vbx-p">Pending</span></div><div class="sla-ok">3 days</div></div>
+            <div class="trow c5 trow-action"><div class="case-id">HQ-2024-040</div><div><div class="cv">Universal Supply Co.</div><div class="cb">Sony &bull; JBL</div></div><div><span class="bx bx-action">&#9888; Action Needed</span></div><div><span class="vbx vbx-p">Pending</span></div><div class="sla-warn">Paused</div></div>
+            <div class="trow c5"><div class="case-id">HQ-2024-039</div><div><div class="cv">NorthPoint Traders</div><div class="cb">Nike &bull; Adidas</div></div><div><span class="bx bx-done">Completed</span></div><div><span class="vbx vbx-u">Usable With Conditions</span></div><div class="sla-ok">Delivered</div></div>
+          </div>
+          <div class="sec-hdr"><span class="sec-t">Recent Activity</span></div>
+          <div class="tbl">
+            <div class="act-item"><div class="adot a-ok"></div><div class="act-tx"><strong>Report HQ-2024-041</strong> is ready to download</div><div class="act-tm">9:41 AM</div></div>
+            <div class="act-item"><div class="adot a-wn"></div><div class="act-tx"><strong>Case HQ-2024-040</strong> — scope confirmation needed</div><div class="act-tm">2:15 PM</div></div>
+            <div class="act-item"><div class="adot a-bl"></div><div class="act-tx">New case <strong>HQ-2024-042</strong> submitted</div><div class="act-tm">Yesterday</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="widget">
+            <div class="wh"><h3>Upcoming Deadlines</h3></div>
+            <div class="dl-item"><div><span class="dl-id">HQ-2024-042</span><div class="dl-nm">Elite Dist. Group</div><div class="dl-br">Samsung &bull; LG</div></div><span class="sla-warn" style="margin-left:auto">3 days</span></div>
+            <div class="dl-item"><div><span class="dl-id">HQ-2024-043</span><div class="dl-nm">BestBuy Distributors</div><div class="dl-br">Apple &bull; Sony</div></div><span class="sla-ok" style="margin-left:auto">7 days</span></div>
+          </div>
+          <div class="widget">
+            <div class="wh"><h3>Quick Actions</h3></div>
+            <div class="qa-grid">
+              <button class="qa-btn">&#43; New Research</button>
+              <button class="qa-btn">&#128179; Buy Credits</button>
+              <button class="qa-btn">&#128196; View Reports</button>
+              <button class="qa-btn">&#128172; Get Help</button>
+            </div>
+          </div>
+          <div class="widget">
+            <div class="wh"><h3>Current Plan</h3></div>
+            <div style="padding:13px 15px">
+              <div style="font-size:16px;font-weight:800;color:var(--ac);letter-spacing:-.3px;margin-bottom:3px">Growth Plan</div>
+              <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">$279/mo &bull; 5 credits/month &bull; up to 5 brands</div>
+              <div class="cbar" style="margin-bottom:6px"><div class="cbf cb-g" style="width:80%"></div></div>
+              <div style="font-size:11.5px;color:var(--ink3);margin-bottom:14px">4 of 5 credits remaining</div>
+              <button style="width:100%;padding:9px;background:var(--ac);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Upgrade to Scale &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 5: MY CASES LIST (NEW) ===== -->
+<div id="mycases" class="scr">
+<div class="cases-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub on">&#128196;&nbsp; Active Cases <span class="sbadge sbadge-bl">2</span></button>
+      <button class="si si-sub">&#10003;&nbsp; Completed Reports</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span><a href="#" class="sbc-add">Add more</a></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar">
+      <div class="tb-left"><div class="tb-title">My Cases</div></div>
+      <div class="tb-right"><button class="btn-new">&#43; New Research</button><div class="tb-av">G</div></div>
+    </div>
+    <div class="cases-main">
+      <div class="filter-tabs">
+        <button class="ftab on" onclick="selFtab(this)">All</button>
+        <button class="ftab" onclick="selFtab(this)">Active</button>
+        <button class="ftab" onclick="selFtab(this)">Completed</button>
+        <button class="ftab" onclick="selFtab(this)">Action Required <span class="ftab-red">1</span></button>
+      </div>
+      <div class="tbl">
+        <div class="tbl-hd c6"><span>Case ID</span><span>Supplier / Brands</span><span>Status</span><span>Verdict</span><span>SLA</span><span>Action</span></div>
+        <!-- Action required row — amber left border -->
+        <div class="trow c6 trow-action">
+          <div class="case-id">HQ-2024-040</div>
+          <div><div class="cv">Universal Supply Co.</div><div class="cb">Sony &bull; JBL</div></div>
+          <div><span class="bx bx-action">&#9888; Confirm Scope</span></div>
+          <div><span class="vbx vbx-p">Pending</span></div>
+          <div style="font-size:11.5px;font-weight:600;color:var(--vv)">SLA Paused</div>
+          <div><button style="background:var(--vv);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Confirm &rarr;</button></div>
+        </div>
+        <div class="trow c6">
+          <div class="case-id">HQ-2024-042</div>
+          <div><div class="cv">Elite Dist. Group</div><div class="cb">Samsung &bull; LG</div></div>
+          <div><span class="bx bx-research">In Research</span></div>
+          <div><span class="vbx vbx-p">Pending</span></div>
+          <div class="sla-ok">3 days</div>
+          <div><div class="queue-pos-badge">Queue <span class="qp-num">#3</span></div></div>
+        </div>
+        <div class="trow c6">
+          <div class="case-id">HQ-2024-043</div>
+          <div><div class="cv">BestBuy Distributors</div><div class="cb">Apple &bull; Sony</div></div>
+          <div><span class="bx bx-new">Submitted</span></div>
+          <div><span class="vbx vbx-p">Pending</span></div>
+          <div class="sla-ok">7 days</div>
+          <div><div class="queue-pos-badge">Queue <span class="qp-num">#7</span></div></div>
+        </div>
+        <div class="trow c6">
+          <div class="case-id">HQ-2024-041</div>
+          <div><div class="cv">Primo Wholesale LLC</div><div class="cb">Milwaukee Tool &bull; DeWalt &bull; Bosch</div></div>
+          <div><span class="bx bx-ready">&#10003; Ready</span></div>
+          <div><span class="vbx vbx-c">Source Clear</span></div>
+          <div class="sla-ok">Delivered</div>
+          <div><button style="background:var(--ac);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Download</button></div>
+        </div>
+        <div class="trow c6">
+          <div class="case-id">HQ-2024-039</div>
+          <div><div class="cv">NorthPoint Traders</div><div class="cb">Nike &bull; Adidas</div></div>
+          <div><span class="bx bx-done">Completed</span></div>
+          <div><span class="vbx vbx-u">Usable With Conditions</span></div>
+          <div class="sla-ok">Delivered</div>
+          <div><button style="background:var(--s2);color:var(--ink2);border:1px solid var(--b);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">View</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 6: CASE DETAIL (scope banner + working tabs with content) ===== -->
+<div id="casedetail" class="scr">
+<div class="cd-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub on">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar">
+      <div class="tb-left"><div class="tb-title">Case HQ-2024-040</div><span class="bx bx-action" style="font-size:11px">&#9888; Action Needed</span></div>
+      <div class="tb-right"><div class="tb-av">G</div></div>
+    </div>
+    <div class="cd-main">
+      <div class="breadcrumb"><a href="#">My Cases</a><span>/</span>HQ-2024-040</div>
+
+      <!-- SCOPE CONFIRMATION BANNER — new, critical -->
+      <div class="scope-banner">
+        <div class="sb-icon">&#9888;</div>
+        <div class="sb-body">
+          <div class="sb-title">Action Required — Brand Mismatch Detected</div>
+          <div class="sb-text">We found a difference between the brands you entered and the brands detected in your uploaded document. Please confirm which brands to research.</div>
+          <div class="sb-brands">
+            <div class="brand-cmp">
+              <div><div class="bmc-label">You entered</div><div class="bmc-val">Sony &bull; JBL</div></div>
+              <div class="bmc-arrow">&#8594;</div>
+              <div><div class="bmc-label">Document detected</div><div class="bmc-val">Sony &bull; JBL &bull; Bose</div></div>
+            </div>
+          </div>
+          <div class="sb-actions">
+            <button class="btn-confirm">&#10003; Confirm Sony &amp; JBL (original)</button>
+            <button class="btn-update-scope">Update brand list</button>
+          </div>
+          <div class="sb-sla">&#9201; SLA timer paused since Jun 18 &bull; Restarts once you confirm</div>
+        </div>
+      </div>
+
+      <div class="cd-hdr">
+        <div>
+          <h2>Universal Supply Co.</h2>
+          <div class="cd-meta"><span class="mono">HQ-2024-040</span><span class="meta-dot"></span><span>Jun 16, 2026</span><span class="meta-dot"></span><span>Sony, JBL</span></div>
+          <div class="cd-status-row"><span class="bx bx-action">&#9888; Awaiting Confirmation</span><span style="font-size:12px;color:var(--vv);font-weight:600">SLA Paused</span></div>
+        </div>
+      </div>
+
+      <!-- BUG FIX 3: tab panels properly show/hide via JS -->
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab(this,'tp-overview')">Overview</button>
+        <button class="tab" onclick="switchTab(this,'tp-evidence')">Evidence</button>
+        <button class="tab" onclick="switchTab(this,'tp-questions')">Questions to Ask</button>
+        <button class="tab" onclick="switchTab(this,'tp-timeline')">Timeline</button>
+      </div>
+
+      <!-- Overview panel -->
+      <div id="tp-overview" class="tab-panel on">
+        <div style="background:var(--acll);border:1px solid #B3C9EE;border-radius:9px;padding:13px 15px;margin-bottom:18px">
+          <div style="font-size:13px;font-weight:600;color:var(--ac)">&#128269; Research queued — confirm scope above to begin</div>
+          <div style="font-size:12.5px;color:var(--ink3);margin-top:3px">All 5 dimensions will be researched once you confirm the brand list.</div>
+        </div>
+        <div class="sec-hdr" style="margin-bottom:11px"><span class="sec-t">Research Dimensions</span></div>
+        <div class="dims">
+          <div class="dim"><div class="dim-nm">Supplier Identity</div><div class="dim-st ds-q">Queued</div></div>
+          <div class="dim"><div class="dim-nm">Supply Chain Relationship</div><div class="dim-st ds-q">Queued</div></div>
+          <div class="dim"><div class="dim-nm">Brand Risk Assessment</div><div class="dim-st ds-q">Queued</div></div>
+          <div class="dim"><div class="dim-nm">Documentation Review</div><div class="dim-st ds-q">Queued</div></div>
+          <div class="dim"><div class="dim-nm">Sourcing Logic</div><div class="dim-st ds-q">Queued</div></div>
+        </div>
+      </div>
+
+      <!-- Evidence panel (populated for a delivered case) -->
+      <div id="tp-evidence" class="tab-panel">
+        <div class="tbl">
+          <div class="ev-item"><div class="ev-icon ev-ok">&#10003;</div><div style="flex:1"><div class="ev-title">Business Registration</div><div class="ev-detail">Universal Supply Co. found in Wyoming SOS. Registered 2019. Status: Active.</div></div><span class="ev-cert ec-v">Verified</span></div>
+          <div class="ev-item"><div class="ev-icon ev-ok">&#10003;</div><div style="flex:1"><div class="ev-title">Website &amp; Domain</div><div class="ev-detail">universalsupplyco.com registered 2018. 4+ year domain age. Contact details consistent.</div></div><span class="ev-cert ec-v">Verified</span></div>
+          <div class="ev-item"><div class="ev-icon ev-inf">&#8679;</div><div style="flex:1"><div class="ev-title">Brand Relationship — Sony</div><div class="ev-detail">Not found in Sony's public authorised dealer locator. Distribution inferred from marketplace presence.</div></div><span class="ev-cert ec-i">Inferred</span></div>
+          <div class="ev-item"><div class="ev-icon ev-warn">&#9651;</div><div style="flex:1"><div class="ev-title">Brand Relationship — JBL</div><div class="ev-detail">JBL (Harman/Samsung) sells exclusively through national distributors. No reseller signal visible.</div></div><span class="ev-cert ec-w">No Signal</span></div>
+          <div class="ev-item"><div class="ev-icon ev-ok">&#10003;</div><div style="flex:1"><div class="ev-title">Invoice Format</div><div class="ev-detail">14-field review: 13 pass, 1 flag — buyer legal entity shows personal name on F8.</div></div><span class="ev-cert ec-i">Consistent</span></div>
+        </div>
+      </div>
+
+      <!-- Questions to Ask panel -->
+      <div id="tp-questions" class="tab-panel">
+        <div style="background:var(--acll);border:1px solid #B3C9EE;border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--ac)">&#128172; Ask your supplier these before placing an order. Satisfactory answers do not guarantee invoice acceptance.</div>
+        <div class="tbl">
+          <div class="q-item"><div class="q-num">1</div><div><div class="q-text">Can you provide a current Letter of Authorisation (LOA) or reseller certificate for Sony and JBL?</div><div class="q-why">No public authorisation signal found — LOA would materially change the risk profile</div></div></div>
+          <div class="q-item"><div class="q-num">2</div><div><div class="q-text">Who is your primary distributor for Sony products, and can you name them on the invoice?</div><div class="q-why">JBL/Sony sell through national distributors — confirming the source chain reduces enforcement risk</div></div></div>
+          <div class="q-item"><div class="q-num">3</div><div><div class="q-text">Can the invoice buyer name be updated to our business legal entity rather than a personal name?</div><div class="q-why">F8 flag on document review — buyer name should match your Amazon seller account's legal entity</div></div></div>
+          <div class="q-item"><div class="q-num">4</div><div><div class="q-text">Have you previously supplied Amazon sellers and had invoices accepted by Amazon?</div><div class="q-why">Track record is a material signal — invoice acceptance history matters</div></div></div>
+        </div>
+      </div>
+
+      <!-- Timeline panel -->
+      <div id="tp-timeline" class="tab-panel">
+        <div class="tl-wrap">
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot tld-done"></div><div class="tl-line tll-done"></div></div><div class="tl-content"><div class="tl-title">Case submitted</div><div class="tl-time">Jun 16, 2026 &bull; 10:22 AM</div><div class="tl-note">Vendor: Universal Supply Co. &bull; Brands: Sony, JBL &bull; Document uploaded</div></div></div>
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot tld-done"></div><div class="tl-line tll-done"></div></div><div class="tl-content"><div class="tl-title">Intake check complete</div><div class="tl-time">Jun 16, 2026 &bull; 10:23 AM</div></div></div>
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot tld-act"></div><div class="tl-line tll-pend"></div></div><div class="tl-content"><div class="tl-title">Scope confirmation requested</div><div class="tl-time">Jun 18, 2026 &bull; 2:15 PM &bull; SLA paused</div><div class="tl-note">Brand mismatch detected between submission and uploaded document</div></div></div>
+          <div class="tl-item tl-pend"><div class="tl-left"><div class="tl-dot tld-pend"></div><div class="tl-line tll-pend"></div></div><div class="tl-content"><div class="tl-title">Research begins</div><div class="tl-time">Waiting for scope confirmation</div></div></div>
+          <div class="tl-item tl-pend"><div class="tl-left"><div class="tl-dot tld-pend"></div><div class="tl-line tll-pend"></div></div><div class="tl-content"><div class="tl-title">Founder review</div><div class="tl-time">Est. within 5 business days of research start</div></div></div>
+          <div class="tl-item tl-pend"><div class="tl-left"><div class="tl-dot tld-pend"></div></div><div class="tl-content"><div class="tl-title">Report delivered</div><div class="tl-time">Est. within 5 business days of research start</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 7: CHANGE REQUEST (NEW) ===== -->
+<div id="changereq" class="scr">
+<div class="cd-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub on">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar">
+      <div class="tb-left"><div class="tb-title">Change Request — HQ-2024-041</div></div>
+      <div class="tb-right"><div class="tb-av">G</div></div>
+    </div>
+    <div class="cr-wrap">
+      <div class="breadcrumb"><a href="#">My Cases</a><span>/</span><a href="#">HQ-2024-041</a><span>/</span>Change Request</div>
+      <div class="cr-window">
+        <div class="cr-win-icon">&#9432;</div>
+        <div>
+          <div class="cr-win-title">7-day change request window is open</div>
+          <div class="cr-win-text">Report delivered Jun 12, 2026. Window closes Jun 19, 2026 (1 day remaining). One change request is included per report.</div>
+        </div>
+      </div>
+      <div class="cr-form-card">
+        <div class="cr-form-t">Request a change to Report HQ-2024-041</div>
+        <div class="frow">
+          <label class="fl2">Which part of the report needs changing? <span style="color:var(--vd)">*</span></label>
+          <select class="sel-input">
+            <option>Select category...</option>
+            <option>Supplier information</option>
+            <option selected>Brand assessment</option>
+            <option>Document review findings</option>
+            <option>Verdict reasoning</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="frow">
+          <label class="fl2">What needs to change and why? <span style="color:var(--vd)">*</span></label>
+          <textarea class="ta-input" rows="4">The Milwaukee Tool brand assessment states no public enforcement activity. I found recent IP enforcement notices from Milwaukee Tool filed in Q1 2026. Can you review with updated data?</textarea>
+        </div>
+        <div class="frow">
+          <label class="fl2">Supporting files <span style="color:var(--ink3);font-weight:400">(optional)</span></label>
+          <div class="uzone"><div class="uzone-ic">&#128206;</div><div class="uzone-t">Attach supporting files</div><div class="uzone-s">PDF, JPG, PNG &mdash; max 10MB</div></div>
+        </div>
+        <div class="cr-note">&#9432; Change requests are reviewed within 1 business day. We will update your report if the research can be improved, or explain why the current finding is correct. This is not a refund request.</div>
+        <div class="snav" style="margin-top:16px"><button class="btn-bk">Cancel</button><button class="btn-nx">Submit Change Request</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 8: SUBMIT RESEARCH (unchanged structure; brand count updated to 5) ===== -->
+<div id="submit" class="scr">
+<div class="submit-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub on">&#43;&nbsp; New Case</button>
+      <button class="si si-sub">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar"><div class="tb-left"><div class="tb-title">Submit Research</div></div><div class="tb-right"><div class="tb-av">G</div></div></div>
+    <div class="sub-main">
+      <h2>New Research Request</h2>
+      <p>Tell us about the supplier and brands you want researched.</p>
+      <div class="stepper">
+        <div class="step s-done"><div class="step-dot">&#10003;</div><div class="step-lbl">Supplier</div></div>
+        <div class="step-ln done"></div>
+        <div class="step s-act"><div class="step-dot">2</div><div class="step-lbl">Brands &amp; Docs</div></div>
+        <div class="step-ln"></div>
+        <div class="step"><div class="step-dot">3</div><div class="step-lbl">Confirm</div></div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-t">Step 2 &mdash; Brands &amp; Document Upload</div>
+        <div class="frow">
+          <label class="fl2">Brand names <span style="color:var(--vd)">*</span></label>
+          <div class="brand-tags"><div class="btag">Milwaukee Tool <span class="btx">&#215;</span></div><div class="btag">DeWalt <span class="btx">&#215;</span></div><input class="bti" placeholder="Add brand..."/></div>
+          <!-- BUG FIX: was "3 brands" — Growth plan now up to 5 brands per credit -->
+          <div class="bcnt">2 of 5 brands added (Growth plan: up to 5 brands per credit)</div>
+        </div>
+        <div class="frow">
+          <label class="fl2">Upload supplier invoice or LOA <span style="color:var(--ink3);font-weight:400">(optional but recommended)</span></label>
+          <div class="uzone"><div class="uzone-ic">&#128196;</div><div class="uzone-t">Drop file here or click to browse</div><div class="uzone-s">PDF, JPG, or PNG &mdash; max 10MB</div></div>
+        </div>
+        <div class="frow">
+          <label class="fl2">Additional notes <span style="color:var(--ink3);font-weight:400">(optional)</span></label>
+          <textarea class="fi2" rows="3" placeholder="Any specific concerns or context you want us to know..."></textarea>
+        </div>
+        <div class="cprev"><div><div class="cp-l">Credits required</div><div class="cp-s">1 credit &bull; 4 remaining after submit</div></div><div class="cp-v">1 credit</div></div>
+      </div>
+      <div class="snav"><button class="btn-bk">&#8592; Back</button><button class="btn-nx">Review &amp; Confirm &rarr;</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 9: SUPPORT CENTRE (NEW) ===== -->
+<div id="support" class="scr">
+<div class="sup-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si on">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar"><div class="tb-left"><div class="tb-title">Support &amp; Escalation</div></div><div class="tb-right"><div class="tb-av">G</div></div></div>
+    <div class="sup-main">
+      <div class="sup-layout">
+        <div>
+          <div class="sup-form-card">
+            <div class="sup-title">Submit a request</div>
+            <div class="sup-sub">We typically respond within 1 business day. Use Escalation for urgent case issues.</div>
+            <div class="frow">
+              <label class="fl2">Request type <span style="color:var(--vd)">*</span></label>
+              <select class="sel-input" style="margin-bottom:0">
+                <option>Select type...</option>
+                <option>General question</option>
+                <option selected>Case question</option>
+                <option>Escalation (urgent)</option>
+                <option>Billing / payment</option>
+                <option>Change request</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="frow" style="margin-top:13px">
+              <label class="fl2">Linked case <span style="color:var(--ink3);font-weight:400">(optional)</span></label>
+              <select class="sel-input" style="margin-bottom:0">
+                <option>Select a case...</option>
+                <option selected>HQ-2024-042 — Elite Dist. Group</option>
+                <option>HQ-2024-040 — Universal Supply Co.</option>
+                <option>HQ-2024-041 — Primo Wholesale LLC</option>
+              </select>
+            </div>
+            <div class="frow" style="margin-top:13px">
+              <label class="fl2">Subject <span style="color:var(--vd)">*</span></label>
+              <input class="fi2" type="text" value="Question about brand assessment for Samsung"/>
+            </div>
+            <div class="frow" style="margin-top:13px">
+              <label class="fl2">Message <span style="color:var(--vd)">*</span></label>
+              <textarea class="ta-input" placeholder="Describe your question or issue...">The Samsung brand assessment on HQ-2024-042 shows 'inferred' relationship. Can you clarify what additional steps I can take to strengthen the authorization evidence before placing an order?</textarea>
+            </div>
+            <div class="frow" style="margin-top:13px">
+              <label class="fl2">Attachment <span style="color:var(--ink3);font-weight:400">(optional)</span></label>
+              <div class="uzone" style="padding:16px"><div class="uzone-t">Attach a file</div><div class="uzone-s">PDF, JPG, PNG &mdash; max 10MB</div></div>
+            </div>
+            <button class="btn-submit-req">Submit Request &rarr;</button>
+            <div class="crisp-hint">
+              <span class="crisp-text">&#128172; Need an instant answer? Chat with us.</span>
+              <button class="btn-crisp">Open chat</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="tbl">
+            <div class="wh"><h3>My Requests</h3></div>
+            <div class="req-item">
+              <div style="flex:1"><div class="req-id">SR-20260615-003</div><div class="req-subj">Invoice field clarification</div><div class="req-cat">General question &bull; Jun 15</div></div>
+              <span class="req-st rst-res">Resolved</span>
+            </div>
+            <div class="req-item">
+              <div style="flex:1"><div class="req-id">SR-20260612-002</div><div class="req-subj">SLA delay on HQ-2024-039</div><div class="req-cat">Case question &bull; Jun 12</div></div>
+              <span class="req-st rst-res">Resolved</span>
+            </div>
+            <div class="req-item">
+              <div style="flex:1"><div class="req-id">SR-20260601-001</div><div class="req-subj">Credit rollover question</div><div class="req-cat">Billing &bull; Jun 1</div></div>
+              <span class="req-st rst-res">Resolved</span>
+            </div>
+            <div style="padding:20px 16px;text-align:center">
+              <div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:3px">All caught up</div>
+              <div style="font-size:12.5px;color:var(--ink3)">No open requests</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 10: HELP CENTRE (NEW) ===== -->
+<div id="help" class="scr">
+<div class="help-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si on">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar"><div class="tb-left"><div class="tb-title">Help Centre</div></div><div class="tb-right"><div class="tb-av">G</div></div></div>
+    <div class="help-main">
+      <!-- Section 1: How it works -->
+      <div class="help-section">
+        <div class="help-t">How HyprrIQ Works</div>
+        <div class="help-sub">A quick overview of our research process from submission to delivery.</div>
+        <div class="video-slot"><div class="video-play">&#9654;</div><div class="video-label">How It Works — 3 min overview</div><div class="video-soon">Video coming soon</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="background:var(--s);border:1px solid var(--b);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--ink2)">&#128396; <strong style="color:var(--ink)">Submit</strong> supplier &amp; brands</div>
+          <div style="color:var(--ink3);padding-top:10px">&#8594;</div>
+          <div style="background:var(--s);border:1px solid var(--b);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--ink2)">&#128269; <strong style="color:var(--ink)">Research</strong> 5 dimensions</div>
+          <div style="color:var(--ink3);padding-top:10px">&#8594;</div>
+          <div style="background:var(--s);border:1px solid var(--b);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--ink2)">&#128205; <strong style="color:var(--ink)">Founder reviews</strong> findings</div>
+          <div style="color:var(--ink3);padding-top:10px">&#8594;</div>
+          <div style="background:var(--s);border:1px solid var(--b);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--ink2)">&#128196; <strong style="color:var(--ink)">Verdict</strong> delivered</div>
+        </div>
+      </div>
+      <!-- Section 2: Verdict meanings -->
+      <div class="help-section">
+        <div class="help-t">Understanding Your Verdict</div>
+        <div class="help-sub">We deliver one of four structured verdicts. Each tells you what we observed — not what Amazon will decide.</div>
+        <div class="verdict-grid">
+          <div class="verdict-card vc-c"><div class="vc-badge"><div class="vc-dot"></div><div class="vc-name">Source Clear</div></div><div class="vc-desc">Observable indicators are consistent with a credible wholesale supplier. Identity confirmed, no significant red flags found.</div><div class="vc-action">&#8594; Proceed with standard due diligence</div></div>
+          <div class="verdict-card vc-u"><div class="vc-badge"><div class="vc-dot"></div><div class="vc-name">Usable With Conditions</div></div><div class="vc-desc">Credible supplier but specific concerns noted. Review the conditions before purchasing.</div><div class="vc-action">&#8594; Review conditions before proceeding</div></div>
+          <div class="verdict-card vc-v"><div class="vc-badge"><div class="vc-dot"></div><div class="vc-name">Verify Before Purchase</div></div><div class="vc-desc">Significant signals require independent verification. Additional documentation recommended.</div><div class="vc-action">&#8594; Get more information first</div></div>
+          <div class="verdict-card vc-d"><div class="vc-badge"><div class="vc-dot"></div><div class="vc-name">Do Not Rely</div></div><div class="vc-desc">Observable concerns are significant enough that relying on this supplier carries material risk.</div><div class="vc-action">&#8594; Do not purchase from this supplier</div></div>
+        </div>
+        <div style="background:var(--vvb);border:1px solid var(--vve);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--vv)">&#9888; <strong>Important:</strong> HyprrIQ reports reflect what we can observe externally. We cannot confirm whether Amazon will accept an invoice.</div>
+      </div>
+      <!-- Section 3: 5 Dimensions -->
+      <div class="help-section">
+        <div class="help-t">The 5 Research Dimensions</div>
+        <div class="help-sub">Every report covers five areas of investigation. All five run at full depth on every plan.</div>
+        <div class="dim-cards">
+          <div class="dim-row"><div class="dim-icon">&#127970;</div><div><div class="dim-nm2">Supplier Identity</div><div class="dim-desc">We verify the supplier is a real, operating business — registration, address, web presence, domain age, contact consistency.</div></div></div>
+          <div class="dim-row"><div class="dim-icon">&#128279;</div><div><div class="dim-nm2">Supply Chain Relationship</div><div class="dim-desc">We surface any observable connection between the supplier and the brands you're sourcing — distributor listings, brand references, marketplace history.</div></div></div>
+          <div class="dim-row"><div class="dim-icon">&#128737;</div><div><div class="dim-nm2">Brand Risk Assessment</div><div class="dim-desc">We assess the brand's enforcement posture — how aggressively they pursue IP complaints and whether their distribution model creates risk.</div></div></div>
+          <div class="dim-row"><div class="dim-icon">&#128196;</div><div><div class="dim-nm2">Documentation Review</div><div class="dim-desc">If you upload an invoice or LOA, we check it against 14 fields Amazon evaluates — buyer name, address, product specificity, formatting, and more.</div></div></div>
+          <div class="dim-row"><div class="dim-icon">&#129504;</div><div><div class="dim-nm2">Sourcing Logic</div><div class="dim-desc">We assess whether the entire picture makes commercial sense — category risks, scenario coherence, and B2B archetype analysis.</div></div></div>
+        </div>
+      </div>
+      <!-- Section 4: FAQ -->
+      <div class="help-section">
+        <div class="help-t">Frequently Asked Questions</div>
+        <div class="faq-list">
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Can you confirm my supplier is authorized to sell this brand?<span class="faq-chev">&#9660;</span></div><div class="faq-a">No — brand authorization is a private agreement between a supplier and a brand. It is not publicly verifiable from the outside. HyprrIQ surfaces every observable signal we can find, but we cannot confirm the existence of a private authorization agreement. Our verdicts reflect what we can observe, not what Amazon will decide.</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">What is a change request?<span class="faq-chev">&#9660;</span></div><div class="faq-a">A change request lets you flag a specific part of a delivered report that you believe is incorrect. You have 7 days from delivery to submit one. We review within 1 business day and either update the finding or explain why the current assessment stands. One change request is included per report.</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">How do credits work?<span class="faq-chev">&#9660;</span></div><div class="faq-a">1 credit = 1 research case (1 supplier + up to 5 brands on Growth and Single Report). Credits are deducted at submission, not at delivery. Unused credits carry forward at renewal — up to 2 on Growth, up to 4 on Scale.</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">What happens if my submission is flagged for scope confirmation?<span class="faq-chev">&#9660;</span></div><div class="faq-a">If our intake check detects a mismatch between the brands you entered and the brands in your uploaded document, we pause the case and ask you to confirm. Your SLA pauses during this time and restarts once you confirm.</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">What do Verified, Inferred, and No Public Signal mean?<span class="faq-chev">&#9660;</span></div><div class="faq-a">Verified: we found direct evidence in an official source. Inferred: we found indirect signals that support the conclusion. No Public Signal: we searched and found nothing — this doesn't mean the relationship doesn't exist, just that we couldn't confirm it externally.</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Can I upgrade my plan mid-month?<span class="faq-chev">&#9660;</span></div><div class="faq-a">Yes. Stripe handles the upgrade immediately with prorated billing. Your new credit allowance takes effect at your next renewal date. Your current month's remaining credits are unchanged.</div></div>
+        </div>
+      </div>
+      <div class="help-cta">
+        <div><div class="hcta-t">Still have a question?</div><div class="hcta-sub">We typically respond within 1 business day</div></div>
+        <div class="hcta-acts"><button class="hcta-s">&#128172; Chat with us</button><button class="hcta-p">Submit a request</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 11: BILLING & CREDITS (NEW) ===== -->
+<div id="billing" class="scr">
+<div class="billing-wrap">
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-logo">HyprrIQ</div><div class="sb-plan">Growth Plan</div></div>
+    <div class="sb-nav">
+      <button class="si">&#9632;&nbsp; Dashboard</button>
+      <div class="sb-sec">Research</div>
+      <button class="si si-sub">&#43;&nbsp; New Case</button>
+      <button class="si si-sub">&#128196;&nbsp; Active Cases</button>
+      <button class="si si-sub">&#10003;&nbsp; Completed</button>
+      <div class="sb-sec">Account</div>
+      <button class="si on">&#128179;&nbsp; Billing &amp; Credits</button>
+      <button class="si">&#9881;&nbsp; Settings</button>
+      <div class="sb-sec">Support</div>
+      <button class="si">&#10067;&nbsp; Help Centre</button>
+      <button class="si">&#9993;&nbsp; Contact Support</button>
+    </div>
+    <div class="sb-credits"><div class="sbc-hdr"><span class="sbc-lbl">Credits</span></div><div class="sbc-num">4</div><div class="sbc-sub">of 5 remaining</div><div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div></div>
+  </div>
+  <div class="pmain">
+    <div class="topbar"><div class="tb-left"><div class="tb-title">Billing &amp; Credits</div></div><div class="tb-right"><div class="tb-av">G</div></div></div>
+    <div class="billing-main">
+      <!-- Current plan -->
+      <div class="bill-card">
+        <div class="bill-card-t">Current Plan</div>
+        <div class="bill-plan-row">
+          <div>
+            <div class="bill-plan-name">Growth Plan</div>
+            <div class="bill-plan-price">$279 / month &bull; renews Jul 18, 2026</div>
+          </div>
+          <div class="bill-plan-actions">
+            <button class="btn-upgrade">Upgrade to Scale &rarr;</button>
+            <button class="btn-cancel">Cancel subscription</button>
+          </div>
+        </div>
+        <div class="bill-meta">
+          <div class="bmi"><div class="bmi-lbl">Credits Left</div><div class="bmi-val">4</div><div class="bmi-sub">of 5 this month</div></div>
+          <div class="bmi"><div class="bmi-lbl">Rollover</div><div class="bmi-val">2</div><div class="bmi-sub">max carry-forward</div></div>
+          <div class="bmi"><div class="bmi-lbl">Renews</div><div class="bmi-val" style="font-size:14px;letter-spacing:-.3px">Jul 18</div><div class="bmi-sub">18 days</div></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;color:var(--ink3);margin-bottom:5px">4 of 5 credits remaining this month</div>
+          <div class="cbar"><div class="cbf cb-g" style="width:80%"></div></div>
+        </div>
+      </div>
+      <!-- Top-up credits -->
+      <div class="bill-card">
+        <div class="bill-card-t">Top-Up Credits</div>
+        <div class="topup-row">
+          <div class="topup-card">
+            <div class="topup-name">Growth Top-Up</div>
+            <div class="topup-detail">3 additional credits &bull; Growth plan only</div>
+            <div class="topup-price">$99</div>
+            <button class="btn-topup">Buy 3 credits</button>
+          </div>
+          <div class="topup-card" style="opacity:.5">
+            <div class="topup-name">Scale Top-Up</div>
+            <div class="topup-detail">6 additional credits &bull; Scale plan only</div>
+            <div class="topup-price">$179</div>
+            <button class="btn-topup" disabled>Scale plan only</button>
+          </div>
+        </div>
+      </div>
+      <!-- Payment method -->
+      <div class="bill-card">
+        <div class="bill-card-t">Payment Method</div>
+        <div class="pay-row">
+          <div class="card-chip">VISA</div>
+          <div class="card-num">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4242</div>
+          <div style="font-size:12px;color:var(--ink3)">Exp 12/27</div>
+          <button class="btn-manage-pay">Manage in Stripe &rarr;</button>
+        </div>
+      </div>
+      <!-- Invoice history -->
+      <div class="bill-card">
+        <div class="bill-card-t">Invoice History</div>
+        <div class="inv-row" style="font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;padding-bottom:8px;border-bottom:1px solid var(--b)"><span>Date</span><span>Description</span><span>Amount</span><span></span></div>
+        <div class="inv-row"><span class="inv-date">Jun 18</span><span class="inv-desc">Growth Plan — Monthly renewal</span><span class="inv-amt">$279.00</span><a href="#" class="inv-pdf">PDF</a></div>
+        <div class="inv-row"><span class="inv-date">May 18</span><span class="inv-desc">Growth Plan — Monthly renewal</span><span class="inv-amt">$279.00</span><a href="#" class="inv-pdf">PDF</a></div>
+        <div class="inv-row"><span class="inv-date">May 10</span><span class="inv-desc">Growth Top-Up — 3 credits</span><span class="inv-amt">$99.00</span><a href="#" class="inv-pdf">PDF</a></div>
+        <div class="inv-row"><span class="inv-date">Apr 18</span><span class="inv-desc">Growth Plan — First payment</span><span class="inv-amt">$279.00</span><a href="#" class="inv-pdf">PDF</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 12: ADMIN DASHBOARD (BUG FIX: sidebar opacity, Support Queue added, KPI6 = Open Requests, pricing $279) ===== -->
+<div id="admin" class="scr">
+<div class="adm-wrap">
+  <div class="adm-sb">
+    <div class="adm-sb-top"><div class="adm-logo">HyprrIQ Admin</div><div class="adm-badge">FOUNDER</div></div>
+    <div class="adm-nav">
+      <button class="ai on">&#9632;&nbsp; Dashboard</button>
+      <div class="adm-sec">Cases</div>
+      <button class="ai">&#43;&nbsp; New <span class="aic aic-r">2</span></button>
+      <button class="ai">&#8635;&nbsp; In Research</button>
+      <button class="ai">&#128269;&nbsp; Founder Review <span class="aic aic-a">3</span></button>
+      <button class="ai">&#10003;&nbsp; Delivered</button>
+      <button class="ai">&#9783;&nbsp; All Cases</button>
+      <div class="adm-sec">Management</div>
+      <button class="ai">&#128101;&nbsp; Clients</button>
+      <button class="ai">&#9993;&nbsp; Support Queue <span class="aic aic-a">2</span></button>
+      <button class="ai">&#128200;&nbsp; Outcomes</button>
+      <div class="adm-sec">Intelligence</div>
+      <button class="ai">&#127968;&nbsp; Suppliers</button>
+      <button class="ai">&#127991;&nbsp; Brands</button>
+      <div class="adm-sec">System</div>
+      <button class="ai">&#128202;&nbsp; Revenue</button>
+      <button class="ai">&#128196;&nbsp; Prompts</button>
+      <button class="ai">&#9881;&nbsp; Settings</button>
+    </div>
+  </div>
+  <div class="adm-main">
+    <div class="adm-topbar"><div class="adm-tb-t">Admin Dashboard</div><div class="adm-tb-r"><span class="adm-date">Last 30 days</span><div class="adm-av">G</div></div></div>
+    <div class="kpi-strip">
+      <div class="akpi"><div class="ak-lbl">MRR</div><div class="ak-val">$24,580</div><div class="ak-dl"><span class="dl-up">&#8679; 18.6%</span> vs last month</div></div>
+      <div class="akpi"><div class="ak-lbl">Credits Sold</div><div class="ak-val">186</div><div class="ak-dl"><span class="dl-up">&#8679; 12.3%</span></div></div>
+      <div class="akpi"><div class="ak-lbl">Cases Created</div><div class="ak-val">194</div><div class="ak-dl"><span class="dl-up">&#8679; 8.7%</span></div></div>
+      <div class="akpi"><div class="ak-lbl">Pending Review</div><div class="ak-val warn">8</div><div class="ak-dl">Awaiting founder</div></div>
+      <div class="akpi"><div class="ak-lbl">Delivered</div><div class="ak-val pos">156</div><div class="ak-dl"><span class="dl-up">&#8679; 14.6%</span></div></div>
+      <!-- BUG FIX: was "Refunds" — now "Open Requests" (support queue integration) -->
+      <div class="akpi"><div class="ak-lbl">Open Requests</div><div class="ak-val warn">2</div><div class="ak-dl">Support queue</div></div>
+    </div>
+    <div class="adm-body">
+      <div class="adm-grid">
+        <div>
+          <div class="sec-hdr" style="margin-bottom:11px"><span class="sec-t">Case Queue — Founder Review</span><span style="font-size:12px;color:var(--ink3)">3 awaiting verdict</span></div>
+          <div class="queue">
+            <div class="q-hdr"><h3>Ready for Review</h3><span>All research tracks complete</span></div>
+            <div class="q-th"><span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>Tracks</span><span>SLA</span><span>Submitted</span><span></span></div>
+            <div class="qrow"><div class="case-id">HQ-2024-056</div><div><div class="cv" style="font-size:12.5px">BestBuy Distributors</div><div class="cb">Apple &bull; Sony</div></div><div class="pr"><div class="pdot p-sc"></div><span class="pr-sc">Scale</span></div><div class="trdots"><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div></div><div class="sla-warn">2 days</div><div style="font-size:11.5px;color:var(--ink3)">May 12</div><div><button class="btn-rv urg">Review</button></div></div>
+            <div class="qrow"><div class="case-id">HQ-2024-055</div><div><div class="cv" style="font-size:12.5px">Elite Dist. Group</div><div class="cb">Samsung &bull; LG</div></div><div class="pr"><div class="pdot p-gr"></div><span class="pr-gr">Growth</span></div><div class="trdots"><div class="td td-d"></div><div class="td td-d"></div><div class="td td-f"></div><div class="td td-d"></div><div class="td td-d"></div></div><div class="sla-ok">3 days</div><div style="font-size:11.5px;color:var(--ink3)">May 11</div><div><button class="btn-rv">Review</button></div></div>
+            <div class="qrow"><div class="case-id">HQ-2024-054</div><div><div class="cv" style="font-size:12.5px">NorthPoint Traders</div><div class="cb">Nike &bull; Adidas</div></div><div class="pr"><div class="pdot p-si"></div><span class="pr-si">Single</span></div><div class="trdots"><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div><div class="td td-d"></div></div><div class="sla-ok">4 days</div><div style="font-size:11.5px;color:var(--ink3)">May 11</div><div><button class="btn-rv">Review</button></div></div>
+          </div>
+
+          <!-- Support Queue widget — new -->
+          <div style="margin-top:20px">
+            <div class="sec-hdr" style="margin-bottom:11px"><span class="sec-t">Support Queue</span><span style="font-size:12px;color:var(--vd);font-weight:600">2 open</span></div>
+            <div class="queue">
+              <div class="q-hdr"><h3>Client Requests</h3><span>Respond within 1 business day</span></div>
+              <div class="sup-q-th"><span>SR Number</span><span>Type</span><span>Subject</span><span>Client</span><span>Status</span></div>
+              <div class="sup-qrow">
+                <div class="case-id">SR-20260618-005</div>
+                <div><span class="bx" style="background:var(--purpleb);color:var(--purple);font-size:10.5px">Escalation</span></div>
+                <div style="font-size:13px;color:var(--ink)">Urgent — case HQ-2024-042 brand flagged</div>
+                <div style="font-size:12.5px;color:var(--ink2)">Gautam A.</div>
+                <div><span class="bx bx-action" style="font-size:10.5px">Open</span></div>
+              </div>
+              <div class="sup-qrow">
+                <div class="case-id">SR-20260617-004</div>
+                <div><span class="bx bx-research" style="font-size:10.5px">Case Q</span></div>
+                <div style="font-size:13px;color:var(--ink)">Question about Samsung brand assessment</div>
+                <div style="font-size:12.5px;color:var(--ink2)">Mike J.</div>
+                <div><span class="bx bx-action" style="font-size:10.5px">Open</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px">
+            <div class="sec-hdr" style="margin-bottom:11px"><span class="sec-t">SLA Overview — 194 Cases</span></div>
+            <div class="tbl">
+              <div class="sla-bars">
+                <div style="flex-shrink:0">
+                  <div style="width:76px;height:76px;border-radius:50%;background:conic-gradient(var(--vc) 0% 80%,var(--vv) 80% 95%,var(--vd) 95% 100%);display:flex;align-items:center;justify-content:center">
+                    <div style="width:50px;height:50px;border-radius:50%;background:var(--s);display:flex;align-items:center;justify-content:center"><div style="text-align:center"><div style="font-size:13px;font-weight:800;color:var(--ink)">194</div><div style="font-size:9px;color:var(--ink3);font-weight:600">total</div></div></div>
+                  </div>
+                </div>
+                <div class="slabr">
+                  <div class="slabr-row"><div class="slabr-lbl"><span class="slabr-nm">On Time</span><span style="font-size:12px;font-weight:700;color:var(--vc)">156 (80%)</span></div><div class="slabr-trk"><div class="slabr-fill" style="width:80%;background:var(--vc)"></div></div></div>
+                  <div class="slabr-row"><div class="slabr-lbl"><span class="slabr-nm">At Risk</span><span style="font-size:12px;font-weight:700;color:var(--vv)">30 (15%)</span></div><div class="slabr-trk"><div class="slabr-fill" style="width:15%;background:var(--vv)"></div></div></div>
+                  <div class="slabr-row"><div class="slabr-lbl"><span class="slabr-nm">Overdue</span><span style="font-size:12px;font-weight:700;color:var(--vd)">8 (5%)</span></div><div class="slabr-trk"><div class="slabr-fill" style="width:5%;background:var(--vd)"></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="aw">
+            <div class="aw-h"><h3>Recent Activity</h3></div>
+            <div class="act-item"><div class="adot a-ok"></div><div class="act-tx"><strong>HQ-2024-041</strong> report delivered</div><div class="act-tm">2m ago</div></div>
+            <div class="act-item"><div class="adot a-wn"></div><div class="act-tx">Support request <strong>SR-005</strong> received</div><div class="act-tm">14m ago</div></div>
+            <div class="act-item"><div class="adot a-bl"></div><div class="act-tx">New case <strong>HQ-2024-056</strong> queued</div><div class="act-tm">1h ago</div></div>
+          </div>
+          <div class="aw">
+            <div class="aw-h"><h3>Active Clients</h3><a href="#" class="wh-a">View all</a></div>
+            <div class="cli"><div class="cli-av">GA</div><div><div class="cli-nm">Gautam Agarwal</div><div class="cli-pl">Scale &bull; 10 credits</div></div><div class="cli-cc"><div class="cc-n">12</div><div class="cc-l">cases</div></div></div>
+            <!-- BUG FIX: was "Growth &bull; 5 credits" — now shows $279 plan -->
+            <div class="cli"><div class="cli-av" style="background:#153A6A">MJ</div><div><div class="cli-nm">Mike Johnson</div><div class="cli-pl">Growth $279 &bull; 5 credits</div></div><div class="cli-cc"><div class="cc-n">7</div><div class="cc-l">cases</div></div></div>
+            <div class="cli"><div class="cli-av" style="background:var(--purple)">SW</div><div><div class="cli-nm">Sarah Williams</div><div class="cli-pl">Single Report $99</div></div><div class="cli-cc"><div class="cc-n">1</div><div class="cc-l">case</div></div></div>
+          </div>
+          <div class="aw">
+            <div class="aw-h"><h3>Quick Actions</h3></div>
+            <div class="qa-grid" style="padding:11px">
+              <button class="qa-btn">&#43; Add Client</button>
+              <button class="qa-btn">&#128202; Revenue</button>
+              <button class="qa-btn">&#128196; Prompts</button>
+              <button class="qa-btn">&#9881; Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SCREEN 13: CASE REVIEW ADMIN (BUG FIX: vopts=buttons, rtab=buttons, client-language dimension names) ===== -->
+<div id="casereview" class="scr">
+<div class="rev-wrap">
+  <div class="adm-sb">
+    <div class="adm-sb-top"><div class="adm-logo">HyprrIQ Admin</div><div class="adm-badge">FOUNDER</div></div>
+    <div class="adm-nav">
+      <button class="ai">&#9632;&nbsp; Dashboard</button>
+      <div class="adm-sec">Cases</div>
+      <button class="ai">&#43;&nbsp; New</button>
+      <button class="ai">&#8635;&nbsp; In Research</button>
+      <button class="ai on">&#128269;&nbsp; Founder Review <span class="aic aic-a">3</span></button>
+      <button class="ai">&#10003;&nbsp; Delivered</button>
+      <button class="ai">&#9783;&nbsp; All Cases</button>
+      <div class="adm-sec">Management</div>
+      <button class="ai">&#128101;&nbsp; Clients</button>
+      <button class="ai">&#9993;&nbsp; Support Queue <span class="aic aic-a">2</span></button>
+      <button class="ai">&#128200;&nbsp; Outcomes</button>
+      <div class="adm-sec">Intelligence</div>
+      <button class="ai">&#127968;&nbsp; Suppliers</button>
+      <button class="ai">&#127991;&nbsp; Brands</button>
+      <div class="adm-sec">System</div>
+      <button class="ai">&#128202;&nbsp; Revenue</button>
+      <button class="ai">&#128196;&nbsp; Prompts</button>
+      <button class="ai">&#9881;&nbsp; Settings</button>
+    </div>
+  </div>
+  <div class="adm-main">
+    <div class="rev-topbar">
+      <div class="rtb-l">
+        <button class="rtb-bk">&#8592; Back to queue</button>
+        <div class="rtb-div">|</div>
+        <div class="rtb-case">Case HQ-2024-056</div>
+        <span class="bx bx-review" style="font-size:11px">Founder Review</span>
+      </div>
+      <div class="rtb-r">
+        <button class="btn-draft">Save Draft</button>
+        <button class="btn-approve" id="appBtn" disabled>Approve &amp; Deliver</button>
+        <span class="rev-hint" id="revHint">Select verdict first</span>
+      </div>
+    </div>
+    <div class="rev-layout">
+      <div class="rev-col">
+        <div class="rinfo">
+          <div class="rinfo-sec">
+            <div class="rinfo-lbl">Case Information</div>
+            <div class="rf"><div class="rf-k">Case ID</div><div class="rf-v mono">HQ-2024-056</div></div>
+            <div class="rf"><div class="rf-k">Client</div><div class="rf-v">Gautam Agarwal</div></div>
+            <div class="rf"><div class="rf-k">Supplier</div><div class="rf-v">BestBuy Distributors</div></div>
+            <div class="rf"><div class="rf-k">Brands</div><div class="rf-v">Apple &bull; Sony</div></div>
+            <div class="rf"><div class="rf-k">Plan</div><div class="rf-v"><span class="bx bx-review" style="font-size:11px">Scale</span></div></div>
+            <div class="rf"><div class="rf-k">Submitted</div><div class="rf-v">May 12, 2025</div></div>
+            <div class="rf"><div class="rf-k">SLA</div><div class="rf-v sla-warn">2 days left</div></div>
+          </div>
+          <div class="rinfo-sec">
+            <div class="rinfo-lbl">Client Notes</div>
+            <div style="font-size:13px;color:var(--ink2);line-height:1.6">Looking to source Apple accessories and Sony headphones.</div>
+          </div>
+          <div class="rinfo-sec">
+            <div class="rinfo-lbl">Internal Flag</div>
+            <div class="flag-box">Supply chain flagged — major distributor footprint only. Proceed with modified scoring.</div>
+          </div>
+        </div>
+      </div>
+      <div class="rev-col">
+        <div class="rcenter">
+          <!-- BUG FIX 7: rtab elements are now button -->
+          <div class="rtabs">
+            <button class="rtab on" onclick="switchRTab(this)">Research Builder</button>
+            <button class="rtab" onclick="switchRTab(this)">Evidence</button>
+            <button class="rtab" onclick="switchRTab(this)">Notes</button>
+            <button class="rtab" onclick="switchRTab(this)">Files</button>
+          </div>
+          <!-- CLIENT-LANGUAGE dimension names — never "Track 1-5" -->
+          <div class="dim-list">
+            <div class="dim-item"><div class="di-hdr"><div class="di-nm">Supplier Identity</div><div class="di-opts"><button class="sopt s-pass" onclick="selOpt(this)">Pass</button><button class="sopt" onclick="selOpt(this)">Infer</button><button class="sopt" onclick="selOpt(this)">Flag</button><button class="sopt" onclick="selOpt(this)">Fail</button><button class="sopt" onclick="selOpt(this)">N/A</button></div></div><textarea class="di-note" rows="2" placeholder="Notes on supplier identity..."></textarea></div>
+            <div class="dim-item"><div class="di-hdr"><div class="di-nm">Supply Chain Relationship</div><div class="di-opts"><button class="sopt" onclick="selOpt(this)">Pass</button><button class="sopt s-infer" onclick="selOpt(this)">Infer</button><button class="sopt" onclick="selOpt(this)">Flag</button><button class="sopt" onclick="selOpt(this)">Fail</button><button class="sopt" onclick="selOpt(this)">N/A</button></div></div><textarea class="di-note" rows="2" placeholder="Notes on supply chain..."></textarea></div>
+            <div class="dim-item"><div class="di-hdr"><div class="di-nm">Brand Risk Assessment</div><div class="di-opts"><button class="sopt" onclick="selOpt(this)">Pass</button><button class="sopt" onclick="selOpt(this)">Infer</button><button class="sopt s-flag" onclick="selOpt(this)">Flag</button><button class="sopt" onclick="selOpt(this)">Fail</button><button class="sopt" onclick="selOpt(this)">N/A</button></div></div><textarea class="di-note" rows="2" placeholder="Notes on brand risk..."></textarea></div>
+            <div class="dim-item"><div class="di-hdr"><div class="di-nm">Documentation Review</div><div class="di-opts"><button class="sopt s-pass" onclick="selOpt(this)">Pass</button><button class="sopt" onclick="selOpt(this)">Infer</button><button class="sopt" onclick="selOpt(this)">Flag</button><button class="sopt" onclick="selOpt(this)">Fail</button><button class="sopt" onclick="selOpt(this)">N/A</button></div></div></div>
+            <div class="dim-item"><div class="di-hdr"><div class="di-nm">Sourcing Logic</div><div class="di-opts"><button class="sopt" onclick="selOpt(this)">Pass</button><button class="sopt s-infer" onclick="selOpt(this)">Infer</button><button class="sopt" onclick="selOpt(this)">Flag</button><button class="sopt" onclick="selOpt(this)">Fail</button><button class="sopt" onclick="selOpt(this)">N/A</button></div></div></div>
+          </div>
+          <div class="conf-box">
+            <div class="conf-lbl">Overall Confidence</div>
+            <div class="conf-opts">
+              <div class="copt" onclick="selConf(this)"><div class="copt-lbl">Low</div></div>
+              <div class="copt on" onclick="selConf(this)"><div class="copt-lbl">Medium</div></div>
+              <div class="copt" onclick="selConf(this)"><div class="copt-lbl">High</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rev-col" style="border-right:none">
+        <div class="rverd">
+          <div class="rv-lbl">Select Verdict</div>
+          <div class="vopts">
+            <!-- BUG FIX 5: verdict options are now button elements for keyboard access -->
+            <button class="vopt vopt-c" onclick="selVerdict(this)"><div class="vo-nm">&#10003; Source Clear</div><div class="vo-ds">Observable indicators consistent with credible source</div></button>
+            <button class="vopt vopt-u sel" onclick="selVerdict(this)"><div class="vo-nm">&#8679; Usable With Conditions</div><div class="vo-ds">Proceed with specific caveats noted</div></button>
+            <button class="vopt vopt-v" onclick="selVerdict(this)"><div class="vo-nm">&#9651; Verify Before Purchase</div><div class="vo-ds">Additional due diligence required</div></button>
+            <button class="vopt vopt-d" onclick="selVerdict(this)"><div class="vo-nm">&#10005; Do Not Rely</div><div class="vo-ds">Significant concerns identified</div></button>
+          </div>
+          <div class="prog-box">
+            <div class="prog-row"><span class="pk">Dimensions scored</span><span class="pv ok">4 of 5</span></div>
+            <div class="prog-row"><span class="pk">Verdict selected</span><span class="pv ok">Usable With Conditions</span></div>
+            <div class="prog-row"><span class="pk">Confidence</span><span class="pv">Medium</span></div>
+          </div>
+          <button class="btn-gen">Generate Report Preview</button>
+          <button class="btn-ready" onclick="document.getElementById('appBtn').disabled=false;document.getElementById('revHint').style.display='none'">Mark Ready to Approve</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/* Screen switcher */
+function show(id,btn){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+}
+/* BUG FIX 3: tabs now show/hide content panels */
+function switchTab(btn,panelId){
+  const main=btn.closest('.pmain');
+  main.querySelectorAll('.tab').forEach(t=>{t.classList.remove('on');t.setAttribute('aria-selected','false');});
+  main.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  btn.setAttribute('aria-selected','true');
+  const p=document.getElementById(panelId);
+  if(p)p.classList.add('on');
+}
+/* BUG FIX 7: admin research builder tabs */
+function switchRTab(el){
+  el.closest('.rtabs').querySelectorAll('.rtab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+/* Dimension scoring */
+function selOpt(el){
+  el.closest('.di-opts').querySelectorAll('.sopt').forEach(o=>o.classList.remove('s-pass','s-infer','s-flag','s-fail'));
+  const t=el.textContent.trim();
+  if(t==='Pass')el.classList.add('s-pass');
+  else if(t==='Infer')el.classList.add('s-infer');
+  else if(t==='Flag')el.classList.add('s-flag');
+  else if(t==='Fail')el.classList.add('s-fail');
+}
+/* Confidence */
+function selConf(el){
+  el.closest('.conf-opts').querySelectorAll('.copt').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+/* BUG FIX 5: verdict selection now works on button elements */
+function selVerdict(el){
+  el.closest('.vopts').querySelectorAll('.vopt').forEach(v=>v.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('appBtn').disabled=false;
+  const h=document.getElementById('revHint');
+  if(h)h.style.display='none';
+}
+/* Filter tabs */
+function selFtab(el){
+  el.closest('.filter-tabs').querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+/* Onboarding steps */
+function obNext(step){
+  document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>{d.classList.toggle('on',i<step);});
+  const s=document.getElementById('obs'+step);
+  if(s)s.classList.add('on');
+}
+function obSkip(){
+  show('dash',document.querySelectorAll('.pb')[3]);
+}
+/* FAQ accordion */
+function toggleFaq(el){
+  const a=el.nextElementSibling;
+  const c=el.querySelector('.faq-chev');
+  const isOpen=a.classList.contains('on');
+  el.closest('.faq-list').querySelectorAll('.faq-a').forEach(x=>x.classList.remove('on'));
+  el.closest('.faq-list').querySelectorAll('.faq-chev').forEach(x=>x.classList.remove('open'));
+  if(!isOpen){a.classList.add('on');if(c)c.classList.add('open');}
+}
+</script>
+</body>
+</html>

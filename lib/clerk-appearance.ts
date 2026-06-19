@@ -1,7 +1,7 @@
-// Brand theming for Clerk's hosted <SignIn /> / <SignUp /> components so the
-// auth UI matches the HyprrIQ palette. The surrounding (auth) layout provides
-// the framing, so the Clerk card itself is borderless/transparent here.
-// (Shape is validated against the component's `appearance` prop at the call site.)
+// Brand theming for Clerk's <SignIn /> / <SignUp /> components so the auth UI
+// matches the HyprrIQ palette. The (auth) shell provides the heading and the
+// sign-in/up switch link, so Clerk's own header + footer are hidden and the
+// card chrome is stripped — the form sits flush in our right panel.
 export const clerkAppearance = {
   variables: {
     colorPrimary: "#1e40af",
@@ -9,12 +9,15 @@ export const clerkAppearance = {
     colorTextSecondary: "#56544e",
     colorBackground: "#ffffff",
     colorInputBackground: "#ffffff",
+    colorInputText: "#1a1917",
     borderRadius: "0.625rem",
+    fontFamily: "var(--font-hanken), system-ui, sans-serif",
   },
   elements: {
     rootBox: "w-full",
-    card: "shadow-none border-0 bg-transparent w-full",
-    headerTitle: "font-display",
-    footerActionLink: "text-[#1e40af] hover:text-[#1a3793]",
+    cardBox: "w-full shadow-none",
+    card: "bg-transparent shadow-none border-0 p-0 m-0 w-full",
+    header: "hidden",
+    footer: "hidden",
   },
 };
