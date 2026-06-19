@@ -1,0 +1,200 @@
+import Link from "next/link";
+import type { Client } from "@/lib/data/client";
+import {
+  PLAN_NAME,
+  PLAN_CREDITS_PER_CYCLE,
+  type PlanType,
+} from "@/lib/constants/plans";
+
+export type PortalNavKey =
+  | "dashboard"
+  | "new"
+  | "cases"
+  | "completed"
+  | "billing"
+  | "settings"
+  | "help"
+  | "support";
+
+type NavItem = {
+  key: PortalNavKey;
+  label: string;
+  icon: string;
+  href?: string; // omitted => rendered disabled (route not in scope yet)
+  sub?: boolean;
+  badge?: number;
+};
+
+const NAV: { section?: string; items: NavItem[] }[] = [
+  { items: [{ key: "dashboard", label: "Dashboard", icon: "▪", href: "/portal/dashboard" }] },
+  {
+    section: "Research",
+    items: [
+      { key: "new", label: "New Case", icon: "＋", href: "/portal/submit", sub: true },
+      { key: "cases", label: "Active Cases", icon: "🗎", href: "/portal/cases", sub: true },
+      { key: "completed", label: "Completed Reports", icon: "✓", href: "/portal/cases?filter=completed", sub: true },
+    ],
+  },
+  {
+    section: "Account",
+    items: [
+      { key: "billing", label: "Billing & Credits", icon: "💳", href: "/portal/billing" },
+      { key: "settings", label: "Settings", icon: "⚙" }, // not in scope — disabled
+    ],
+  },
+  {
+    section: "Support",
+    items: [
+      { key: "help", label: "Help Centre", icon: "❓", href: "/portal/help" },
+      { key: "support", label: "Contact Support", icon: "✉", href: "/portal/support" },
+    ],
+  },
+];
+
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const diff = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
+}
+
+function CreditsWidget({ client }: { client: Client }) {
+  const plan = client.plan_type as PlanType | null;
+  const total = plan ? PLAN_CREDITS_PER_CYCLE[plan] : 0;
+  const left = client.credits_available;
+  const pct = total > 0 ? Math.min(100, Math.round((left / total) * 100)) : 0;
+  const renew = daysUntil(client.renewal_date);
+
+  return (
+    <div className="mt-auto rounded-card border border-line bg-base p-3.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+          Credits
+        </span>
+        <Link href="/portal/billing" className="text-xs font-semibold text-brand hover:text-brand-hover">
+          Add more
+        </Link>
+      </div>
+      <div className="mt-1 font-display text-3xl font-extrabold leading-none text-ink">
+        {left}
+      </div>
+      <div className="mt-1 text-[11.5px] text-muted">
+        {total > 0 ? `of ${total} remaining` : "no active plan"}
+        {renew !== null ? ` • renews ${renew} day${renew === 1 ? "" : "s"}` : ""}
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-subtle">
+        <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
+  const plan = client.plan_type as PlanType | null;
+  return (
+    <aside className="flex w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-5">
+      <div className="mb-5 px-1">
+        <div className="font-display text-lg font-extrabold tracking-tight text-ink">
+          Hyprr<span className="text-brand">IQ</span>
+        </div>
+        <div className="mt-0.5 text-xs font-medium text-muted">
+          {plan ? `${PLAN_NAME[plan]} Plan` : "No plan yet"}
+        </div>
+      </div>
+
+      <nav className="flex flex-col gap-0.5">
+        {NAV.map((group, gi) => (
+          <div key={gi} className="flex flex-col gap-0.5">
+            {group.section && (
+              <div className="mb-0.5 mt-3 px-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted">
+                {group.section}
+              </div>
+            )}
+            {group.items.map((item) => {
+              const isActive = item.key === active;
+              const base =
+                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors";
+              const cls = isActive
+                ? `${base} bg-brand-tint text-brand-ink`
+                : `${base} text-ink-2 hover:bg-subtle hover:text-ink`;
+              const content = (
+                <>
+                  <span aria-hidden className="w-4 text-center text-xs">
+                    {item.icon}
+                  </span>
+                  <span className={item.sub ? "pl-0.5" : ""}>{item.label}</span>
+                  {item.badge ? (
+                    <span className="ml-auto rounded-full bg-brand-tint px-1.5 py-0.5 text-[10px] font-bold text-brand-ink">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </>
+              );
+              return item.href ? (
+                <Link key={item.key} href={item.href} className={cls} aria-current={isActive ? "page" : undefined}>
+                  {content}
+                </Link>
+              ) : (
+                <button
+                  key={item.key}
+                  type="button"
+                  disabled
+                  className={`${base} cursor-not-allowed text-muted/60`}
+                  title="Coming soon"
+                >
+                  {content}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <CreditsWidget client={client} />
+    </aside>
+  );
+}
+
+function Topbar({ client, title }: { client: Client; title: string }) {
+  const initial = (client.full_name || client.email || "?").charAt(0).toUpperCase();
+  return (
+    <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-7">
+      <h1 className="font-display text-xl font-bold tracking-tight text-ink">{title}</h1>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/portal/submit"
+          className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover"
+        >
+          ＋ New Research
+        </Link>
+        <div
+          className="grid h-8 w-8 place-items-center rounded-full bg-brand-tint text-sm font-bold text-brand-ink"
+          aria-hidden
+        >
+          {initial}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export function PortalShell({
+  client,
+  active,
+  title,
+  children,
+}: {
+  client: Client;
+  active: PortalNavKey;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-dvh bg-base">
+      <Sidebar client={client} active={active} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar client={client} title={title} />
+        <main className="flex-1 overflow-y-auto px-7 py-6">{children}</main>
+      </div>
+    </div>
+  );
+}

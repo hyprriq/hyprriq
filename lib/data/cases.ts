@@ -1,0 +1,127 @@
+import { auth } from "@clerk/nextjs/server";
+import { createServerClient } from "@/lib/supabase/server";
+import type { CaseStatus, Verdict } from "@/components/portal/badges";
+
+export type CaseRow = {
+  id: string;
+  case_number: string;
+  vendor_name: string | null;
+  brands_submitted: string[] | null;
+  brands_confirmed: string[] | null;
+  status: CaseStatus;
+  verdict: Verdict | null;
+  sla_deadline: string | null;
+  delivered_at: string | null;
+  change_request_deadline: string | null;
+  change_request_used: boolean;
+  queue_position: number | null;
+  created_at: string;
+};
+
+const LIST_COLUMNS =
+  "id, case_number, vendor_name, brands_submitted, brands_confirmed, status, verdict, sla_deadline, delivered_at, change_request_deadline, change_request_used, queue_position, created_at";
+
+const DONE: CaseStatus[] = ["delivered", "complete", "cancelled"];
+
+export type CaseFilter = "all" | "active" | "completed" | "action";
+
+export function isActive(c: Pick<CaseRow, "status">): boolean {
+  return !DONE.includes(c.status);
+}
+
+// All non-deleted cases for the current client, newest first. Scoped by Clerk
+// user id (service-role client bypasses RLS — see lib/supabase/server.ts).
+export async function getClientCases(): Promise<CaseRow[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+  const supa = createServerClient();
+  const { data } = await supa
+    .from("cases")
+    .select(LIST_COLUMNS)
+    .eq("client_id", userId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data as CaseRow[]) ?? [];
+}
+
+export function filterCases(cases: CaseRow[], filter: CaseFilter): CaseRow[] {
+  switch (filter) {
+    case "active":
+      return cases.filter(isActive);
+    case "completed":
+      return cases.filter((c) => c.status === "delivered" || c.status === "complete");
+    case "action":
+      return cases.filter((c) => c.status === "awaiting_client");
+    default:
+      return cases;
+  }
+}
+
+type TrackStatus = "complete" | "failed" | "skipped" | "manual_required" | "pending";
+
+export type CaseDetail = CaseRow & {
+  client_id: string;
+  vendor_website: string | null;
+  brands_from_ocr: string[] | null;
+  client_notes: string | null;
+  marketplace: string | null;
+  credits_required: number | null;
+  credits_charged: number | null;
+  confidence_score: number | null;
+  submission_type: string | null;
+  plan_type: string | null;
+  track_1_status: TrackStatus;
+  track_2_status: TrackStatus;
+  track_3_status: TrackStatus;
+  track_4_status: TrackStatus;
+  track_5_status: TrackStatus;
+};
+
+// A single case, scoped to the current client. Returns null if not found or not
+// owned by the caller.
+export async function getCaseById(id: string): Promise<CaseDetail | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+  const supa = createServerClient();
+  const { data } = await supa
+    .from("cases")
+    .select(
+      `${LIST_COLUMNS}, client_id, vendor_website, brands_from_ocr, client_notes, marketplace, credits_required, credits_charged, confidence_score, submission_type, plan_type, track_1_status, track_2_status, track_3_status, track_4_status, track_5_status`,
+    )
+    .eq("id", id)
+    .eq("client_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data as CaseDetail) ?? null;
+}
+
+export type Finding = {
+  id: string;
+  track: string;
+  finding_certainty: "verified" | "inferred" | "unknown" | null;
+  confidence: "high" | "moderate" | "low" | null;
+  compiled_findings_json: Record<string, unknown> | null;
+  ai_output_json: Record<string, unknown> | null;
+  manual_notes: string | null;
+};
+
+// Findings for a case, scoped via the parent case's ownership.
+export async function getCaseFindings(caseId: string): Promise<Finding[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+  const supa = createServerClient();
+  // Confirm ownership first (service-role bypasses RLS).
+  const { data: owned } = await supa
+    .from("cases")
+    .select("id")
+    .eq("id", caseId)
+    .eq("client_id", userId)
+    .maybeSingle();
+  if (!owned) return [];
+  const { data } = await supa
+    .from("research_findings")
+    .select("id, track, finding_certainty, confidence, compiled_findings_json, ai_output_json, manual_notes")
+    .eq("case_id", caseId)
+    .order("track", { ascending: true });
+  return (data as Finding[]) ?? [];
+}
