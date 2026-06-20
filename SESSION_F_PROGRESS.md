@@ -1,3 +1,36 @@
+## SCOPE — what's real vs deferred (case lifecycle), as of 2026-06-20
+**REAL / working now (manual-review mode):**
+- Client submit → case created (`pending_intake`), credit deducted atomically.
+- Admin Founder Review queue surfaces all submitted cases (manual mode).
+- Admin manual review: dimension scoring, confidence, verdict, Approve & Deliver →
+  sets status `delivered` + `delivered_at` + verdict + writes findings (no PDF involved).
+- Client sees verdict + Evidence/Questions/Timeline on the Case Detail page (on-screen report).
+- Scope-confirmation (awaiting_client) banner + confirm-scope, change request, support, billing
+  (Stripe portal/invoices when key present), plan-state gating.
+
+**DEFERRED (research-pipeline session) — NOT built:**
+- Track 0 automated intake (OCR, brand-mismatch detection) — only Inngest scaffold exists.
+- Tracks 1–5 automated research — none.
+- Automated status progression pending_intake→…→awaiting_review — none (founder does it manually).
+- PDF report generation (React-PDF) — none. The on-screen Case Detail IS the report for now.
+
+**Interim placeholders in place so the flow is testable end-to-end:**
+- Founder manually moves a case to delivered via the review screen (no pipeline needed).
+- Client "Download" relabeled "View report" → opens the on-screen report; PDF export marked "coming soon".
+- Admin nav sections without real features (Outcomes/Revenue/Prompts/Settings) → clear "coming soon" pages.
+
+## Session F.5 — Scope clarity + 3 bugs (2026-06-20)
+- **Bug 1 (Approve & Deliver "does nothing")** — NOT a bug. Transition works (review API sets
+  delivered; DELIVERED KPI=1 confirmed). Invisible only because there was no Delivered page to view
+  it (= Bug 3). Resolved by the admin Cases pages below.
+- **Bug 2 (download redirects, no PDF)** — confirmed blocked on React-PDF (deferred). Interim: client
+  action relabeled "View report" → Case Detail (real on-screen report); delivered banner notes PDF
+  export coming. Flagged, not a fake feature.
+- **Bug 3 (admin nav not clickable)** — real UI bug. All admin nav items lacked `href` → disabled.
+  Fixed: every item routes now. Built real `/admin/cases` (All/In Queue/Delivered/Action filters,
+  cross-client) + `/admin/clients`; Outcomes/Revenue/Prompts/Settings → honest "coming soon" pages.
+  `lib/data/admin.ts`: `getAllCasesAdmin`, `getAdminClients`.
+
 ## Session F Progress
 
 ### Done (pre-Session-F)

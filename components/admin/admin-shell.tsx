@@ -1,34 +1,44 @@
 import Link from "next/link";
 import { UserMenu } from "@/components/portal/user-menu";
 
-export type AdminNavKey = "dashboard" | "review" | "support";
+export type AdminNavKey =
+  | "dashboard"
+  | "review"
+  | "delivered"
+  | "all"
+  | "clients"
+  | "support"
+  | "outcomes"
+  | "revenue"
+  | "prompts"
+  | "settings";
 
-type Item = { key: AdminNavKey | string; label: string; icon: string; href?: string; badge?: number };
+type Item = { key: AdminNavKey; label: string; icon: string; href: string; badge?: number };
 
 const GROUPS: { section?: string; items: Item[] }[] = [
   { items: [{ key: "dashboard", label: "Dashboard", icon: "▪", href: "/admin/dashboard" }] },
   {
     section: "Cases",
     items: [
-      { key: "review", label: "Founder Review", icon: "🔍", href: "/admin/dashboard" },
-      { key: "delivered", label: "Delivered", icon: "✓" },
-      { key: "all", label: "All Cases", icon: "▦" },
+      { key: "review", label: "Founder Review", icon: "🔍", href: "/admin/cases?filter=queue" },
+      { key: "delivered", label: "Delivered", icon: "✓", href: "/admin/cases?filter=delivered" },
+      { key: "all", label: "All Cases", icon: "▦", href: "/admin/cases" },
     ],
   },
   {
     section: "Management",
     items: [
-      { key: "clients", label: "Clients", icon: "👥" },
+      { key: "clients", label: "Clients", icon: "👥", href: "/admin/clients" },
       { key: "support", label: "Support Queue", icon: "✉", href: "/admin/dashboard" },
-      { key: "outcomes", label: "Outcomes", icon: "📈" },
+      { key: "outcomes", label: "Outcomes", icon: "📈", href: "/admin/outcomes" },
     ],
   },
   {
     section: "System",
     items: [
-      { key: "revenue", label: "Revenue", icon: "📊" },
-      { key: "prompts", label: "Prompts", icon: "📄" },
-      { key: "settings", label: "Settings", icon: "⚙" },
+      { key: "revenue", label: "Revenue", icon: "📊", href: "/admin/revenue" },
+      { key: "prompts", label: "Prompts", icon: "📄", href: "/admin/prompts" },
+      { key: "settings", label: "Settings", icon: "⚙", href: "/admin/settings" },
     ],
   },
 ];
@@ -60,15 +70,11 @@ function Nav({ active }: { active: AdminNavKey }) {
                 <span key={item.key} className={`${base} bg-white/10 text-white`} aria-current="page">{content}</span>
               );
             }
-            return item.href ? (
-              // bug fix #2: inactive nav at 0.65 opacity (was 0.48 — contrast)
+            // bug fix #2: inactive nav at 0.65 opacity (was 0.48 — contrast)
+            return (
               <Link key={item.key} href={item.href} className={`${base} text-white/[0.65] hover:bg-white/5 hover:text-white`}>
                 {content}
               </Link>
-            ) : (
-              <button key={item.key} type="button" disabled className={`${base} cursor-not-allowed text-white/[0.65] opacity-70`} title="Coming soon">
-                {content}
-              </button>
             );
           })}
         </div>

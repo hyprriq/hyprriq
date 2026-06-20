@@ -205,8 +205,13 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               <div className="mt-0.5 text-[13px] text-ink-2">All 5 dimensions will be researched once you confirm the brand list.</div>
             </div>
           ) : c.status === "delivered" || c.status === "complete" ? (
-            <div className="mb-5 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3 text-[14px] font-semibold text-clear-ink">
-              ✓ Report delivered{c.delivered_at ? ` on ${fmt(c.delivered_at)}` : ""}.
+            <div className="mb-5 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3">
+              <div className="text-[14px] font-semibold text-clear-ink">
+                ✓ Report delivered{c.delivered_at ? ` on ${fmt(c.delivered_at)}` : ""}.
+              </div>
+              <div className="mt-0.5 text-[13px] text-ink-2">
+                Your full verdict and evidence are below. Downloadable PDF export is coming soon.
+              </div>
             </div>
           ) : null}
           <h3 className="mb-3 font-display text-sm font-bold text-ink">Research Dimensions</h3>

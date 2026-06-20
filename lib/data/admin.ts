@@ -152,4 +152,48 @@ export async function getAdminCase(id: string): Promise<AdminCaseDetail | null> 
   return (data as unknown as AdminCaseDetail) ?? null;
 }
 
+// ---- All Cases (admin, cross-client) ----
+export type AdminCaseListFilter = "all" | "queue" | "delivered" | "action";
+
+export async function getAllCasesAdmin(filter: AdminCaseListFilter = "all"): Promise<AdminCaseRow[]> {
+  const { data } = await supabaseAdmin
+    .from("cases")
+    .select("id, case_number, vendor_name, brands_submitted, status, verdict, plan_type, sla_deadline, created_at, delivered_at, credits_charged, clients(full_name, company_name)")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  const rows = (data as unknown as AdminCaseRow[]) ?? [];
+  switch (filter) {
+    case "queue":
+      return rows.filter((c) => inFounderQueue(c.status));
+    case "delivered":
+      return rows.filter((c) => c.status === "delivered" || c.status === "complete");
+    case "action":
+      return rows.filter((c) => c.status === "awaiting_client");
+    default:
+      return rows;
+  }
+}
+
+// ---- Clients (admin) ----
+export type AdminClientRow = {
+  id: string;
+  full_name: string | null;
+  company_name: string | null;
+  email: string;
+  plan_type: PlanType | null;
+  billing_status: string;
+  credits_available: number;
+  is_admin: boolean;
+  created_at: string;
+};
+
+export async function getAdminClients(): Promise<AdminClientRow[]> {
+  const { data } = await supabaseAdmin
+    .from("clients")
+    .select("id, full_name, company_name, email, plan_type, billing_status, credits_available, is_admin, created_at")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data as AdminClientRow[]) ?? [];
+}
+
 export { PLAN_PRICE_LABEL };

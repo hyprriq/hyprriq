@@ -36,7 +36,7 @@ function RowAction({ c }: { c: CaseRow }) {
         href={`/portal/cases/${c.id}`}
         className="rounded-md bg-brand px-2.5 py-1 text-[12px] font-bold text-white hover:bg-brand-hover"
       >
-        Download
+        View report
       </Link>
     );
   }
