@@ -42,6 +42,19 @@
 - Reusable: `components/portal/case-table.tsx`, `badges.tsx`, `portal-shell.tsx`.
 - Migration extended with atomic `deduct_client_credits` / `refund_client_credits`.
 
+### Session F.4 — Stuck-case bug (founder queue never populated) — FIXED (2026-06-20)
+**Root cause:** the research pipeline (Track 0 intake → Tracks 1–5 → QA, Inngest) that advances a
+case `pending_intake → … → awaiting_review` does not exist (only the Inngest scaffold). `submit`
+writes the case at `pending_intake` and nothing moves it. The admin Founder Review queue filtered
+strictly for `awaiting_review`, which nothing ever reaches → queue always 0 despite cases created.
+**Fix (systemic):** `lib/data/admin.ts` now has one `FOUNDER_QUEUE_STATUSES` source of truth used by
+both the queue and the Pending-Review KPI — it surfaces every submitted case not blocked on the
+client and not delivered (manual-review mode). Existing stuck case (AWI-2606-001) now appears with
+no one-off patch. Added a Stage (StatusBadge) column + corrected copy ("in queue"). Clearly marked:
+when the automated pipeline lands, narrow the set to `awaiting_review`/`manual_override_required`
+(one line). Minor follow-up noted: `submit` doesn't set `sla_deadline` (SLA shows "—" until intake
+exists). `next build` + `eslint` clean.
+
 ### Credit Impact after-submission — implementation decision (flagged per prompt)
 Chose inline Step-success state over a cross-page toast. There is no toast infra in the repo, so
 option (a) "toast on redirect" was NOT the clean/minimal-state path — inline success carries the

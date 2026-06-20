@@ -40,6 +40,32 @@ type SupportRow = {
 
 const MONTHLY_PRICE: Record<PlanType, number> = { single_99: 0, growth_279: 279, scale_499: 499 };
 
+// Statuses that require founder action in the review queue.
+//
+// WHY THIS IS BROAD RIGHT NOW: the automated research pipeline (Track 0 intake →
+// Tracks 1–5 → QA) that would advance a case pending_intake → awaiting_review
+// does NOT exist yet (deferred to the research-pipeline session). Until it does,
+// the founder researches and delivers every case manually via the Case Review
+// screen, so the queue must surface everything that's been submitted and isn't
+// either blocked on the client (awaiting_client) or already finished
+// (delivered/complete/cancelled).
+//
+// WHEN THE PIPELINE LANDS: narrow this to ["awaiting_review",
+// "manual_override_required"] (cases the automation has finished researching) —
+// a one-line change, since both the queue and the KPI read from here.
+export const FOUNDER_QUEUE_STATUSES: CaseStatus[] = [
+  "pending_intake",
+  "intake_complete",
+  "queued",
+  "research_running",
+  "awaiting_review",
+  "manual_override_required",
+  "qa_in_progress",
+  "approved",
+];
+
+const inFounderQueue = (s: CaseStatus) => FOUNDER_QUEUE_STATUSES.includes(s);
+
 export type AdminDashboard = {
   kpis: { mrr: number; creditsSold: number; casesCreated: number; pendingReview: number; delivered: number; openRequests: number };
   reviewQueue: AdminCaseRow[];
@@ -79,7 +105,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   // MRR over ALL active subscribers (not the display-limited slice).
   const mrr = clients.reduce((sum, c) => sum + (c.plan_type ? MONTHLY_PRICE[c.plan_type] : 0), 0);
   const creditsSold = cases.reduce((sum, c) => sum + (c.credits_charged ?? 0), 0);
-  const pendingReview = cases.filter((c) => c.status === "awaiting_review").length;
+  const pendingReview = cases.filter((c) => inFounderQueue(c.status)).length;
   const delivered = cases.filter((c) => c.status === "delivered" || c.status === "complete").length;
 
   return {
@@ -91,7 +117,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       delivered,
       openRequests: support.length,
     },
-    reviewQueue: cases.filter((c) => c.status === "awaiting_review").slice(0, 10),
+    reviewQueue: cases.filter((c) => inFounderQueue(c.status)).slice(0, 10),
     openSupport: support.slice(0, 10),
     recentClients: clients.slice(0, 5).map((c) => ({ id: c.id, full_name: c.full_name, plan_type: c.plan_type, credits_available: c.credits_available })),
   };

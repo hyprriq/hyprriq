@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin, getAdminDashboard } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PLAN_NAME, type PlanType } from "@/lib/constants/plans";
+import { StatusBadge } from "@/components/portal/badges";
 
 function slaText(iso: string | null) {
   if (!iso) return "—";
@@ -46,23 +47,24 @@ export default async function AdminDashboardPage() {
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-ink">Case Queue — Founder Review</h2>
-              <span className="text-[13px] text-muted">{reviewQueue.length} awaiting verdict</span>
+              <span className="text-[13px] text-muted">{reviewQueue.length} in queue</span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
-              <div className="grid grid-cols-[100px_1fr_90px_80px_80px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                <span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>SLA</span><span></span>
+              <div className="grid grid-cols-[96px_1fr_80px_132px_70px_72px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
+                <span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>Stage</span><span>SLA</span><span></span>
               </div>
               {reviewQueue.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted">No cases awaiting review.</div>
+                <div className="p-8 text-center text-sm text-muted">No cases in the queue — new submissions appear here.</div>
               ) : (
                 reviewQueue.map((c) => (
-                  <div key={c.id} className="grid grid-cols-[100px_1fr_90px_80px_80px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
+                  <div key={c.id} className="grid grid-cols-[96px_1fr_80px_132px_70px_72px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
                     <span className="font-mono text-[13px] font-semibold text-brand">{c.case_number}</span>
                     <div className="min-w-0">
                       <div className="truncate text-[14px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
                       <div className="truncate text-[12px] text-muted">{(c.brands_submitted ?? []).join(" • ") || "—"}</div>
                     </div>
                     <span className="text-[13px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span>
+                    <span><StatusBadge status={c.status} /></span>
                     <span className="text-[13px] font-semibold text-verify-ink">{slaText(c.sla_deadline)}</span>
                     <Link href={`/admin/cases/${c.id}/review`} className="rounded-md bg-brand px-2.5 py-1 text-center text-[12px] font-bold text-white hover:bg-brand-hover">
                       Review
