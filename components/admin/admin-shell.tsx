@@ -20,7 +20,7 @@ const GROUPS: { section?: string; items: Item[] }[] = [
   {
     section: "Cases",
     items: [
-      { key: "review", label: "Founder Review", icon: "🔍", href: "/admin/cases?filter=queue" },
+      { key: "review", label: "Quality Review", icon: "🔍", href: "/admin/cases?filter=queue" },
       { key: "delivered", label: "Delivered", icon: "✓", href: "/admin/cases?filter=delivered" },
       { key: "all", label: "All Cases", icon: "▦", href: "/admin/cases" },
     ],

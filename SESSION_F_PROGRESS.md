@@ -1,3 +1,30 @@
+## Session F.6 — UX fixes + ADR-006 + architecture answers (2026-06-20)
+- [x] **Submit form** — drag-and-drop wired (shared `validateFile`, PDF/JPG/PNG ≤10MB), Choose-file
+  row realigned (label-button + filename + remove), **conditional-required notes**: when NO file is
+  uploaded, notes become required with evidence-only helper copy; gates Step 2 Next + final submit.
+- [x] **Terminology (ADR-006)** — "Founder Review" → "Quality Review" (UI only; confirmed NOT in DB
+  enum — `founder` in DB is the separate `founder_notes` table / `reported_by`, untouched). FOUNDER
+  *role* badge kept (accurate).
+- [x] **ADR-006 role enum migration written** `20260620000000_adr006_role_enum.sql` — additive,
+  txn-wrapped: adds `clients.role` ('client'|'admin'|'founder'), backfills from is_admin, makes
+  `is_current_user_admin()` role-aware (keeps is_admin as transitional fallback). **NOT APPLIED** —
+  founder applies first; code swap (is_admin→role) is the follow-up after apply (selecting a missing
+  column would break the deployed app). is_admin column retained until then.
+- **Architecture answers (no code):**
+  - **Stripe portal flow CONFIRMED correct** — `api/billing/portal-session` uses
+    `stripe.billingPortal.sessions.create`; we only store `stripe_customer_id`, never raw card data.
+    No deviation. Checkout wiring (Session E) still to come.
+  - **Brands/Suppliers** — currently TEXT/array fields on `cases` (`vendor_name`, `brands_submitted`).
+    `brand_cache`/`supplier_cache` exist but are per-entity research caches, NOT a case↔entity index.
+    Cross-reference feature needs a normalized model → ADR-007 (proposed, see docs/). NOT built.
+  - **Settings (client) page — NOT built.** Nav item is a disabled placeholder. Flagged; not silently built.
+- **100-client load audit (severity):** indexes on client_id/status/billing_status/stripe present (good);
+  no N+1 (joins via PostgREST embeds). MEDIUM: `getAdminDashboard` + `getAllCasesAdmin` pull ALL rows
+  unbounded to derive counts → move to DB `count()` + pagination before real scale. LOW: `getAdminClients`
+  unbounded. None urgent at current volume.
+- **Still to implement next (flagged, not done this turn):** admin credit-adjust tool (API+UI+audit),
+  is_admin→role code swap (post-migration), brands/suppliers normalized model (ADR-007), client Settings page.
+
 ## SCOPE — what's real vs deferred (case lifecycle), as of 2026-06-20
 **REAL / working now (manual-review mode):**
 - Client submit → case created (`pending_intake`), credit deducted atomically.

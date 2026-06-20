@@ -18,6 +18,14 @@ type Result = {
   remaining_balance: number;
 };
 
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+// Shared validation for both the button and drag-drop paths.
+function validateFile(f: File): string | null {
+  if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) return "Only PDF, JPG, or PNG files are accepted.";
+  if (f.size > MAX_FILE_BYTES) return "File must be 10MB or smaller.";
+  return null;
+}
+
 export function SubmitForm({
   plan,
   creditsAvailable,
@@ -36,13 +44,34 @@ export function SubmitForm({
   const [draft, setDraft] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
 
   const cost = creditsRequired(brands.length || 1, plan);
   const remainingAfter = creditsAvailable - cost;
-  const canSubmit = vendor.trim() !== "" && brands.length > 0 && remainingAfter >= 0;
+  // When no document is uploaded, the typed notes are the ONLY evidence we have,
+  // so they become required (conditional requirement).
+  const notesRequired = !file;
+  const notesOk = file ? true : notes.trim().length > 0;
+  const canSubmit = vendor.trim() !== "" && brands.length > 0 && notesOk && remainingAfter >= 0;
+
+  function handleFile(f: File | null) {
+    if (!f) {
+      setFile(null);
+      setFileError(null);
+      return;
+    }
+    const err = validateFile(f);
+    if (err) {
+      setFileError(err);
+      return;
+    }
+    setFileError(null);
+    setFile(f);
+  }
 
   function addBrand() {
     const v = draft.trim();
@@ -234,28 +263,68 @@ export function SubmitForm({
               </p>
             </div>
 
-            <label className="block">
+            <div>
               <span className="text-[14px] font-medium text-ink">Upload supplier invoice or LOA <span className="font-normal text-muted">(optional but recommended)</span></span>
-              <div className="mt-1 rounded-lg border border-dashed border-line-strong bg-base p-5 text-center">
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  handleFile(e.dataTransfer.files?.[0] ?? null);
+                }}
+                className={`mt-1 flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-4 transition-colors ${
+                  dragOver ? "border-brand bg-brand-tint" : "border-line-strong bg-base"
+                }`}
+              >
                 <input
+                  id="case-file"
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[13px] text-ink-2 file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-white hover:file:bg-brand-hover"
+                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                  className="sr-only"
                 />
-                <div className="mt-2 text-[12px] text-muted">{file ? file.name : "PDF, JPG, or PNG — max 10MB"}</div>
+                <label
+                  htmlFor="case-file"
+                  className="cursor-pointer rounded-md bg-brand px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+                >
+                  Choose file
+                </label>
+                <span className="min-w-0 flex-1 truncate text-[13px] text-ink-2">
+                  {file ? file.name : "or drag & drop here — PDF, JPG, PNG · max 10MB"}
+                </span>
+                {file && (
+                  <button type="button" onClick={() => handleFile(null)} className="text-[13px] font-semibold text-muted hover:text-ink">
+                    Remove
+                  </button>
+                )}
               </div>
-            </label>
+              {fileError && <p className="mt-1 text-[13px] text-deny-ink">{fileError}</p>}
+            </div>
 
             <label className="block">
-              <span className="text-[14px] font-medium text-ink">Additional notes <span className="font-normal text-muted">(optional)</span></span>
+              <span className="text-[14px] font-medium text-ink">
+                Additional notes{" "}
+                {notesRequired ? (
+                  <span className="text-deny-ink">*</span>
+                ) : (
+                  <span className="font-normal text-muted">(optional)</span>
+                )}
+              </span>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={3}
+                rows={notesRequired ? 5 : 3}
                 placeholder="Any specific concerns or context you want us to know…"
                 className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
               />
+              {notesRequired && (
+                <p className="mt-1 text-[13px] text-ink-2">
+                  No document uploaded — please describe what you know about this vendor and brand
+                  relationship in as much detail as possible. This is the only evidence we&rsquo;ll
+                  have to work from.
+                </p>
+              )}
             </label>
 
             <CreditImpact brands={brands.length} cost={cost} remainingAfter={remainingAfter} />
@@ -296,7 +365,7 @@ export function SubmitForm({
         {step < 3 ? (
           <button
             type="button"
-            disabled={(step === 1 && vendor.trim() === "") || (step === 2 && brands.length === 0)}
+            disabled={(step === 1 && vendor.trim() === "") || (step === 2 && (brands.length === 0 || !notesOk))}
             onClick={() => setStep((step + 1) as 2 | 3)}
             className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
           >
