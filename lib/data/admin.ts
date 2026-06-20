@@ -59,13 +59,15 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       .select("id, sr_number, type, subject, status, created_at, clients(full_name)")
       .eq("status", "open")
       .order("created_at", { ascending: false }),
+    // No limit here: MRR must aggregate ALL active subscribers. The "Active
+    // Clients" widget slices to 5 in JS below. (At scale, move MRR to a DB-side
+    // sum and paginate this list — see SESSION_F_PROGRESS.md.)
     supabaseAdmin
       .from("clients")
       .select("id, full_name, plan_type, credits_available, billing_status")
       .eq("billing_status", "active")
       .is("deleted_at", null)
-      .order("last_active_at", { ascending: false, nullsFirst: false })
-      .limit(5),
+      .order("last_active_at", { ascending: false, nullsFirst: false }),
   ]);
 
   // PostgREST infers embedded to-one relations as arrays in its generated types,
@@ -74,6 +76,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   const support = (supportRes.data as unknown as SupportRow[]) ?? [];
   const clients = (clientsRes.data ?? []) as { id: string; full_name: string | null; plan_type: PlanType | null; credits_available: number; billing_status: string }[];
 
+  // MRR over ALL active subscribers (not the display-limited slice).
   const mrr = clients.reduce((sum, c) => sum + (c.plan_type ? MONTHLY_PRICE[c.plan_type] : 0), 0);
   const creditsSold = cases.reduce((sum, c) => sum + (c.credits_charged ?? 0), 0);
   const pendingReview = cases.filter((c) => c.status === "awaiting_review").length;
@@ -90,7 +93,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
     },
     reviewQueue: cases.filter((c) => c.status === "awaiting_review").slice(0, 10),
     openSupport: support.slice(0, 10),
-    recentClients: clients.map((c) => ({ id: c.id, full_name: c.full_name, plan_type: c.plan_type, credits_available: c.credits_available })),
+    recentClients: clients.slice(0, 5).map((c) => ({ id: c.id, full_name: c.full_name, plan_type: c.plan_type, credits_available: c.credits_available })),
   };
 }
 

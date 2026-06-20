@@ -11,10 +11,10 @@ import {
 } from "@/lib/content/help";
 
 const VERDICT_CLS: Record<string, string> = {
-  source_clear: "border-l-clear-ink bg-clear-bg",
-  usable_with_conditions: "border-l-conditional-ink bg-conditional-bg",
-  verify_before_purchase: "border-l-verify-ink bg-verify-bg",
-  do_not_rely: "border-l-deny-ink bg-deny-bg",
+  source_clear: "border-clear-ink/30 bg-clear-bg",
+  usable_with_conditions: "border-conditional-ink/30 bg-conditional-bg",
+  verify_before_purchase: "border-verify-ink/30 bg-verify-bg",
+  do_not_rely: "border-deny-ink/30 bg-deny-bg",
 };
 const VERDICT_INK: Record<string, string> = {
   source_clear: "text-clear-ink",
@@ -42,7 +42,7 @@ export default async function HelpPage() {
           <div className="flex flex-wrap items-center gap-2">
             {howItWorks.steps.map((s, i) => (
               <div key={s.label} className="flex items-center gap-2">
-                <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[13px] text-ink-2">
+                <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[14px] text-ink-2">
                   {s.icon} <strong className="text-ink">{s.label}</strong> {s.detail}
                 </div>
                 {i < howItWorks.steps.length - 1 && <span className="text-muted">→</span>}
@@ -54,14 +54,14 @@ export default async function HelpPage() {
         <Section title="Understanding Your Verdict" sub="We deliver one of four structured verdicts. Each tells you what we observed — not what Amazon will decide.">
           <div className="grid gap-3 sm:grid-cols-2">
             {verdicts.map((v) => (
-              <div key={v.key} className={`rounded-card border border-l-[3px] border-line ${VERDICT_CLS[v.key]} p-4`}>
+              <div key={v.key} className={`rounded-card border ${VERDICT_CLS[v.key]} p-4`}>
                 <div className={`text-sm font-bold ${VERDICT_INK[v.key]}`}>{v.name}</div>
-                <p className="mt-1 text-[12.5px] text-ink-2">{v.desc}</p>
-                <div className={`mt-2 text-[12px] font-semibold ${VERDICT_INK[v.key]}`}>{v.action}</div>
+                <p className="mt-1 text-[13px] text-ink-2">{v.desc}</p>
+                <div className={`mt-2 text-[13px] font-semibold ${VERDICT_INK[v.key]}`}>{v.action}</div>
               </div>
             ))}
           </div>
-          <div className="mt-3 rounded-lg border border-verify-ink/40 bg-verify-bg px-4 py-3 text-[13px] text-verify-ink">
+          <div className="mt-3 rounded-lg border border-verify-ink/40 bg-verify-bg px-4 py-3 text-[14px] text-verify-ink">
             ⚠ {verdictDisclaimer}
           </div>
         </Section>
@@ -72,8 +72,8 @@ export default async function HelpPage() {
               <div key={d.name} className="flex gap-3 rounded-card border border-line bg-surface p-4">
                 <div className="text-xl" aria-hidden>{d.icon}</div>
                 <div>
-                  <div className="text-[13px] font-semibold text-ink">{d.name}</div>
-                  <p className="mt-0.5 text-[12.5px] text-ink-2">{d.desc}</p>
+                  <div className="text-[14px] font-semibold text-ink">{d.name}</div>
+                  <p className="mt-0.5 text-[13px] text-ink-2">{d.desc}</p>
                 </div>
               </div>
             ))}
@@ -87,7 +87,7 @@ export default async function HelpPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-5">
           <div>
             <div className="text-sm font-bold text-ink">Still have a question?</div>
-            <div className="text-[13px] text-ink-2">We typically respond within 1 business day</div>
+            <div className="text-[14px] text-ink-2">We typically respond within 1 business day</div>
           </div>
           <Link
             href="/portal/support"

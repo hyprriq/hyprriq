@@ -91,7 +91,7 @@ export function OnboardingFlow({
             </p>
             <div className="mt-5 space-y-4">
               <label className="block">
-                <span className="text-[13px] font-medium text-ink">Your name</span>
+                <span className="text-[14px] font-medium text-ink">Your name</span>
                 <input
                   type="text"
                   value={name}
@@ -100,7 +100,7 @@ export function OnboardingFlow({
                 />
               </label>
               <label className="block">
-                <span className="text-[13px] font-medium text-ink">
+                <span className="text-[14px] font-medium text-ink">
                   Company name{" "}
                   <span className="font-normal text-muted">(optional)</span>
                 </span>
@@ -124,7 +124,7 @@ export function OnboardingFlow({
               type="button"
               onClick={() => finish("/portal/dashboard")}
               disabled={busy}
-              className="mt-3 w-full text-center text-[13px] font-medium text-muted hover:text-ink disabled:opacity-50"
+              className="mt-3 w-full text-center text-[14px] font-medium text-muted hover:text-ink disabled:opacity-50"
             >
               Skip for now
             </button>
@@ -152,7 +152,7 @@ export function OnboardingFlow({
                 </div>
                 <ul className="mt-4 space-y-2.5">
                   {planBullets(plan).map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-[13px] text-ink-2">
+                    <li key={b} className="flex items-start gap-2 text-[14px] text-ink-2">
                       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                       {b}
                     </li>
@@ -171,7 +171,7 @@ export function OnboardingFlow({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="text-[13px] font-medium text-muted hover:text-ink"
+                className="text-[14px] font-medium text-muted hover:text-ink"
               >
                 ← Back
               </button>
@@ -196,7 +196,7 @@ export function OnboardingFlow({
               supplier within {plan ? PLAN_SLA_DAYS[plan] : 5} business days.
             </p>
             <div className="mt-5 rounded-card border border-line bg-base p-5">
-              <div className="text-[13px] font-semibold text-ink">
+              <div className="text-[14px] font-semibold text-ink">
                 What happens when you submit
               </div>
               <ol className="mt-3 space-y-3">
@@ -205,8 +205,8 @@ export function OnboardingFlow({
                   "Upload an invoice or LOA if you have one — improves accuracy",
                   "We research across 5 dimensions, the founder reviews, and delivers your verdict",
                 ].map((t, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[13px] text-ink-2">
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-tint text-[11px] font-bold text-brand-ink">
+                  <li key={i} className="flex items-start gap-3 text-[14px] text-ink-2">
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-tint text-[12px] font-bold text-brand-ink">
                       {i + 1}
                     </span>
                     {t}
@@ -214,7 +214,7 @@ export function OnboardingFlow({
                 ))}
               </ol>
             </div>
-            {error && <p className="mt-4 text-[13px] text-deny-ink">{error}</p>}
+            {error && <p className="mt-4 text-[14px] text-deny-ink">{error}</p>}
             <button
               type="button"
               onClick={() => finish("/portal/submit")}
@@ -227,7 +227,7 @@ export function OnboardingFlow({
               type="button"
               onClick={() => finish("/portal/dashboard")}
               disabled={busy}
-              className="mt-3 w-full text-center text-[13px] font-medium text-muted hover:text-ink disabled:opacity-50"
+              className="mt-3 w-full text-center text-[14px] font-medium text-muted hover:text-ink disabled:opacity-50"
             >
               Explore the portal first
             </button>

@@ -36,7 +36,7 @@ export default async function CasesPage({
   return (
     <PortalShell client={client} active={access.canViewActive ? "cases" : "completed"} title="My Cases">
       {!access.canViewActive && (
-        <div className="mb-5 rounded-card border border-line bg-conditional-bg px-4 py-3 text-[13px] text-conditional-ink">
+        <div className="mb-5 rounded-card border border-line bg-conditional-bg px-4 py-3 text-[14px] text-conditional-ink">
           Your plan is inactive — showing your completed reports in read-only mode.{" "}
           <Link href="/portal/billing" className="font-semibold underline">Reactivate plan →</Link>
         </div>
@@ -49,14 +49,14 @@ export default async function CasesPage({
             <Link
               key={t.key}
               href={t.key === "all" ? "/portal/cases" : `/portal/cases?filter=${t.key}`}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[14px] font-semibold transition-colors ${
                 isOn ? "bg-brand text-white" : "text-ink-2 hover:bg-subtle"
               }`}
             >
               {t.label}
               {t.key === "action" && actionCount > 0 && (
                 <span
-                  className={`rounded-full px-1.5 text-[10px] font-bold ${
+                  className={`rounded-full px-1.5 text-[11px] font-bold ${
                     isOn ? "bg-white/25 text-white" : "bg-deny-bg text-deny-ink"
                   }`}
                 >

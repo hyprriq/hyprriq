@@ -34,7 +34,7 @@ export function StripePortalButton({
       <button type="button" onClick={open} disabled={busy} className={className}>
         {busy ? "Opening…" : children}
       </button>
-      {error && <span className="text-[11.5px] text-deny-ink">{error}</span>}
+      {error && <span className="text-[12px] text-deny-ink">{error}</span>}
     </span>
   );
 }

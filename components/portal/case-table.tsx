@@ -24,7 +24,7 @@ function RowAction({ c }: { c: CaseRow }) {
     return (
       <Link
         href={`/portal/cases/${c.id}`}
-        className="rounded-md bg-verify-ink px-2.5 py-1 text-[11px] font-bold text-white hover:opacity-90"
+        className="rounded-md bg-verify-ink px-2.5 py-1 text-[12px] font-bold text-white hover:opacity-90"
       >
         Confirm →
       </Link>
@@ -34,7 +34,7 @@ function RowAction({ c }: { c: CaseRow }) {
     return (
       <Link
         href={`/portal/cases/${c.id}`}
-        className="rounded-md bg-brand px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-hover"
+        className="rounded-md bg-brand px-2.5 py-1 text-[12px] font-bold text-white hover:bg-brand-hover"
       >
         Download
       </Link>
@@ -42,7 +42,7 @@ function RowAction({ c }: { c: CaseRow }) {
   }
   if (c.queue_position != null && c.status !== "complete") {
     return (
-      <span className="rounded-md bg-subtle px-2 py-1 text-[11px] font-semibold text-ink-2">
+      <span className="rounded-md bg-subtle px-2 py-1 text-[12px] font-semibold text-ink-2">
         Queue #{c.queue_position}
       </span>
     );
@@ -50,7 +50,7 @@ function RowAction({ c }: { c: CaseRow }) {
   return (
     <Link
       href={`/portal/cases/${c.id}`}
-      className="rounded-md border border-line bg-subtle px-2.5 py-1 text-[11px] font-semibold text-ink-2 hover:bg-line"
+      className="rounded-md border border-line bg-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 hover:bg-line"
     >
       View
     </Link>
@@ -80,7 +80,7 @@ export function CaseTable({
 
   return (
     <div className="overflow-hidden rounded-card border border-line bg-surface">
-      <div className={`grid ${cols} gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted`}>
+      <div className={`grid ${cols} gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted`}>
         <span>Case ID</span>
         <span>Supplier / Brands</span>
         <span>Status</span>
@@ -96,21 +96,21 @@ export function CaseTable({
           <div
             key={c.id}
             className={`grid ${cols} items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 ${
-              c.status === "awaiting_client" ? "border-l-2 border-l-verify-ink bg-verify-bg/30" : ""
+              c.status === "awaiting_client" ? "bg-verify-bg/60" : ""
             }`}
           >
-            <Link href={`/portal/cases/${c.id}`} className="font-mono text-[12px] font-semibold text-brand hover:underline">
+            <Link href={`/portal/cases/${c.id}`} className="font-mono text-[13px] font-semibold text-brand hover:underline">
               {c.case_number}
             </Link>
             <div className="min-w-0">
-              <div className="truncate text-[13px] font-semibold text-ink">
+              <div className="truncate text-[14px] font-semibold text-ink">
                 {c.vendor_name ?? "—"}
               </div>
-              <div className="truncate text-[11.5px] text-muted">{brandsLabel(c.brands_submitted)}</div>
+              <div className="truncate text-[12px] text-muted">{brandsLabel(c.brands_submitted)}</div>
             </div>
             <div><StatusBadge status={c.status} /></div>
             <div><VerdictBadge verdict={c.verdict} /></div>
-            <div className={`text-[11.5px] font-semibold ${slaTone}`}>{sla.text}</div>
+            <div className={`text-[12px] font-semibold ${slaTone}`}>{sla.text}</div>
             {showAction && (
               <div><RowAction c={c} /></div>
             )}

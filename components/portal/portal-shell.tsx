@@ -79,7 +79,7 @@ function CreditsWidget({ client }: { client: Client }) {
       <div className="mt-1 font-display text-3xl font-extrabold leading-none text-ink">
         {left}
       </div>
-      <div className="mt-1 text-[11.5px] text-muted">
+      <div className="mt-1 text-[12px] text-muted">
         {total > 0 ? `of ${total} remaining` : "no active plan"}
         {renew !== null ? ` • renews ${renew} day${renew === 1 ? "" : "s"}` : ""}
       </div>
@@ -114,7 +114,7 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
         {NAV.map((group, gi) => (
           <div key={gi} className="flex flex-col gap-0.5">
             {group.section && (
-              <div className="mb-0.5 mt-3 px-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted">
+              <div className="mb-0.5 mt-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
                 {group.section}
               </div>
             )}
@@ -122,7 +122,7 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
               const isActive = item.key === active;
               const blocked = isBlocked(item.key, access);
               const base =
-                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors";
+                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors";
               const cls = isActive
                 ? `${base} bg-brand-tint text-brand-ink`
                 : `${base} text-ink-2 hover:bg-subtle hover:text-ink`;
@@ -133,7 +133,7 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
                   </span>
                   <span className={item.sub ? "pl-0.5" : ""}>{item.label}</span>
                   {item.badge ? (
-                    <span className="ml-auto rounded-full bg-brand-tint px-1.5 py-0.5 text-[10px] font-bold text-brand-ink">
+                    <span className="ml-auto rounded-full bg-brand-tint px-1.5 py-0.5 text-[11px] font-bold text-brand-ink">
                       {item.badge}
                     </span>
                   ) : null}
@@ -183,7 +183,7 @@ function Topbar({
         {access.canSubmit && (
           <Link
             href="/portal/submit"
-            className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover"
+            className="rounded-lg bg-brand px-3.5 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-brand-hover"
           >
             ＋ New Research
           </Link>

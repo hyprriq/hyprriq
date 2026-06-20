@@ -16,13 +16,31 @@ function daysUntil(iso: string | null): number | null {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
 }
 
-function Kpi({ label, value, sub, tone }: { label: string; value: number | string; sub: string; tone?: "ok" | "accent" }) {
-  const accent = tone === "ok" ? "text-clear-ink" : tone === "accent" ? "text-brand" : "text-ink";
+function Kpi({
+  label,
+  value,
+  sub,
+  icon,
+  chip,
+  valueCls = "text-ink",
+}: {
+  label: string;
+  value: number | string;
+  sub: string;
+  icon: string;
+  chip: string;
+  valueCls?: string;
+}) {
   return (
     <div className="rounded-card border border-line bg-surface p-4">
-      <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">{label}</div>
-      <div className={`mt-1 font-display text-3xl font-extrabold leading-none ${accent}`}>{value}</div>
-      <div className="mt-1 text-[12px] text-muted">{sub}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[12px] font-semibold uppercase tracking-wide text-muted">{label}</div>
+        <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm ${chip}`} aria-hidden>
+          {icon}
+        </span>
+      </div>
+      <div className={`mt-2 font-display text-3xl font-extrabold leading-none ${valueCls}`}>{value}</div>
+      <div className="mt-1 text-[13px] text-muted">{sub}</div>
     </div>
   );
 }
@@ -43,7 +61,7 @@ function NoPlanDashboard() {
       <h2 className="mt-5 font-display text-2xl font-bold tracking-tight text-ink">
         Choose a plan to start vetting suppliers
       </h2>
-      <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">
+      <p className="mx-auto mt-2 max-w-md text-[16px] text-ink-2">
         Pick a plan to submit your first research request. You&rsquo;ll get a structured,
         five-dimension verdict on your supplier before you wire any money.
       </p>
@@ -90,7 +108,7 @@ export default async function DashboardPage() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-conditional-bg px-5 py-4">
           <div>
             <div className="text-sm font-bold text-conditional-ink">Your plan is inactive</div>
-            <div className="text-[13px] text-ink-2">Your completed reports stay available. Reactivate to submit new research.</div>
+            <div className="text-[14px] text-ink-2">Your completed reports stay available. Reactivate to submit new research.</div>
           </div>
           <Link href="/portal/billing" className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
             Reactivate plan →
@@ -128,17 +146,17 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi label="Credits Left" value={client.credits_available} sub={renew !== null ? `Renews in ${renew} days` : "—"} tone="accent" />
-        <Kpi label="Active Cases" value={activeCount} sub="In progress" />
-        <Kpi label="Reports Ready" value={readyCount} sub="Ready to download" tone="ok" />
-        <Kpi label="SLA Risk" value={slaRisk} sub={slaRisk === 0 ? "No cases at risk" : "Due soon"} />
+        <Kpi label="Credits Left" value={client.credits_available} sub={renew !== null ? `Renews in ${renew} days` : "—"} icon="🪙" chip="bg-brand-tint text-brand" valueCls="text-brand" />
+        <Kpi label="Active Cases" value={activeCount} sub="In progress" icon="🗂" chip="bg-accent-data-tint text-accent-data" />
+        <Kpi label="Reports Ready" value={readyCount} sub="Ready to download" icon="✓" chip="bg-clear-bg text-clear-ink" valueCls="text-clear-ink" />
+        <Kpi label="SLA Risk" value={slaRisk} sub={slaRisk === 0 ? "No cases at risk" : "Due soon"} icon="⏱" chip={slaRisk > 0 ? "bg-verify-bg text-verify-ink" : "bg-subtle text-muted"} valueCls={slaRisk > 0 ? "text-verify-ink" : "text-ink"} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-base font-bold text-ink">Recent Cases</h3>
-            <Link href="/portal/cases" className="text-[13px] font-semibold text-brand hover:text-brand-hover">View all →</Link>
+            <Link href="/portal/cases" className="text-[14px] font-semibold text-brand hover:text-brand-hover">View all →</Link>
           </div>
           <CaseTable cases={cases.slice(0, 4)} emptyLabel="No cases yet — submit your first research request." />
 
@@ -150,7 +168,7 @@ export default async function DashboardPage() {
               activity.map((a, i) => (
                 <div key={i} className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
                   <span className={`h-2 w-2 shrink-0 rounded-full ${a.tone === "ok" ? "bg-clear-ink" : a.tone === "warn" ? "bg-verify-ink" : "bg-brand"}`} />
-                  <span className="flex-1 text-[13px] text-ink-2">{a.text}</span>
+                  <span className="flex-1 text-[14px] text-ink-2">{a.text}</span>
                 </div>
               ))
             )}
@@ -161,17 +179,17 @@ export default async function DashboardPage() {
           <div className="rounded-card border border-line bg-surface">
             <div className="border-b border-line px-4 py-3 font-display text-sm font-bold text-ink">Upcoming Deadlines</div>
             {deadlines.length === 0 ? (
-              <div className="p-5 text-center text-[13px] text-muted">No upcoming deadlines.</div>
+              <div className="p-5 text-center text-[14px] text-muted">No upcoming deadlines.</div>
             ) : (
               deadlines.map((c) => {
                 const d = daysUntil(c.sla_deadline);
                 return (
                   <div key={c.id} className="flex items-center gap-2 border-b border-line px-4 py-3 last:border-b-0">
                     <div className="min-w-0">
-                      <div className="font-mono text-[11px] font-semibold text-brand">{c.case_number}</div>
-                      <div className="truncate text-[13px] font-medium text-ink">{c.vendor_name ?? "—"}</div>
+                      <div className="font-mono text-[12px] font-semibold text-brand">{c.case_number}</div>
+                      <div className="truncate text-[14px] font-medium text-ink">{c.vendor_name ?? "—"}</div>
                     </div>
-                    <span className={`ml-auto text-[12px] font-semibold ${d !== null && d <= 1 ? "text-verify-ink" : "text-ink-2"}`}>
+                    <span className={`ml-auto text-[13px] font-semibold ${d !== null && d <= 1 ? "text-verify-ink" : "text-ink-2"}`}>
                       {d !== null ? `${d} day${d === 1 ? "" : "s"}` : "—"}
                     </span>
                   </div>
@@ -189,7 +207,7 @@ export default async function DashboardPage() {
                 { label: "🗎 View Reports", href: "/portal/cases?filter=completed" },
                 { label: "💬 Get Help", href: "/portal/help" },
               ].map((q) => (
-                <Link key={q.label} href={q.href} className="rounded-lg border border-line bg-base px-3 py-2.5 text-center text-[12px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
+                <Link key={q.label} href={q.href} className="rounded-lg border border-line bg-base px-3 py-2.5 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
                   {q.label}
                 </Link>
               ))}
@@ -200,15 +218,15 @@ export default async function DashboardPage() {
             <div className="border-b border-line px-4 py-3 font-display text-sm font-bold text-ink">Current Plan</div>
             <div className="p-4">
               <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[plan]} Plan</div>
-              <div className="mt-0.5 text-[12px] text-muted">
+              <div className="mt-0.5 text-[13px] text-muted">
                 {PLAN_PRICE_LABEL[plan]}/mo • {planTotal} credits/month • up to {PLAN_BRAND_CAPS[plan]} brands
               </div>
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-subtle">
                 <div className="h-full rounded-full bg-brand" style={{ width: `${planTotal > 0 ? Math.min(100, (client.credits_available / planTotal) * 100) : 0}%` }} />
               </div>
-              <div className="mt-1.5 text-[12px] text-muted">{client.credits_available} of {planTotal} credits remaining</div>
+              <div className="mt-1.5 text-[13px] text-muted">{client.credits_available} of {planTotal} credits remaining</div>
               {plan !== "scale_499" && (
-                <Link href="/portal/billing" className="mt-3 block rounded-lg bg-brand px-3 py-2 text-center text-[13px] font-semibold text-white hover:bg-brand-hover">
+                <Link href="/portal/billing" className="mt-3 block rounded-lg bg-brand px-3 py-2 text-center text-[14px] font-semibold text-white hover:bg-brand-hover">
                   Upgrade to Scale →
                 </Link>
               )}

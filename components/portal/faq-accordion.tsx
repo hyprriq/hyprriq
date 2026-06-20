@@ -30,7 +30,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
               type="button"
               onClick={() => setOpen(isOpen ? null : f.id)}
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-[13px] font-semibold text-ink hover:bg-subtle"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-[14px] font-semibold text-ink hover:bg-subtle"
             >
               {f.q}
               <span className={`shrink-0 text-muted transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden>
@@ -38,7 +38,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
               </span>
             </button>
             {isOpen && (
-              <div className="px-4 pb-4 text-[13px] leading-relaxed text-ink-2">{f.a}</div>
+              <div className="px-4 pb-4 text-[14px] leading-relaxed text-ink-2">{f.a}</div>
             )}
           </div>
         );

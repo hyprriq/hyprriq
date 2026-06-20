@@ -23,10 +23,10 @@ const SCORES: { key: Score; label: string; cls: string }[] = [
 ];
 
 const VERDICTS: { key: Verdict; name: string; desc: string; cls: string }[] = [
-  { key: "source_clear", name: "✓ Source Clear", desc: "Observable indicators consistent with credible source", cls: "border-l-clear-ink" },
-  { key: "usable_with_conditions", name: "⇡ Usable With Conditions", desc: "Proceed with specific caveats noted", cls: "border-l-conditional-ink" },
-  { key: "verify_before_purchase", name: "△ Verify Before Purchase", desc: "Additional due diligence required", cls: "border-l-verify-ink" },
-  { key: "do_not_rely", name: "✕ Do Not Rely", desc: "Significant concerns identified", cls: "border-l-deny-ink" },
+  { key: "source_clear", name: "✓ Source Clear", desc: "Observable indicators consistent with credible source", cls: "border-clear-ink/30" },
+  { key: "usable_with_conditions", name: "⇡ Usable With Conditions", desc: "Proceed with specific caveats noted", cls: "border-conditional-ink/30" },
+  { key: "verify_before_purchase", name: "△ Verify Before Purchase", desc: "Additional due diligence required", cls: "border-verify-ink/30" },
+  { key: "do_not_rely", name: "✕ Do Not Rely", desc: "Significant concerns identified", cls: "border-deny-ink/30" },
 ];
 
 export function CaseReview({
@@ -94,7 +94,7 @@ export function CaseReview({
           return (
             <div key={name} className="rounded-card border border-line bg-surface p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-[13px] font-semibold text-ink">{name}</div>
+                <div className="text-[14px] font-semibold text-ink">{name}</div>
                 <div className="flex gap-1.5">
                   {SCORES.map((s) => {
                     const on = scores[idx] === s.key;
@@ -104,7 +104,7 @@ export function CaseReview({
                         type="button"
                         onClick={() => setScores({ ...scores, [idx]: s.key })}
                         aria-pressed={on}
-                        className={`rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
+                        className={`rounded-md border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
                           on ? s.cls : "border-line bg-base text-ink-2 hover:bg-subtle"
                         }`}
                       >
@@ -119,14 +119,14 @@ export function CaseReview({
                 onChange={(e) => setNotes({ ...notes, [idx]: e.target.value })}
                 rows={2}
                 placeholder={`Notes on ${name.toLowerCase()}…`}
-                className="mt-2 w-full rounded-lg border border-line bg-base px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                className="mt-2 w-full rounded-lg border border-line bg-base px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
               />
             </div>
           );
         })}
 
         <div className="rounded-card border border-line bg-surface p-4">
-          <div className="text-[13px] font-semibold text-ink">Overall Confidence</div>
+          <div className="text-[14px] font-semibold text-ink">Overall Confidence</div>
           <div className="mt-2 flex gap-2">
             {(["low", "medium", "high"] as const).map((c) => (
               <button
@@ -134,7 +134,7 @@ export function CaseReview({
                 type="button"
                 onClick={() => setConfidence(c)}
                 aria-pressed={confidence === c}
-                className={`flex-1 rounded-lg border px-3 py-2 text-[13px] font-semibold capitalize transition-colors ${
+                className={`flex-1 rounded-lg border px-3 py-2 text-[14px] font-semibold capitalize transition-colors ${
                   confidence === c ? "border-brand bg-brand-tint text-brand-ink" : "border-line bg-base text-ink-2 hover:bg-subtle"
                 }`}
               >
@@ -148,7 +148,7 @@ export function CaseReview({
       {/* Verdict column */}
       <div className="space-y-4">
         <div className="rounded-card border border-line bg-surface p-4">
-          <div className="text-[13px] font-bold text-ink">Select Verdict</div>
+          <div className="text-[14px] font-bold text-ink">Select Verdict</div>
           <div className="mt-3 space-y-2">
             {VERDICTS.map((v) => {
               const on = verdict === v.key;
@@ -158,25 +158,25 @@ export function CaseReview({
                   type="button"
                   onClick={() => setVerdict(v.key)}
                   aria-pressed={on}
-                  className={`block w-full rounded-lg border border-l-[3px] ${v.cls} px-3 py-2.5 text-left transition-colors ${
-                    on ? "border-brand bg-brand-tint" : "border-line bg-base hover:bg-subtle"
+                  className={`block w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    on ? "border-brand bg-brand-tint" : `${v.cls} bg-base hover:bg-subtle`
                   }`}
                 >
-                  <div className="text-[13px] font-bold text-ink">{v.name}</div>
-                  <div className="text-[11.5px] text-ink-2">{v.desc}</div>
+                  <div className="text-[14px] font-bold text-ink">{v.name}</div>
+                  <div className="text-[12px] text-ink-2">{v.desc}</div>
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-4 space-y-1.5 rounded-lg border border-line bg-base p-3 text-[12px]">
+          <div className="mt-4 space-y-1.5 rounded-lg border border-line bg-base p-3 text-[13px]">
             <div className="flex justify-between"><span className="text-muted">Dimensions scored</span><span className={`font-semibold ${scoredCount >= 5 ? "text-clear-ink" : "text-ink"}`}>{scoredCount} of 5</span></div>
             <div className="flex justify-between"><span className="text-muted">Verdict selected</span><span className="font-semibold text-ink">{verdict ? VERDICTS.find((v) => v.key === verdict)!.name.replace(/^[^ ]+ /, "") : "—"}</span></div>
             <div className="flex justify-between"><span className="text-muted">Confidence</span><span className="font-semibold capitalize text-ink">{confidence}</span></div>
           </div>
 
-          {error && <p className="mt-3 text-[12px] text-deny-ink">{error}</p>}
-          {done && <p className="mt-3 text-[12px] font-semibold text-clear-ink">✓ {done}</p>}
+          {error && <p className="mt-3 text-[13px] text-deny-ink">{error}</p>}
+          {done && <p className="mt-3 text-[13px] font-semibold text-clear-ink">✓ {done}</p>}
 
           <div className="mt-4 space-y-2">
             <button
@@ -195,7 +195,7 @@ export function CaseReview({
             >
               {busy === "approve" ? "Delivering…" : "Approve & Deliver"}
             </button>
-            {!verdict && <p className="text-center text-[11.5px] text-muted">Select verdict first</p>}
+            {!verdict && <p className="text-center text-[12px] text-muted">Select verdict first</p>}
           </div>
         </div>
       </div>

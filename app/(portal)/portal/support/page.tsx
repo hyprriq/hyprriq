@@ -31,20 +31,20 @@ export default async function SupportPage() {
           </div>
           {requests.length === 0 ? (
             <div className="p-6 text-center">
-              <div className="text-[13px] font-semibold text-ink-2">All caught up</div>
-              <div className="text-[12.5px] text-muted">No requests yet</div>
+              <div className="text-[14px] font-semibold text-ink-2">All caught up</div>
+              <div className="text-[13px] text-muted">No requests yet</div>
             </div>
           ) : (
             requests.map((r) => (
               <div key={r.id} className="flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0">
                 <div className="min-w-0 flex-1">
-                  <div className="font-mono text-[11px] font-semibold text-brand">{r.sr_number}</div>
-                  <div className="truncate text-[13px] font-medium text-ink">{r.subject}</div>
-                  <div className="text-[11.5px] text-muted">
+                  <div className="font-mono text-[12px] font-semibold text-brand">{r.sr_number}</div>
+                  <div className="truncate text-[14px] font-medium text-ink">{r.subject}</div>
+                  <div className="text-[12px] text-muted">
                     {r.type.replace("_", " ")} • {fmt(r.created_at)}
                   </div>
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold capitalize ${STATUS_CLS[r.status] ?? STATUS_CLS.open}`}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${STATUS_CLS[r.status] ?? STATUS_CLS.open}`}>
                   {r.status.replace("_", " ")}
                 </span>
               </div>

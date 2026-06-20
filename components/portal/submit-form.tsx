@@ -98,11 +98,11 @@ export function SubmitForm({
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 text-left">
           <div className="rounded-lg border border-line bg-base p-3">
-            <div className="text-[11px] uppercase tracking-wide text-muted">Credit Deducted</div>
+            <div className="text-[12px] uppercase tracking-wide text-muted">Credit Deducted</div>
             <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.credits_charged}</div>
           </div>
           <div className="rounded-lg border border-line bg-base p-3">
-            <div className="text-[11px] uppercase tracking-wide text-muted">Remaining Balance</div>
+            <div className="text-[12px] uppercase tracking-wide text-muted">Remaining Balance</div>
             <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.remaining_balance}</div>
           </div>
         </div>
@@ -138,13 +138,13 @@ export function SubmitForm({
         ].map((s, i) => (
           <div key={s.n} className="flex flex-1 items-center gap-2">
             <div
-              className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-bold ${
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] font-bold ${
                 step >= s.n ? "bg-brand text-white" : "bg-subtle text-muted"
               }`}
             >
               {step > s.n ? "✓" : s.n}
             </div>
-            <span className={`text-[12px] font-semibold ${step >= s.n ? "text-ink" : "text-muted"}`}>{s.label}</span>
+            <span className={`text-[13px] font-semibold ${step >= s.n ? "text-ink" : "text-muted"}`}>{s.label}</span>
             {i < 2 && <span className={`h-px flex-1 ${step > s.n ? "bg-brand" : "bg-line"}`} />}
           </div>
         ))}
@@ -155,7 +155,7 @@ export function SubmitForm({
           <div className="space-y-4">
             <div className="text-sm font-bold text-ink">Step 1 — Supplier</div>
             <label className="block">
-              <span className="text-[13px] font-medium text-ink">Supplier / vendor name <span className="text-deny-ink">*</span></span>
+              <span className="text-[14px] font-medium text-ink">Supplier / vendor name <span className="text-deny-ink">*</span></span>
               <input
                 value={vendor}
                 onChange={(e) => setVendor(e.target.value)}
@@ -164,7 +164,7 @@ export function SubmitForm({
               />
             </label>
             <label className="block">
-              <span className="text-[13px] font-medium text-ink">Supplier website <span className="font-normal text-muted">(optional)</span></span>
+              <span className="text-[14px] font-medium text-ink">Supplier website <span className="font-normal text-muted">(optional)</span></span>
               <input
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
@@ -173,7 +173,7 @@ export function SubmitForm({
               />
             </label>
             <label className="block">
-              <span className="text-[13px] font-medium text-ink">Marketplace</span>
+              <span className="text-[14px] font-medium text-ink">Marketplace</span>
               <select
                 value={marketplace}
                 onChange={(e) => setMarketplace(e.target.value)}
@@ -191,10 +191,10 @@ export function SubmitForm({
           <div className="space-y-5">
             <div className="text-sm font-bold text-ink">Step 2 — Brands & Document Upload</div>
             <div>
-              <span className="text-[13px] font-medium text-ink">Brand names <span className="text-deny-ink">*</span></span>
+              <span className="text-[14px] font-medium text-ink">Brand names <span className="text-deny-ink">*</span></span>
               <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-base p-2">
                 {brands.map((b, i) => (
-                  <span key={b} className="flex items-center gap-1 rounded-md bg-brand-tint px-2 py-1 text-[12px] font-medium text-brand-ink">
+                  <span key={b} className="flex items-center gap-1 rounded-md bg-brand-tint px-2 py-1 text-[13px] font-medium text-brand-ink">
                     {b}
                     <button type="button" onClick={() => removeBrand(i)} className="text-brand-ink/60 hover:text-brand-ink" aria-label={`Remove ${b}`}>
                       ×
@@ -217,11 +217,11 @@ export function SubmitForm({
                   />
                 )}
               </div>
-              <div className="mt-1.5 text-[12px] text-muted">
+              <div className="mt-1.5 text-[13px] text-muted">
                 {brands.length} of {cap} brands added ({plan ? `${PLAN_NAME[plan]} plan` : "plan"}: up to {cap} brands per credit)
               </div>
               {/* vendor-brand vetting expectation-setter (content file) */}
-              <p className="mt-2 text-[12px] text-ink-2">
+              <p className="mt-2 text-[13px] text-ink-2">
                 {brandHelper}{" "}
                 <a
                   href={brandHelperLearnMore.href}
@@ -235,20 +235,20 @@ export function SubmitForm({
             </div>
 
             <label className="block">
-              <span className="text-[13px] font-medium text-ink">Upload supplier invoice or LOA <span className="font-normal text-muted">(optional but recommended)</span></span>
+              <span className="text-[14px] font-medium text-ink">Upload supplier invoice or LOA <span className="font-normal text-muted">(optional but recommended)</span></span>
               <div className="mt-1 rounded-lg border border-dashed border-line-strong bg-base p-5 text-center">
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[12px] text-ink-2 file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white hover:file:bg-brand-hover"
+                  className="block w-full text-[13px] text-ink-2 file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-white hover:file:bg-brand-hover"
                 />
-                <div className="mt-2 text-[11.5px] text-muted">{file ? file.name : "PDF, JPG, or PNG — max 10MB"}</div>
+                <div className="mt-2 text-[12px] text-muted">{file ? file.name : "PDF, JPG, or PNG — max 10MB"}</div>
               </div>
             </label>
 
             <label className="block">
-              <span className="text-[13px] font-medium text-ink">Additional notes <span className="font-normal text-muted">(optional)</span></span>
+              <span className="text-[14px] font-medium text-ink">Additional notes <span className="font-normal text-muted">(optional)</span></span>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -275,11 +275,11 @@ export function SubmitForm({
             </dl>
             <CreditImpact brands={brands.length} cost={cost} remainingAfter={remainingAfter} />
             {remainingAfter < 0 && (
-              <p className="text-[13px] text-deny-ink">
+              <p className="text-[14px] text-deny-ink">
                 Not enough credits. <Link href="/portal/billing" className="font-semibold underline">Add credits →</Link>
               </p>
             )}
-            {error && <p className="text-[13px] text-deny-ink">{error}</p>}
+            {error && <p className="text-[14px] text-deny-ink">{error}</p>}
           </div>
         )}
       </div>
@@ -320,8 +320,8 @@ export function SubmitForm({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-4 px-4 py-2.5">
-      <dt className="w-28 shrink-0 text-[12px] font-medium text-muted">{label}</dt>
-      <dd className="text-[13px] text-ink">{value}</dd>
+      <dt className="w-28 shrink-0 text-[13px] font-medium text-muted">{label}</dt>
+      <dd className="text-[14px] text-ink">{value}</dd>
     </div>
   );
 }
@@ -337,8 +337,8 @@ function CreditImpact({
 }) {
   return (
     <div className="rounded-lg border border-brand/30 bg-brand-tint p-4">
-      <div className="text-[12px] font-bold uppercase tracking-wide text-brand-ink">Research Cost</div>
-      <div className="mt-1.5 flex items-center justify-between text-[13px]">
+      <div className="text-[13px] font-bold uppercase tracking-wide text-brand-ink">Research Cost</div>
+      <div className="mt-1.5 flex items-center justify-between text-[14px]">
         <span className="text-ink-2">
           {brands} {brands === 1 ? "Brand" : "Brands"} → {cost} {cost === 1 ? "Credit" : "Credits"}
         </span>
@@ -346,7 +346,7 @@ function CreditImpact({
           {cost} {cost === 1 ? "credit" : "credits"}
         </span>
       </div>
-      <div className={`mt-1 text-[12px] ${remainingAfter < 0 ? "text-deny-ink" : "text-ink-2"}`}>
+      <div className={`mt-1 text-[13px] ${remainingAfter < 0 ? "text-deny-ink" : "text-ink-2"}`}>
         Credits Remaining After Submission: <span className="font-semibold">{remainingAfter}</span>
       </div>
     </div>

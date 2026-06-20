@@ -111,11 +111,22 @@ values directly from the submit response (zero race). Status: built.
 - ⚠ `expired` state depends on `billing_status` which the (unbuilt) Stripe webhook would set;
   until then it only triggers if set manually.
 
-### NEXT (not yet done)
-- [ ] Design pass (impeccable): type-scale tokens (one step up), add color to monochrome portal,
-  polish empty/locked states, FIX side-stripe `border-l` accents (impeccable ban — currently on
-  KPI cards, case-table action rows, help verdict cards, review verdict buttons).
-- [ ] `/code-review` on the full diff.
+### Session F.3 — Design pass + code review (2026-06-20)
+- [x] **Type scale** bumped one step in portal/admin only (13→14 body, 11→12 labels, 10/9→11
+  micro). Decision: direct scoped bump, NOT global `--text-*` override — the homepage shares the
+  Tailwind scale and must not change. Marketing dirs left untouched (verified).
+- [x] **Side-stripe `border-l` bans removed** (impeccable): case-table action rows → bg tint;
+  case-review verdict buttons → full faint colored border; help verdict cards → full colored
+  border. (Dashboard KPI stripe already removed in the gating rewrite.)
+- [x] **Color** added to dashboard KPIs — tinted icon chips per metric (brand / accent-data /
+  clear / verify) to break the monochrome, no banned hero-metric template.
+- [x] **`/code-review` (high)** run. Found + FIXED: **MRR undercounted** — it aggregated the
+  `clients` query that had `.limit(5)` (shared with the Active-Clients widget). Now MRR sums all
+  active subscribers; the widget slices to 5 in JS. Noted for later: move MRR to a DB-side sum +
+  paginate admin case/clients queries before scale.
+- Verified: `next build` ✓, `eslint` ✓.
+- Known minor (accepted): expired users can open in-progress case detail read-only (own data,
+  scoped) — slightly looser than "completed only"; left as-is.
 
 ### Decisions made (delegated to engineering judgment by Gautam)
 - **plan_type** → wrote migration aligning DB to locked `single_99/growth_279/scale_499`.

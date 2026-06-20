@@ -105,7 +105,7 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
 
   return (
     <div>
-      <nav className="mb-4 flex items-center gap-1.5 text-[12px] text-muted">
+      <nav className="mb-4 flex items-center gap-1.5 text-[13px] text-muted">
         <Link href="/portal/cases" className="hover:text-ink">My Cases</Link>
         <span>/</span>
         <span className="font-mono">{c.case_number}</span>
@@ -118,31 +118,31 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
             <div className="text-sm font-bold text-verify-ink">
               Action Required — {hasMismatch ? "Brand Mismatch Detected" : "Scope Confirmation Needed"}
             </div>
-            <p className="mt-1 text-[13px] text-ink-2">
+            <p className="mt-1 text-[14px] text-ink-2">
               {hasMismatch
                 ? "We found a difference between the brands you entered and the brands detected in your uploaded document. Please confirm which brands to research."
                 : "Please confirm the brand scope so we can begin research."}
             </p>
             {hasMismatch && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 text-[13px]">
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 text-[14px]">
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-muted">You entered</div>
+                  <div className="text-[12px] uppercase tracking-wide text-muted">You entered</div>
                   <div className="font-semibold text-ink">{entered.join(" • ") || "—"}</div>
                 </div>
                 <span className="text-muted" aria-hidden>→</span>
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-muted">Document detected</div>
+                  <div className="text-[12px] uppercase tracking-wide text-muted">Document detected</div>
                   <div className="font-semibold text-ink">{detected.join(" • ") || "—"}</div>
                 </div>
               </div>
             )}
-            {error && <p className="mt-3 text-[13px] text-deny-ink">{error}</p>}
+            {error && <p className="mt-3 text-[14px] text-deny-ink">{error}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={pending}
                 onClick={() => confirmScope(entered)}
-                className="rounded-lg bg-clear-ink px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="rounded-lg bg-clear-ink px-3.5 py-2 text-[14px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
                 {pending ? "Confirming…" : `✓ Confirm ${entered.join(" & ") || "scope"} (original)`}
               </button>
@@ -151,20 +151,20 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
                   type="button"
                   disabled={pending}
                   onClick={() => confirmScope(detected)}
-                  className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle disabled:opacity-60"
+                  className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle disabled:opacity-60"
                 >
                   Use document list ({detected.join(" & ")})
                 </button>
               )}
             </div>
-            <div className="mt-3 text-[12px] text-muted">⏱ SLA timer paused • Restarts once you confirm</div>
+            <div className="mt-3 text-[13px] text-muted">⏱ SLA timer paused • Restarts once you confirm</div>
           </div>
         </div>
       )}
 
       <div className="mb-5">
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink">{c.vendor_name ?? "—"}</h2>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-muted">
           <span className="font-mono">{c.case_number}</span>
           <span className="h-1 w-1 rounded-full bg-line-strong" />
           <span>{fmt(c.created_at)}</span>
@@ -188,7 +188,7 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
             type="button"
             onClick={() => setTab(t.key)}
             aria-current={tab === t.key ? "true" : undefined}
-            className={`-mb-px border-b-2 px-3.5 py-2.5 text-[13px] font-semibold transition-colors ${
+            className={`-mb-px border-b-2 px-3.5 py-2.5 text-[14px] font-semibold transition-colors ${
               tab === t.key ? "border-brand text-brand" : "border-transparent text-muted hover:text-ink"
             }`}
           >
@@ -201,11 +201,11 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
         <div>
           {awaiting ? (
             <div className="mb-5 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3">
-              <div className="text-[13px] font-semibold text-brand-ink">🔍 Research queued — confirm scope above to begin</div>
-              <div className="mt-0.5 text-[12.5px] text-ink-2">All 5 dimensions will be researched once you confirm the brand list.</div>
+              <div className="text-[14px] font-semibold text-brand-ink">🔍 Research queued — confirm scope above to begin</div>
+              <div className="mt-0.5 text-[13px] text-ink-2">All 5 dimensions will be researched once you confirm the brand list.</div>
             </div>
           ) : c.status === "delivered" || c.status === "complete" ? (
-            <div className="mb-5 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3 text-[13px] font-semibold text-clear-ink">
+            <div className="mb-5 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3 text-[14px] font-semibold text-clear-ink">
               ✓ Report delivered{c.delivered_at ? ` on ${fmt(c.delivered_at)}` : ""}.
             </div>
           ) : null}
@@ -215,8 +215,8 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               const st = dimStatus(String(c[d.track]));
               return (
                 <div key={d.name} className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3">
-                  <span className="text-[13px] font-medium text-ink">{d.name}</span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
+                  <span className="text-[14px] font-medium text-ink">{d.name}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${st.cls}`}>{st.label}</span>
                 </div>
               );
             })}
@@ -237,8 +237,8 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               return (
                 <div key={f.id} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
                   <div className="flex-1">
-                    <div className="text-[13px] font-semibold text-ink">{title}</div>
-                    {detail && <div className="mt-0.5 text-[12.5px] text-ink-2">{detail}</div>}
+                    <div className="text-[14px] font-semibold text-ink">{title}</div>
+                    {detail && <div className="mt-0.5 text-[13px] text-ink-2">{detail}</div>}
                   </div>
                   <CertaintyBadge certainty={cert} />
                 </div>
@@ -250,7 +250,7 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
 
       {tab === "questions" && (
         <div>
-          <div className="mb-4 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3 text-[13px] text-brand-ink">
+          <div className="mb-4 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3 text-[14px] text-brand-ink">
             💬 Ask your supplier these before placing an order. Satisfactory answers do not guarantee invoice acceptance.
           </div>
           {questions.length === 0 ? (
@@ -261,12 +261,12 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
             <div className="overflow-hidden rounded-card border border-line bg-surface">
               {questions.map((q, i) => (
                 <div key={i} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[12px] font-bold text-brand-ink">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[13px] font-bold text-brand-ink">
                     {i + 1}
                   </span>
                   <div>
-                    <div className="text-[13px] font-medium text-ink">{q.text}</div>
-                    {q.why && <div className="mt-0.5 text-[12px] text-muted">{q.why}</div>}
+                    <div className="text-[14px] font-medium text-ink">{q.text}</div>
+                    {q.why && <div className="mt-0.5 text-[13px] text-muted">{q.why}</div>}
                   </div>
                 </div>
               ))}
@@ -309,8 +309,8 @@ function Timeline({ c }: { c: CaseDetail }) {
             {i < steps.length - 1 && <span className={`w-px flex-1 ${s.done ? "bg-clear-ink/40" : "bg-line"}`} />}
           </div>
           <div className={`pb-5 ${s.done || s.active ? "" : "opacity-60"}`}>
-            <div className="text-[13px] font-semibold text-ink">{s.title}</div>
-            <div className="text-[12px] text-muted">{s.time}</div>
+            <div className="text-[14px] font-semibold text-ink">{s.title}</div>
+            <div className="text-[13px] text-muted">{s.time}</div>
           </div>
         </div>
       ))}

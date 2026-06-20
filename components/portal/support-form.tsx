@@ -65,19 +65,19 @@ export function SupportForm({
   return (
     <div className="rounded-card border border-line bg-surface p-6">
       <div className="text-sm font-bold text-ink">Submit a request</div>
-      <p className="mt-1 text-[13px] text-ink-2">
+      <p className="mt-1 text-[14px] text-ink-2">
         We typically respond within 1 business day. Use Escalation for urgent case issues.
       </p>
 
       {done && (
-        <div className="mt-4 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3 text-[13px] text-clear-ink">
+        <div className="mt-4 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3 text-[14px] text-clear-ink">
           ✓ Request <span className="font-mono font-semibold">{done}</span> submitted. We&rsquo;ll be in touch within 1 business day.
         </div>
       )}
 
       <div className="mt-5 space-y-4">
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">Request type <span className="text-deny-ink">*</span></span>
+          <span className="text-[14px] font-medium text-ink">Request type <span className="text-deny-ink">*</span></span>
           <select
             value={typeIdx}
             onChange={(e) => setTypeIdx(Number(e.target.value))}
@@ -90,7 +90,7 @@ export function SupportForm({
         </label>
 
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">Linked case <span className="font-normal text-muted">(optional)</span></span>
+          <span className="text-[14px] font-medium text-ink">Linked case <span className="font-normal text-muted">(optional)</span></span>
           <select
             value={caseId}
             onChange={(e) => setCaseId(e.target.value)}
@@ -106,7 +106,7 @@ export function SupportForm({
         </label>
 
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">Subject <span className="text-deny-ink">*</span></span>
+          <span className="text-[14px] font-medium text-ink">Subject <span className="text-deny-ink">*</span></span>
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
@@ -115,7 +115,7 @@ export function SupportForm({
         </label>
 
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">Message <span className="text-deny-ink">*</span></span>
+          <span className="text-[14px] font-medium text-ink">Message <span className="text-deny-ink">*</span></span>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -125,7 +125,7 @@ export function SupportForm({
           />
         </label>
 
-        {error && <p className="text-[13px] text-deny-ink">{error}</p>}
+        {error && <p className="text-[14px] text-deny-ink">{error}</p>}
 
         <button
           type="button"

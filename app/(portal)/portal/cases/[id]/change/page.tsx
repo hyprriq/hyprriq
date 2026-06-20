@@ -39,7 +39,7 @@ export default async function ChangeRequestPage({
   return (
     <PortalShell client={client} active="cases" title={`Change Request — ${c.case_number}`}>
       <div className="mx-auto max-w-2xl">
-        <nav className="mb-4 flex items-center gap-1.5 text-[12px] text-muted">
+        <nav className="mb-4 flex items-center gap-1.5 text-[13px] text-muted">
           <Link href="/portal/cases" className="hover:text-ink">My Cases</Link>
           <span>/</span>
           <Link href={`/portal/cases/${c.id}`} className="hover:text-ink font-mono">{c.case_number}</Link>
@@ -52,8 +52,8 @@ export default async function ChangeRequestPage({
             <div className="mb-5 flex gap-3 rounded-card border border-brand/30 bg-brand-tint p-4">
               <span className="text-lg" aria-hidden>ⓘ</span>
               <div>
-                <div className="text-[13px] font-bold text-brand-ink">7-day change request window is open</div>
-                <div className="mt-0.5 text-[12.5px] text-ink-2">
+                <div className="text-[14px] font-bold text-brand-ink">7-day change request window is open</div>
+                <div className="mt-0.5 text-[13px] text-ink-2">
                   Report delivered {fmt(c.delivered_at)}. Window closes {fmt(c.change_request_deadline)} ({daysLeft} day{daysLeft === 1 ? "" : "s"} remaining). One change request is included per report.
                 </div>
               </div>

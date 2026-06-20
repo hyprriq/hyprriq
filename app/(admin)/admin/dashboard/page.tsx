@@ -27,16 +27,16 @@ export default async function AdminDashboardPage() {
       active="dashboard"
       title="Admin Dashboard"
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
-      topRight={<span className="text-[12px] text-muted">Last 30 days</span>}
+      topRight={<span className="text-[13px] text-muted">Last 30 days</span>}
     >
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t) => (
           <div key={t.label} className="rounded-card border border-line bg-surface p-3.5">
-            <div className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">{t.label}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t.label}</div>
             <div className={`mt-1 font-display text-xl font-extrabold ${t.tone === "warn" ? "text-verify-ink" : t.tone === "ok" ? "text-clear-ink" : "text-ink"}`}>
               {t.value}
             </div>
-            <div className="mt-0.5 text-[11px] text-muted">{t.sub}</div>
+            <div className="mt-0.5 text-[12px] text-muted">{t.sub}</div>
           </div>
         ))}
       </div>
@@ -46,10 +46,10 @@ export default async function AdminDashboardPage() {
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-ink">Case Queue — Founder Review</h2>
-              <span className="text-[12px] text-muted">{reviewQueue.length} awaiting verdict</span>
+              <span className="text-[13px] text-muted">{reviewQueue.length} awaiting verdict</span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
-              <div className="grid grid-cols-[100px_1fr_90px_80px_80px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <div className="grid grid-cols-[100px_1fr_90px_80px_80px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
                 <span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>SLA</span><span></span>
               </div>
               {reviewQueue.length === 0 ? (
@@ -57,14 +57,14 @@ export default async function AdminDashboardPage() {
               ) : (
                 reviewQueue.map((c) => (
                   <div key={c.id} className="grid grid-cols-[100px_1fr_90px_80px_80px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
-                    <span className="font-mono text-[12px] font-semibold text-brand">{c.case_number}</span>
+                    <span className="font-mono text-[13px] font-semibold text-brand">{c.case_number}</span>
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
-                      <div className="truncate text-[11.5px] text-muted">{(c.brands_submitted ?? []).join(" • ") || "—"}</div>
+                      <div className="truncate text-[14px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
+                      <div className="truncate text-[12px] text-muted">{(c.brands_submitted ?? []).join(" • ") || "—"}</div>
                     </div>
-                    <span className="text-[12px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span>
-                    <span className="text-[12px] font-semibold text-verify-ink">{slaText(c.sla_deadline)}</span>
-                    <Link href={`/admin/cases/${c.id}/review`} className="rounded-md bg-brand px-2.5 py-1 text-center text-[11px] font-bold text-white hover:bg-brand-hover">
+                    <span className="text-[13px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span>
+                    <span className="text-[13px] font-semibold text-verify-ink">{slaText(c.sla_deadline)}</span>
+                    <Link href={`/admin/cases/${c.id}/review`} className="rounded-md bg-brand px-2.5 py-1 text-center text-[12px] font-bold text-white hover:bg-brand-hover">
                       Review
                     </Link>
                   </div>
@@ -76,10 +76,10 @@ export default async function AdminDashboardPage() {
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-ink">Support Queue</h2>
-              <span className="text-[12px] font-semibold text-deny-ink">{openSupport.length} open</span>
+              <span className="text-[13px] font-semibold text-deny-ink">{openSupport.length} open</span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
-              <div className="grid grid-cols-[140px_110px_1fr_120px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <div className="grid grid-cols-[140px_110px_1fr_120px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
                 <span>SR Number</span><span>Type</span><span>Subject</span><span>Client</span>
               </div>
               {openSupport.length === 0 ? (
@@ -87,10 +87,10 @@ export default async function AdminDashboardPage() {
               ) : (
                 openSupport.map((r) => (
                   <div key={r.id} className="grid grid-cols-[140px_110px_1fr_120px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
-                    <span className="font-mono text-[12px] font-semibold text-brand">{r.sr_number}</span>
-                    <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[10.5px] font-semibold capitalize text-brand-ink">{r.type.replace("_", " ")}</span>
-                    <span className="truncate text-[13px] text-ink">{r.subject}</span>
-                    <span className="truncate text-[12.5px] text-ink-2">{r.clients?.full_name ?? "—"}</span>
+                    <span className="font-mono text-[13px] font-semibold text-brand">{r.sr_number}</span>
+                    <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold capitalize text-brand-ink">{r.type.replace("_", " ")}</span>
+                    <span className="truncate text-[14px] text-ink">{r.subject}</span>
+                    <span className="truncate text-[13px] text-ink-2">{r.clients?.full_name ?? "—"}</span>
                   </div>
                 ))
               )}
@@ -102,16 +102,16 @@ export default async function AdminDashboardPage() {
           <div className="rounded-card border border-line bg-surface">
             <div className="border-b border-line px-4 py-3 font-display text-sm font-bold text-ink">Active Clients</div>
             {recentClients.length === 0 ? (
-              <div className="p-5 text-center text-[13px] text-muted">No active clients yet.</div>
+              <div className="p-5 text-center text-[14px] text-muted">No active clients yet.</div>
             ) : (
               recentClients.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
-                  <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-tint text-[12px] font-bold text-brand-ink">
+                  <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-tint text-[13px] font-bold text-brand-ink">
                     {(c.full_name ?? "?").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium text-ink">{c.full_name ?? "Unnamed"}</div>
-                    <div className="text-[11.5px] text-muted">
+                    <div className="truncate text-[14px] font-medium text-ink">{c.full_name ?? "Unnamed"}</div>
+                    <div className="text-[12px] text-muted">
                       {c.plan_type ? PLAN_NAME[c.plan_type as PlanType] : "No plan"} • {c.credits_available} credits
                     </div>
                   </div>

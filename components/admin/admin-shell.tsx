@@ -39,19 +39,19 @@ function Nav({ active }: { active: AdminNavKey }) {
       {GROUPS.map((g, i) => (
         <div key={i} className="flex flex-col gap-0.5">
           {g.section && (
-            <div className="mb-0.5 mt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            <div className="mb-0.5 mt-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">
               {g.section}
             </div>
           )}
           {g.items.map((item) => {
             const isActive = item.key === active;
-            const base = "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors";
+            const base = "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors";
             const content = (
               <>
                 <span aria-hidden className="w-4 text-center text-xs">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.badge ? (
-                  <span className="ml-auto rounded-full bg-verify-ink px-1.5 py-0.5 text-[10px] font-bold text-white">{item.badge}</span>
+                  <span className="ml-auto rounded-full bg-verify-ink px-1.5 py-0.5 text-[11px] font-bold text-white">{item.badge}</span>
                 ) : null}
               </>
             );
@@ -100,7 +100,7 @@ export function AdminShell({
           <div className="font-display text-base font-extrabold tracking-tight text-white">
             HyprrIQ <span className="text-white/50">Admin</span>
           </div>
-          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
             Founder
           </span>
         </div>

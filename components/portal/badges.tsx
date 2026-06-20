@@ -50,7 +50,7 @@ const VERDICT_META: Record<Verdict, { label: string; cls: string }> = {
   pending: { label: "Pending", cls: "bg-subtle text-muted" },
 };
 
-const PILL = "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold";
+const PILL = "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold";
 
 export function StatusBadge({ status }: { status: CaseStatus }) {
   const m = STATUS_META[status] ?? STATUS_META.pending_intake;

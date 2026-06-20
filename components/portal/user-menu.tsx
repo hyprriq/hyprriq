@@ -56,10 +56,10 @@ export function UserMenu({
               href={switcher.href}
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 border-b border-line px-3 py-2.5 text-[13px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
+              className="flex items-center gap-2 border-b border-line px-3 py-2.5 text-[14px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
             >
               <span aria-hidden>🔁</span> {switcher.label}
-              <span className="ml-auto rounded bg-conditional-bg px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-conditional-ink">
+              <span className="ml-auto rounded bg-conditional-bg px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-conditional-ink">
                 Dev
               </span>
             </Link>
@@ -68,7 +68,7 @@ export function UserMenu({
             type="button"
             role="menuitem"
             onClick={() => signOut({ redirectUrl: "/" })}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] font-medium text-deny-ink hover:bg-deny-bg/40"
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] font-medium text-deny-ink hover:bg-deny-bg/40"
           >
             <span aria-hidden>↩</span> Sign out
           </button>

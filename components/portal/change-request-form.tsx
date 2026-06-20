@@ -68,7 +68,7 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
       <div className="text-sm font-bold text-ink">Request a change to Report {caseNumber}</div>
       <div className="mt-5 space-y-4">
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">Which part of the report needs changing? <span className="text-deny-ink">*</span></span>
+          <span className="text-[14px] font-medium text-ink">Which part of the report needs changing? <span className="text-deny-ink">*</span></span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -80,7 +80,7 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
           </select>
         </label>
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">What needs to change and why? <span className="text-deny-ink">*</span></span>
+          <span className="text-[14px] font-medium text-ink">What needs to change and why? <span className="text-deny-ink">*</span></span>
           <textarea
             value={details}
             onChange={(e) => setDetails(e.target.value)}
@@ -89,10 +89,10 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
             className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
           />
         </label>
-        <div className="rounded-lg border border-line bg-base px-4 py-3 text-[12px] text-ink-2">
+        <div className="rounded-lg border border-line bg-base px-4 py-3 text-[13px] text-ink-2">
           ⓘ Change requests are reviewed within 1 business day. We will update your report if the research can be improved, or explain why the current finding is correct. This is not a refund request.
         </div>
-        {error && <p className="text-[13px] text-deny-ink">{error}</p>}
+        {error && <p className="text-[14px] text-deny-ink">{error}</p>}
         <div className="flex items-center justify-between">
           <Link href={`/portal/cases/${caseId}`} className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle">
             Cancel

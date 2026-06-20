@@ -12,7 +12,7 @@ function fmt(iso: string | null) {
 
 function Field({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <div className="flex justify-between gap-3 py-1.5 text-[13px]">
+    <div className="flex justify-between gap-3 py-1.5 text-[14px]">
       <span className="text-muted">{k}</span>
       <span className="text-right font-medium text-ink">{v}</span>
     </div>
@@ -35,7 +35,7 @@ export default async function CaseReviewPage({
       title={`Case ${c.case_number}`}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
       topRight={
-        <Link href="/admin/dashboard" className="text-[13px] font-semibold text-brand hover:text-brand-hover">
+        <Link href="/admin/dashboard" className="text-[14px] font-semibold text-brand hover:text-brand-hover">
           ← Back to queue
         </Link>
       }
@@ -43,7 +43,7 @@ export default async function CaseReviewPage({
       <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         <div className="space-y-4">
           <div className="rounded-card border border-line bg-surface p-4">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Case Information</div>
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Case Information</div>
             <Field k="Case ID" v={<span className="font-mono">{c.case_number}</span>} />
             <Field k="Client" v={c.clients?.full_name ?? c.clients?.email ?? "—"} />
             <Field k="Supplier" v={c.vendor_name ?? "—"} />
@@ -54,8 +54,8 @@ export default async function CaseReviewPage({
           </div>
           {c.client_notes && (
             <div className="rounded-card border border-line bg-surface p-4">
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">Client Notes</div>
-              <p className="text-[13px] leading-relaxed text-ink-2">{c.client_notes}</p>
+              <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted">Client Notes</div>
+              <p className="text-[14px] leading-relaxed text-ink-2">{c.client_notes}</p>
             </div>
           )}
         </div>
