@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Client } from "@/lib/data/client";
+import { deriveAccess, type Access } from "@/lib/data/access";
+import { UserMenu } from "@/components/portal/user-menu";
 import {
   PLAN_NAME,
   PLAN_CREDITS_PER_CYCLE,
@@ -88,7 +90,14 @@ function CreditsWidget({ client }: { client: Client }) {
   );
 }
 
-function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
+function isBlocked(key: PortalNavKey, access: Access): boolean {
+  if (key === "new") return !access.canSubmit;
+  if (key === "cases") return !access.canViewActive;
+  if (key === "completed") return !access.canViewCompleted;
+  return false;
+}
+
+function Sidebar({ client, active, access }: { client: Client; active: PortalNavKey; access: Access }) {
   const plan = client.plan_type as PlanType | null;
   return (
     <aside className="flex w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-5">
@@ -111,6 +120,7 @@ function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
             )}
             {group.items.map((item) => {
               const isActive = item.key === active;
+              const blocked = isBlocked(item.key, access);
               const base =
                 "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors";
               const cls = isActive
@@ -129,7 +139,7 @@ function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
                   ) : null}
                 </>
               );
-              return item.href ? (
+              return item.href && !blocked ? (
                 <Link key={item.key} href={item.href} className={cls} aria-current={isActive ? "page" : undefined}>
                   {content}
                 </Link>
@@ -139,7 +149,7 @@ function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
                   type="button"
                   disabled
                   className={`${base} cursor-not-allowed text-muted/60`}
-                  title="Coming soon"
+                  title={blocked ? "Requires an active plan" : "Coming soon"}
                 >
                   {content}
                 </button>
@@ -154,24 +164,35 @@ function Sidebar({ client, active }: { client: Client; active: PortalNavKey }) {
   );
 }
 
-function Topbar({ client, title }: { client: Client; title: string }) {
+function Topbar({
+  client,
+  title,
+  access,
+  showSwitcher,
+}: {
+  client: Client;
+  title: string;
+  access: Access;
+  showSwitcher: boolean;
+}) {
   const initial = (client.full_name || client.email || "?").charAt(0).toUpperCase();
   return (
     <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-7">
       <h1 className="font-display text-xl font-bold tracking-tight text-ink">{title}</h1>
       <div className="flex items-center gap-3">
-        <Link
-          href="/portal/submit"
-          className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover"
-        >
-          ＋ New Research
-        </Link>
-        <div
-          className="grid h-8 w-8 place-items-center rounded-full bg-brand-tint text-sm font-bold text-brand-ink"
-          aria-hidden
-        >
-          {initial}
-        </div>
+        {access.canSubmit && (
+          <Link
+            href="/portal/submit"
+            className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover"
+          >
+            ＋ New Research
+          </Link>
+        )}
+        <UserMenu
+          initial={initial}
+          email={client.email}
+          switcher={showSwitcher ? { href: "/admin/dashboard", label: "View as Admin" } : undefined}
+        />
       </div>
     </header>
   );
@@ -188,11 +209,16 @@ export function PortalShell({
   title: string;
   children: React.ReactNode;
 }) {
+  const access = deriveAccess(client);
+  // Dev/staging-only view switcher, admin-only. VERCEL_ENV (not NODE_ENV) — Vercel
+  // sets NODE_ENV='production' on preview builds too (see ADR-005).
+  const showSwitcher = process.env.VERCEL_ENV !== "production" && client.is_admin;
+
   return (
     <div className="flex min-h-dvh bg-base">
-      <Sidebar client={client} active={active} />
+      <Sidebar client={client} active={active} access={access} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar client={client} title={title} />
+        <Topbar client={client} title={title} access={access} showSwitcher={showSwitcher} />
         <main className="flex-1 overflow-y-auto px-7 py-6">{children}</main>
       </div>
     </div>

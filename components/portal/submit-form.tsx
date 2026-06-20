@@ -223,9 +223,14 @@ export function SubmitForm({
               {/* vendor-brand vetting expectation-setter (content file) */}
               <p className="mt-2 text-[12px] text-ink-2">
                 {brandHelper}{" "}
-                <Link href={brandHelperLearnMore.href} className="font-semibold text-brand hover:text-brand-hover">
+                <a
+                  href={brandHelperLearnMore.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand hover:text-brand-hover"
+                >
                   {brandHelperLearnMore.label}
-                </Link>
+                </a>
               </p>
             </div>
 

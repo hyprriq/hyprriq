@@ -24,7 +24,7 @@ export default async function CaseReviewPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const { id } = await params;
   const c = await getAdminCase(id);
   if (!c) notFound();
@@ -33,6 +33,7 @@ export default async function CaseReviewPage({
     <AdminShell
       active="review"
       title={`Case ${c.case_number}`}
+      user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
       topRight={
         <Link href="/admin/dashboard" className="text-[13px] font-semibold text-brand hover:text-brand-hover">
           ← Back to queue

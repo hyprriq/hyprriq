@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserMenu } from "@/components/portal/user-menu";
 
 export type AdminNavKey = "dashboard" | "review" | "support";
 
@@ -80,13 +81,18 @@ export function AdminShell({
   active,
   title,
   topRight,
+  user,
   children,
 }: {
   active: AdminNavKey;
   title: string;
   topRight?: React.ReactNode;
+  user?: { initial: string; email: string };
   children: React.ReactNode;
 }) {
+  // Admin routes are already is_admin-guarded; the switcher just needs the
+  // dev/staging gate (VERCEL_ENV, not NODE_ENV — see ADR-005).
+  const showSwitcher = process.env.VERCEL_ENV !== "production";
   return (
     <div className="flex min-h-dvh bg-base">
       <aside className="flex w-[248px] shrink-0 flex-col bg-ink px-4 py-5">
@@ -103,7 +109,16 @@ export function AdminShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-7">
           <h1 className="font-display text-xl font-bold tracking-tight text-ink">{title}</h1>
-          <div className="flex items-center gap-3">{topRight}</div>
+          <div className="flex items-center gap-3">
+            {topRight}
+            {user && (
+              <UserMenu
+                initial={user.initial}
+                email={user.email}
+                switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
+              />
+            )}
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto px-7 py-6">{children}</main>
       </div>

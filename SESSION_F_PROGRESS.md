@@ -88,6 +88,35 @@ values directly from the submit response (zero race). Status: built.
   deliver → client Evidence populates). Manual checklist handed to founder. Stripe Billing still
   blocked on STRIPE_SECRET_KEY.
 
+## Session F.2 — Plan gating + fixes (2026-06-20, from live staging testing)
+- [x] **Plan-state gating** (ADR-005, `docs/adr-005-plan-state-gating.md`) — `lib/data/access.ts`
+  `deriveAccess(client)` single source. States: `no_plan` (plan_type NULL),
+  `active` (billing active/trialling), `expired` (billing cancelled/past_due).
+  - Submit route → `requireSubmitAccess()` redirects no_plan/expired to Billing
+    (root-cause fix for the "-1 credits at Step 3" dead-end — they never reach the form).
+  - Cases list: no_plan→dashboard; expired→Completed-only read-only banner. Case detail &
+    change-request: no_plan→dashboard; expired blocked from change request.
+  - Dashboard: no_plan → single "Choose a plan" activation panel (NOT 0-KPIs); expired →
+    reactivate banner + read-only Completed Reports; active → full dashboard.
+  - Sidebar nav items gated by access (New Case/Active/Completed disabled when not allowed).
+- [x] **Logout** — Clerk `signOut()` in topbar avatar menu (`components/portal/user-menu.tsx`),
+  on both client + admin shells.
+- [x] **Dev view-switcher** — admin↔client toggle in the avatar menu. Gated by
+  `VERCEL_ENV !== 'production'` (NOT NODE_ENV — Vercel sets NODE_ENV=production on preview too)
+  AND `is_admin`. Never shows in prod; `/admin/*` stays `requireAdmin()`-guarded regardless.
+- [x] **Learn-more new tab** — submit Step 2 link is `target="_blank"` (form progress preserved).
+- [x] **Copy fixes** — greeting name-agnostic when no name ("Welcome to HyprrIQ"); zero-state
+  subline ("Ready to start? Submit your first research request.") vs active-state line.
+- Verified: `tsc` + `eslint` clean, `next build` success (26 routes).
+- ⚠ `expired` state depends on `billing_status` which the (unbuilt) Stripe webhook would set;
+  until then it only triggers if set manually.
+
+### NEXT (not yet done)
+- [ ] Design pass (impeccable): type-scale tokens (one step up), add color to monochrome portal,
+  polish empty/locked states, FIX side-stripe `border-l` accents (impeccable ban — currently on
+  KPI cards, case-table action rows, help verdict cards, review verdict buttons).
+- [ ] `/code-review` on the full diff.
+
 ### Decisions made (delegated to engineering judgment by Gautam)
 - **plan_type** → wrote migration aligning DB to locked `single_99/growth_279/scale_499`.
 - **Schema gaps** → both via one migration: `support_requests` as a real table (no viable

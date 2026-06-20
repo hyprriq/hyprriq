@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import { requireOnboardedClient } from "@/lib/data/client";
+import { notFound, redirect } from "next/navigation";
+import { getClientWithAccess } from "@/lib/data/access";
 import { getCaseById, getCaseFindings } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { CaseDetailView } from "@/components/portal/case-detail-view";
@@ -9,7 +9,8 @@ export default async function CaseDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const client = await requireOnboardedClient();
+  const { client, access } = await getClientWithAccess();
+  if (access.state === "no_plan") redirect("/portal/dashboard");
   const { id } = await params;
   const c = await getCaseById(id);
   if (!c) notFound();

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireOnboardedClient } from "@/lib/data/client";
+import { redirect } from "next/navigation";
+import { getClientWithAccess } from "@/lib/data/access";
 import { getClientCases, filterCases, type CaseFilter } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { CaseTable } from "@/components/portal/case-table";
@@ -21,15 +22,26 @@ export default async function CasesPage({
 }: {
   searchParams: Promise<{ filter?: string }>;
 }) {
-  const client = await requireOnboardedClient();
+  const { client, access } = await getClientWithAccess();
+  // no-plan users have no cases and no list access — send them to the dashboard.
+  if (access.state === "no_plan") redirect("/portal/dashboard");
+
   const { filter } = await searchParams;
-  const active = normalize(filter);
+  // Expired = read-only Completed only; force the filter regardless of the query.
+  const active: CaseFilter = access.canViewActive ? normalize(filter) : "completed";
   const cases = await getClientCases();
   const actionCount = cases.filter((c) => c.status === "awaiting_client").length;
   const shown = filterCases(cases, active);
 
   return (
-    <PortalShell client={client} active="cases" title="My Cases">
+    <PortalShell client={client} active={access.canViewActive ? "cases" : "completed"} title="My Cases">
+      {!access.canViewActive && (
+        <div className="mb-5 rounded-card border border-line bg-conditional-bg px-4 py-3 text-[13px] text-conditional-ink">
+          Your plan is inactive — showing your completed reports in read-only mode.{" "}
+          <Link href="/portal/billing" className="font-semibold underline">Reactivate plan →</Link>
+        </div>
+      )}
+      {access.canViewActive && (
       <div className="mb-5 flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">
         {TABS.map((t) => {
           const isOn = t.key === active;
@@ -55,10 +67,11 @@ export default async function CasesPage({
           );
         })}
       </div>
+      )}
 
       <CaseTable
         cases={shown}
-        showAction
+        showAction={access.canViewActive}
         emptyLabel={
           active === "action"
             ? "Nothing needs your attention right now."

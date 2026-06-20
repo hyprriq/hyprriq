@@ -1,0 +1,79 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useClerk } from "@clerk/nextjs";
+
+// Topbar avatar menu: sign out (Clerk) + optional dev-only view switcher.
+// The switcher is passed in already gated (VERCEL_ENV + is_admin) by the server
+// shell — this component never decides visibility itself.
+export function UserMenu({
+  initial,
+  email,
+  switcher,
+}: {
+  initial: string;
+  email?: string;
+  switcher?: { href: string; label: string };
+}) {
+  const { signOut } = useClerk();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-sm font-bold text-brand-ink ring-offset-2 transition hover:ring-2 hover:ring-brand/30"
+      >
+        {initial}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+        >
+          {email && (
+            <div className="border-b border-line px-3 py-2.5 text-xs text-muted">
+              Signed in as<br />
+              <span className="font-medium text-ink">{email}</span>
+            </div>
+          )}
+          {switcher && (
+            <Link
+              href={switcher.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 border-b border-line px-3 py-2.5 text-[13px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
+            >
+              <span aria-hidden>🔁</span> {switcher.label}
+              <span className="ml-auto rounded bg-conditional-bg px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-conditional-ink">
+                Dev
+              </span>
+            </Link>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => signOut({ redirectUrl: "/" })}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] font-medium text-deny-ink hover:bg-deny-bg/40"
+          >
+            <span aria-hidden>↩</span> Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

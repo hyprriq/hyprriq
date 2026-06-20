@@ -10,7 +10,7 @@ function slaText(iso: string | null) {
 }
 
 export default async function AdminDashboardPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const { kpis, reviewQueue, openSupport, recentClients } = await getAdminDashboard();
 
   const tiles = [
@@ -23,7 +23,12 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <AdminShell active="dashboard" title="Admin Dashboard" topRight={<span className="text-[12px] text-muted">Last 30 days</span>}>
+    <AdminShell
+      active="dashboard"
+      title="Admin Dashboard"
+      user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
+      topRight={<span className="text-[12px] text-muted">Last 30 days</span>}
+    >
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t) => (
           <div key={t.label} className="rounded-card border border-line bg-surface p-3.5">

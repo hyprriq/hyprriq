@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { requireOnboardedClient } from "@/lib/data/client";
+import { notFound, redirect } from "next/navigation";
+import { getClientWithAccess } from "@/lib/data/access";
 import { getCaseById } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { ChangeRequestForm } from "@/components/portal/change-request-form";
@@ -25,13 +25,15 @@ export default async function ChangeRequestPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const client = await requireOnboardedClient();
+  const { client, access } = await getClientWithAccess();
+  if (access.state === "no_plan") redirect("/portal/dashboard");
   const { id } = await params;
   const c = await getCaseById(id);
   if (!c) notFound();
 
   const delivered = c.status === "delivered" || c.status === "complete";
-  const eligible = delivered && isDeadlineOpen(c.change_request_deadline) && !c.change_request_used;
+  const eligible =
+    access.canRequestChange && delivered && isDeadlineOpen(c.change_request_deadline) && !c.change_request_used;
   const daysLeft = daysLeftUntil(c.change_request_deadline);
 
   return (
