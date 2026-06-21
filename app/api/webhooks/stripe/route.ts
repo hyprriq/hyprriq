@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { planForPriceId, topupForPriceId } from "@/lib/stripe/plans";
-import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
+import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, PLAN_ROLLOVER_LIMIT, type PlanType } from "@/lib/constants/plans";
 
 // Stripe webhook — the source of truth for plan/credit state. SCAFFOLDING:
 // signature verification, idempotency (stripe_events.stripe_event_id UNIQUE), and
@@ -119,16 +119,29 @@ export async function POST(req: Request) {
       }
 
       case "invoice.paid": {
-        // Recurring renewal → reset the cycle's credits (rollover TODO).
         const inv = event.data.object as Stripe.Invoice;
+        // Only RENEWAL invoices roll credits over. The first invoice
+        // (billing_reason 'subscription_create') is already handled by
+        // checkout.session.completed — applying rollover here too would double-count.
+        if (inv.billing_reason !== "subscription_cycle") break;
+
         const priceRef = inv.lines?.data?.[0]?.pricing?.price_details?.price;
         const priceId = typeof priceRef === "string" ? priceRef : priceRef?.id ?? "";
         const plan = priceId ? planForPriceId(priceId) : null;
         const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? null;
         if (plan && customerId) {
+          // Capped rollover (decision 2026-06-20): unused credits carry over up to
+          // the plan's cap, then the new cycle's allotment is added on top.
+          const { data } = await supabaseAdmin
+            .from("clients")
+            .select("credits_available")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+          const unused = data?.credits_available ?? 0;
+          const newBalance = Math.min(unused, PLAN_ROLLOVER_LIMIT[plan]) + PLAN_CREDITS_PER_CYCLE[plan];
           await supabaseAdmin
             .from("clients")
-            .update({ credits_available: PLAN_CREDITS_PER_CYCLE[plan], billing_status: "active" })
+            .update({ credits_available: newBalance, credits_used_this_cycle: 0, billing_status: "active" })
             .eq("stripe_customer_id", customerId);
         }
         break;
