@@ -2,14 +2,22 @@ import { requireOnboardedClient } from "@/lib/data/client";
 import { getInvoices } from "@/lib/data/billing";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { StripePortalButton } from "@/components/portal/stripe-portal-button";
+import { CheckoutButton } from "@/components/portal/checkout-button";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
   PLAN_CADENCE,
   PLAN_CREDITS_PER_CYCLE,
   PLAN_ROLLOVER_LIMIT,
+  PLAN_TYPES,
   type PlanType,
 } from "@/lib/constants/plans";
+
+// Credit top-up packs (one-time) available per active plan.
+const TOPUP_FOR_PLAN: Partial<Record<PlanType, { id: string; label: string }>> = {
+  growth_279: { id: "growth_topup", label: "Buy 3 credits — $99" },
+  scale_499: { id: "scale_topup", label: "Buy 6 credits — $179" },
+};
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
@@ -84,14 +92,44 @@ export default async function BillingPage() {
               </div>
             </>
           ) : (
-            <div className="text-center">
-              <p className="text-sm text-ink-2">You don&rsquo;t have an active plan yet.</p>
-              <a href="/pricing" className="mt-3 inline-block rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
-                Choose a plan →
-              </a>
+            <div>
+              <p className="text-center text-sm text-ink-2">You don&rsquo;t have an active plan yet — choose one to start.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {PLAN_TYPES.map((p) => (
+                  <div key={p} className="flex flex-col rounded-lg border border-line bg-base p-4">
+                    <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
+                    <div className="mt-0.5 text-[13px] text-muted">
+                      {PLAN_PRICE_LABEL[p]} {PLAN_CADENCE[p]}
+                    </div>
+                    <div className="mt-2 text-[13px] text-ink-2">
+                      {PLAN_CREDITS_PER_CYCLE[p]} {p === "single_99" ? "report" : "credits / mo"}
+                    </div>
+                    <CheckoutButton
+                      plan={p}
+                      className="mt-4 w-full rounded-lg bg-brand px-3 py-2 text-center text-[13px] font-semibold text-white hover:bg-brand-hover"
+                    >
+                      Choose {PLAN_NAME[p]} →
+                    </CheckoutButton>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </Card>
+
+        {plan && TOPUP_FOR_PLAN[plan] && (
+          <Card title="Top-Up Credits">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[14px] text-ink-2">Need more this cycle? Add credits without changing your plan.</span>
+              <CheckoutButton
+                topup={TOPUP_FOR_PLAN[plan]!.id}
+                className="ml-auto rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover"
+              >
+                {TOPUP_FOR_PLAN[plan]!.label}
+              </CheckoutButton>
+            </div>
+          </Card>
+        )}
 
         <Card title="Payment Method">
           <div className="flex flex-wrap items-center gap-3">

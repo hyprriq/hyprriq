@@ -19,19 +19,27 @@ async function activatePlan(clientId: string, plan: PlanType, opts: {
   customerId?: string | null;
   subscriptionId?: string | null;
   renewalDate?: string | null;
+  email?: string | null;
 }) {
-  await supabaseAdmin
+  const fields = {
+    plan_type: plan,
+    plan_category: PLAN_CATEGORY[plan],
+    credits_available: PLAN_CREDITS_PER_CYCLE[plan],
+    billing_status: "active" as const,
+    ...(opts.customerId ? { stripe_customer_id: opts.customerId } : {}),
+    ...(opts.subscriptionId ? { stripe_subscription_id: opts.subscriptionId } : {}),
+    ...(opts.renewalDate ? { renewal_date: opts.renewalDate } : {}),
+  };
+  const { data: updated } = await supabaseAdmin
     .from("clients")
-    .update({
-      plan_type: plan,
-      plan_category: PLAN_CATEGORY[plan],
-      credits_available: PLAN_CREDITS_PER_CYCLE[plan],
-      billing_status: "active",
-      ...(opts.customerId ? { stripe_customer_id: opts.customerId } : {}),
-      ...(opts.subscriptionId ? { stripe_subscription_id: opts.subscriptionId } : {}),
-      ...(opts.renewalDate ? { renewal_date: opts.renewalDate } : {}),
-    })
-    .eq("id", clientId);
+    .update(fields)
+    .eq("id", clientId)
+    .select("id");
+  // Row may not exist yet if the user paid before their first portal load (lazy
+  // provisioning hasn't run). Create it so payment is never lost.
+  if (!updated || updated.length === 0) {
+    await supabaseAdmin.from("clients").insert({ id: clientId, email: opts.email ?? "", ...fields });
+  }
 }
 
 async function addCredits(clientId: string, credits: number) {
@@ -72,6 +80,7 @@ export async function POST(req: Request) {
         const clientId = s.client_reference_id || (s.metadata?.client_id ?? null);
         if (!clientId) break;
         const customerId = typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
+        const email = s.customer_details?.email ?? s.customer_email ?? null;
         const kind = s.metadata?.kind ?? "";
 
         if (kind.startsWith("topup:")) {
@@ -88,12 +97,13 @@ export async function POST(req: Request) {
               customerId,
               subscriptionId: subId,
               renewalDate: iso((sub as unknown as { current_period_end: number }).current_period_end),
+              email,
             });
           }
         } else {
           // one-time (Single Report)
           const plan = kind.startsWith("plan:") ? (kind.slice(5) as PlanType) : null;
-          if (plan) await activatePlan(clientId, plan, { customerId });
+          if (plan) await activatePlan(clientId, plan, { customerId, email });
         }
         break;
       }
