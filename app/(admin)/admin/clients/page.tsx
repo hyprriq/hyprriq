@@ -33,7 +33,7 @@ export default async function AdminClientsPage() {
               <div className="min-w-0">
                 <div className="truncate text-[14px] font-semibold text-ink">
                   {c.full_name ?? "Unnamed"}
-                  {c.is_admin && <span className="ml-2 rounded bg-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Admin</span>}
+                  {c.role !== "client" && <span className="ml-2 rounded bg-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">{c.role}</span>}
                 </div>
                 <div className="truncate text-[12px] text-muted">{c.email}{c.company_name ? ` · ${c.company_name}` : ""}</div>
               </div>

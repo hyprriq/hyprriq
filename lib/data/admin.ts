@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentClient } from "@/lib/data/client";
+import { getCurrentClient, type Role } from "@/lib/data/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
@@ -9,7 +9,7 @@ import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
 export async function requireAdmin() {
   const client = await getCurrentClient();
   if (!client) redirect("/sign-in");
-  if (!client.is_admin) redirect("/portal/dashboard");
+  if (client.role === "client") redirect("/portal/dashboard");
   return client;
 }
 
@@ -183,14 +183,14 @@ export type AdminClientRow = {
   plan_type: PlanType | null;
   billing_status: string;
   credits_available: number;
-  is_admin: boolean;
+  role: Role;
   created_at: string;
 };
 
 export async function getAdminClients(): Promise<AdminClientRow[]> {
   const { data } = await supabaseAdmin
     .from("clients")
-    .select("id, full_name, company_name, email, plan_type, billing_status, credits_available, is_admin, created_at")
+    .select("id, full_name, company_name, email, plan_type, billing_status, credits_available, role, created_at")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   return (data as AdminClientRow[]) ?? [];

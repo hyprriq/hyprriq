@@ -212,7 +212,7 @@ export function PortalShell({
   const access = deriveAccess(client);
   // Dev/staging-only view switcher, admin-only. VERCEL_ENV (not NODE_ENV) — Vercel
   // sets NODE_ENV='production' on preview builds too (see ADR-005).
-  const showSwitcher = process.env.VERCEL_ENV !== "production" && client.is_admin;
+  const showSwitcher = process.env.VERCEL_ENV !== "production" && client.role !== "client";
 
   return (
     <div className="flex min-h-dvh bg-base">

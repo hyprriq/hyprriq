@@ -1,3 +1,23 @@
+## Session F.7 — ADR-006 code swap + Stripe checkout/webhook scaffold (2026-06-20)
+- [x] **ADR-006 migration APPLIED & verified** (founder ran it; `role='founder'` confirmed).
+- [x] **is_admin → role code swap** complete: `lib/data/client.ts` (`Role` type + `isElevated`,
+  Client.role, selects), `requireAdmin` (role!=='client'), admin review API, admin clients page
+  badge, portal-shell dev-switcher gate. `is_admin` DB column retained until a later cleanup.
+- [x] **Stripe checkout + webhook SCAFFOLD** (no Stripe products created by app — founder supplies
+  Price IDs from planning thread):
+  - `lib/stripe/plans.ts` — env-driven Price-ID map (plan↔price, top-ups), forward + reverse.
+  - `app/api/checkout/session/route.ts` — Checkout Session (subscription for growth/scale, payment
+    for single + top-ups); 503 until price env + STRIPE_SECRET_KEY set.
+  - `app/api/webhooks/stripe/route.ts` — signature verify + idempotency (stripe_events) + handles
+    checkout.session.completed / subscription.updated|deleted / invoice.paid|payment_failed →
+    sets plan_type/credits/renewal/billing_status/stripe ids. Inert until STRIPE_WEBHOOK_SECRET set.
+  - Webhook is also the real client-provisioning path (addresses reliability gap #4).
+  **Founder env to add when Price IDs exist** (.env.local + Vercel): `STRIPE_SECRET_KEY`,
+  `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_SINGLE_99`, `STRIPE_PRICE_GROWTH_279`,
+  `STRIPE_PRICE_SCALE_499`, `STRIPE_PRICE_GROWTH_TOPUP`, `STRIPE_PRICE_SCALE_TOPUP`. Register
+  webhook endpoint `https://<domain>/api/webhooks/stripe`. TODO: credit rollover on renewal.
+- Verified: tsc + eslint + 15/15 tests + next build clean.
+
 ## Session F.6 — UX fixes + ADR-006 + architecture answers (2026-06-20)
 - [x] **Submit form** — drag-and-drop wired (shared `validateFile`, PDF/JPG/PNG ≤10MB), Choose-file
   row realigned (label-button + filename + remove), **conditional-required notes**: when NO file is

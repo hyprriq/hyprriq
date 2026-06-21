@@ -1,0 +1,77 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { createServerClient } from "@/lib/supabase/server";
+import { getStripe } from "@/lib/stripe";
+import { priceIdForPlan, topupPriceId, type TopupId } from "@/lib/stripe/plans";
+import { PLAN_CATEGORY, PLAN_TYPES, type PlanType } from "@/lib/constants/plans";
+
+// Creates a Stripe Checkout Session for a plan purchase or a credit top-up and
+// returns its URL for the browser to redirect to. SCAFFOLDING: fully wired except
+// the Stripe Price IDs, which arrive via env (lib/stripe/plans.ts). Until the
+// price env + STRIPE_SECRET_KEY are set, returns 503 — never a broken redirect.
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const stripe = getStripe();
+  if (!stripe) {
+    return NextResponse.json({ error: "stripe_not_configured", message: "Checkout isn't available yet." }, { status: 503 });
+  }
+
+  let body: { plan?: string; topup?: string } = {};
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+
+  const isTopup = !!body.topup;
+  const plan = body.plan as PlanType | undefined;
+  if (!isTopup && (!plan || !PLAN_TYPES.includes(plan))) {
+    return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
+  }
+
+  const price = isTopup
+    ? topupPriceId(body.topup as TopupId)
+    : priceIdForPlan(plan as PlanType);
+  if (!price) {
+    return NextResponse.json(
+      { error: "price_not_configured", message: "This item isn't available for purchase yet." },
+      { status: 503 },
+    );
+  }
+
+  // Reuse an existing Stripe customer if the client already has one.
+  const supa = createServerClient();
+  const { data: client } = await supa
+    .from("clients")
+    .select("email, stripe_customer_id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const origin = new URL(req.url).origin;
+  // Subscriptions for the monthly plans; one-time payment for Single Report + top-ups.
+  const mode: "subscription" | "payment" =
+    !isTopup && plan && PLAN_CATEGORY[plan] === "subscription" ? "subscription" : "payment";
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode,
+      line_items: [{ price, quantity: 1 }],
+      client_reference_id: userId,
+      ...(client?.stripe_customer_id
+        ? { customer: client.stripe_customer_id }
+        : { customer_email: client?.email ?? undefined }),
+      // The webhook is the source of truth; metadata lets it attribute the event.
+      metadata: { client_id: userId, kind: isTopup ? `topup:${body.topup}` : `plan:${plan}` },
+      ...(mode === "subscription"
+        ? { subscription_data: { metadata: { client_id: userId } } }
+        : {}),
+      success_url: `${origin}/portal/dashboard?checkout=success`,
+      cancel_url: `${origin}/portal/billing?checkout=cancelled`,
+    });
+    return NextResponse.json({ url: session.url });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "stripe_error" }, { status: 500 });
+  }
+}

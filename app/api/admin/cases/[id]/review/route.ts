@@ -17,8 +17,8 @@ const SCORE_CERTAINTY: Record<Score, "verified" | "inferred" | "unknown"> = {
 };
 
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("is_admin").eq("id", userId).maybeSingle();
-  return !!data?.is_admin;
+  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
+  return !!data && data.role !== "client";
 }
 
 export async function POST(

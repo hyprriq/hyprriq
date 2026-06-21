@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import type { PlanType } from "@/lib/constants/plans";
 
+// ADR-006: admin access is a role enum, not a boolean. Only 'client' and
+// 'founder' are in use today; 'admin' (staff) is reserved for a future hire.
+export type Role = "client" | "admin" | "founder";
+export function isElevated(role: Role): boolean {
+  return role !== "client";
+}
+
 // Shape of a clients row (subset we read in the portal). The server Supabase
 // client uses the service-role key (bypasses RLS), so every query here MUST be
 // explicitly scoped by the Clerk user id — see lib/supabase/server.ts.
@@ -19,7 +26,7 @@ export type Client = {
   billing_status: "active" | "past_due" | "cancelled" | "trialling";
   stripe_customer_id: string | null;
   onboarding_completed: boolean;
-  is_admin: boolean;
+  role: Role;
 };
 
 // Lazy idempotent provisioning. There is no Clerk user.created webhook, so the
@@ -31,7 +38,7 @@ export async function getOrCreateClient(): Promise<Client | null> {
   if (!userId) return null;
 
   const supa = createServerClient();
-  const select = "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, is_admin";
+  const select = "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role";
 
   let { data } = await supa
     .from("clients")
@@ -85,7 +92,7 @@ export async function getCurrentClient(): Promise<Client | null> {
   const { data } = await supa
     .from("clients")
     .select(
-      "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, is_admin",
+      "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role",
     )
     .eq("id", userId)
     .maybeSingle();
