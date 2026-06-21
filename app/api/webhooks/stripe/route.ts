@@ -59,10 +59,21 @@ export async function POST(req: Request) {
   const raw = await req.text();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(raw, sig ?? "", secret);
-  } catch (e) {
-    return NextResponse.json({ error: `signature: ${e instanceof Error ? e.message : "invalid"}` }, { status: 400 });
-  }
+  event = stripe.webhooks.constructEvent(
+    raw,
+    sig ?? "",
+    secret
+  );
+} catch (e) {
+  console.error("WEBHOOK SIGNATURE ERROR:", e);
+
+  return NextResponse.json(
+    {
+      error: e instanceof Error ? e.message : "invalid"
+    },
+    { status: 400 }
+  );
+}
 
   // Idempotency: the UNIQUE constraint on stripe_event_id rejects replays.
   const { error: dupeErr } = await supabaseAdmin
