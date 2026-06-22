@@ -1,4 +1,4 @@
-# ⏩ RESUME HERE — state as of 2026-06-22 (last commit `7ddd988`, branch `staging`)
+# ⏩ RESUME HERE — state as of 2026-06-22 (last commit `244271e` + F.11 migrations, branch `staging`)
 
 **What this project is:** HyprrIQ portal (Next.js 16 App Router, Tailwind v4, Clerk, Supabase, Stripe, Inngest).
 **Working dir:** `D:\Projects\Hyprriq\portal` (NOT HyprrX — ignore any HyprrX path). Repo `github.com/hyprriq/hyprriq`, branch **staging**. Staging URL `hyprriq-git-staging-hyprrx-hyprriq.vercel.app`.
@@ -7,10 +7,16 @@
 Stripe checkout + webhook (test mode) VERIFIED working, cancel subscription, onboarding+billing bug pass,
 top-up credit + invoice fixes. Every change is `tsc`+`eslint`+`vitest(15)`+`next build` clean and pushed.
 
-**⚠ PENDING — founder actions (not code):**
-1. **Apply 2 migrations** in Supabase SQL editor (manual; no CLI link): `20260620000000_adr006_role_enum.sql`
-   (role enum — may already be applied; confirm) and `20260622000000_add_cancelling_billing_status.sql`
-   (needed before testing cancel). Pre-flight pattern: count conflicting rows → run → confirm with SELECT.
+**⚠ PENDING — founder actions (not code). Apply migrations IN ORDER:**
+1. **Apply 5 migrations** in Supabase SQL editor (manual; no CLI link), each is `BEGIN/COMMIT`-wrapped:
+   - `20260620000000_adr006_role_enum.sql` (role enum — may already be applied; confirm via SELECT)
+   - `20260622000000_add_cancelling_billing_status.sql` (needed before testing cancel)
+   - `20260622010000_client_profile_and_notes.sql` ← **NEW (F.11)** client profile + internal notes
+   - `20260622020000_case_track_results.sql` ← **NEW (F.11)** per-track results table (Phase G/H)
+   - `20260622030000_billing_audit_and_admin_audit.sql` ← **NEW (F.11)** billing_audit + admin_audit_log
+   Run the consolidated pre-flight (below, F.11 section) first → expect the 2 already-applied ones to show,
+   all F.11 columns/tables absent → run each → confirm. **F.11 dependent CODE is NOT shipped yet** (would
+   break deployed app by selecting missing columns) — ship after founder confirms these applied.
 2. **Mirror env to Vercel** (Preview+Prod): `STRIPE_SECRET_KEY`, 5 `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET`. All in `.env.local`.
 3. **Retest** a fresh top-up (credits should jump, invoice should appear) and the cancel flow.
 4. **Open the PR** `main...staging` once the fresh new-user + billing flows pass.
@@ -22,6 +28,62 @@ webhook path. Migrations are applied by the founder manually (write file → the
 **Open/flagged (not built):** drop `is_admin` column (post role-swap cleanup); admin credit-adjust tool;
 RLS test suite + CI gate; brands/suppliers normalization (ADR-007 proposed); client Settings page;
 research pipeline + PDF report (deferred sessions). See full audit lists in sections below.
+
+## Session F.11 — Client profile / internal notes / track schema / deletion / billing_audit (2026-06-22)
+**Scope:** spec `HyprrIQ_ClaudeCode_ClientProfile_TrackSchema_Deletion.md` (5 items). This pass writes the
+SCHEMA (migrations, founder-applied) + the build plan. Dependent code ships per-item AFTER founder confirms
+each migration applied (selecting a missing column would break the deployed staging app — ADR-006 lesson).
+
+### Schema written this pass (3 new migrations, additive, BEGIN/COMMIT-wrapped, `ADD ... IF NOT EXISTS`)
+- `20260622010000_client_profile_and_notes.sql` — Items 1+2. ~22 nullable cols on `clients`: contact_*,
+  primary_marketplace (broad enum) + marketplace_other_name, sells_on_amazon/walmart + store names,
+  billing_* address, vat/ein/tax_id, internal_notes + notes_updated_at.
+- `20260622020000_case_track_results.sql` — Item 3. Table per spec + admin-only RLS + updated_at trigger.
+  No UI/API this pass (Phase G writes, Phase H reads).
+- `20260622030000_billing_audit_and_admin_audit.sql` — Items 5+4. `billing_audit` (+ `retention_override`)
+  and `admin_audit_log` (action/admin_id/target_email/reason/metadata). Both admin-only RLS.
+
+### ⚠ FLAGGED decisions (engineering judgment, not blocking)
+1. **`marketplace` already exists** on `clients` (legacy, UNUSED — every code ref is `cases.marketplace` or
+   marketing copy). Spec's pre-flight expected 0 rows for it; it's present. Resolution: added
+   `primary_marketplace` (spec's name, broader enum) alongside; legacy col untouched → later cleanup ADR.
+2. **`internal_notes` client-visibility:** RLS is row-level and `clients_self` grants a client its own row,
+   so DB RLS can't hide a column. Enforced at QUERY layer — client data layer (`getCurrentClient`) must NEVER
+   select internal_notes/notes_updated_at; only an admin-only query reads them. (App talks to Supabase
+   server-side, so query-layer is the real control here.)
+3. **`case_track_results` RLS = admin-only** for now (no client UI; Phase H PDF runs server-side). Add a
+   read-own SELECT policy when client-facing track views exist.
+4. **`admin_audit_log` built new** (not reusing generic `audit_log`) per spec — dedicated high-sensitivity log.
+
+### CONSOLIDATED PRE-FLIGHT (run once before applying the F.11 trio)
+```sql
+-- New columns on clients (expect: only legacy 'marketplace' may appear; all F.11 names absent)
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'clients'
+AND column_name IN ('contact_phone','primary_marketplace','marketplace_other_name',
+  'sells_on_amazon','sells_on_walmart','internal_notes','billing_address_line1','vat_number');
+-- Expect 0 rows.
+
+-- New tables (expect 0 rows — none should exist yet)
+SELECT table_name FROM information_schema.tables
+WHERE table_name IN ('case_track_results','billing_audit','admin_audit_log');
+```
+If any F.11 name appears, STOP and flag. (Migrations use `IF NOT EXISTS` so a partial state won't hard-fail,
+but a pre-existing column with a different definition must be reconciled by hand.)
+
+### BUILD PLAN — dependent code, ships per-item after founder confirms migrations
+- [ ] **Item 1** Onboarding Step 1: enforce required (company, contact_name, contact_phone, primary_marketplace,
+  country) + optional "Additional details" (billing address, store names gated by sells_on_* checkboxes).
+  `POST /api/onboarding/complete` persists the new fields. Confirm company_name is actually *required*.
+- [ ] **Item 1** Client **Settings** page (`/portal/settings`, currently a disabled nav placeholder) — editable
+  profile + tax fields (vat/ein/tax_id live here only, never onboarding). New `PATCH /api/settings`.
+- [ ] **Item 2** Admin client **detail view** (`/admin/clients/[id]` — does not exist yet) with internal-notes
+  textarea (explicit Save → sets notes_updated_at) + Billing History (reads billing_audit). Admin-only.
+- [ ] **Item 4** Account **deletion** API (`DELETE /api/admin/clients/[id]`) — hard delete + CASCADE +
+  Storage purge + Clerk deleteUser + null stripe_customer_id + write admin_audit_log + retention_override on
+  billing_audit. Double-confirm dialog (type client email). Admin-only; NOT on client Settings yet.
+- [ ] **Item 5** Webhook writes `billing_audit` rows on every plan-state change.
+- [ ] **Item 1 data layer:** extend `Client` type / selects — split client-safe vs admin-only (internal_notes).
 
 ## Session F.10 — Top-up credits + invoices (2026-06-22)
 - [x] **Top-up credits not added** — webhook read unset `metadata.credits`; now derives from `kind`
