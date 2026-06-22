@@ -7,19 +7,24 @@
 Stripe checkout + webhook (test mode) VERIFIED working, cancel subscription, onboarding+billing bug pass,
 top-up credit + invoice fixes. Every change is `tsc`+`eslint`+`vitest(15)`+`next build` clean and pushed.
 
-**⚠ PENDING — founder actions (not code). Apply migrations IN ORDER:**
-1. **Apply 5 migrations** in Supabase SQL editor (manual; no CLI link), each is `BEGIN/COMMIT`-wrapped:
-   - `20260620000000_adr006_role_enum.sql` (role enum — may already be applied; confirm via SELECT)
-   - `20260622000000_add_cancelling_billing_status.sql` (needed before testing cancel)
-   - `20260622010000_client_profile_and_notes.sql` ← **NEW (F.11)** client profile + internal notes
-   - `20260622020000_case_track_results.sql` ← **NEW (F.11)** per-track results table (Phase G/H)
-   - `20260622030000_billing_audit_and_admin_audit.sql` ← **NEW (F.11)** billing_audit + admin_audit_log
-   Run the consolidated pre-flight (below, F.11 section) first → expect the 2 already-applied ones to show,
-   all F.11 columns/tables absent → run each → confirm. **F.11 dependent CODE is NOT shipped yet** (would
-   break deployed app by selecting missing columns) — ship after founder confirms these applied.
-2. **Mirror env to Vercel** (Preview+Prod): `STRIPE_SECRET_KEY`, 5 `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET`. All in `.env.local`.
-3. **Retest** a fresh top-up (credits should jump, invoice should appear) and the cancel flow.
-4. **Open the PR** `main...staging` once the fresh new-user + billing flows pass.
+**⚠ PENDING — founder actions (not code):**
+1. **F.11 migration trio APPLIED ✓** (010000 client profile+notes, 020000 case_track_results,
+   030000 billing_audit+admin_audit) — pre-flight returned 0 conflicts, all three ran clean.
+   F.11 dependent code (Items 1/2/4/5) is BUILT, verified and pushed (commits 105cfde, f8c5ee9,
+   aede1c2, fcdb029).
+2. **Apply 1 more migration** `20260622040000_billing_audit_retain_on_delete.sql` — relaxes the
+   billing_audit→clients FK to `ON DELETE SET NULL` + adds `client_email_snapshot`, so retained
+   billing rows survive a client hard-delete. **Needed ONLY before using the account-deletion
+   feature.** The delete route fails safe (errors before destroying anything) until it's applied.
+   Pre-flight: `SELECT column_name FROM information_schema.columns WHERE table_name='billing_audit'
+   AND column_name='client_email_snapshot';` → expect 0 rows.
+3. **Test account deletion** on a throwaway client (per spec) before relying on it — confirm CASCADE +
+   Storage purge + Clerk deleteUser + admin_audit_log row + billing_audit retained.
+4. **Older migrations** `20260620000000_adr006_role_enum` + `20260622000000_add_cancelling_billing_status` —
+   confirm applied (role='founder' + 'cancelling' in billing_status CHECK).
+5. **Mirror env to Vercel** (Preview+Prod): `STRIPE_SECRET_KEY`, 5 `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET`.
+6. **Retest** a fresh top-up + cancel; verify a billing_audit row now appears in admin client detail.
+7. **Open the PR** `main...staging` once the fresh new-user + billing flows pass.
 
 **⚠ KNOWN GOTCHAS (cost hours before):** Stripe webhook destination must be **test mode** (not live) to
 get test events; **Vercel Deployment Protection** returns 401 to Stripe at the edge — must stay OFF for the
@@ -71,19 +76,34 @@ WHERE table_name IN ('case_track_results','billing_audit','admin_audit_log');
 If any F.11 name appears, STOP and flag. (Migrations use `IF NOT EXISTS` so a partial state won't hard-fail,
 but a pre-existing column with a different definition must be reconciled by hand.)
 
-### BUILD PLAN — dependent code, ships per-item after founder confirms migrations
-- [ ] **Item 1** Onboarding Step 1: enforce required (company, contact_name, contact_phone, primary_marketplace,
-  country) + optional "Additional details" (billing address, store names gated by sells_on_* checkboxes).
-  `POST /api/onboarding/complete` persists the new fields. Confirm company_name is actually *required*.
-- [ ] **Item 1** Client **Settings** page (`/portal/settings`, currently a disabled nav placeholder) — editable
-  profile + tax fields (vat/ein/tax_id live here only, never onboarding). New `PATCH /api/settings`.
-- [ ] **Item 2** Admin client **detail view** (`/admin/clients/[id]` — does not exist yet) with internal-notes
-  textarea (explicit Save → sets notes_updated_at) + Billing History (reads billing_audit). Admin-only.
-- [ ] **Item 4** Account **deletion** API (`DELETE /api/admin/clients/[id]`) — hard delete + CASCADE +
-  Storage purge + Clerk deleteUser + null stripe_customer_id + write admin_audit_log + retention_override on
-  billing_audit. Double-confirm dialog (type client email). Admin-only; NOT on client Settings yet.
-- [ ] **Item 5** Webhook writes `billing_audit` rows on every plan-state change.
-- [ ] **Item 1 data layer:** extend `Client` type / selects — split client-safe vs admin-only (internal_notes).
+### BUILD PLAN — dependent code (ALL SHIPPED, verified tsc+eslint+test+build, pushed)
+- [x] **Item 2** (commit `105cfde`) `/admin/clients/[id]` detail page: profile/contact/business/billing/tax,
+  cases list, billing history. Internal-notes panel (explicit Save → notes_updated_at). `PATCH
+  /api/admin/clients/[id]/notes`. Clients list rows now link to detail. Data layer:
+  `getAdminClientDetail`/`getCasesForClient`/`getClientBillingAudit` — `internal_notes` is admin-only.
+- [x] **Item 1** (commit `f8c5ee9`) Onboarding Step 1 expanded: required company/contact-name/phone/
+  marketplace/country (hard-gated) + optional Additional details (also-sells + store names + billing
+  address). Profile persists on Step-1 advance so it survives the Stripe redirect. New `/portal/settings`
+  + `SettingsForm` (tax fields Settings-only). Shared `PATCH /api/profile` (field-whitelist). Settings nav
+  enabled. `getClientProfile()` excludes internal_notes. `lib/constants/marketplaces.ts`.
+  NOTE: required "Country" maps to `billing_country` (the only country column the spec added).
+- [x] **Item 5** (commit `aede1c2`) Stripe webhook writes `billing_audit` on new_subscription /
+  one_time_purchase (incl top-ups) / cancel / resume. updated|deleted read prior state → log only on a real
+  transition. Idempotent via the stripe_events dedupe gate.
+- [x] **Item 4** (commit `fcdb029`) `DELETE /api/admin/clients/[id]` hard delete — fail-safe ordering
+  (non-destructive billing_audit retention FIRST, destructive deletes last), Storage purge, Clerk
+  deleteUser, admin_audit_log. Double-confirm dialog. Guards: no self-delete, no elevated-role delete.
+  **Needs migration `20260622040000` applied before use** (billing_audit ON DELETE SET NULL +
+  client_email_snapshot). Route errors pre-destruction until then.
+
+### ⚠ FLAGGED decisions (Build 3/4, engineering judgment)
+5. **Deletion guards:** route refuses to delete your own account or any role≠'client' (prevents nuking the
+   founder/admin). Danger-zone UI hidden for elevated roles. Flag if you want admin deletion enabled.
+6. **stripe_events / credit_transactions NOT touched on delete:** `stripe_events` has no `client_id`
+   column (raw Stripe event log, not per-client) and `credit_transactions` does not exist (credits are
+   columns on `clients` + the deduct/refund RPCs). Spec listed both; neither is applicable here.
+7. **billing_audit retention needs a schema change** (migration 040000) — the original RESTRICT FK would
+   block the client delete. Relaxed to ON DELETE SET NULL; retained rows keep `client_email_snapshot`.
 
 ## Session F.10 — Top-up credits + invoices (2026-06-22)
 - [x] **Top-up credits not added** — webhook read unset `metadata.credits`; now derives from `kind`
