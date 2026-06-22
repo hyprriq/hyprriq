@@ -83,6 +83,48 @@ export async function requireOnboardedClient(): Promise<Client> {
   return client;
 }
 
+// Editable client profile (Item 1). Selected for the Settings page and the
+// onboarding profile step. Deliberately EXCLUDES internal_notes/notes_updated_at
+// — those are admin-only and must never be read by a client-facing query.
+export type ClientProfile = {
+  full_name: string | null;
+  company_name: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  primary_marketplace: string | null;
+  marketplace_other_name: string | null;
+  sells_on_amazon: boolean | null;
+  sells_on_walmart: boolean | null;
+  amazon_store_name: string | null;
+  walmart_store_name: string | null;
+  billing_company_name: string | null;
+  billing_address_line1: string | null;
+  billing_address_line2: string | null;
+  billing_city: string | null;
+  billing_state: string | null;
+  billing_zip: string | null;
+  billing_country: string | null;
+  vat_number: string | null;
+  ein_number: string | null;
+  tax_id: string | null;
+};
+
+const PROFILE_COLUMNS =
+  "full_name, company_name, contact_name, contact_email, contact_phone, primary_marketplace, marketplace_other_name, sells_on_amazon, sells_on_walmart, amazon_store_name, walmart_store_name, billing_company_name, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_zip, billing_country, vat_number, ein_number, tax_id";
+
+export async function getClientProfile(): Promise<ClientProfile | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+  const supa = createServerClient();
+  const { data } = await supa
+    .from("clients")
+    .select(PROFILE_COLUMNS)
+    .eq("id", userId)
+    .maybeSingle();
+  return (data as ClientProfile) ?? null;
+}
+
 // Read-only fetch of the current client (no provisioning). Returns null if the
 // row doesn't exist yet.
 export async function getCurrentClient(): Promise<Client | null> {

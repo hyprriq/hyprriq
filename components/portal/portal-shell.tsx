@@ -41,7 +41,7 @@ const NAV: { section?: string; items: NavItem[] }[] = [
     section: "Account",
     items: [
       { key: "billing", label: "Billing & Credits", icon: "💳", href: "/portal/billing" },
-      { key: "settings", label: "Settings", icon: "⚙" }, // not in scope — disabled
+      { key: "settings", label: "Settings", icon: "⚙", href: "/portal/settings" },
     ],
   },
   {

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckoutButton } from "@/components/portal/checkout-button";
+import type { ClientProfile } from "@/lib/data/client";
+import { PRIMARY_MARKETPLACES, COUNTRIES } from "@/lib/constants/marketplaces";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
@@ -38,25 +40,98 @@ export function OnboardingFlow({
   plan,
   initialStep = 1,
   justCheckedOut = false,
+  profile,
 }: {
   fullName: string;
   companyName: string;
   plan: PlanType | null;
   initialStep?: 1 | 2 | 3;
   justCheckedOut?: boolean;
+  profile?: ClientProfile | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(initialStep);
   const [name, setName] = useState(fullName);
   const [company, setCompany] = useState(companyName);
+  // Item 1 business-profile fields (required ones gate Step 1; rest optional).
+  const [contactName, setContactName] = useState(profile?.contact_name ?? fullName ?? "");
+  const [contactPhone, setContactPhone] = useState(profile?.contact_phone ?? "");
+  const [marketplace, setMarketplace] = useState(profile?.primary_marketplace ?? "");
+  const [marketplaceOther, setMarketplaceOther] = useState(profile?.marketplace_other_name ?? "");
+  const [country, setCountry] = useState(profile?.billing_country ?? "");
+  const [showMore, setShowMore] = useState(false);
+  const [sellsAmazon, setSellsAmazon] = useState(!!profile?.sells_on_amazon);
+  const [sellsWalmart, setSellsWalmart] = useState(!!profile?.sells_on_walmart);
+  const [amazonStore, setAmazonStore] = useState(profile?.amazon_store_name ?? "");
+  const [walmartStore, setWalmartStore] = useState(profile?.walmart_store_name ?? "");
+  const [addr1, setAddr1] = useState(profile?.billing_address_line1 ?? "");
+  const [addr2, setAddr2] = useState(profile?.billing_address_line2 ?? "");
+  const [city, setCity] = useState(profile?.billing_city ?? "");
+  const [stateRegion, setStateRegion] = useState(profile?.billing_state ?? "");
+  const [zip, setZip] = useState(profile?.billing_zip ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Step 1 hard gate — required fields per spec Item 1.
+  const step1Valid =
+    company.trim() !== "" &&
+    contactName.trim() !== "" &&
+    contactPhone.trim() !== "" &&
+    marketplace !== "" &&
+    country !== "" &&
+    (marketplace !== "other" || marketplaceOther.trim() !== "");
+
+  // Persist the business profile WITHOUT completing onboarding. Called when
+  // leaving Step 1 (so data survives the Stripe checkout redirect, which unmounts
+  // this component) and again on finish.
+  async function saveProfile(): Promise<boolean> {
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        full_name: name,
+        company_name: company,
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        primary_marketplace: marketplace || null,
+        marketplace_other_name: marketplace === "other" ? marketplaceOther : null,
+        billing_country: country,
+        sells_on_amazon: sellsAmazon,
+        sells_on_walmart: sellsWalmart,
+        amazon_store_name: sellsAmazon ? amazonStore : null,
+        walmart_store_name: sellsWalmart ? walmartStore : null,
+        billing_address_line1: addr1,
+        billing_address_line2: addr2,
+        billing_city: city,
+        billing_state: stateRegion,
+        billing_zip: zip,
+      }),
+    });
+    return res.ok;
+  }
+
+  async function continueFromStep1() {
+    if (busy || !step1Valid) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const ok = await saveProfile();
+      if (!ok) throw new Error("Could not save your details. Please try again.");
+      setStep(2);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function finish(dest: string) {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
+      // Persist profile too (covers the "Skip for now" path straight from Step 1).
+      await saveProfile();
       const res = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,10 +165,10 @@ export function OnboardingFlow({
               Welcome to HyprrIQ
             </div>
             <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink">
-              Let&rsquo;s confirm your details
+              Tell us about your business
             </h2>
             <p className="mt-2 text-sm text-ink-2">
-              We&rsquo;ll use these to address your reports correctly.
+              We&rsquo;ll use these to address your reports and invoices correctly.
             </p>
             <div className="mt-5 space-y-4">
               <label className="block">
@@ -106,10 +181,7 @@ export function OnboardingFlow({
                 />
               </label>
               <label className="block">
-                <span className="text-[14px] font-medium text-ink">
-                  Company name{" "}
-                  <span className="font-normal text-muted">(optional)</span>
-                </span>
+                <span className="text-[14px] font-medium text-ink">Company name</span>
                 <input
                   type="text"
                   value={company}
@@ -118,14 +190,139 @@ export function OnboardingFlow({
                   className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
               </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-[14px] font-medium text-ink">Contact name</span>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[14px] font-medium text-ink">Contact phone</span>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="+1 555 000 0000"
+                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-[14px] font-medium text-ink">Primary marketplace</span>
+                <select
+                  value={marketplace}
+                  onChange={(e) => setMarketplace(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                >
+                  <option value="">Select…</option>
+                  {PRIMARY_MARKETPLACES.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </label>
+              {marketplace === "other" && (
+                <label className="block">
+                  <span className="text-[14px] font-medium text-ink">Please specify</span>
+                  <input
+                    type="text"
+                    value={marketplaceOther}
+                    onChange={(e) => setMarketplaceOther(e.target.value)}
+                    placeholder="e.g. Etsy, Wayfair"
+                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+                  />
+                </label>
+              )}
+              <label className="block">
+                <span className="text-[14px] font-medium text-ink">Country</span>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                >
+                  <option value="">Select…</option>
+                  {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+
+              {/* Optional expandable */}
+              <button
+                type="button"
+                onClick={() => setShowMore((s) => !s)}
+                className="text-[13px] font-medium text-brand hover:text-brand-hover"
+              >
+                {showMore ? "− Hide additional details" : "+ Add billing address & other marketplaces (optional)"}
+              </button>
+              {showMore && (
+                <div className="space-y-4 rounded-lg border border-line bg-base/50 p-3">
+                  <div>
+                    <span className="text-[13px] font-medium text-ink">I also sell on</span>
+                    <div className="mt-2 flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 text-[14px] text-ink-2">
+                        <input type="checkbox" checked={sellsAmazon} onChange={(e) => setSellsAmazon(e.target.checked)} className="h-4 w-4 accent-brand" />
+                        Amazon
+                      </label>
+                      <label className="flex items-center gap-2 text-[14px] text-ink-2">
+                        <input type="checkbox" checked={sellsWalmart} onChange={(e) => setSellsWalmart(e.target.checked)} className="h-4 w-4 accent-brand" />
+                        Walmart
+                      </label>
+                    </div>
+                  </div>
+                  {sellsAmazon && (
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink">Amazon store name</span>
+                      <input type="text" value={amazonStore} onChange={(e) => setAmazonStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    </label>
+                  )}
+                  {sellsWalmart && (
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink">Walmart store name</span>
+                      <input type="text" value={walmartStore} onChange={(e) => setWalmartStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    </label>
+                  )}
+                  <label className="block">
+                    <span className="text-[13px] font-medium text-ink">Billing address line 1</span>
+                    <input type="text" value={addr1} onChange={(e) => setAddr1(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[13px] font-medium text-ink">Billing address line 2</span>
+                    <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink">City</span>
+                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    </label>
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink">State</span>
+                      <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    </label>
+                    <label className="block">
+                      <span className="text-[13px] font-medium text-ink">ZIP</span>
+                      <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {error && <p className="mt-4 text-[14px] text-deny-ink">{error}</p>}
             <button
               type="button"
-              onClick={() => setStep(2)}
-              className="mt-6 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+              onClick={continueFromStep1}
+              disabled={busy || !step1Valid}
+              className="mt-6 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Continue →
+              {busy ? "Saving…" : "Continue →"}
             </button>
+            {!step1Valid && (
+              <p className="mt-2 text-center text-[12px] text-muted">
+                Company, contact name, phone, marketplace and country are required.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => finish("/portal/dashboard")}

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getOrCreateClient } from "@/lib/data/client";
+import { getOrCreateClient, getClientProfile } from "@/lib/data/client";
 import { OnboardingFlow } from "@/components/portal/onboarding-flow";
 
 // First-login onboarding. Guard: if the client has already completed it (or no
@@ -26,6 +26,9 @@ export default async function OnboardingPage({
   // checkout attempt (so we don't dump the user back on step 1).
   const initialStep: 1 | 2 = client.plan_type || returnedFromCheckout ? 2 : 1;
 
+  // Profile prefill so a Back-from-checkout keeps Step 1 values the user entered.
+  const profile = await getClientProfile();
+
   return (
     <OnboardingFlow
       fullName={client.full_name ?? ""}
@@ -33,6 +36,7 @@ export default async function OnboardingPage({
       plan={client.plan_type}
       initialStep={initialStep}
       justCheckedOut={checkout === "success" && !client.plan_type}
+      profile={profile}
     />
   );
 }
