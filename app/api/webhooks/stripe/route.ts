@@ -121,8 +121,13 @@ export async function POST(req: Request) {
 
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        const status = sub.status === "active" || sub.status === "trialing"
-          ? "active"
+        const live = sub.status === "active" || sub.status === "trialing";
+        // cancel_at_period_end on a still-live sub = "cancelling": access stays
+        // until period end, but it won't renew. Distinct from a hard 'cancelled'.
+        const status = live
+          ? sub.cancel_at_period_end
+            ? "cancelling"
+            : "active"
           : sub.status === "past_due" || sub.status === "unpaid"
             ? "past_due"
             : "cancelled";

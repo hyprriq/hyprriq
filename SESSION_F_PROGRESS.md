@@ -1,3 +1,23 @@
+## Session F.8 — Stripe verified + cancel subscription (2026-06-22)
+- [x] **Stripe checkout VERIFIED end-to-end.** Root cause of the earlier zero-deliveries:
+  (1) the webhook *destination was created in LIVE mode* in Stripe while checkouts were test mode —
+  separate pipelines, so test events never reached a live destination (recreated in test mode);
+  (2) earlier, Vercel **Deployment Protection** returned 401 to Stripe at the edge (founder disabled
+  it for Preview). Both resolved; checkout confirmed working.
+- [x] **Cancel subscription** built:
+  - `app/api/billing/cancel/route.ts` — `cancel_at_period_end: true` (never immediate), with resume;
+    optimistic local `billing_status` mirror, webhook reconciles. Subscription-only guard.
+  - `components/portal/cancel-subscription.tsx` — explicit confirm dialog ("stays active until
+    <renewal>, then won't renew"); Resume option when already cancelling.
+  - Billing page: cancel control (subscription plans only) + "Your plan cancels on <date>" banner.
+  - Webhook `customer.subscription.updated` → sets `billing_status='cancelling'` when
+    `cancel_at_period_end` on a live sub (distinct from `cancelled`); `subscription.deleted` →
+    `cancelled` → existing `expired` gating. `deriveAccess` already treats `cancelling` as full access.
+  - **Migration `20260622000000_add_cancelling_billing_status.sql`** (additive, txn-wrapped) — adds
+    `cancelling` to the billing_status CHECK. **APPLY BEFORE testing cancel** (webhook writes it).
+- Verified: tsc + eslint + tests + next build clean.
+- Open: ADR-006 `is_admin` column drop (post-verify cleanup); credit-adjust admin tool; RLS test suite.
+
 ## Session F.7 — ADR-006 code swap + Stripe checkout/webhook scaffold (2026-06-20)
 - [x] **ADR-006 migration APPLIED & verified** (founder ran it; `role='founder'` confirmed).
 - [x] **is_admin → role code swap** complete: `lib/data/client.ts` (`Role` type + `isElevated`,

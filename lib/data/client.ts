@@ -23,7 +23,7 @@ export type Client = {
   credits_available: number;
   credits_used_this_cycle: number;
   renewal_date: string | null;
-  billing_status: "active" | "past_due" | "cancelled" | "trialling";
+  billing_status: "active" | "past_due" | "cancelled" | "trialling" | "cancelling";
   stripe_customer_id: string | null;
   onboarding_completed: boolean;
   role: Role;

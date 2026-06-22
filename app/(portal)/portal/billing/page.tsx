@@ -3,6 +3,7 @@ import { getInvoices } from "@/lib/data/billing";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { StripePortalButton } from "@/components/portal/stripe-portal-button";
 import { CheckoutButton } from "@/components/portal/checkout-button";
+import { CancelSubscription } from "@/components/portal/cancel-subscription";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
@@ -52,6 +53,11 @@ export default async function BillingPage() {
   return (
     <PortalShell client={client} active="billing" title="Billing & Credits">
       <div className="mx-auto max-w-3xl space-y-5">
+        {client.billing_status === "cancelling" && (
+          <div className="rounded-card border border-conditional-ink/40 bg-conditional-bg px-4 py-3 text-[14px] text-conditional-ink">
+            Your plan cancels on <span className="font-semibold">{fmtDate(client.renewal_date)}</span> — you keep full access until then.
+          </div>
+        )}
         <Card title="Current Plan">
           {plan ? (
             <>
@@ -90,6 +96,14 @@ export default async function BillingPage() {
                   <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
                 </div>
               </div>
+              {client.plan_category === "subscription" && (
+                <div className="mt-4 flex justify-end border-t border-line pt-3">
+                  <CancelSubscription
+                    renewalLabel={fmtDate(client.renewal_date)}
+                    cancelling={client.billing_status === "cancelling"}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <div>
