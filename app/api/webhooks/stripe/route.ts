@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { planForPriceId, topupForPriceId } from "@/lib/stripe/plans";
+import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, PLAN_ROLLOVER_LIMIT, type PlanType } from "@/lib/constants/plans";
 
 // Stripe webhook — the source of truth for plan/credit state. SCAFFOLDING:
@@ -95,7 +95,8 @@ export async function POST(req: Request) {
         const kind = s.metadata?.kind ?? "";
 
         if (kind.startsWith("topup:")) {
-          const credits = Number(s.metadata?.credits ?? 0) || topupCreditsFromSession(s);
+          const topupId = kind.slice("topup:".length) as TopupId;
+          const credits = TOPUP[topupId]?.credits ?? 0;
           if (credits > 0) await addCredits(clientId, credits);
           if (customerId) await supabaseAdmin.from("clients").update({ stripe_customer_id: customerId }).eq("id", clientId);
         } else if (s.mode === "subscription" && s.subscription) {
@@ -194,11 +195,4 @@ export async function POST(req: Request) {
       .eq("stripe_event_id", event.id);
     return NextResponse.json({ error: "handler_error" }, { status: 500 });
   }
-}
-
-// Top-up credit count resolved from the line item's price when metadata is absent.
-function topupCreditsFromSession(s: Stripe.Checkout.Session): number {
-  const priceId = (s.metadata?.price_id as string) || "";
-  const t = priceId ? topupForPriceId(priceId) : null;
-  return t?.credits ?? 0;
 }

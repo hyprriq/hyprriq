@@ -69,7 +69,10 @@ export async function POST(req: Request) {
       metadata: { client_id: userId, kind: isTopup ? `topup:${body.topup}` : `plan:${plan}` },
       ...(mode === "subscription"
         ? { subscription_data: { metadata: { client_id: userId } } }
-        : {}),
+        // One-time payments don't create an Invoice by default; enable it so
+        // top-ups + Single Report show in Billing's Invoice History (which reads
+        // invoices.list).
+        : { invoice_creation: { enabled: true } }),
       success_url: `${origin}/portal/${toOnboarding ? "onboarding" : "dashboard"}?checkout=success`,
       cancel_url: `${origin}/portal/${toOnboarding ? "onboarding" : "billing"}?checkout=cancelled`,
     });
