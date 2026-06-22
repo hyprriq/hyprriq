@@ -48,6 +48,28 @@ async function addCredits(clientId: string, credits: number) {
   await supabaseAdmin.from("clients").update({ credits_available: current + credits }).eq("id", clientId);
 }
 
+// Item 5: append a Billing History row on every plan-state change. Idempotent by
+// construction — duplicate Stripe events are rejected at the stripe_events gate
+// above, so each event reaches this handler (and writes here) at most once.
+type BillingEvent = "upgrade" | "downgrade" | "cancel" | "resume" | "new_subscription" | "one_time_purchase";
+async function recordBillingEvent(clientId: string, e: {
+  event: BillingEvent;
+  oldPlan?: string | null;
+  newPlan?: string | null;
+  stripeEventId?: string | null;
+  notes?: string | null;
+}) {
+  await supabaseAdmin.from("billing_audit").insert({
+    client_id: clientId,
+    old_plan: e.oldPlan ?? null,
+    new_plan: e.newPlan ?? null,
+    event: e.event,
+    stripe_event_id: e.stripeEventId ?? null,
+    source: "stripe",
+    notes: e.notes ?? null,
+  });
+}
+
 export async function POST(req: Request) {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -99,6 +121,7 @@ export async function POST(req: Request) {
           const credits = TOPUP[topupId]?.credits ?? 0;
           if (credits > 0) await addCredits(clientId, credits);
           if (customerId) await supabaseAdmin.from("clients").update({ stripe_customer_id: customerId }).eq("id", clientId);
+          await recordBillingEvent(clientId, { event: "one_time_purchase", stripeEventId: event.id, notes: `Top-up: ${credits} credit${credits === 1 ? "" : "s"}` });
         } else if (s.mode === "subscription" && s.subscription) {
           const subId = typeof s.subscription === "string" ? s.subscription : s.subscription.id;
           const sub = await stripe.subscriptions.retrieve(subId);
@@ -111,11 +134,15 @@ export async function POST(req: Request) {
               renewalDate: iso((sub as unknown as { current_period_end: number }).current_period_end),
               email,
             });
+            await recordBillingEvent(clientId, { event: "new_subscription", newPlan: plan, stripeEventId: event.id });
           }
         } else {
           // one-time (Single Report)
           const plan = kind.startsWith("plan:") ? (kind.slice(5) as PlanType) : null;
-          if (plan) await activatePlan(clientId, plan, { customerId, email });
+          if (plan) {
+            await activatePlan(clientId, plan, { customerId, email });
+            await recordBillingEvent(clientId, { event: "one_time_purchase", newPlan: plan, stripeEventId: event.id });
+          }
         }
         break;
       }
@@ -132,16 +159,38 @@ export async function POST(req: Request) {
           : sub.status === "past_due" || sub.status === "unpaid"
             ? "past_due"
             : "cancelled";
+        // Read prior state first so we only log a Billing History row on an actual
+        // transition (subscription.updated fires for many non-status changes).
+        const { data: prior } = await supabaseAdmin
+          .from("clients")
+          .select("id, billing_status, plan_type")
+          .eq("stripe_subscription_id", sub.id)
+          .maybeSingle();
         await supabaseAdmin
           .from("clients")
           .update({ billing_status: status, renewal_date: iso((sub as unknown as { current_period_end: number }).current_period_end) })
           .eq("stripe_subscription_id", sub.id);
+        if (prior && prior.billing_status !== status) {
+          if (status === "cancelling") {
+            await recordBillingEvent(prior.id, { event: "cancel", oldPlan: prior.plan_type, newPlan: prior.plan_type, stripeEventId: event.id, notes: "Scheduled cancellation at period end" });
+          } else if (status === "active" && prior.billing_status === "cancelling") {
+            await recordBillingEvent(prior.id, { event: "resume", oldPlan: prior.plan_type, newPlan: prior.plan_type, stripeEventId: event.id, notes: "Cancellation reversed" });
+          }
+        }
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        const { data: prior } = await supabaseAdmin
+          .from("clients")
+          .select("id, plan_type")
+          .eq("stripe_subscription_id", sub.id)
+          .maybeSingle();
         await supabaseAdmin.from("clients").update({ billing_status: "cancelled" }).eq("stripe_subscription_id", sub.id);
+        if (prior) {
+          await recordBillingEvent(prior.id, { event: "cancel", oldPlan: prior.plan_type, stripeEventId: event.id, notes: "Subscription ended" });
+        }
         break;
       }
 
