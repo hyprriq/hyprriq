@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin, getAdminClients } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PLAN_NAME, type PlanType } from "@/lib/constants/plans";
@@ -29,7 +30,7 @@ export default async function AdminClientsPage() {
             <span>Client</span><span>Plan</span><span>Status</span><span>Credits</span>
           </div>
           {clients.map((c) => (
-            <div key={c.id} className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
+            <Link key={c.id} href={`/admin/clients/${c.id}`} className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-3 border-b border-line px-4 py-3 transition-colors last:border-b-0 hover:bg-subtle">
               <div className="min-w-0">
                 <div className="truncate text-[14px] font-semibold text-ink">
                   {c.full_name ?? "Unnamed"}
@@ -44,7 +45,7 @@ export default async function AdminClientsPage() {
                 </span>
               </span>
               <span className="text-[14px] font-semibold text-ink">{c.credits_available}</span>
-            </div>
+            </Link>
           ))}
         </div>
       )}

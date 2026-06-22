@@ -196,4 +196,90 @@ export async function getAdminClients(): Promise<AdminClientRow[]> {
   return (data as AdminClientRow[]) ?? [];
 }
 
+// ---- Single client detail (admin) ----
+// Full profile INCLUDING internal_notes — admin-only by construction (reached
+// only from requireAdmin()-guarded pages). The client-facing data layer
+// (lib/data/client.ts) never selects internal_notes/notes_updated_at.
+export type AdminClientDetail = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  company_name: string | null;
+  plan_type: PlanType | null;
+  plan_category: "one_time" | "subscription" | null;
+  billing_status: string;
+  credits_available: number;
+  credits_used_this_cycle: number;
+  renewal_date: string | null;
+  stripe_customer_id: string | null;
+  role: Role;
+  created_at: string;
+  last_active_at: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  primary_marketplace: string | null;
+  marketplace_other_name: string | null;
+  sells_on_amazon: boolean | null;
+  sells_on_walmart: boolean | null;
+  amazon_store_name: string | null;
+  walmart_store_name: string | null;
+  billing_company_name: string | null;
+  billing_address_line1: string | null;
+  billing_address_line2: string | null;
+  billing_city: string | null;
+  billing_state: string | null;
+  billing_zip: string | null;
+  billing_country: string | null;
+  vat_number: string | null;
+  ein_number: string | null;
+  tax_id: string | null;
+  internal_notes: string | null;
+  notes_updated_at: string | null;
+};
+
+const CLIENT_DETAIL_COLUMNS =
+  "id, email, full_name, company_name, plan_type, plan_category, billing_status, credits_available, credits_used_this_cycle, renewal_date, stripe_customer_id, role, created_at, last_active_at, contact_name, contact_email, contact_phone, primary_marketplace, marketplace_other_name, sells_on_amazon, sells_on_walmart, amazon_store_name, walmart_store_name, billing_company_name, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_zip, billing_country, vat_number, ein_number, tax_id, internal_notes, notes_updated_at";
+
+export async function getAdminClientDetail(id: string): Promise<AdminClientDetail | null> {
+  const { data } = await supabaseAdmin
+    .from("clients")
+    .select(CLIENT_DETAIL_COLUMNS)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data as AdminClientDetail) ?? null;
+}
+
+export async function getCasesForClient(id: string): Promise<AdminCaseRow[]> {
+  const { data } = await supabaseAdmin
+    .from("cases")
+    .select("id, case_number, vendor_name, brands_submitted, status, verdict, plan_type, sla_deadline, created_at, delivered_at, credits_charged, clients(full_name, company_name)")
+    .eq("client_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data as unknown as AdminCaseRow[]) ?? [];
+}
+
+// Billing History (Item 5). Reads billing_audit; empty until the Stripe webhook
+// starts writing rows (Item 5 build) — the panel renders an empty state.
+export type BillingAuditRow = {
+  id: string;
+  old_plan: string | null;
+  new_plan: string | null;
+  event: string;
+  source: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export async function getClientBillingAudit(id: string): Promise<BillingAuditRow[]> {
+  const { data } = await supabaseAdmin
+    .from("billing_audit")
+    .select("id, old_plan, new_plan, event, source, notes, created_at")
+    .eq("client_id", id)
+    .order("created_at", { ascending: false });
+  return (data as BillingAuditRow[]) ?? [];
+}
+
 export { PLAN_PRICE_LABEL };
