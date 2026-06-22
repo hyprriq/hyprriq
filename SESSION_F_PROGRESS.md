@@ -1,3 +1,35 @@
+# ⏩ RESUME HERE — state as of 2026-06-22 (last commit `7ddd988`, branch `staging`)
+
+**What this project is:** HyprrIQ portal (Next.js 16 App Router, Tailwind v4, Clerk, Supabase, Stripe, Inngest).
+**Working dir:** `D:\Projects\Hyprriq\portal` (NOT HyprrX — ignore any HyprrX path). Repo `github.com/hyprriq/hyprriq`, branch **staging**. Staging URL `hyprriq-git-staging-hyprrx-hyprriq.vercel.app`.
+
+**Done & live:** full 13-screen client+admin portal, plan-state gating (ADR-005), role enum (ADR-006),
+Stripe checkout + webhook (test mode) VERIFIED working, cancel subscription, onboarding+billing bug pass,
+top-up credit + invoice fixes. Every change is `tsc`+`eslint`+`vitest(15)`+`next build` clean and pushed.
+
+**⚠ PENDING — founder actions (not code):**
+1. **Apply 2 migrations** in Supabase SQL editor (manual; no CLI link): `20260620000000_adr006_role_enum.sql`
+   (role enum — may already be applied; confirm) and `20260622000000_add_cancelling_billing_status.sql`
+   (needed before testing cancel). Pre-flight pattern: count conflicting rows → run → confirm with SELECT.
+2. **Mirror env to Vercel** (Preview+Prod): `STRIPE_SECRET_KEY`, 5 `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET`. All in `.env.local`.
+3. **Retest** a fresh top-up (credits should jump, invoice should appear) and the cancel flow.
+4. **Open the PR** `main...staging` once the fresh new-user + billing flows pass.
+
+**⚠ KNOWN GOTCHAS (cost hours before):** Stripe webhook destination must be **test mode** (not live) to
+get test events; **Vercel Deployment Protection** returns 401 to Stripe at the edge — must stay OFF for the
+webhook path. Migrations are applied by the founder manually (write file → they run → confirm → then code swap).
+
+**Open/flagged (not built):** drop `is_admin` column (post role-swap cleanup); admin credit-adjust tool;
+RLS test suite + CI gate; brands/suppliers normalization (ADR-007 proposed); client Settings page;
+research pipeline + PDF report (deferred sessions). See full audit lists in sections below.
+
+## Session F.10 — Top-up credits + invoices (2026-06-22)
+- [x] **Top-up credits not added** — webhook read unset `metadata.credits`; now derives from `kind`
+  (`topup:<id>`) via the `TOPUP` map. Already-paid $179 needs manual backfill (`+6` credits via SQL).
+- [x] **One-time purchases missing from Invoice History** — enabled `invoice_creation` on payment-mode
+  Checkout sessions (one-time payments don't create invoices by default). Future top-ups/Single show + PDF.
+- [x] **Top-up packs** — both Growth & Scale offer $99 (3) and $179 (6).
+
 ## Session F.9 — Onboarding + Billing bugs (2026-06-22)
 - [x] **Bug 1** Onboarding Step 2 checkout — embedded plan picker with `CheckoutButton redirect="onboarding"`;
   checkout API + button take a `redirect` param → returns to `/portal/onboarding?checkout=success`.
