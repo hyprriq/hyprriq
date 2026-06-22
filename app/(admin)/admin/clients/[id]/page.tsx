@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { InternalNotes } from "@/components/admin/internal-notes";
+import { DeleteClient } from "@/components/admin/delete-client";
 import { StatusBadge, VerdictBadge } from "@/components/portal/badges";
 import { PLAN_NAME, PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
 import { primaryMarketplaceLabel } from "@/lib/constants/marketplaces";
@@ -175,6 +176,14 @@ export default async function AdminClientDetailPage({
           </div>
         )}
       </div>
+
+      {/* Danger zone — hard delete (Item 4). Only plain client accounts; the API
+          also refuses self-delete and elevated roles. */}
+      {client.role === "client" && (
+        <div className="mt-5">
+          <DeleteClient clientId={client.id} clientEmail={client.email} clientName={client.full_name ?? ""} />
+        </div>
+      )}
     </AdminShell>
   );
 }
