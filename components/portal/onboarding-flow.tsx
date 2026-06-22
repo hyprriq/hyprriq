@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckoutButton } from "@/components/portal/checkout-button";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
@@ -10,6 +11,7 @@ import {
   PLAN_BRAND_CAPS,
   PLAN_SLA_DAYS,
   PLAN_ROLLOVER_LIMIT,
+  PLAN_TYPES,
   type PlanType,
 } from "@/lib/constants/plans";
 
@@ -34,13 +36,17 @@ export function OnboardingFlow({
   fullName,
   companyName,
   plan,
+  initialStep = 1,
+  justCheckedOut = false,
 }: {
   fullName: string;
   companyName: string;
   plan: PlanType | null;
+  initialStep?: 1 | 2 | 3;
+  justCheckedOut?: boolean;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(initialStep);
   const [name, setName] = useState(fullName);
   const [company, setCompany] = useState(companyName);
   const [busy, setBusy] = useState(false);
@@ -134,55 +140,99 @@ export function OnboardingFlow({
         {step === 2 && (
           <div>
             <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
-              {plan ? `You're on the ${PLAN_NAME[plan]} Plan` : "Your plan"}
+              {plan ? `You're on the ${PLAN_NAME[plan]} Plan` : "Choose your plan"}
             </h2>
             <p className="mt-2 text-sm text-ink-2">
               {plan
-                ? "Here's what's included with your subscription."
-                : "You don't have an active plan yet — pick one to start submitting research."}
+                ? "Here's what's included — you're all set to continue."
+                : "Pick a plan to start vetting suppliers. You can change or cancel anytime."}
             </p>
+
             {plan ? (
-              <div className="mt-5 rounded-card border border-line bg-base p-5">
-                <div className="font-display text-lg font-extrabold text-brand">
-                  {PLAN_NAME[plan]} Plan
+              <>
+                <div className="mt-5 rounded-card border border-line bg-base p-5">
+                  <div className="font-display text-lg font-extrabold text-brand">{PLAN_NAME[plan]} Plan</div>
+                  <div className="mt-0.5 text-xs text-muted">
+                    {PLAN_PRICE_LABEL[plan]} {PLAN_CADENCE[plan]}
+                    {plan !== "single_99" ? " • renews monthly" : ""}
+                  </div>
+                  <ul className="mt-4 space-y-2.5">
+                    {planBullets(plan).map((b) => (
+                      <li key={b} className="flex items-start gap-2 text-[14px] text-ink-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="mt-0.5 text-xs text-muted">
-                  {PLAN_PRICE_LABEL[plan]} {PLAN_CADENCE[plan]}
-                  {plan !== "single_99" ? " • renews monthly" : ""}
+                <div className="mt-6 flex items-center justify-between">
+                  <button type="button" onClick={() => setStep(1)} className="text-[14px] font-medium text-muted hover:text-ink">
+                    ← Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+                  >
+                    Continue →
+                  </button>
                 </div>
-                <ul className="mt-4 space-y-2.5">
-                  {planBullets(plan).map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-[14px] text-ink-2">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
+              </>
+            ) : justCheckedOut ? (
+              <div className="mt-5">
+                <div className="rounded-card border border-clear-ink/30 bg-clear-bg p-5 text-center">
+                  <div className="text-sm font-semibold text-clear-ink">Payment received — finalizing your plan…</div>
+                  <p className="mt-1 text-[13px] text-ink-2">This takes a few seconds. Refresh to continue.</p>
+                  <button
+                    type="button"
+                    onClick={() => router.refresh()}
+                    className="mt-3 rounded-lg bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <button type="button" onClick={() => setStep(1)} className="mt-4 text-[14px] font-medium text-muted hover:text-ink">
+                  ← Back
+                </button>
               </div>
             ) : (
-              <a
-                href="/portal/billing"
-                className="mt-5 block rounded-card border border-dashed border-line-strong bg-base p-5 text-center text-sm font-medium text-brand hover:bg-subtle"
-              >
-                Choose a plan →
-              </a>
+              <>
+                <div className="mt-5 grid gap-3">
+                  {PLAN_TYPES.map((p) => (
+                    <div key={p} className="flex items-center justify-between gap-3 rounded-card border border-line bg-base p-4">
+                      <div>
+                        <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
+                        <div className="text-[13px] text-muted">
+                          {PLAN_PRICE_LABEL[p]} {PLAN_CADENCE[p]} • {PLAN_CREDITS_PER_CYCLE[p]}{" "}
+                          {p === "single_99" ? "report" : "credits/mo"}
+                        </div>
+                      </div>
+                      <CheckoutButton
+                        plan={p}
+                        redirect="onboarding"
+                        className="shrink-0 rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+                      >
+                        Choose →
+                      </CheckoutButton>
+                    </div>
+                  ))}
+                </div>
+                {/* Hard gate: no "Continue" without a plan. Skip is explicit + separate. */}
+                <div className="mt-6 flex items-center justify-between">
+                  <button type="button" onClick={() => setStep(1)} className="text-[14px] font-medium text-muted hover:text-ink">
+                    ← Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => finish("/portal/dashboard")}
+                    disabled={busy}
+                    className="text-[14px] font-medium text-muted hover:text-ink disabled:opacity-50"
+                  >
+                    Skip for now →
+                  </button>
+                </div>
+              </>
             )}
-            <div className="mt-6 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-[14px] font-medium text-muted hover:text-ink"
-              >
-                ← Back
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(3)}
-                className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
-              >
-                Continue →
-              </button>
-            </div>
           </div>
         )}
 
@@ -203,7 +253,7 @@ export function OnboardingFlow({
                 {[
                   "Tell us the supplier, website, and the brands you're sourcing",
                   "Upload an invoice or LOA if you have one — improves accuracy",
-                  "We research across 5 dimensions, the founder reviews, and delivers your verdict",
+                  "We research across 5 dimensions, your report goes through quality review, and you receive your verdict",
                 ].map((t, i) => (
                   <li key={i} className="flex items-start gap-3 text-[14px] text-ink-2">
                     <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-tint text-[12px] font-bold text-brand-ink">
@@ -230,6 +280,14 @@ export function OnboardingFlow({
               className="mt-3 w-full text-center text-[14px] font-medium text-muted hover:text-ink disabled:opacity-50"
             >
               Explore the portal first
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={busy}
+              className="mt-3 w-full text-center text-[14px] font-medium text-muted hover:text-ink disabled:opacity-50"
+            >
+              ← Back
             </button>
           </div>
         )}

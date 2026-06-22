@@ -1,3 +1,17 @@
+## Session F.9 — Onboarding + Billing bugs (2026-06-22)
+- [x] **Bug 1** Onboarding Step 2 checkout — embedded plan picker with `CheckoutButton redirect="onboarding"`;
+  checkout API + button take a `redirect` param → returns to `/portal/onboarding?checkout=success`.
+  Onboarding page resumes at Step 2 when `plan_type` set or `?checkout` present (no more loop to Step 1).
+- [x] **Bug 2** Plan bypass — hard gate: Step 2 has NO "Continue" without a plan; only the plan picker +
+  an explicit "Skip for now →". Plan presence read from DB (server prop), not UI state.
+- [x] **Bug 3** "Manage subscription" only for `plan_category='subscription'`; one_time shows "Buy another
+  report →". Payment Method hides the Stripe button (no alarming red) until a `stripe_customer_id` exists.
+- [x] **Bug 4** One-time → "Upgrade to a subscription" section (Growth/Scale checkout) on Billing.
+- [x] **Bug 5** Back buttons added to onboarding Steps 2 and 3.
+- [x] **Bug 6** "the founder reviews" → "your report goes through quality review" (onboarding Step 3).
+- [x] **Top-ups (screenshot)** — Scale now offers BOTH $99 (3) and $179 (6); Growth offers $99 (3).
+- Verified: tsc + eslint + tests + next build clean. Run a fresh new-user flow to confirm loop/bypass fixed.
+
 ## Session F.8 — Stripe verified + cancel subscription (2026-06-22)
 - [x] **Stripe checkout VERIFIED end-to-end.** Root cause of the earlier zero-deliveries:
   (1) the webhook *destination was created in LIVE mode* in Stripe while checkouts were test mode —

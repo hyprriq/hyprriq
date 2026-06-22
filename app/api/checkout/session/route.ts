@@ -18,12 +18,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "stripe_not_configured", message: "Checkout isn't available yet." }, { status: 503 });
   }
 
-  let body: { plan?: string; topup?: string } = {};
+  let body: { plan?: string; topup?: string; redirect?: string } = {};
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
+  // Onboarding checkout returns to onboarding (so the flow can resume at the plan
+  // step); everything else returns to dashboard/billing.
+  const toOnboarding = body.redirect === "onboarding";
 
   const isTopup = !!body.topup;
   const plan = body.plan as PlanType | undefined;
@@ -67,8 +70,8 @@ export async function POST(req: Request) {
       ...(mode === "subscription"
         ? { subscription_data: { metadata: { client_id: userId } } }
         : {}),
-      success_url: `${origin}/portal/dashboard?checkout=success`,
-      cancel_url: `${origin}/portal/billing?checkout=cancelled`,
+      success_url: `${origin}/portal/${toOnboarding ? "onboarding" : "dashboard"}?checkout=success`,
+      cancel_url: `${origin}/portal/${toOnboarding ? "onboarding" : "billing"}?checkout=cancelled`,
     });
     return NextResponse.json({ url: session.url });
   } catch (e) {

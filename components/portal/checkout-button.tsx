@@ -8,11 +8,13 @@ import { useState } from "react";
 export function CheckoutButton({
   plan,
   topup,
+  redirect,
   className,
   children,
 }: {
   plan?: string;
   topup?: string;
+  redirect?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -27,7 +29,7 @@ export function CheckoutButton({
       const res = await fetch("/api/checkout/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(plan ? { plan } : { topup }),
+        body: JSON.stringify(plan ? { plan, redirect } : { topup, redirect }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data?.message || "Checkout isn't available yet.");

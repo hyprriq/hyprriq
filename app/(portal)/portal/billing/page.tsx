@@ -14,10 +14,15 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 
-// Credit top-up packs (one-time) available per active plan.
-const TOPUP_FOR_PLAN: Partial<Record<PlanType, { id: string; label: string }>> = {
-  growth_279: { id: "growth_topup", label: "Buy 3 credits — $99" },
-  scale_499: { id: "scale_topup", label: "Buy 6 credits — $179" },
+// Credit top-up packs (one-time) available per active subscription plan. Scale
+// can buy either the 3-credit ($99) or 6-credit ($179) pack; Growth gets the
+// 3-credit pack.
+const TOPUPS_FOR_PLAN: Partial<Record<PlanType, { id: string; label: string }[]>> = {
+  growth_279: [{ id: "growth_topup", label: "Buy 3 credits — $99" }],
+  scale_499: [
+    { id: "growth_topup", label: "Buy 3 credits — $99" },
+    { id: "scale_topup", label: "Buy 6 credits — $179" },
+  ],
 };
 
 function fmtDate(iso: string | null) {
@@ -69,9 +74,18 @@ export default async function BillingPage() {
                     {plan !== "single_99" && client.renewal_date ? ` • renews ${fmtDate(client.renewal_date)}` : ""}
                   </div>
                 </div>
-                <StripePortalButton className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle">
-                  Manage subscription →
-                </StripePortalButton>
+                {client.plan_category === "subscription" ? (
+                  <StripePortalButton className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle">
+                    Manage subscription →
+                  </StripePortalButton>
+                ) : (
+                  <CheckoutButton
+                    plan="single_99"
+                    className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle"
+                  >
+                    Buy another report →
+                  </CheckoutButton>
+                )}
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-line bg-base p-3">
@@ -131,26 +145,61 @@ export default async function BillingPage() {
           )}
         </Card>
 
-        {plan && TOPUP_FOR_PLAN[plan] && (
+        {plan && TOPUPS_FOR_PLAN[plan] && (
           <Card title="Top-Up Credits">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[14px] text-ink-2">Need more this cycle? Add credits without changing your plan.</span>
-              <CheckoutButton
-                topup={TOPUP_FOR_PLAN[plan]!.id}
-                className="ml-auto rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover"
-              >
-                {TOPUP_FOR_PLAN[plan]!.label}
-              </CheckoutButton>
+            <p className="mb-3 text-[14px] text-ink-2">Need more this cycle? Add credits without changing your plan.</p>
+            <div className="flex flex-wrap gap-2">
+              {TOPUPS_FOR_PLAN[plan]!.map((t) => (
+                <CheckoutButton
+                  key={t.id}
+                  topup={t.id}
+                  className="rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover"
+                >
+                  {t.label}
+                </CheckoutButton>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {plan && client.plan_category === "one_time" && (
+          <Card title="Upgrade to a subscription">
+            <p className="mb-3 text-[14px] text-ink-2">
+              Ready for more? Move to a monthly plan for recurring reports, credit rollover, and (Scale) priority SLA.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(["growth_279", "scale_499"] as const).map((p) => (
+                <div key={p} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-base p-4">
+                  <div>
+                    <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
+                    <div className="text-[13px] text-muted">
+                      {PLAN_PRICE_LABEL[p]} {PLAN_CADENCE[p]} • {PLAN_CREDITS_PER_CYCLE[p]} credits/mo
+                    </div>
+                  </div>
+                  <CheckoutButton
+                    plan={p}
+                    className="shrink-0 rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+                  >
+                    Upgrade →
+                  </CheckoutButton>
+                </div>
+              ))}
             </div>
           </Card>
         )}
 
         <Card title="Payment Method">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-[14px] text-ink-2">Manage your card and billing details securely in Stripe.</span>
-            <StripePortalButton className="ml-auto rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover">
-              Manage in Stripe →
-            </StripePortalButton>
+            <span className="text-[14px] text-ink-2">
+              {client.stripe_customer_id
+                ? "Manage your card, receipts, and billing details securely in Stripe."
+                : "No payment method on file yet — it'll appear here after your first purchase."}
+            </span>
+            {client.stripe_customer_id && (
+              <StripePortalButton className="ml-auto rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover">
+                Manage in Stripe →
+              </StripePortalButton>
+            )}
           </div>
         </Card>
 
