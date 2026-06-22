@@ -14,15 +14,15 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 
-// Credit top-up packs (one-time) available per active subscription plan. Scale
-// can buy either the 3-credit ($99) or 6-credit ($179) pack; Growth gets the
-// 3-credit pack.
+// Credit top-up packs (one-time). Both subscription plans can buy either the
+// 3-credit ($99) or 6-credit ($179) pack — no reason to restrict by plan.
+const TOPUP_PACKS = [
+  { id: "growth_topup", label: "Buy 3 credits — $99" },
+  { id: "scale_topup", label: "Buy 6 credits — $179" },
+];
 const TOPUPS_FOR_PLAN: Partial<Record<PlanType, { id: string; label: string }[]>> = {
-  growth_279: [{ id: "growth_topup", label: "Buy 3 credits — $99" }],
-  scale_499: [
-    { id: "growth_topup", label: "Buy 3 credits — $99" },
-    { id: "scale_topup", label: "Buy 6 credits — $179" },
-  ],
+  growth_279: TOPUP_PACKS,
+  scale_499: TOPUP_PACKS,
 };
 
 function fmtDate(iso: string | null) {
