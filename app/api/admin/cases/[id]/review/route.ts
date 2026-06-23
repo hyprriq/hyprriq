@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { trackByNumber } from "@/lib/constants/tracks";
+import { legacyConfidenceToBand } from "@/lib/research/confidence";
+import { upsertTrackResult, getCaseTrackResults } from "@/lib/data/track-results";
+import { isCaseReadyForReport } from "@/lib/research/founder-review";
+import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import type { PlanType } from "@/lib/constants/plans";
 
 type Score = "pass" | "infer" | "flag" | "fail" | "na";
 type DimInput = { index: number; score: Score; note?: string };
 
 const VALID_VERDICTS = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"];
 const CONFIDENCE_SCORE: Record<string, number> = { low: 5, medium: 10, high: 14 };
-const CONFIDENCE_ENUM: Record<string, "low" | "moderate" | "high"> = { low: "low", medium: "moderate", high: "high" };
 const SCORE_CERTAINTY: Record<Score, "verified" | "inferred" | "unknown"> = {
   pass: "verified",
   infer: "inferred",
@@ -48,10 +53,31 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, status")
+    .select("id, status, plan_type")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (!c.plan_type) return NextResponse.json({ error: "case_not_configured" }, { status: 409 });
+  const plan = c.plan_type as PlanType;
+
+  // 1) Persist per-dimension findings to case_track_results (ADR-G001, authoritative).
+  //    Founder-entered = manual_override + 'edited'. Upsert on (case_id, track,
+  //    attempt_number=1) so the orchestrator's manual_required rows become these findings.
+  const band = legacyConfidenceToBand(confidence as "low" | "medium" | "high");
+  for (const d of dims) {
+    if (d.index < 1 || d.index > 5) continue;
+    const def = trackByNumber(d.index);
+    await upsertTrackResult({
+      case_id: id, track: def.track, track_key: def.track_key, track_number: d.index,
+      source_mode: "manual_override",
+      compiled_findings_json: { score: d.score, summary: d.note ?? "" },
+      confidence_band: band,
+      finding_certainty: SCORE_CERTAINTY[d.score] ?? "unknown",
+      founder_review_status: "edited",
+      manual_review_required: false,
+      manual_notes: d.note ?? null,
+    });
+  }
 
   // Build the case update.
   const update: Record<string, unknown> = {
@@ -67,31 +93,30 @@ export async function POST(
     }
   }
 
+  // 2) Gate delivery (ADR-G002 + banned-language). Only after findings are written.
   if (action === "approve") {
+    if (!(await isCaseReadyForReport(id, plan))) {
+      return NextResponse.json(
+        { error: "not_ready", message: "All required tracks must be completed before delivery." },
+        { status: 409 },
+      );
+    }
+    const rows = await getCaseTrackResults(id);
+    const violations = [...new Set(rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)))];
+    if (violations.length > 0) {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "case_track_results", record_id: id, action: "UPDATE",
+        actor_id: userId, actor_type: "admin",
+        new_value: { blocked: "banned_language", violations },
+      });
+      return NextResponse.json({ error: "banned_language", violations }, { status: 422 });
+    }
     update.status = "delivered";
     update.delivered_at = new Date().toISOString();
   }
 
   const { error: caseErr } = await supabaseAdmin.from("cases").update(update).eq("id", id);
   if (caseErr) return NextResponse.json({ error: caseErr.message }, { status: 500 });
-
-  // Persist per-dimension findings (manual_override) so the client Evidence tab
-  // populates. Replace any prior manual findings for idempotent re-review.
-  if (dims.length > 0) {
-    await supabaseAdmin.from("research_findings").delete().eq("case_id", id).eq("source_mode", "manual_override");
-    const rows = dims
-      .filter((d) => d.index >= 1 && d.index <= 5)
-      .map((d) => ({
-        case_id: id,
-        track: `track_${d.index}`,
-        source_mode: "manual_override" as const,
-        finding_certainty: SCORE_CERTAINTY[d.score] ?? "unknown",
-        confidence: CONFIDENCE_ENUM[confidence] ?? "moderate",
-        manual_notes: d.note ?? null,
-        compiled_findings_json: { score: d.score, summary: d.note ?? "" },
-      }));
-    if (rows.length > 0) await supabaseAdmin.from("research_findings").insert(rows);
-  }
 
   return NextResponse.json({ ok: true, delivered: action === "approve" });
 }

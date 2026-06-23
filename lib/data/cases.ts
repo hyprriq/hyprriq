@@ -98,14 +98,17 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
 export type Finding = {
   id: string;
   track: string;
+  track_key: string;
   finding_certainty: "verified" | "inferred" | "unknown" | null;
-  confidence: "high" | "moderate" | "low" | null;
+  confidence_band: "low" | "moderate" | "high" | "verified" | null;
   compiled_findings_json: Record<string, unknown> | null;
   ai_output_json: Record<string, unknown> | null;
   manual_notes: string | null;
 };
 
-// Findings for a case, scoped via the parent case's ownership.
+// Findings for a case, scoped via the parent case's ownership. Reads the
+// authoritative case_track_results (ADR-G001); the Evidence tab shows finding
+// tracks (1–5), not the intake row.
 export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   const { userId } = await auth();
   if (!userId) return [];
@@ -119,9 +122,11 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
     .maybeSingle();
   if (!owned) return [];
   const { data } = await supa
-    .from("research_findings")
-    .select("id, track, finding_certainty, confidence, compiled_findings_json, ai_output_json, manual_notes")
+    .from("case_track_results")
+    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, ai_output_json, manual_notes")
     .eq("case_id", caseId)
-    .order("track", { ascending: true });
+    .gte("track_number", 1)
+    .is("deleted_at", null)
+    .order("track_number", { ascending: true });
   return (data as Finding[]) ?? [];
 }

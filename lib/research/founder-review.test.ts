@@ -10,7 +10,8 @@ const row = (
   id: String(n), case_id: "c", track: `track_${n}`, track_key: "x", track_number: n,
   source_mode: "manual_override", compiled_findings_json: hasFindings ? { ok: true } : null,
   confidence_score: null, confidence_band: null, finding_certainty: null,
-  founder_review_status: status, manual_review_required: false, manual_review_reason: null, attempt_number: 1,
+  founder_review_status: status, manual_review_required: false, manual_review_reason: null,
+  manual_notes: null, attempt_number: 1,
 });
 
 describe("evaluateReportReady", () => {

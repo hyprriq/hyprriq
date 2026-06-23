@@ -17,11 +17,12 @@ export type TrackResultRow = {
   founder_review_status: "pending" | "approved" | "edited" | "rejected";
   manual_review_required: boolean;
   manual_review_reason: string | null;
+  manual_notes: string | null;
   attempt_number: number;
 };
 
 const COLS =
-  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, attempt_number";
+  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, attempt_number";
 
 export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin
