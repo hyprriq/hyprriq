@@ -1,30 +1,30 @@
-# ⏩ RESUME HERE — state as of 2026-06-22 (last commit `244271e` + F.11 migrations, branch `staging`)
+# ⏩ RESUME HERE — state as of 2026-06-23 (Phase G architecture locked, branch `staging`)
 
 **What this project is:** HyprrIQ portal (Next.js 16 App Router, Tailwind v4, Clerk, Supabase, Stripe, Inngest).
 **Working dir:** `D:\Projects\Hyprriq\portal` (NOT HyprrX — ignore any HyprrX path). Repo `github.com/hyprriq/hyprriq`, branch **staging**. Staging URL `hyprriq-git-staging-hyprrx-hyprriq.vercel.app`.
 
 **Done & live:** full 13-screen client+admin portal, plan-state gating (ADR-005), role enum (ADR-006),
 Stripe checkout + webhook (test mode) VERIFIED working, cancel subscription, onboarding+billing bug pass,
-top-up credit + invoice fixes. Every change is `tsc`+`eslint`+`vitest(15)`+`next build` clean and pushed.
+top-up credit + invoice fixes, **F.11 complete** (client profile, internal notes, account deletion,
+billing_audit). Every change is `tsc`+`eslint`+`vitest(15)`+`next build` clean and pushed.
+
+**⚠ NEXT — Phase G research pipeline. Governing spec: `docs/adr-008-research-pipeline.md` (READ FIRST).**
+Founder-approved: full adoption of ADR-G001 (`case_track_results` = single authoritative track table),
+single-model `claude-sonnet-4-6` at launch (no OpenAI backup yet; behind a `runModel()` adapter),
+phasing G1 (backbone+Track 0+manual+review gate) → G2 (Track 1) → G3 (Tracks 2–5 + PDF).
 
 **⚠ PENDING — founder actions (not code):**
-1. **F.11 migration trio APPLIED ✓** (010000 client profile+notes, 020000 case_track_results,
-   030000 billing_audit+admin_audit) — pre-flight returned 0 conflicts, all three ran clean.
-   F.11 dependent code (Items 1/2/4/5) is BUILT, verified and pushed (commits 105cfde, f8c5ee9,
-   aede1c2, fcdb029).
-2. **Apply 1 more migration** `20260622040000_billing_audit_retain_on_delete.sql` — relaxes the
-   billing_audit→clients FK to `ON DELETE SET NULL` + adds `client_email_snapshot`, so retained
-   billing rows survive a client hard-delete. **Needed ONLY before using the account-deletion
-   feature.** The delete route fails safe (errors before destroying anything) until it's applied.
-   Pre-flight: `SELECT column_name FROM information_schema.columns WHERE table_name='billing_audit'
-   AND column_name='client_email_snapshot';` → expect 0 rows.
-3. **Test account deletion** on a throwaway client (per spec) before relying on it — confirm CASCADE +
-   Storage purge + Clerk deleteUser + admin_audit_log row + billing_audit retained.
-4. **Older migrations** `20260620000000_adr006_role_enum` + `20260622000000_add_cancelling_billing_status` —
-   confirm applied (role='founder' + 'cancelling' in billing_status CHECK).
-5. **Mirror env to Vercel** (Preview+Prod): `STRIPE_SECRET_KEY`, 5 `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET`.
-6. **Retest** a fresh top-up + cancel; verify a billing_audit row now appears in admin client detail.
-7. **Open the PR** `main...staging` once the fresh new-user + billing flows pass.
+1. **Apply migration** `20260623000000_adr_g001_case_track_results_authoritative.sql` — drop+recreate
+   `case_track_results` to the ADR-G001 schema (+`track_key`, governance/prompt fields), backfill from
+   legacy `research_findings`, deprecate `research_findings`. **Pre-flight FIRST:**
+   `SELECT count(*) FROM case_track_results;` must be **0** (no writer exists). Then confirm counts.
+   *After this applies → I re-point the review API + Evidence tab to `case_track_results`, then build G1.*
+2. **Review `docs/adr-008-research-pipeline.md`** and confirm the locked decisions.
+3. **No API keys needed for G1.** Add `ANTHROPIC_API_KEY` + `WHOIS_API_KEY` (+ register `SERPER_API_KEY`)
+   only at the G1→G2 boundary — I'll ping you. `KEEPA_API_KEY` at G3 when first Scale client subscribes.
+4. **(F.11 leftovers)** `20260622040000_billing_audit_retain_on_delete.sql` APPLIED ✓; still TODO:
+   test account deletion on a throwaway client; mirror Stripe env to Vercel; retest top-up + cancel
+   (verify a billing_audit row appears in admin client detail); open the PR `main...staging`.
 
 **⚠ KNOWN GOTCHAS (cost hours before):** Stripe webhook destination must be **test mode** (not live) to
 get test events; **Vercel Deployment Protection** returns 401 to Stripe at the edge — must stay OFF for the
@@ -33,6 +33,31 @@ webhook path. Migrations are applied by the founder manually (write file → the
 **Open/flagged (not built):** drop `is_admin` column (post role-swap cleanup); admin credit-adjust tool;
 RLS test suite + CI gate; brands/suppliers normalization (ADR-007 proposed); client Settings page;
 research pipeline + PDF report (deferred sessions). See full audit lists in sections below.
+
+## Session G.0 — Research pipeline architecture locked (2026-06-23)
+**Scope:** lock the intelligence engine before any Track 0–5 code. Inputs: founder's
+`hyprriq_phase_de_g_brief v1.1` (ADR-G001/G002/G003 + prompts + evidence-weight tables) and
+`ADR-G001 Research Pipeline Governance`. Output: `docs/adr-008-research-pipeline.md` (governing spec).
+
+- **🛑 Caught (ADR-G001-mandated stop): TWO findings tables existed** — `research_findings` (original
+  schema, live-wired: review API writes, Evidence tab reads) AND `case_track_results` (F.11 scaffold,
+  empty). ADR-G001 forbids dual tables. **Founder decision: Option 1 — full ADR-G001 adoption.**
+- **Migration written** `20260623000000_adr_g001_case_track_results_authoritative.sql`: drop+recreate
+  `case_track_results` (empty) to the ADR-G001 authoritative schema + `track_key` canonical registry
+  (`intake`/`supplier_identity`/`supply_chain_relationship`/`brand_risk_assessment`/`documentation_review`/
+  `sourcing_logic`) + `track_number` + prompt-governance fields (GR5); backfill `research_findings`
+  near-1:1; deprecate `research_findings` (legacy comment, drop after Phase G). Pre-flight: ctr empty.
+- **CTO decisions recorded in ADR-008:** single-model `claude-sonnet-4-6` at launch (GR8), **no OpenAI
+  backup yet** but every call behind a `runModel()` provider adapter (config-flag later); API-key
+  timing (G1 none → G2 Anthropic+WHOIS+Serper → G3 Keepa); cost tiered by plan + cache-reuse moat;
+  Source Clear copy adds "Verdicts are operational guidance, not legal determinations."; recommended
+  premium data sources (import bill-of-lading / OpenCorporates / WhoisXML / USPTO / CourtListener).
+- **Test-engineer finding:** `normalizeName()` bug confirmed (`'LLC'→''`, no null guard) — fix per
+  brief §3.1 before G2 cache use.
+- **Phasing (supersedes brief session-split):** G1 backbone+Track 0+manual+review gate (zero keys) →
+  G2 Track 1 automated (reference impl) → G3 Tracks 2–5 + Phase H PDF.
+- **Next code (after migration applies):** re-point review API + Evidence tab `research_findings →
+  case_track_results.compiled_findings_json`, then writing-plans for G1.
 
 ## Session F.11 — Client profile / internal notes / track schema / deletion / billing_audit (2026-06-22)
 **Scope:** spec `HyprrIQ_ClaudeCode_ClientProfile_TrackSchema_Deletion.md` (5 items). This pass writes the
