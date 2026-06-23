@@ -44,14 +44,32 @@ describe("normalizeName", () => {
     expect(normalizeName(once)).toBe(once);
   });
 
-  it("returns an empty string for a name made entirely of suffix words", () => {
-    // EDGE CASE worth guarding at the call site: an empty normalized key
-    // collides on the UNIQUE(vendor_name_normalized) constraint if two such
-    // names are ever cached. The pipeline must not write a '' cache key.
-    expect(normalizeName("Holdings International Group")).toBe("");
+  it("keeps the cleaned tokens when a name is made entirely of suffix words", () => {
+    // G1 fix: a pure-suffix name must NOT collapse to '' (that would collide on
+    // the UNIQUE cache key). When every token is a suffix, keep them all.
+    expect(normalizeName("Holdings International Group")).toBe("holdings international group");
   });
 
   it("returns an empty string for empty input", () => {
     expect(normalizeName("")).toBe("");
+  });
+});
+
+// G1 edge-case hardening (brief §3.1): pure-suffix inputs and nullish guards.
+describe("normalizeName edge cases (G1)", () => {
+  it("returns cleaned token when input is a pure business suffix", () => {
+    expect(normalizeName("LLC")).toBe("llc");
+    expect(normalizeName("Corp")).toBe("corp");
+  });
+  it("strips suffix from real names", () => {
+    expect(normalizeName("Acme LLC")).toBe("acme");
+    expect(normalizeName("Ingram Micro Inc")).toBe("ingram micro");
+  });
+  it("guards empty/nullish input", () => {
+    expect(normalizeName("")).toBe("");
+    // @ts-expect-error runtime guard for null
+    expect(normalizeName(null)).toBe("");
+    // @ts-expect-error runtime guard for undefined
+    expect(normalizeName(undefined)).toBe("");
   });
 });
