@@ -29,12 +29,23 @@ const VERDICTS: { key: Verdict; name: string; desc: string; cls: string }[] = [
   { key: "do_not_rely", name: "✕ Do Not Rely", desc: "Significant concerns identified", cls: "border-deny-ink/30" },
 ];
 
+const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
+  approved: { label: "Approved", cls: "bg-clear-bg text-clear-ink" },
+  edited: { label: "Edited", cls: "bg-conditional-bg text-conditional-ink" },
+  pending: { label: "Pending", cls: "bg-subtle text-muted" },
+  rejected: { label: "Rejected", cls: "bg-deny-bg text-deny-ink" },
+};
+
 export function CaseReview({
   caseId,
   initial,
+  requiredTracks = [1, 2, 3, 4, 5],
+  existing = [],
 }: {
   caseId: string;
   initial: { verdict: string | null };
+  requiredTracks?: number[];
+  existing?: { track_number: number; status: string; band: string | null }[];
 }) {
   const router = useRouter();
   const validInitial = VERDICTS.some((v) => v.key === initial.verdict)
@@ -48,7 +59,9 @@ export function CaseReview({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  const scoredCount = Object.keys(scores).length;
+  const requiredScored = requiredTracks.filter((n) => scores[n] !== undefined).length;
+  const allRequiredScored = requiredScored >= requiredTracks.length;
+  const existingByTrack = new Map(existing.map((e) => [e.track_number, e]));
 
   async function send(action: "draft" | "approve") {
     if (busy) return;
@@ -70,7 +83,12 @@ export function CaseReview({
         body: JSON.stringify({ action, verdict, confidence, dimensions }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Could not save.");
+      if (!res.ok) {
+        if (data?.error === "banned_language") {
+          throw new Error(`Delivery blocked — prohibited language: ${(data.violations ?? []).join(", ")}`);
+        }
+        throw new Error(data?.message || data?.error || "Could not save.");
+      }
       if (action === "approve") {
         setDone("Report approved & delivered.");
         router.refresh();
@@ -91,10 +109,19 @@ export function CaseReview({
         <h3 className="font-display text-sm font-bold text-ink">Research Builder</h3>
         {DIMENSIONS.map((name, i) => {
           const idx = i + 1;
+          if (!requiredTracks.includes(idx)) return null; // skipped for this plan
+          const ex = existingByTrack.get(idx);
           return (
             <div key={name} className="rounded-card border border-line bg-surface p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-[14px] font-semibold text-ink">{name}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-semibold text-ink">{name}</span>
+                  {ex && (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_LABEL[ex.status]?.cls ?? "bg-subtle text-muted"}`}>
+                      {STATUS_LABEL[ex.status]?.label ?? ex.status}
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-1.5">
                   {SCORES.map((s) => {
                     const on = scores[idx] === s.key;
@@ -170,7 +197,7 @@ export function CaseReview({
           </div>
 
           <div className="mt-4 space-y-1.5 rounded-lg border border-line bg-base p-3 text-[13px]">
-            <div className="flex justify-between"><span className="text-muted">Dimensions scored</span><span className={`font-semibold ${scoredCount >= 5 ? "text-clear-ink" : "text-ink"}`}>{scoredCount} of 5</span></div>
+            <div className="flex justify-between"><span className="text-muted">Required dimensions</span><span className={`font-semibold ${allRequiredScored ? "text-clear-ink" : "text-ink"}`}>{requiredScored} of {requiredTracks.length}</span></div>
             <div className="flex justify-between"><span className="text-muted">Verdict selected</span><span className="font-semibold text-ink">{verdict ? VERDICTS.find((v) => v.key === verdict)!.name.replace(/^[^ ]+ /, "") : "—"}</span></div>
             <div className="flex justify-between"><span className="text-muted">Confidence</span><span className="font-semibold capitalize text-ink">{confidence}</span></div>
           </div>
@@ -190,12 +217,16 @@ export function CaseReview({
             <button
               type="button"
               onClick={() => send("approve")}
-              disabled={!verdict || busy !== null}
+              disabled={!verdict || !allRequiredScored || busy !== null}
               className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy === "approve" ? "Delivering…" : "Approve & Deliver"}
             </button>
-            {!verdict && <p className="text-center text-[12px] text-muted">Select verdict first</p>}
+            {!allRequiredScored ? (
+              <p className="text-center text-[12px] text-muted">Score all {requiredTracks.length} required dimensions first</p>
+            ) : !verdict ? (
+              <p className="text-center text-[12px] text-muted">Select verdict first</p>
+            ) : null}
           </div>
         </div>
       </div>
