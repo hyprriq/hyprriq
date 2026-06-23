@@ -8,6 +8,7 @@ import {
   PLAN_CATEGORY,
   type PlanType,
 } from "@/lib/constants/plans";
+import { initializeCaseResearch } from "@/lib/research/orchestrator";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
 
@@ -142,6 +143,20 @@ export async function POST(req: Request) {
     } catch {
       // file upload is best-effort; the case is already created and charged.
     }
+  }
+
+  // ---- initialize the research pipeline (G1: Track 0 + manual-required tracks) ----
+  // Synchronous orchestration (no Inngest in G1). Non-fatal: the case + charge
+  // already exist, and the founder queue surfaces pending_intake, so a failure here
+  // can be re-run rather than lost.
+  try {
+    await initializeCaseResearch(created.id, plan, {
+      vendor_name: vendorName,
+      brands_submitted: brands,
+      has_document: !!(file && file instanceof Blob && file.size > 0),
+    });
+  } catch {
+    // best-effort; orchestration is idempotent and can be re-run
   }
 
   return NextResponse.json({
