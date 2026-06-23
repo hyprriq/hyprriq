@@ -47,6 +47,11 @@ to run until **every required track** has `compiled_findings_json` AND
 the "Approve & Deliver" button is disabled until it returns true. Required tracks come from the
 per-plan `TRACK_CONFIG` (brief §3.4).
 
+> **Future enhancement (founder-approved, NOT G1):** when a founder edits a track
+> (`founder_review_status='edited'`), persist the before/after diff as a model-training
+> feedback signal (the `founder_override_json` + `founder_edit_notes` already capture the
+> edit; this adds structured logging for later fine-tuning/eval). Deferred until after G1.
+
 ## 3. Confidence + verdict (ADR-G003)
 
 Per-track numeric confidence **0–15** from the per-track evidence-weight tables (brief §ADR-G003),
