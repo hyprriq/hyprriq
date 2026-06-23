@@ -34,6 +34,31 @@ webhook path. Migrations are applied by the founder manually (write file → the
 RLS test suite + CI gate; brands/suppliers normalization (ADR-007 proposed); client Settings page;
 research pipeline + PDF report (deferred sessions). See full audit lists in sections below.
 
+## Session G.1 — Pipeline backbone + Track 0 + manual workflow (2026-06-23)
+**Built (plan `docs/superpowers/plans/2026-06-23-g1-pipeline-backbone.md`, inline TDD, synchronous — NO Inngest).**
+Spine is end-to-end with zero automation/zero API keys; Tracks 1–5 land in manual entry.
+- [x] **normalizeName fix** — pure-suffix (`'LLC'→'llc'`) + null guard; updated the stale characterization
+  test. Closed BEFORE any cache code (ADR-008 §7).
+- [x] **Foundations** — `lib/constants/tracks.ts` (track_key registry + per-plan `TRACK_CONFIG` +
+  `requiredFindingTracks`), `lib/research/confidence.ts` (`scoreToBand` ADR-G003 bands), `lib/utils/banned-language.ts`.
+- [x] **Track 0** `lib/research/track0.ts` — deterministic intake (normalize + brand count + flags), no LLM.
+- [x] **Orchestrator** `lib/research/orchestrator.ts` `initializeCaseResearch()` — wired into submit; creates
+  6 `case_track_results` rows (intake auto-approved; finding tracks manual_required/pending; skipped tracks
+  no row), sets `cases.track_*_status` + `status='awaiting_review'`. Transport-agnostic seam → Inngest drops
+  in at G2 without touching business logic.
+- [x] **Founder-review gate** `lib/research/founder-review.ts` `isCaseReadyForReport()` (+ pure `evaluateReportReady`).
+- [x] **Re-point** review API + Evidence tab `research_findings → case_track_results.compiled_findings_json`;
+  delivery gated on `isCaseReadyForReport` + banned-language scan (blocks + logs to audit_log).
+- [x] **Review UI** — plan-aware: renders only the plan's required dimensions, shows per-track review-status
+  badges, gates "Approve & Deliver" on all required dimensions scored + verdict; surfaces 409/422 errors.
+- **Verified:** `tsc` + `eslint` + `vitest (35)` + `next build` clean on every commit; pushed to staging.
+- **NOT in G1 (→ G2):** Inngest activation, Tracks 1–5 automation, WHOIS/Keepa/Serper, `runModel()` adapter,
+  supplier/brand cache. **→ Phase H:** React-PDF. **Cleanup:** drop `research_findings` after G1 stabilizes.
+- **⚠ Founder manual verification (Clerk-gated, not headless):** submit a case → confirm 6 track rows
+  (intake approved + JSON; required tracks manual_required/pending; skipped tracks absent) + case at
+  `awaiting_review`; Case Review → score required dims + verdict → Approve enables only when all required
+  scored → deliver → client Evidence tab renders from `case_track_results`.
+
 ## Session G.0 — Research pipeline architecture locked (2026-06-23)
 **Scope:** lock the intelligence engine before any Track 0–5 code. Inputs: founder's
 `hyprriq_phase_de_g_brief v1.1` (ADR-G001/G002/G003 + prompts + evidence-weight tables) and
