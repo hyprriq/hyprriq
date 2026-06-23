@@ -150,13 +150,15 @@ export async function POST(req: Request) {
   // already exist, and the founder queue surfaces pending_intake, so a failure here
   // can be re-run rather than lost.
   try {
-    await initializeCaseResearch(created.id, plan, {
+    const orch = await initializeCaseResearch(created.id, plan, {
       vendor_name: vendorName,
       brands_submitted: brands,
       has_document: !!(file && file instanceof Blob && file.size > 0),
     });
-  } catch {
-    // best-effort; orchestration is idempotent and can be re-run
+    if (orch.error) console.error("[submit] orchestration error:", orch.error, { case_id: created.id });
+  } catch (e) {
+    // best-effort; orchestration is idempotent and can be re-run. Never swallow silently.
+    console.error("[submit] orchestration threw:", e, { case_id: created.id });
   }
 
   return NextResponse.json({
