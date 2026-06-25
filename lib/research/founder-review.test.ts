@@ -11,7 +11,9 @@ const row = (
   source_mode: "manual_override", compiled_findings_json: hasFindings ? { ok: true } : null,
   confidence_score: null, confidence_band: null, finding_certainty: null,
   founder_review_status: status, manual_review_required: false, manual_review_reason: null,
-  manual_notes: null, attempt_number: 1,
+  manual_notes: null, evidence_items: null, reasoning_notes: null, unknowns: null,
+  evidence_weights_applied: null, track_verdict_signal: null, suggested_signal: null,
+  failure_type: null, attempt_number: 1,
 });
 
 describe("evaluateReportReady", () => {

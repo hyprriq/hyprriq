@@ -9,7 +9,7 @@ describe("track registry", () => {
   });
   it("maps number to canonical key", () => {
     expect(trackByNumber(1).track_key).toBe("supplier_identity");
-    expect(trackByNumber(0).track_key).toBe("intake");
+    expect(trackByNumber(0).track_key).toBe("intake_scope_guard");
   });
   it("throws on unknown track number", () => {
     expect(() => trackByNumber(9)).toThrow();

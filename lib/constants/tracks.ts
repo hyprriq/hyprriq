@@ -4,13 +4,13 @@ import type { PlanType } from "@/lib/constants/plans";
 // prompts, orchestration, reporting, PDFs, QA, analytics — never reference a track
 // by number alone. Kept in sync with the case_track_results CHECK constraints.
 export type TrackKey =
-  | "intake" | "supplier_identity" | "supply_chain_relationship"
+  | "intake_scope_guard" | "supplier_identity" | "supply_chain_relationship"
   | "brand_risk_assessment" | "documentation_review" | "sourcing_logic";
 
 export type TrackDef = { track: string; track_key: TrackKey; track_number: number; dimension: string };
 
 export const TRACKS: TrackDef[] = [
-  { track: "track_0", track_key: "intake",                    track_number: 0, dimension: "Intake" },
+  { track: "track_0", track_key: "intake_scope_guard",       track_number: 0, dimension: "Intake" },
   { track: "track_1", track_key: "supplier_identity",         track_number: 1, dimension: "Supplier Identity" },
   { track: "track_2", track_key: "supply_chain_relationship", track_number: 2, dimension: "Supply Chain Relationship" },
   { track: "track_3", track_key: "brand_risk_assessment",     track_number: 3, dimension: "Brand Risk Assessment" },

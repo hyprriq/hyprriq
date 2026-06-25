@@ -8,7 +8,7 @@ import {
   PLAN_CATEGORY,
   type PlanType,
 } from "@/lib/constants/plans";
-import { initializeCaseResearch } from "@/lib/research/orchestrator";
+import { runPipeline } from "@/lib/research/pipeline";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
 
@@ -145,20 +145,22 @@ export async function POST(req: Request) {
     }
   }
 
-  // ---- initialize the research pipeline (G1: Track 0 + manual-required tracks) ----
-  // Synchronous orchestration (no Inngest in G1). Non-fatal: the case + charge
-  // already exist, and the founder queue surfaces pending_intake, so a failure here
-  // can be re-run rather than lost.
+  // ---- run the Intelligence-OS pipeline (Stage 2: synchronous, stubbed reasoning) ----
+  // Layers 1→5 reach report-ready autonomously (no human gate). Non-fatal: the case + charge
+  // already exist; a failure is logged (never silently swallowed) and can be re-run. Inngest
+  // takes over the Layer-1 loop in Phase 5 when tracks make real external calls.
   try {
-    const orch = await initializeCaseResearch(created.id, plan, {
+    const result = await runPipeline({
+      case_id: created.id,
       vendor_name: vendorName,
+      vendor_website: vendorWebsite,
       brands_submitted: brands,
-      has_document: !!(file && file instanceof Blob && file.size > 0),
+      marketplace,
+      plan_type: plan,
     });
-    if (orch.error) console.error("[submit] orchestration error:", orch.error, { case_id: created.id });
+    if (result.error) console.error("[submit] pipeline error:", result.error, { case_id: created.id });
   } catch (e) {
-    // best-effort; orchestration is idempotent and can be re-run. Never swallow silently.
-    console.error("[submit] orchestration threw:", e, { case_id: created.id });
+    console.error("[submit] pipeline threw:", e, { case_id: created.id });
   }
 
   return NextResponse.json({

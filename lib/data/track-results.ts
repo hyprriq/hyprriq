@@ -1,8 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { ConfidenceBand } from "@/lib/research/confidence";
+import type { EvidenceItem, EvidenceWeight, TrackSignal, Unknown } from "@/lib/research/contracts";
 
 // Read/write helpers for case_track_results — the single authoritative track table
-// (ADR-G001). Service-role; callers are admin-guarded routes or the submit flow.
+// (ADR-G001 + v2.1 evidence columns). Service-role; callers are admin-guarded routes,
+// the submit flow, or the Intelligence-OS pipeline.
 export type TrackResultRow = {
   id: string;
   case_id: string;
@@ -18,11 +20,20 @@ export type TrackResultRow = {
   manual_review_required: boolean;
   manual_review_reason: string | null;
   manual_notes: string | null;
+  // v2.1 evidence layer (Layer 1 output). track_verdict_signal is CODE-derived (Layer 4a);
+  // suggested_signal is the LLM's QA-only suggestion — never a verdict input.
+  evidence_items: EvidenceItem[] | null;
+  reasoning_notes: string | null;
+  unknowns: Unknown[] | null;
+  evidence_weights_applied: EvidenceWeight[] | null;
+  track_verdict_signal: TrackSignal | null;
+  suggested_signal: TrackSignal | null;
+  failure_type: "soft" | "hard" | null;
   attempt_number: number;
 };
 
 const COLS =
-  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, attempt_number";
+  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number";
 
 export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin
