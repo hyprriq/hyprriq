@@ -36,6 +36,42 @@ export async function upsertCaseSynthesis(
   return { error: error?.message ?? null };
 }
 
+// Evidence-hash memoization (enhancement #2): if a prior case produced synthesis from the
+// IDENTICAL normalized evidence under the SAME IOS version, reuse it instead of regenerating.
+// This makes "same evidence → same synthesis → same verdict" demonstrably reproducible.
+type SynthRow = {
+  normalized_evidence: unknown; claim_attributions: unknown; assertions: unknown;
+  contradictions: SynthesisOutput["module_4_contradictions"]; hypotheses: SynthesisOutput["module_5_hypotheses"];
+  risk_gaps: unknown; doubt_calibration: SynthesisOutput["module_7_doubt_calibration"];
+  vendor_questions: string[]; decision_snapshot: SynthesisOutput["module_9_decision_snapshot"];
+};
+export async function getSynthesisByEvidenceHash(
+  evidenceHash: string,
+  iosVersion: string,
+): Promise<SynthesisOutput | null> {
+  const { data } = await supabaseAdmin
+    .from("case_synthesis")
+    .select("normalized_evidence, claim_attributions, assertions, contradictions, hypotheses, risk_gaps, doubt_calibration, vendor_questions, decision_snapshot")
+    .eq("evidence_hash", evidenceHash)
+    .eq("ios_version", iosVersion)
+    .is("deleted_at", null)
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  const r = data as SynthRow;
+  return {
+    module_1_normalized_evidence: (r.normalized_evidence as unknown[]) ?? [],
+    module_2_claim_attributions: (r.claim_attributions as unknown[]) ?? [],
+    module_3_assertions: (r.assertions as unknown[]) ?? [],
+    module_4_contradictions: r.contradictions ?? [],
+    module_5_hypotheses: r.hypotheses ?? { hypotheses: [], what_would_change_the_leader: "" },
+    module_6_risk_gaps: (r.risk_gaps as unknown[]) ?? [],
+    module_7_doubt_calibration: r.doubt_calibration ?? { doubt_level: "", doubt_focus: "", rationale: "" },
+    module_8_vendor_questions: r.vendor_questions ?? [],
+    module_9_decision_snapshot: r.decision_snapshot,
+  };
+}
+
 // Client-facing: ONLY Module 9 + vendor questions (reasoning modules never exposed).
 export type ClientSnapshot = { decision_snapshot: unknown; vendor_questions: unknown };
 export async function getClientDecisionSnapshot(caseId: string): Promise<ClientSnapshot | null> {

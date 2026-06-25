@@ -1,10 +1,15 @@
+import { createHash } from "node:crypto";
 import type { TrackOutput, NormalizedEvidence, NormalizedEvidenceItem } from "@/lib/research/contracts";
 
-// Layer 2 — Evidence Normalization (deterministic). Phase 3: real stable hash over the
-// sorted normalized set (the cache + replay key). Stage-1 scaffold: passthrough + placeholder hash.
+// Layer 2 — Evidence Normalization (deterministic). The evidence_hash is a stable SHA-256 over
+// the canonicalized (order-independent) normalized evidence set. Same evidence → same hash →
+// same synthesis (memoization) → same verdict (replay/DD requirement). Order-independent so two
+// runs that find the same evidence in a different sequence still match.
 export function computeEvidenceHash(items: NormalizedEvidenceItem[]): string {
-  // Phase 3: SHA-256 over canonicalized (sorted) evidence. Placeholder for now.
-  return `stub-${items.length}`;
+  const canonical = items
+    .map((i) => `${i.source_track}|${i.evidence_id}|${i.statement}|${i.certainty}|${i.source_type}|${i.source_url ?? ""}|${i.claimant}|${i.claimant_benefits}|${i.weight_key ?? ""}`)
+    .sort();
+  return createHash("sha256").update(JSON.stringify(canonical)).digest("hex").slice(0, 32);
 }
 
 export function normalizeEvidence(outputs: TrackOutput[]): NormalizedEvidence {

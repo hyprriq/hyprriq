@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import type { TrackContext, TrackOutput, SignalResult, TrackSignal } from "@/lib/research/contracts";
+import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey, requiredFindingTracks, trackByNumber } from "@/lib/constants/tracks";
 import { runTrack0 } from "@/lib/research/track0";
 import { runTrack1 } from "@/lib/research/track1";
@@ -15,7 +15,7 @@ import { computeVerdict } from "@/lib/research/verdictEngine";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
 import { upsertTrackResult } from "@/lib/data/track-results";
-import { upsertCaseSynthesis } from "@/lib/data/synthesis";
+import { upsertCaseSynthesis, getSynthesisByEvidenceHash } from "@/lib/data/synthesis";
 import { writeIntelligence } from "@/lib/data/intelligence";
 
 const TRACK_FNS: Record<number, (ctx: TrackContext) => Promise<TrackOutput>> = {
@@ -51,14 +51,15 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
     trackOutputs.push(out);
 
     // ── Layer 4a — CODE-derived signal (the LLM never decides PASS/FAIL) ──
-    const sig: SignalResult = deriveTrackSignal(out.evidence_weights_applied, [], []);
+    const foundTypes = out.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k);
+    const sig = deriveTrackSignal(def.track_key, foundTypes);
     signals[def.track_key] = sig.signal;
 
     await upsertTrackResult({
       case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n,
       source_mode: "ai_generated",
       evidence_items: out.evidence_items, reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
-      evidence_weights_applied: out.evidence_weights_applied, suggested_signal: out.suggested_signal ?? null,
+      evidence_weights_applied: sig.applied, suggested_signal: out.suggested_signal ?? null,
       track_verdict_signal: sig.signal, confidence_score: sig.score_0_15, confidence_band: sig.band,
       finding_certainty: "unknown",
       compiled_findings_json: {
@@ -73,8 +74,11 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   // ── Layer 2.5 — Evidence Graph (reserved seam; passthrough today) ──
   const enriched = enrichWithGraph(normalized);
   // ── Layer 3 — Intelligence (the only adaptive reasoning layer) ──
-  const synthesis = await runSynthesis(enriched);
   const ios = assembleIosVersion(enriched.evidence_hash, "anthropic", "claude-sonnet-4-6");
+  // Memoize (enhancement #2): reuse synthesis when identical evidence was already reasoned over
+  // under the same IOS version → same evidence → same synthesis → same verdict.
+  const memoized = await getSynthesisByEvidenceHash(enriched.evidence_hash, ios.ios_version);
+  const synthesis = memoized ?? (await runSynthesis(enriched));
   const synthErr = await upsertCaseSynthesis(ctx.case_id, synthesis, ios);
   if (synthErr.error) return { error: synthErr.error };
 
@@ -89,7 +93,7 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   // ── Persist case state — report-ready, reached autonomously ──
   const caseUpdate: Record<string, unknown> = {
     status: "awaiting_review", synthesis_status: "complete",
-    verdict: verdict.verdict, confidence_score: 0, track_0_status: "complete",
+    verdict: verdict.verdict, confidence_score: verdict.confidence_0_15, track_0_status: "complete",
   };
   for (let n = 1; n <= 5; n++) caseUpdate[`track_${n}_status`] = included.has(n) ? "complete" : "skipped";
   const { error } = await supabaseAdmin.from("cases").update(caseUpdate).eq("id", ctx.case_id);

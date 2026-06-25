@@ -29,6 +29,7 @@ export interface EvidenceItem {
   claimant: "vendor" | "brand" | "independent_registry" | "third_party" | "ai_inference";
   claimant_benefits: boolean; // true if the claimant benefits from it being believed
   supports: string;
+  weight_key?: string; // ADR-G003 evidence_type tag the CODE weight engine scores (Phase 5)
 }
 export interface EvidenceWeight { evidence_type: string; points: number; note?: string }
 export interface Unknown { unknown: string; why_unresolvable: string; resolvable_by_client: boolean }
@@ -72,7 +73,8 @@ export interface SynthesisOutput {
 // Layer 4b output
 export interface VerdictResult {
   verdict: Verdict;
-  weighted_score: number;
+  weighted_score: number;      // 0–4 (ADR-G004)
+  confidence_0_15: number;     // case-level confidence on the 0–15 scale
   veto_fired: boolean;
   veto_reasons: string[];
   decision_confidence: "low" | "moderate" | "high"; // how flippable the verdict is
