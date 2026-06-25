@@ -1,17 +1,30 @@
-// Phase 4 — seed ONE throwaway case so you can walk the admin review screen on staging.
+// Scenario 001 — Verify Before Purchase (contradiction-floored)
+// =============================================================================
+// Scenario name   : verify-before-purchase
+// Purpose         : Phase 4 review-screen validation. Exercises every admin panel with a realistic
+//                   mid-risk case — solid supplier identity, but an unproven sourcing channel.
+// Signal spread   : T0 intake_scope_guard        = n_a
+//                   T1 supplier_identity         = pass      (9/15 · high)
+//                   T2 supply_chain_relationship = flag      (2/15 · low)
+//                   T3 brand_risk_assessment     = infer     (7/15 · moderate)
+//                   T4 documentation_review      = soft_fail (0/15 · low, absence — Hard Rule #15)
+//                   T5 sourcing_logic            = n_a       (arbitration; does not vote)
+// Expected verdict: Verify Before Purchase — weighted 2.40/4 (score alone → Usable-With-Conditions),
+//                   FLOORED by veto. Confidence 9/15. Decision confidence: low (0.20 from boundary).
+// Expected veto   : "2 load-bearing contradictions" (Module 4: one high + one moderate, both load-bearing).
 //
-// WHY a direct seed (not runPipeline): the live stub tracks/synthesis return EMPTY data, so a
-// real pipeline run renders a bare screen. This writes RICH, representative deterministic data into
-// the SAME schema the screen reads — every panel lights up. It writes only the persisted INPUTS
-// (per-track signals + synthesis); the review screen RECOMPUTES the verdict at read time (Fork A),
-// so the verdict you see is the real ADR-G004 engine output for these seeded signals.
+// HOW IT WORKS: writes only the persisted INPUTS (per-track signals + synthesis); the review screen
+// RECOMPUTES the verdict at read time via computeVerdict() (Fork A), so what you see is the real
+// ADR-G004 output for these seeded signals — the scenario only chooses the inputs. A direct seed
+// (not runPipeline) is used because the live stub tracks/synthesis return EMPTY data (bare screen).
+// See scripts/scenarios/README.md for the scenario schema.
 //
 // RUN (from D:\Projects\Hyprriq\portal):
-//   node scripts/seed-review-case.mjs                 # attaches to an existing admin client
-//   node scripts/seed-review-case.mjs <client_id>     # attach to a specific clients.id
+//   node scripts/scenarios/scenario-001-verify-before-purchase.mjs               # attaches to an admin client
+//   node scripts/scenarios/scenario-001-verify-before-purchase.mjs <client_id>   # attach to a specific clients.id
 //
-// It reads .env.local for NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and points at the
-// SAME Supabase project the staging deploy reads. Throwaway: a DELETE snippet is printed at the end.
+// Reads .env.local for NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (same Supabase project
+// staging reads). Throwaway: a DELETE snippet is printed at the end.
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -55,7 +68,7 @@ async function main() {
     const { data: admins } = await db.from("clients").select("id, role").neq("role", "client").limit(1);
     const pick = admins?.[0] ?? (await db.from("clients").select("id").limit(1)).data?.[0];
     if (!pick) {
-      console.error("No clients found. Pass a client id: node scripts/seed-review-case.mjs <client_id>");
+      console.error("No clients found. Pass a client id: node scripts/scenarios/scenario-001-verify-before-purchase.mjs <client_id>");
       process.exit(1);
     }
     clientId = pick.id;
