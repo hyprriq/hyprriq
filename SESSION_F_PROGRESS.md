@@ -34,6 +34,21 @@ webhook path. Migrations are applied by the founder manually (write file → the
 RLS test suite + CI gate; brands/suppliers normalization (ADR-007 proposed); client Settings page;
 research pipeline + PDF report (deferred sessions). See full audit lists in sections below.
 
+## Session G.2-prep — Intelligence OS reconciliation: migrations + skeleton plan (2026-06-25)
+Architecture pivoted to Tech Arch v1.4 (Intelligence OS). Governing: ADR-G004/G005/G006, Prompts v2.1,
+Phase G1 Brief, CTO Addendum. Locked decisions + conflicts/resolutions in memory `project-pipeline-state.md`.
+- **5 migration files written (NOT applied — awaiting founder pre-flight + approval):**
+  `20260625010000` ctr v2.1 evidence cols (evidence_items/reasoning_notes/unknowns/track_verdict_signal/
+  failure_type/evidence_weights_applied/suggested_signal); `…020000` track_key `intake`→`intake_scope_guard`
+  (transitional CHECK allows both); `…030000` case_synthesis (NEW, +evidence_hash + full version vector +
+  ios_version, admin RLS); `…040000` cases.synthesis_status + `synthesis_running` status; `…050000` agencies
+  + nullable agency_id (agency-agnostic foundation). Pre-flight SQL provided; founder runs it.
+- **Plan:** `docs/superpowers/plans/2026-06-25-intelligence-os-skeleton-plan.md` (5-layer model; deterministic
+  contracts; runModel adapter; skeleton-first Phases 2–3; gates). Code-derived signals + human-gate-rework
+  (engine autonomous, approval optional) + evidence-hash/IOS determinism all locked.
+- **NOT done / gated:** nothing applied or built. Next gate = founder confirms pre-flight → applies migrations →
+  I build Phase 2 skeleton. My earlier G1 manual-required gate will be reworked to optional in Phase 3.5.
+
 ## Session G.1 — Pipeline backbone + Track 0 + manual workflow (2026-06-23)
 **Built (plan `docs/superpowers/plans/2026-06-23-g1-pipeline-backbone.md`, inline TDD, synchronous — NO Inngest).**
 Spine is end-to-end with zero automation/zero API keys; Tracks 1–5 land in manual entry.
