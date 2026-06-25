@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin, getAdminCase } from "@/lib/data/admin";
 import { getCaseTrackResults } from "@/lib/data/track-results";
-import { requiredFindingTracks } from "@/lib/constants/tracks";
+import { getCaseIntelligence } from "@/lib/data/synthesis";
+import { buildVerdictViewModel } from "@/lib/research/verdictViewModel";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CaseReview } from "@/components/admin/case-review";
 import { PLAN_NAME } from "@/lib/constants/plans";
@@ -32,10 +33,12 @@ export default async function CaseReviewPage({
   if (!c) notFound();
 
   const trackRows = c.plan_type ? await getCaseTrackResults(c.id) : [];
-  const required = c.plan_type ? requiredFindingTracks(c.plan_type) : [1, 2, 3, 4, 5];
-  const existing = trackRows
-    .filter((r) => r.track_number >= 1)
-    .map((r) => ({ track_number: r.track_number, status: r.founder_review_status, band: r.confidence_band }));
+  const intel = await getCaseIntelligence(c.id);
+  const vm = buildVerdictViewModel({
+    trackRows,
+    synthesis: intel?.synthesis ?? null,
+    ios: intel?.ios ?? null,
+  });
 
   return (
     <AdminShell
@@ -68,7 +71,7 @@ export default async function CaseReviewPage({
           )}
         </div>
 
-        <CaseReview caseId={c.id} initial={{ verdict: c.verdict }} requiredTracks={required} existing={existing} />
+        <CaseReview caseId={c.id} vm={vm} caseStatus={c.status} />
       </div>
     </AdminShell>
   );

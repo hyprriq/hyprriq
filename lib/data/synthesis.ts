@@ -72,6 +72,46 @@ export async function getSynthesisByEvidenceHash(
   };
 }
 
+// Admin/QA-facing (Phase 4): the FULL case_synthesis row for a case — all 9 modules + the IOS
+// version vector — mapped back to the canonical contracts. Feeds buildVerdictViewModel(). Service-
+// role; callers are admin-guarded. Returns null until the engine has written synthesis.
+export async function getCaseIntelligence(
+  caseId: string,
+): Promise<{ synthesis: SynthesisOutput; ios: IosVersion } | null> {
+  const { data } = await supabaseAdmin
+    .from("case_synthesis")
+    .select(
+      "normalized_evidence, claim_attributions, assertions, contradictions, hypotheses, risk_gaps, doubt_calibration, vendor_questions, decision_snapshot, evidence_hash, prompt_version, rubric_version, synthesis_version, corpus_version, configuration_version, model_provider, model_version, ios_version",
+    )
+    .eq("case_id", caseId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data) return null;
+  const r = data as SynthRow & {
+    evidence_hash: string; prompt_version: string; rubric_version: string; synthesis_version: string;
+    corpus_version: string; configuration_version: string; model_provider: string;
+    model_version: string; ios_version: string;
+  };
+  const synthesis: SynthesisOutput = {
+    module_1_normalized_evidence: (r.normalized_evidence as unknown[]) ?? [],
+    module_2_claim_attributions: (r.claim_attributions as unknown[]) ?? [],
+    module_3_assertions: (r.assertions as unknown[]) ?? [],
+    module_4_contradictions: r.contradictions ?? [],
+    module_5_hypotheses: r.hypotheses ?? { hypotheses: [], what_would_change_the_leader: "" },
+    module_6_risk_gaps: (r.risk_gaps as unknown[]) ?? [],
+    module_7_doubt_calibration: r.doubt_calibration ?? { doubt_level: "", doubt_focus: "", rationale: "" },
+    module_8_vendor_questions: r.vendor_questions ?? [],
+    module_9_decision_snapshot: r.decision_snapshot,
+  };
+  const ios: IosVersion = {
+    prompt_version: r.prompt_version, rubric_version: r.rubric_version,
+    synthesis_version: r.synthesis_version, corpus_version: r.corpus_version,
+    configuration_version: r.configuration_version, model_provider: r.model_provider,
+    model_version: r.model_version, evidence_hash: r.evidence_hash, ios_version: r.ios_version,
+  };
+  return { synthesis, ios };
+}
+
 // Client-facing: ONLY Module 9 + vendor questions (reasoning modules never exposed).
 export type ClientSnapshot = { decision_snapshot: unknown; vendor_questions: unknown };
 export async function getClientDecisionSnapshot(caseId: string): Promise<ClientSnapshot | null> {
