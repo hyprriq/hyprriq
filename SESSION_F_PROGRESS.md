@@ -1,3 +1,6 @@
+# ⏩ RESUME HERE → read `docs/HANDOVER_G2.md` first (Intelligence OS, Phases 1–3 done, HEAD `670f9a3`).
+# Next: Phase 4 (admin review UI surfacing + archetype/identity-mismatch backlog, NO keys), then Phase 5 (track automation, needs Anthropic/WHOIS/Serper keys + Inngest). Everything below is older (F.11/G.0/G.1) history.
+
 # ⏩ RESUME HERE — state as of 2026-06-23 (Phase G architecture locked, branch `staging`)
 
 **What this project is:** HyprrIQ portal (Next.js 16 App Router, Tailwind v4, Clerk, Supabase, Stripe, Inngest).
