@@ -6,7 +6,7 @@ import type {
 } from "@/lib/research/contracts";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
-import { expectedEvidenceTypes, evidenceLabel } from "@/lib/research/weights";
+import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
 
 // Phase 4 — the SINGLE assembly service for the admin review surface. Every admin UI section
 // (Executive Intelligence Summary, Verdict Panel, Cross-Track Intelligence, Track Intelligence,
@@ -183,6 +183,12 @@ export function computeGaps(tracks: TrackIntelView[]): EvidenceGaps {
     const found = new Set(t.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k));
     const missing: MissingEvidence[] = expectedEvidenceTypes(t.track_key)
       .filter((et) => !found.has(et))
+      // Suppress an expected type whose mutually-exclusive sibling bucket was already found
+      // (e.g. domain_age_5_plus present → don't report domain_age_2_5 as missing).
+      .filter((et) => {
+        const group = alternativeGroupFor(et);
+        return !group || !group.some((m) => found.has(m));
+      })
       .map((et) => ({ evidence_type: et, label: evidenceLabel(et) }));
     return { track_key: t.track_key, dimension: t.dimension, missing, unknowns: t.unknowns };
   });

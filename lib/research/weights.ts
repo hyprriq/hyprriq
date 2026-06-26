@@ -120,6 +120,17 @@ export const EVIDENCE_LABELS: Record<string, string> = {
 export const evidenceLabel = (evidenceType: string): string =>
   EVIDENCE_LABELS[evidenceType] ?? evidenceType.replace(/_/g, " ");
 
+// Mutually-exclusive evidence buckets — one member satisfies the whole attribute. Used so "missing
+// evidence" (item 4) doesn't list the OTHER buckets when one is already covered (e.g. a 7-year
+// domain found as domain_age_5_plus must not report domain_age_2_5 as "missing").
+export const EVIDENCE_ALTERNATIVE_GROUPS: string[][] = [
+  ["domain_age_5_plus", "domain_age_2_5", "domain_age_under_2_established"], // one domain-age value
+];
+
+export function alternativeGroupFor(evidenceType: string): string[] | null {
+  return EVIDENCE_ALTERNATIVE_GROUPS.find((g) => g.includes(evidenceType)) ?? null;
+}
+
 // ADR-G004 signal → score and verdict bands (deterministic verdict engine).
 export const SIGNAL_SCORE: Record<string, number> = {
   pass: 4.0, infer: 2.5, flag: 1.5, soft_fail: 0.5, hard_fail: 0.0,

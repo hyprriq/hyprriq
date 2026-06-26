@@ -41,8 +41,13 @@ Reads `.env.local` for `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` 
 project staging reads). Prints the case id, the staging review URL, and the cleanup SQL.
 
 ## Cleanup
-Each scenario is a **throwaway**. The script prints three deletes to remove it
-(`case_synthesis` → `case_track_results` → `cases`). Run them when you're done walking the screen.
+Each scenario is a **throwaway**. The seed prints three deletes to remove its case
+(`case_synthesis` → `case_track_results` → `cases`). To remove **all** scenario cases at once:
+```
+node scripts/scenarios/cleanup.mjs
+```
+`cleanup.mjs` deletes every case with `case_number LIKE 'SEED-REVIEW-%'` and its child rows. Safe to
+re-run.
 
 ## Current scenarios
 - **`scenario-001-verify-before-purchase.mjs`** — solid identity, unproven sourcing channel.

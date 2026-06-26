@@ -111,6 +111,18 @@ describe("buildVerdictViewModel", () => {
     expect(docGap?.unknowns).toHaveLength(1);
   });
 
+  it("gaps suppress mutually-exclusive alternatives: a 5+ domain doesn't report 2-5 as missing", () => {
+    const idRow = trackRow(1, "supplier_identity", "pass");
+    idRow.evidence_items = [
+      { evidence_id: "a", statement: "7y domain", certainty: "verified", source_type: "third_party", source_url: null, claimant: "third_party", claimant_benefits: false, supports: "s", weight_key: "domain_age_5_plus" },
+    ];
+    const vm = buildVerdictViewModel({ trackRows: [idRow], synthesis: synth(), ios: null });
+    const idGap = vm.gaps?.per_track.find((g) => g.track_key === "supplier_identity");
+    expect(idGap?.missing.some((m) => m.evidence_type === "domain_age_5_plus")).toBe(false); // found
+    expect(idGap?.missing.some((m) => m.evidence_type === "domain_age_2_5")).toBe(false);    // sibling bucket suppressed
+    expect(idGap?.missing.some((m) => m.evidence_type === "government_registration")).toBe(true); // unrelated, still missing
+  });
+
   it("coverage and gaps are null when synthesis is absent", () => {
     const vm = buildVerdictViewModel({ trackRows: rows, synthesis: null, ios: null });
     expect(vm.coverage).toBeNull();
