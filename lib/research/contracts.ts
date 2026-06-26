@@ -78,6 +78,32 @@ export interface VerdictResult {
   veto_fired: boolean;
   veto_reasons: string[];
   decision_confidence: "low" | "moderate" | "high"; // how flippable the verdict is
+  derivation: VerdictDerivation; // Phase 4.5 — additive reasoning trace (single source of truth)
+}
+
+// Phase 4.5 — the reasoning trace computeVerdict() emits so the UI can EXPLAIN the verdict
+// (confidence, "Why Not?") WITHOUT re-deriving ADR-G004 anywhere else.
+export interface TrackContribution {
+  track_key: TrackKey;
+  signal: TrackSignal;
+  signal_score: number; // SIGNAL_SCORE[signal] (0 when excluded)
+  weight: number;       // TRACK_WEIGHTS[track_key]
+  contribution: number; // signal_score * weight (pre-redistribution)
+  included: boolean;    // false for n_a / absent (excluded from the score)
+}
+export interface VetoStep { kind: "floor" | "lock"; verdict: Verdict; reason: string }
+export interface RejectedVerdict { verdict: Verdict; reason: string }
+export interface VerdictDerivation {
+  contributions: TrackContribution[];
+  total_weight: number;
+  weighted_sum: number;
+  raw_score: number; // 0–4, after redistribution (= weighted_score)
+  thresholds: { source_clear: number; usable_with_conditions: number; verify_before_purchase: number };
+  score_verdict: Verdict;            // verdict from the score ALONE, before vetoes
+  vetoes: VetoStep[];                // floors/locks that fired
+  final_differs_from_score: boolean; // a veto changed the outcome
+  margin: { distance: number; nearest_boundary: number }; // distance to nearest band boundary
+  rejected: RejectedVerdict[];       // the 3 unchosen verdicts + deterministic reasons
 }
 
 // Versioning + replay (enhancements #5/#6)

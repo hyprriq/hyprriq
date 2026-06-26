@@ -6,6 +6,7 @@ import type {
 } from "@/lib/research/contracts";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
+import { expectedEvidenceTypes, evidenceLabel } from "@/lib/research/weights";
 
 // Phase 4 — the SINGLE assembly service for the admin review surface. Every admin UI section
 // (Executive Intelligence Summary, Verdict Panel, Cross-Track Intelligence, Track Intelligence,
@@ -55,12 +56,32 @@ export interface EngineTraceView {
   signals: EngineTraceSignal[];
 }
 
+// Phase 4.5 (item 3) — research coverage / completeness.
+export interface CertaintyBreakdown { verified: number; inferred: number; unknown: number }
+export interface TrackCoverage {
+  track_key: TrackKey; dimension: string;
+  evidence_count: number; certainty: CertaintyBreakdown; has_signal: boolean;
+}
+export interface EvidenceCoverage {
+  tracks_run: number; tracks_skipped: number;
+  total_evidence_items: number;
+  certainty: CertaintyBreakdown;
+  per_track: TrackCoverage[];
+}
+
+// Phase 4.5 (item 4) — missing evidence (expected, not found) vs unknowns (looked, unresolvable).
+export interface MissingEvidence { evidence_type: string; label: string }
+export interface TrackGaps { track_key: TrackKey; dimension: string; missing: MissingEvidence[]; unknowns: Unknown[] }
+export interface EvidenceGaps { per_track: TrackGaps[] }
+
 export interface VerdictViewModel {
   engineComplete: boolean;                 // synthesis present → engine reached report-ready
   verdict: VerdictResult | null;           // recomputed; null until synthesis exists
   executiveSummary: ExecutiveSummaryView | null;
   crossTrack: CrossTrackView | null;
   tracks: TrackIntelView[];                // finding tracks (1–5), ordered
+  coverage: EvidenceCoverage | null;       // item 3
+  gaps: EvidenceGaps | null;               // item 4
   trace: EngineTraceView;
 }
 
@@ -68,8 +89,9 @@ export function buildVerdictViewModel(input: {
   trackRows: TrackResultRow[];
   synthesis: SynthesisOutput | null;
   ios: IosVersion | null;
+  requiredTracks?: number[];               // finding tracks the plan should run (for skipped count)
 }): VerdictViewModel {
-  const { trackRows, synthesis, ios } = input;
+  const { trackRows, synthesis, ios, requiredTracks } = input;
 
   // Finding tracks only (1–5); track_0 (intake gate) is not a finding and does not vote.
   const findingRows = trackRows
@@ -124,7 +146,47 @@ export function buildVerdictViewModel(input: {
     })),
   };
 
-  return { engineComplete, verdict, executiveSummary, crossTrack, tracks, trace };
+  const coverage = engineComplete ? computeCoverage(tracks, requiredTracks) : null;
+  const gaps = engineComplete ? computeGaps(tracks) : null;
+
+  return { engineComplete, verdict, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
+}
+
+// item 3 — aggregate evidence completeness over the finding tracks.
+export function computeCoverage(tracks: TrackIntelView[], requiredTracks?: number[]): EvidenceCoverage {
+  const overall: CertaintyBreakdown = { verified: 0, inferred: 0, unknown: 0 };
+  const per_track: TrackCoverage[] = tracks.map((t) => {
+    const c: CertaintyBreakdown = { verified: 0, inferred: 0, unknown: 0 };
+    for (const e of t.evidence_items) c[e.certainty] += 1;
+    overall.verified += c.verified; overall.inferred += c.inferred; overall.unknown += c.unknown;
+    return {
+      track_key: t.track_key, dimension: t.dimension,
+      evidence_count: t.evidence_items.length, certainty: c,
+      has_signal: t.signal != null && t.signal !== "n_a",
+    };
+  });
+  const ALL_FINDING = [1, 2, 3, 4, 5];
+  const required = requiredTracks ?? tracks.map((t) => t.track_number);
+  const tracks_skipped = ALL_FINDING.filter((n) => !required.includes(n)).length;
+  return {
+    tracks_run: tracks.length,
+    tracks_skipped,
+    total_evidence_items: overall.verified + overall.inferred + overall.unknown,
+    certainty: overall,
+    per_track,
+  };
+}
+
+// item 4 — missing (expected ADR-G003 evidence not found) vs unknowns (looked, unresolvable).
+export function computeGaps(tracks: TrackIntelView[]): EvidenceGaps {
+  const per_track: TrackGaps[] = tracks.map((t) => {
+    const found = new Set(t.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k));
+    const missing: MissingEvidence[] = expectedEvidenceTypes(t.track_key)
+      .filter((et) => !found.has(et))
+      .map((et) => ({ evidence_type: et, label: evidenceLabel(et) }));
+    return { track_key: t.track_key, dimension: t.dimension, missing, unknowns: t.unknowns };
+  });
+  return { per_track };
 }
 
 function dimensionFor(trackNumber: number): string {

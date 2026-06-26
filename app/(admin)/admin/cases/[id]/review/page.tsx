@@ -4,6 +4,7 @@ import { requireAdmin, getAdminCase } from "@/lib/data/admin";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { buildVerdictViewModel } from "@/lib/research/verdictViewModel";
+import { requiredFindingTracks } from "@/lib/constants/tracks";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CaseReview } from "@/components/admin/case-review";
 import { PLAN_NAME } from "@/lib/constants/plans";
@@ -38,6 +39,7 @@ export default async function CaseReviewPage({
     trackRows,
     synthesis: intel?.synthesis ?? null,
     ios: intel?.ios ?? null,
+    requiredTracks: c.plan_type ? requiredFindingTracks(c.plan_type) : undefined,
   });
 
   return (

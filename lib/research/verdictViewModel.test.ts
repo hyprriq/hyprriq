@@ -78,4 +78,42 @@ describe("buildVerdictViewModel", () => {
     const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
     expect(vm.trace.signals.map((s) => s.signal)).toEqual(["pass", "pass"]);
   });
+
+  it("surfaces the verdict derivation (rejected verdicts) through the view model", () => {
+    const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
+    expect(vm.verdict?.derivation.rejected.length).toBe(3);
+  });
+
+  it("computes evidence coverage: counts, certainty mix, and tracks run vs skipped", () => {
+    const withEvidence = [
+      trackRow(1, "supplier_identity", "pass"),
+      trackRow(3, "brand_risk_assessment", "infer"),
+    ];
+    withEvidence[0].evidence_items = [
+      { evidence_id: "a", statement: "x", certainty: "verified", source_type: "third_party", source_url: null, claimant: "third_party", claimant_benefits: false, supports: "s", weight_key: "government_registration" },
+      { evidence_id: "b", statement: "y", certainty: "inferred", source_type: "third_party", source_url: null, claimant: "third_party", claimant_benefits: false, supports: "s", weight_key: "address_verifiable" },
+    ];
+    const vm = buildVerdictViewModel({ trackRows: withEvidence, synthesis: synth(), ios: null, requiredTracks: [1, 3] });
+    expect(vm.coverage?.total_evidence_items).toBe(2);
+    expect(vm.coverage?.certainty).toEqual({ verified: 1, inferred: 1, unknown: 0 });
+    expect(vm.coverage?.tracks_run).toBe(2);
+    expect(vm.coverage?.tracks_skipped).toBe(3); // tracks 2,4,5 not required
+  });
+
+  it("computes gaps: missing = expected − found weight_keys; unknowns surfaced", () => {
+    const docRow = trackRow(4, "documentation_review", "soft_fail");
+    docRow.evidence_items = [];
+    docRow.unknowns = [{ unknown: "No invoice supplied", why_unresolvable: "n/a", resolvable_by_client: true }];
+    const vm = buildVerdictViewModel({ trackRows: [docRow], synthesis: synth(), ios: null });
+    const docGap = vm.gaps?.per_track.find((g) => g.track_key === "documentation_review");
+    expect(docGap?.missing.some((m) => m.evidence_type === "invoice_full")).toBe(true);
+    expect(docGap?.missing.some((m) => m.label === "Full wholesale invoice")).toBe(true);
+    expect(docGap?.unknowns).toHaveLength(1);
+  });
+
+  it("coverage and gaps are null when synthesis is absent", () => {
+    const vm = buildVerdictViewModel({ trackRows: rows, synthesis: null, ios: null });
+    expect(vm.coverage).toBeNull();
+    expect(vm.gaps).toBeNull();
+  });
 });

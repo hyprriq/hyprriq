@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
-import type { TrackSignal, Verdict } from "@/lib/research/contracts";
+import type { TrackSignal, Verdict, VerdictResult } from "@/lib/research/contracts";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
 // buildVerdictViewModel(): Executive Intelligence Summary → Verdict Panel → Cross-Track
-// Intelligence → Track Intelligence → Founder Decision, plus a collapsed Engine Trace. The UI
+// Intelligence → Track Intelligence → Research Coverage & Gaps → Analyst Decision, plus a
+// collapsed Engine Trace. The UI
 // only READS the view model — it never reconstructs verdict/synthesis state.
 
 const VERDICT_META: Record<Verdict, { name: string; cls: string }> = {
@@ -25,6 +26,28 @@ const SIGNAL_META: Record<TrackSignal, { label: string; cls: string }> = {
   hard_fail: { label: "Hard Fail", cls: "bg-deny-bg text-deny-ink" },
   n_a: { label: "N/A", cls: "bg-subtle text-muted" },
 };
+
+const BOUNDARY_NAME: Record<number, string> = { 3.2: "Source Clear", 2.2: "Usable With Conditions", 1.2: "Verify Before Purchase" };
+
+// Item 1 — plain-language confidence explanation, built from the engine's derivation trace.
+function confidenceExplanation(v: VerdictResult): string {
+  const d = v.derivation;
+  const score = d.raw_score.toFixed(2);
+  if (v.derivation.final_differs_from_score && v.veto_fired) {
+    const lock = d.vetoes.find((x) => x.kind === "lock");
+    if (lock) return `Decision confidence is High — the verdict is locked at ${VERDICT_META[lock.verdict].name} by veto (${lock.reason}); the score (${score}) cannot override it.`;
+    return `Decision confidence is ${cap(v.decision_confidence)} — the score (${score}) mapped to ${VERDICT_META[d.score_verdict].name}, but the verdict was floored to ${VERDICT_META[v.verdict].name} by veto.`;
+  }
+  const near = BOUNDARY_NAME[d.margin.nearest_boundary] ?? `${d.margin.nearest_boundary}`;
+  const tail = v.decision_confidence === "low"
+    ? "a small shift in evidence could flip the verdict"
+    : v.decision_confidence === "moderate"
+      ? "a moderate margin — fairly stable"
+      : "well clear of the boundary — stable";
+  return `Decision confidence is ${cap(v.decision_confidence)} — the weighted score ${score} sits ${d.margin.distance.toFixed(2)} from the ${near} threshold (${d.margin.nearest_boundary}); ${tail}.`;
+}
+
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 function Section({ title, eyebrow, children }: { title: string; eyebrow?: string; children: React.ReactNode }) {
   return (
@@ -166,6 +189,24 @@ export function CaseReview({
             </ul>
           </div>
         )}
+
+        {/* Item 1 — confidence explanation */}
+        <div className="mt-3 rounded-lg border border-line bg-base p-3">
+          <div className="text-[12px] font-semibold text-muted">Why this confidence</div>
+          <p className="mt-1 text-[13px] text-ink-2">{confidenceExplanation(v)}</p>
+        </div>
+
+        {/* Item 2 — Why Not? rejected verdicts */}
+        <div className="mt-3 rounded-lg border border-line bg-base p-3">
+          <div className="text-[12px] font-semibold text-muted">Why not the other verdicts?</div>
+          <ul className="mt-1.5 space-y-1.5">
+            {v.derivation.rejected.map((r) => (
+              <li key={r.verdict} className="text-[13px] text-ink-2">
+                <span className="font-semibold text-ink">{VERDICT_META[r.verdict].name}:</span> {r.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
       </Section>
 
       {/* 3 — Cross-Track Intelligence */}
@@ -250,8 +291,69 @@ export function CaseReview({
         </div>
       </Section>
 
-      {/* 5 — Founder Decision */}
-      <Section eyebrow="Optional · the engine already reached report-ready" title="Founder Decision">
+      {/* 4.5 — Research Coverage & Gaps (items 3 + 4) */}
+      {vm.coverage && vm.gaps && (
+        <Section eyebrow="Research completeness" title="Research Coverage & Gaps">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-line bg-base p-3">
+              <div className="text-[22px] font-bold text-ink">{vm.coverage.tracks_run}<span className="text-[13px] font-normal text-muted"> run · {vm.coverage.tracks_skipped} skipped</span></div>
+              <div className="text-[12px] text-muted">Tracks</div>
+            </div>
+            <div className="rounded-lg border border-line bg-base p-3">
+              <div className="text-[22px] font-bold text-ink">{vm.coverage.total_evidence_items}</div>
+              <div className="text-[12px] text-muted">Evidence items</div>
+            </div>
+            <div className="rounded-lg border border-line bg-base p-3">
+              <div className="text-[13px] font-semibold text-ink">
+                <span className="text-clear-ink">{vm.coverage.certainty.verified} verified</span> ·{" "}
+                <span className="text-conditional-ink">{vm.coverage.certainty.inferred} inferred</span> ·{" "}
+                <span className="text-muted">{vm.coverage.certainty.unknown} unknown</span>
+              </div>
+              <div className="mt-0.5 text-[12px] text-muted">Certainty mix</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <div className="text-[12px] font-semibold text-muted">Missing evidence <span className="font-normal">(material, not found — informational)</span></div>
+              {vm.gaps.per_track.every((g) => g.missing.length === 0) ? (
+                <p className="mt-1 text-[13px] text-muted">Nothing material missing.</p>
+              ) : (
+                <div className="mt-1.5 space-y-2">
+                  {vm.gaps.per_track.filter((g) => g.missing.length > 0).map((g) => (
+                    <div key={g.track_key}>
+                      <div className="text-[12px] font-semibold text-ink">{g.dimension}</div>
+                      <div className="text-[13px] text-ink-2">{g.missing.map((m) => m.label).join(" · ")}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="text-[12px] font-semibold text-muted">Unknowns <span className="font-normal">(looked, unresolvable)</span></div>
+              {vm.gaps.per_track.every((g) => g.unknowns.length === 0) ? (
+                <p className="mt-1 text-[13px] text-muted">No open unknowns.</p>
+              ) : (
+                <div className="mt-1.5 space-y-2">
+                  {vm.gaps.per_track.filter((g) => g.unknowns.length > 0).map((g) => (
+                    <div key={g.track_key}>
+                      <div className="text-[12px] font-semibold text-ink">{g.dimension}</div>
+                      <ul className="space-y-0.5">
+                        {g.unknowns.map((u, i) => (
+                          <li key={i} className="text-[13px] text-ink-2">• {u.unknown}{u.resolvable_by_client ? <span className="text-muted"> — client-resolvable</span> : null}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* 5 — Analyst Decision */}
+      <Section eyebrow="Optional · the engine already reached report-ready" title="Analyst Decision">
         {delivered ? (
           <p className="text-[14px] font-semibold text-clear-ink">✓ This case has been delivered.</p>
         ) : (
@@ -367,6 +469,23 @@ export function CaseReview({
               </tbody>
             </table>
           </div>
+          {v.derivation && (
+            <div>
+              <div className="font-semibold text-muted">Score math (ADR-G004) — raw {v.derivation.raw_score.toFixed(2)} → {VERDICT_META[v.derivation.score_verdict].name}{v.derivation.final_differs_from_score ? ` → veto → ${VERDICT_META[v.verdict].name}` : ""}</div>
+              <table className="mt-1 w-full text-left">
+                <tbody>
+                  {v.derivation.contributions.map((c) => (
+                    <tr key={c.track_key} className="border-t border-line">
+                      <td className="py-1 pr-3 text-ink-2">{c.track_key}</td>
+                      <td className="py-1 pr-3 text-ink-2">{c.signal}</td>
+                      <td className="py-1 pr-3 text-muted">{c.signal_score.toFixed(1)} × {c.weight.toFixed(2)}</td>
+                      <td className="py-1 text-muted">{c.included ? c.contribution.toFixed(3) : "excluded"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {vm.trace.ios && (
             <div>
               <div className="font-semibold text-muted">IOS version vector</div>

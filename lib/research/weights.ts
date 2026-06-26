@@ -76,6 +76,50 @@ export function weightFor(track: TrackKey, evidenceType: string): WeightEntry | 
   return table?.[evidenceType] ?? null;
 }
 
+// Phase 4.5 (item 4) — the positive-weight evidence types we'd EXPECT to strengthen a track.
+// Used to compute "missing evidence" = expected − found. Informational only (some are alternatives,
+// e.g. invoice OR LOA) — never framed as required. Tracks with no weight table return [].
+export function expectedEvidenceTypes(track: TrackKey): string[] {
+  const table = (WEIGHTS as Record<string, Record<string, WeightEntry>>)[track];
+  if (!table) return [];
+  return Object.entries(table).filter(([, w]) => w.points > 0).map(([k]) => k);
+}
+
+// Human labels for evidence types (item 4 display). Keyed by evidence_type.
+export const EVIDENCE_LABELS: Record<string, string> = {
+  // supplier_identity
+  government_registration: "Government business registration",
+  domain_age_5_plus: "Domain age 5+ years",
+  domain_age_2_5: "Domain age 2–5 years",
+  address_verifiable: "Verifiable business address",
+  linkedin_company: "LinkedIn company presence",
+  phone_verifiable: "Verifiable phone number",
+  website_quality: "Established website",
+  bbb_or_trade_association: "BBB / trade-association listing",
+  // supply_chain_relationship
+  dealer_page_listed: "Listed on the brand's dealer page",
+  loa_legitimate: "Legitimate Letter of Authorization",
+  invoice_matches_distributor: "Invoice matching the distributor",
+  purchases_from_mega_distributor: "Purchases from a major distributor",
+  trade_press_connection: "Trade-press connection",
+  claims_authorization_unverified: "Stated (unverified) authorization",
+  // brand_risk_assessment
+  reseller_friendly: "Reseller-friendly brand history",
+  keepa_stable_no_cliff: "Stable Keepa history (no cliff)",
+  low_seller_count_stable: "Low, stable seller count",
+  no_enforcement_found: "No enforcement found",
+  map_policy_present: "MAP policy present",
+  // documentation_review
+  invoice_full: "Full wholesale invoice",
+  po_on_letterhead: "Purchase order on letterhead",
+  catalog_or_pricelist: "Catalog or price list",
+  email_correspondence: "Email correspondence",
+  screenshot_only: "Screenshot evidence",
+};
+
+export const evidenceLabel = (evidenceType: string): string =>
+  EVIDENCE_LABELS[evidenceType] ?? evidenceType.replace(/_/g, " ");
+
 // ADR-G004 signal → score and verdict bands (deterministic verdict engine).
 export const SIGNAL_SCORE: Record<string, number> = {
   pass: 4.0, infer: 2.5, flag: 1.5, soft_fail: 0.5, hard_fail: 0.0,

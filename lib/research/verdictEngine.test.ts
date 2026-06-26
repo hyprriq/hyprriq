@@ -61,3 +61,65 @@ describe("computeVerdict (deterministic, ADR-G004)", () => {
     expect(a.verdict).toBe("source_clear");
   });
 });
+
+describe("computeVerdict derivation trace (Phase 4.5)", () => {
+  const scenario = () => {
+    const s = emptySynth();
+    s.module_4_contradictions = [
+      { is_load_bearing: true, risk_level: "high" },
+      { is_load_bearing: true, risk_level: "moderate" },
+    ];
+    return computeVerdict(sig({
+      supplier_identity: "pass", supply_chain_relationship: "flag",
+      brand_risk_assessment: "infer", documentation_review: "soft_fail",
+    }), s);
+  };
+
+  it("raw_score and score_verdict reflect the score BEFORE vetoes; final is floored", () => {
+    const r = scenario();
+    expect(r.derivation.raw_score).toBeCloseTo(2.4, 5);
+    expect(r.derivation.score_verdict).toBe("usable_with_conditions"); // score alone
+    expect(r.verdict).toBe("verify_before_purchase");                  // after veto floor
+    expect(r.derivation.final_differs_from_score).toBe(true);
+  });
+
+  it("contributions cover all four scoring tracks and sum to the weighted score", () => {
+    const r = scenario();
+    expect(r.derivation.contributions).toHaveLength(4);
+    const sum = r.derivation.contributions.reduce((a, c) => a + c.contribution, 0);
+    expect(sum / r.derivation.total_weight).toBeCloseTo(r.derivation.raw_score, 5);
+  });
+
+  it("records the load-bearing veto as a structured floor step", () => {
+    const r = scenario();
+    expect(r.derivation.vetoes).toEqual([
+      { kind: "floor", verdict: "verify_before_purchase", reason: "2 load-bearing contradictions" },
+    ]);
+  });
+
+  it("rejected[] explains all three unchosen verdicts deterministically", () => {
+    const r = scenario();
+    const byVerdict = Object.fromEntries(r.derivation.rejected.map((x) => [x.verdict, x.reason]));
+    expect(Object.keys(byVerdict).sort()).toEqual(
+      ["do_not_rely", "source_clear", "usable_with_conditions"].sort(),
+    );
+    expect(byVerdict.source_clear).toMatch(/3\.2/);            // score below threshold
+    expect(byVerdict.usable_with_conditions).toMatch(/qualified/i); // score ok, capped by veto
+    expect(byVerdict.do_not_rely).toMatch(/no .*hard-fail/i);  // higher severity not triggered
+    expect(r.derivation.rejected.some((x) => x.verdict === "verify_before_purchase")).toBe(false);
+  });
+
+  it("margin matches the decision-confidence boundary distance", () => {
+    const r = scenario();
+    expect(r.derivation.margin.nearest_boundary).toBe(2.2);
+    expect(r.derivation.margin.distance).toBeCloseTo(0.2, 5);
+    expect(r.decision_confidence).toBe("low"); // < 0.25
+  });
+
+  it("a hard_fail lock is recorded as a lock step and decision confidence stays high", () => {
+    const r = computeVerdict(sig({ supplier_identity: "hard_fail", brand_risk_assessment: "pass" }), emptySynth());
+    expect(r.derivation.vetoes.some((v) => v.kind === "lock" && v.verdict === "do_not_rely")).toBe(true);
+    expect(r.verdict).toBe("do_not_rely");
+    expect(r.decision_confidence).toBe("high");
+  });
+});
