@@ -36,7 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── load .env.local (tiny parser; vitest's dummy env never touches this) ──
 function loadEnv() {
-  const path = resolve(__dirname, "..", ".env.local");
+  const path = resolve(__dirname, "..", "..", ".env.local"); // scripts/scenarios -> project root
   const out = {};
   for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
     const t = line.trim();
