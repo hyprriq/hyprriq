@@ -10,12 +10,17 @@ export type ResearchQuestion =
 export type AcquisitionMethod = "serper" | "whois" | "native_web_search" | "manual" | "inference";
 
 // Code-assigned at acquisition (certainty is added later by the track LLM — see EvidenceItem).
+// Full provenance chain (CTO §6): provider + version + plugin recorded so the source stays
+// replayable/auditable across provider swaps (§2).
 export interface Provenance {
+  provider: string;                    // external service, e.g. "WhoisXMLAPI", "Serper"
+  provider_version: string;            // provider API version (replay across provider swaps)
+  plugin: AcquisitionMethod;           // our adapter id
+  acquisition_method: AcquisitionMethod;
   source_profile: SourceProfile;
   source_type: CoarseSourceType;       // derived from source_profile
   authority_score: AuthorityScore;     // from the registry
   freshness_days: number | null;       // age of the source at acquisition (null = unknown)
-  acquisition_method: AcquisitionMethod;
   collected_at: string;                // ISO; persisted, point-in-time
   expires_at: string;                  // collected_at + profile freshness expectation; persisted
   refresh_required: boolean;           // persisted; default false at acquisition
@@ -51,9 +56,14 @@ export interface AcquisitionPlugin {
   acquire(query: AcquisitionQuery): Promise<RawSource[]>;
 }
 
+// FROZEN CONTRACT (CTO §4). Every future layer (Track, Synthesis, Memory, Outcome) consumes this
+// shape unchanged. schema_version is stamped immutably per pack; evidence_hash is a deterministic
+// content hash over deterministically-ordered sources (§3 replayable/auditable).
 export interface EvidencePack {
+  schema_version: string;
   case_id: string;
   track_key: TrackKey;
-  sources: RawSource[];
+  sources: RawSource[];                // deterministically ordered by finalizePack()
+  evidence_hash: string;
   collected_at: string;
 }

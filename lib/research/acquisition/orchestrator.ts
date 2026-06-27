@@ -2,6 +2,7 @@ import type { TrackKey } from "@/lib/constants/tracks";
 import type {
   AcquisitionPlugin, AcquisitionMetric, EvidencePack, RawSource, ResearchQuestion,
 } from "./types";
+import { finalizePack } from "./pack";
 
 export interface GatherRequest {
   case_id: string;
@@ -43,7 +44,7 @@ export class Orchestrator {
     }
 
     return {
-      pack: { case_id: req.case_id, track_key: req.track_key, sources, collected_at: new Date().toISOString() },
+      pack: finalizePack(req.case_id, req.track_key, sources, new Date().toISOString()),
       metrics: [...metricsByPlugin.values()],
     };
   }

@@ -1,19 +1,23 @@
-import type { Provenance } from "./types";
+import type { Provenance, AcquisitionMethod } from "./types";
 import { classifySource, authorityFor, sourceTypeFor, freshnessExpectationFor } from "@/lib/research/source_profile";
 
 const DAY_MS = 86_400_000;
 
 export function buildProvenance(input: {
-  url: string | null; pluginId: string; collectedAt: string; freshnessDays: number | null;
+  url: string | null; pluginId: AcquisitionMethod; provider: string; providerVersion: string;
+  collectedAt: string; freshnessDays: number | null;
 }): Provenance {
   const profile = classifySource(input.url ?? "", input.pluginId);
   const expires = new Date(new Date(input.collectedAt).getTime() + freshnessExpectationFor(profile) * DAY_MS);
   return {
+    provider: input.provider,
+    provider_version: input.providerVersion,
+    plugin: input.pluginId,
+    acquisition_method: input.pluginId,
     source_profile: profile,
     source_type: sourceTypeFor(profile),
     authority_score: authorityFor(profile),
     freshness_days: input.freshnessDays,
-    acquisition_method: (input.pluginId as Provenance["acquisition_method"]),
     collected_at: input.collectedAt,
     expires_at: expires.toISOString(),
     refresh_required: false,
@@ -21,7 +25,8 @@ export function buildProvenance(input: {
 }
 
 const REQUIRED: (keyof Provenance)[] = [
-  "source_profile", "source_type", "authority_score", "acquisition_method",
+  "provider", "provider_version", "plugin", "acquisition_method",
+  "source_profile", "source_type", "authority_score",
   "collected_at", "expires_at", "refresh_required",
 ];
 // Full provenance chain: no source enters reasoning without a complete record. (freshness_days

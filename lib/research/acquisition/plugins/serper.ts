@@ -3,6 +3,8 @@ import { buildProvenance } from "@/lib/research/acquisition/provenance";
 
 const ENDPOINT = "https://google.serper.dev/search";
 const MAX_RESULTS = 5; // per-query budget
+const PROVIDER = "Serper";
+const PROVIDER_VERSION = "search-v1";
 
 export const serperPlugin: AcquisitionPlugin = {
   id: "serper",
@@ -27,7 +29,10 @@ export const serperPlugin: AcquisitionPlugin = {
         title: o.title,
         snippet: o.snippet ?? "",
         raw: o,
-        provenance: buildProvenance({ url: o.link, pluginId: "serper", collectedAt: now, freshnessDays: null }),
+        provenance: buildProvenance({
+          url: o.link, pluginId: "serper", provider: PROVIDER, providerVersion: PROVIDER_VERSION,
+          collectedAt: now, freshnessDays: null,
+        }),
       }));
     } catch {
       return [];

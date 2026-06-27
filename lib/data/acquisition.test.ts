@@ -13,9 +13,9 @@ beforeEach(() => { insert.mockClear(); from.mockClear(); });
 
 describe("acquisition persistence", () => {
   it("writes the evidence pack to case_evidence_packs", async () => {
-    await persistEvidencePack({ case_id: "c1", track_key: "supplier_identity", sources: [], collected_at: "2026-06-27T00:00:00.000Z" });
+    await persistEvidencePack({ schema_version: "1.0.0", case_id: "c1", track_key: "supplier_identity", sources: [], evidence_hash: "abc", collected_at: "2026-06-27T00:00:00.000Z" });
     expect(from).toHaveBeenCalledWith("case_evidence_packs");
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ case_id: "c1", track_key: "supplier_identity" }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ case_id: "c1", track_key: "supplier_identity", evidence_hash: "abc", schema_version: "1.0.0" }));
   });
   it("writes one metrics row per plugin", async () => {
     await persistAcquisitionMetrics("c1", "supplier_identity", [

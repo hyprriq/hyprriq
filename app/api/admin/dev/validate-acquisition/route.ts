@@ -80,6 +80,8 @@ export async function POST(req: Request) {
     vendor_name_normalized: normalizeName(vendorName),
     brands_normalized: brands.map(normalizeName),
     pack_summary: {
+      schema_version: pack.schema_version,
+      evidence_hash: pack.evidence_hash,
       source_count: pack.sources.length,
       by_profile: pack.sources.reduce<Record<string, number>>((acc, s) => {
         acc[s.provenance.source_profile] = (acc[s.provenance.source_profile] ?? 0) + 1; return acc;
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
     metrics,
     persist_errors: { pack: packErr.error, metrics: metricsErr.error },
     inspect: {
-      evidence_pack: `select pack, collected_at from case_evidence_packs where case_id = '${caseId}';`,
+      evidence_pack: `select schema_version, evidence_hash, pack, collected_at from case_evidence_packs where case_id = '${caseId}';`,
       metrics: `select * from case_acquisition_metrics where case_id = '${caseId}';`,
       vendor_intelligence: `select * from vendor_intelligence where vendor_name_normalized = '${normalizeName(vendorName)}';`,
       cleanup: `delete from case_evidence_packs where case_id='${caseId}'; delete from case_acquisition_metrics where case_id='${caseId}'; delete from cases where id='${caseId}';`,

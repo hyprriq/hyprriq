@@ -6,7 +6,8 @@ import type { EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition
 // (cost optimization + calibration). Service-role; admin-guarded callers / pipeline only.
 export async function persistEvidencePack(pack: EvidencePack): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin.from("case_evidence_packs").insert({
-    case_id: pack.case_id, track_key: pack.track_key, pack: pack.sources, collected_at: pack.collected_at,
+    case_id: pack.case_id, track_key: pack.track_key, pack: pack.sources,
+    evidence_hash: pack.evidence_hash, schema_version: pack.schema_version, collected_at: pack.collected_at,
   });
   return { error: error?.message ?? null };
 }
