@@ -4,6 +4,7 @@
 import type { TrackKey } from "@/lib/constants/tracks";
 import type { ConfidenceBand } from "@/lib/research/confidence";
 import type { PlanType } from "@/lib/constants/plans";
+import type { Provenance } from "@/lib/research/acquisition/types";
 
 export type Certainty = "verified" | "inferred" | "unknown";
 export type TrackSignal = "pass" | "infer" | "flag" | "soft_fail" | "hard_fail" | "n_a";
@@ -30,6 +31,7 @@ export interface EvidenceItem {
   claimant_benefits: boolean; // true if the claimant benefits from it being believed
   supports: string;
   weight_key?: string; // ADR-G003 evidence_type tag the CODE weight engine scores (Phase 5)
+  provenance?: Provenance; // Phase 5.1a — full acquisition→verdict provenance chain
 }
 export interface EvidenceWeight { evidence_type: string; points: number; note?: string }
 export interface Unknown { unknown: string; why_unresolvable: string; resolvable_by_client: boolean }
