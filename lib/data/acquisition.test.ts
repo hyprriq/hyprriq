@@ -19,7 +19,7 @@ describe("acquisition persistence", () => {
   });
   it("writes one metrics row per plugin", async () => {
     await persistAcquisitionMetrics("c1", "supplier_identity", [
-      { plugin_id: "serper", latency_ms: 10, api_cost_usd: 0, tokens_used: 0, evidence_items_returned: 2, evidence_items_consumed: 1 },
+      { plugin_id: "serper", latency_ms: 10, api_cost_usd: 0, evidence_items_returned: 2 },
     ]);
     expect(from).toHaveBeenCalledWith("case_acquisition_metrics");
     expect(insert).toHaveBeenCalledWith([expect.objectContaining({ case_id: "c1", plugin_id: "serper", evidence_items_returned: 2 })]);

@@ -35,8 +35,7 @@ export class Orchestrator {
       }
       sources.push(...got);
       const m = metricsByPlugin.get(plugin.id) ?? {
-        plugin_id: plugin.id, latency_ms: 0, api_cost_usd: 0, tokens_used: 0,
-        evidence_items_returned: 0, evidence_items_consumed: 0,
+        plugin_id: plugin.id, latency_ms: 0, api_cost_usd: 0, evidence_items_returned: 0,
       };
       m.latency_ms += Date.now() - start;
       m.evidence_items_returned += got.length;

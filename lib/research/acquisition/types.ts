@@ -36,13 +36,13 @@ export interface AcquisitionQuery {
   track_key: TrackKey;
 }
 
+// Acquisition-only (CTO metric category A): provider execution metrics. LLM metrics — tokens,
+// prompt cost, evidence consumed (category B) — persist to case_track_results in 5.1b, NOT here.
 export interface AcquisitionMetric {
   plugin_id: string;
   latency_ms: number;
-  api_cost_usd: number;
-  tokens_used: number;
+  api_cost_usd: number;            // acquisition provider cost (per-call); 0 until per-plugin metering wired
   evidence_items_returned: number;
-  evidence_items_consumed: number;     // set later by the track; 0 at acquisition
 }
 
 export interface AcquisitionPlugin {
