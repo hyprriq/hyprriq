@@ -15,13 +15,17 @@ describe("whoisPlugin", () => {
       json: async () => ({ WhoisRecord: { estimatedDomainAge: 2600, createdDate: "2019-01-01" } }),
     }));
     const out = await whoisPlugin.acquire({ question: "domain_age", input: "meridian-wholesale.example", case_id: "c1", track_key: "supplier_identity" });
-    expect(out).toHaveLength(1);
-    expect(out[0].provenance.source_profile).toBe("whois");
-    expect(out[0].snippet).toMatch(/2600/);
+    expect(out.sources).toHaveLength(1);
+    expect(out.sources[0].provenance.source_profile).toBe("whois");
+    expect(out.sources[0].snippet).toMatch(/2600/);
+    expect(out.final_status).toBe("ok");
+    expect(out.cost_usd).toBeGreaterThan(0);
   });
-  it("degrades gracefully to [] on a provider error", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+  it("degrades gracefully on a permanent provider error (no retry)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
     const out = await whoisPlugin.acquire({ question: "domain_age", input: "x.example", case_id: "c1", track_key: "supplier_identity" });
-    expect(out).toEqual([]);
+    expect(out.sources).toEqual([]);
+    expect(out.final_status).toBe("permanent_error");
+    expect(out.retry_count).toBe(0);
   });
 });

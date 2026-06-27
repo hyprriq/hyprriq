@@ -7,7 +7,8 @@ describe("nativeWebSearchPlugin", () => {
   });
   it("returns [] while disabled (fallback only)", async () => {
     const out = await nativeWebSearchPlugin.acquire({ question: "scam_reports", input: "x", case_id: "c1", track_key: "supplier_identity" });
-    expect(out).toEqual([]);
+    expect(out.sources).toEqual([]);
+    expect(out.final_status).toBe("skipped");
   });
   it("declares broad fallback capabilities", () => {
     expect(nativeWebSearchPlugin.capabilities).toContain("scam_reports");

@@ -20,6 +20,7 @@ export async function persistAcquisitionMetrics(
     case_id: caseId, track_key: trackKey, plugin_id: m.plugin_id,
     latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd,
     evidence_items_returned: m.evidence_items_returned,
+    retry_count: m.retry_count, final_status: m.final_status,
   }));
   const { error } = await supabaseAdmin.from("case_acquisition_metrics").insert(rows);
   return { error: error?.message ?? null };

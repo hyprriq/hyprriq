@@ -4,13 +4,16 @@ import type { AcquisitionPlugin } from "./types";
 
 const fakePlugin = (id: AcquisitionPlugin["id"], caps: AcquisitionPlugin["capabilities"], n: number): AcquisitionPlugin => ({
   id, capabilities: caps,
-  acquire: async (q) => Array.from({ length: n }, (_, i) => ({
-    url: `https://${id}.example/${i}`, title: `${id} ${q.question}`, snippet: "s", raw: {},
-    provenance: { provider: "Fake", provider_version: "v1", plugin: id, acquisition_method: id,
-      source_profile: "news", source_type: "third_party", authority_score: "medium",
-      freshness_days: null, collected_at: "2026-06-27T00:00:00.000Z",
-      expires_at: "2027-06-27T00:00:00.000Z", refresh_required: false },
-  })),
+  acquire: async (q) => ({
+    sources: Array.from({ length: n }, (_, i) => ({
+      url: `https://${id}.example/${i}`, title: `${id} ${q.question}`, snippet: "s", raw: {},
+      provenance: { provider: "Fake", provider_version: "v1", plugin: id, acquisition_method: id,
+        source_profile: "news", source_type: "third_party", authority_score: "medium",
+        freshness_days: null, collected_at: "2026-06-27T00:00:00.000Z",
+        expires_at: "2027-06-27T00:00:00.000Z", refresh_required: false },
+    })),
+    retry_count: 0, final_status: "ok" as const, cost_usd: 0,
+  }),
 });
 
 describe("Orchestrator", () => {

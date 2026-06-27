@@ -19,14 +19,18 @@ describe("serperPlugin", () => {
       ] }),
     }));
     const out = await serperPlugin.acquire({ question: "business_registry", input: "Meridian registration", case_id: "c1", track_key: "supplier_identity" });
-    expect(out).toHaveLength(2);
-    expect(out[0].provenance.source_profile).toBe("government_record");
-    expect(out[1].provenance.source_profile).toBe("social");
-    expect(out[0].provenance.acquisition_method).toBe("serper");
+    expect(out.sources).toHaveLength(2);
+    expect(out.sources[0].provenance.source_profile).toBe("government_record");
+    expect(out.sources[1].provenance.source_profile).toBe("social");
+    expect(out.sources[0].provenance.acquisition_method).toBe("serper");
+    expect(out.final_status).toBe("ok");
+    expect(out.cost_usd).toBeGreaterThan(0);
   });
-  it("degrades gracefully to [] on error", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 429 }));
+  it("degrades gracefully on a permanent error (no retry)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
     const out = await serperPlugin.acquire({ question: "business_registry", input: "x", case_id: "c1", track_key: "supplier_identity" });
-    expect(out).toEqual([]);
+    expect(out.sources).toEqual([]);
+    expect(out.final_status).toBe("permanent_error");
+    expect(out.retry_count).toBe(0);
   });
 });

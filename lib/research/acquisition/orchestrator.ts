@@ -1,8 +1,9 @@
 import type { TrackKey } from "@/lib/constants/tracks";
 import type {
-  AcquisitionPlugin, AcquisitionMetric, EvidencePack, RawSource, ResearchQuestion,
+  AcquisitionPlugin, AcquisitionMetric, AcquisitionResult, EvidencePack, RawSource, ResearchQuestion,
 } from "./types";
 import { finalizePack } from "./pack";
+import { worseStatus } from "./retry";
 
 export interface GatherRequest {
   case_id: string;
@@ -28,18 +29,22 @@ export class Orchestrator {
       const plugin = this.pluginFor(r.question);
       if (!plugin) continue; // no capable plugin → skip (track records the gap as an unknown)
       const start = Date.now();
-      let got: RawSource[] = [];
+      let result: AcquisitionResult;
       try {
-        got = await plugin.acquire({ question: r.question, input: r.input, case_id: req.case_id, track_key: req.track_key });
+        result = await plugin.acquire({ question: r.question, input: r.input, case_id: req.case_id, track_key: req.track_key });
       } catch {
-        got = []; // isolate the failure
+        result = { sources: [], retry_count: 0, final_status: "network_error", cost_usd: 0 }; // isolate the failure
       }
-      sources.push(...got);
+      sources.push(...result.sources);
       const m = metricsByPlugin.get(plugin.id) ?? {
         plugin_id: plugin.id, latency_ms: 0, api_cost_usd: 0, evidence_items_returned: 0,
+        retry_count: 0, final_status: "ok" as const,
       };
       m.latency_ms += Date.now() - start;
-      m.evidence_items_returned += got.length;
+      m.evidence_items_returned += result.sources.length;
+      m.api_cost_usd += result.cost_usd;
+      m.retry_count += result.retry_count;
+      m.final_status = worseStatus(m.final_status, result.final_status);
       metricsByPlugin.set(plugin.id, m);
     }
 

@@ -9,6 +9,10 @@ export type ResearchQuestion =
 
 export type AcquisitionMethod = "serper" | "whois" | "native_web_search" | "manual" | "inference";
 
+// Outcome of one acquisition call after the retry policy resolves (audit + metrics).
+export type AcquisitionStatus =
+  | "ok" | "empty" | "skipped" | "rate_limited" | "server_error" | "network_error" | "permanent_error";
+
 // Code-assigned at acquisition (certainty is added later by the track LLM — see EvidenceItem).
 // Full provenance chain (CTO §6): provider + version + plugin recorded so the source stays
 // replayable/auditable across provider swaps (§2).
@@ -41,19 +45,29 @@ export interface AcquisitionQuery {
   track_key: TrackKey;
 }
 
+// What a plugin returns from one acquire() call: the sources plus retry/cost/status for metrics.
+export interface AcquisitionResult {
+  sources: RawSource[];
+  retry_count: number;
+  final_status: AcquisitionStatus;
+  cost_usd: number;                // real per-call provider cost
+}
+
 // Acquisition-only (CTO metric category A): provider execution metrics. LLM metrics — tokens,
 // prompt cost, evidence consumed (category B) — persist to case_track_results in 5.1b, NOT here.
 export interface AcquisitionMetric {
   plugin_id: string;
   latency_ms: number;
-  api_cost_usd: number;            // acquisition provider cost (per-call); 0 until per-plugin metering wired
+  api_cost_usd: number;            // real acquisition provider cost (aggregated across this plugin's calls)
   evidence_items_returned: number;
+  retry_count: number;             // total retries across this plugin's calls
+  final_status: AcquisitionStatus; // worst status seen across this plugin's calls
 }
 
 export interface AcquisitionPlugin {
   id: AcquisitionMethod;
   capabilities: ResearchQuestion[];    // the questions this plugin can answer
-  acquire(query: AcquisitionQuery): Promise<RawSource[]>;
+  acquire(query: AcquisitionQuery): Promise<AcquisitionResult>;
 }
 
 // FROZEN CONTRACT (CTO §4). Every future layer (Track, Synthesis, Memory, Outcome) consumes this
