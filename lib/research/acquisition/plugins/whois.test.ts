@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { whoisPlugin } from "./whois";
 
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => vi.stubEnv("WHOIS_API_KEY", "test-key"));
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("whoisPlugin", () => {
   it("declares domain capabilities", () => {

@@ -7,7 +7,8 @@ export const whoisPlugin: AcquisitionPlugin = {
   id: "whois",
   capabilities: ["domain_age", "registration_date"],
   async acquire(query: AcquisitionQuery): Promise<RawSource[]> {
-    const key = process.env.WHOIS_API_KEY ?? "";
+    const key = process.env.WHOIS_API_KEY;
+    if (!key) return [];
     const url = `${ENDPOINT}?apiKey=${key}&domainName=${encodeURIComponent(query.input)}&outputFormat=JSON`;
     try {
       const res = await fetch(url);
