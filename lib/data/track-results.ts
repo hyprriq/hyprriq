@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { ConfidenceBand } from "@/lib/research/confidence";
-import type { EvidenceItem, EvidenceWeight, TrackSignal, Unknown } from "@/lib/research/contracts";
+import type { EvidenceItem, EvidenceWeight, TrackSignal, Unknown, WeightValidation } from "@/lib/research/contracts";
 
 // Read/write helpers for case_track_results — the single authoritative track table
 // (ADR-G001 + v2.1 evidence columns). Service-role; callers are admin-guarded routes,
@@ -30,10 +30,19 @@ export type TrackResultRow = {
   suggested_signal: TrackSignal | null;
   failure_type: "soft" | "hard" | null;
   attempt_number: number;
+  // Phase 5.1b — Track 1 firewall audit + classification metrics + regression artifact (optional:
+  // present on Track 1 rows, absent on stub/manual rows + older read sites).
+  weight_validation?: WeightValidation[] | null;
+  classifications_total?: number | null;
+  classifications_accepted?: number | null;
+  classifications_rejected?: number | null;
+  classifications_unknown?: number | null;
+  acceptance_rate?: number | null;
+  track_validation_report?: Record<string, unknown> | null;
 };
 
 const COLS =
-  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number";
+  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report";
 
 export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin

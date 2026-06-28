@@ -77,7 +77,8 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
     }
   }
 
-  const foundKeys = evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k);
+  // Dedupe so each evidence_type scores once (matches the pipeline's signal derivation; anti-gaming).
+  const foundKeys = [...new Set(evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k))];
   const derived_signal = deriveTrackSignal("supplier_identity", foundKeys).signal;
   const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
 

@@ -51,9 +51,18 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
     trackOutputs.push(out);
 
     // ── Layer 4a — CODE-derived signal (the LLM never decides PASS/FAIL) ──
-    const foundTypes = out.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k);
+    // Dedupe evidence_types: each ADR-G003 type scores ONCE (presence is binary). Without this, the
+    // same key accepted from two sources would double-count points and inflate the score (anti-gaming).
+    const foundTypes = [...new Set(out.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k))];
     const sig = deriveTrackSignal(def.track_key, foundTypes);
     signals[def.track_key] = sig.signal;
+
+    // Phase 5.1b — classification metrics from the firewall audit (0/empty for stub tracks).
+    const wv = out.weight_validation ?? [];
+    const cTotal = wv.length;
+    const cUnknown = wv.filter((v) => v.rejection_reason === "llm_returned_unknown").length;
+    const cAccepted = wv.filter((v) => v.validated_weight_key !== null).length;
+    const cRejected = cTotal - cAccepted - cUnknown;
 
     await upsertTrackResult({
       case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n,
@@ -66,6 +75,11 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
         signal: sig.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
       },
       founder_review_status: "approved", manual_review_required: false,
+      weight_validation: out.weight_validation ?? null,
+      classifications_total: cTotal, classifications_accepted: cAccepted,
+      classifications_rejected: cRejected, classifications_unknown: cUnknown,
+      acceptance_rate: cTotal > 0 ? Number((cAccepted / cTotal).toFixed(2)) : null,
+      track_validation_report: out.track_validation_report ?? null,
     });
   }
 
@@ -87,8 +101,8 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   // ── Layer 5 — Communication (deterministic; explains, never changes the verdict) ──
   buildReport(synthesis, verdict); // payload computed here; Phase H renders the PDF from it.
 
-  // ── Institutional memory write-side (ADR-G006 seam) ──
-  await writeIntelligence(ctx);
+  // ── Institutional memory write-side (ADR-G006) — feed Track 1's real signal ──
+  await writeIntelligence(ctx, signals.supplier_identity ?? null);
 
   // ── Persist case state — report-ready, reached autonomously ──
   const caseUpdate: Record<string, unknown> = {
