@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge, VerdictBadge, CertaintyBadge, type FindingCertainty } from "@/components/portal/badges";
 import type { CaseDetail, Finding } from "@/lib/data/cases";
+import { isResearchInProgress } from "@/lib/portal/case-status";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -80,6 +81,14 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
+  // Live progress: while research is running, re-fetch the server component every 4s so dimensions
+  // flip Queued → Complete and the verdict appears without a manual refresh. Stops at terminal states.
+  useEffect(() => {
+    if (!isResearchInProgress(c.status)) return;
+    const t = setInterval(() => router.refresh(), 4000);
+    return () => clearInterval(t);
+  }, [c.status, router]);
 
   const awaiting = c.status === "awaiting_client";
   const entered = c.brands_submitted ?? [];
