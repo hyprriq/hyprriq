@@ -1,0 +1,45 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const { gather, runModel } = vi.hoisted(() => ({
+  gather: vi.fn(),
+  runModel: vi.fn(),
+}));
+
+vi.mock("@/lib/research/acquisition/orchestrator", () => ({ Orchestrator: class { gather = gather } }));
+vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack: vi.fn().mockResolvedValue({ error: null }), persistAcquisitionMetrics: vi.fn().mockResolvedValue({ error: null }) }));
+vi.mock("@/lib/ai/runModel", () => ({ runModel }));
+
+import { runTrack1 } from "./track1";
+
+import type { TrackContext } from "@/lib/research/contracts";
+const ctx: TrackContext = { case_id: "c1", vendor_name: "Meridian Wholesale Co.", vendor_website: "https://meridian.example", brands_submitted: [], marketplace: "amazon_us", plan_type: "growth_279" };
+const prov = (source_profile: string, source_type: string, authority_score: string) => ({ provider: "Serper", provider_version: "v1", plugin: "serper", acquisition_method: "serper", source_profile, source_type, authority_score, freshness_days: null, collected_at: "t", expires_at: "t", refresh_required: false });
+const pack = (source_profile: string, source_type: string, authority: string) => ({ schema_version: "1.0.0", case_id: "c1", track_key: "supplier_identity", evidence_hash: "h", collected_at: "t", sources: [{ url: "https://sos.state.tx.us/x", title: "TX SOS", snippet: "active registration", raw: {}, provenance: prov(source_profile, source_type, authority) }] });
+const item = (proposed_weight_key: string) => ({ evidence_items: [{ evidence_id: "t1_e1", statement: "registered", proposed_weight_key, supporting_source_ids: ["src_0"], mapping_justification: "SOS confirms", counter_evidence: "None found", certainty: "verified", confidence: "high" }], reasoning_notes: "ok", unknowns: [] });
+
+beforeEach(() => { gather.mockReset(); runModel.mockReset(); });
+
+describe("runTrack1", () => {
+  it("validates a well-sourced government_registration proposal into an evidence_item with provenance + report", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [{ plugin_id: "serper", latency_ms: 5, api_cost_usd: 0.0015, evidence_items_returned: 1 }] });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 10, cost_usd: 0.01, latency_ms: 1 });
+
+    const out = await runTrack1(ctx);
+    expect(out.track_key).toBe("supplier_identity");
+    expect(out.evidence_items).toHaveLength(1);
+    expect(out.evidence_items[0].weight_key).toBe("government_registration");
+    expect(out.evidence_items[0].provenance?.source_profile).toBe("government_record");
+    expect(out.weight_validation?.[0].validated_weight_key).toBe("government_registration");
+    expect((out.track_validation_report as any)?.artifact_type).toBe("track_validation_report");
+    expect((out.track_validation_report as any)?.derived_signal).toBeDefined();
+  });
+
+  it("drops a forum-sourced government key (provenance gate): no evidence_item, audit records rejection", async () => {
+    gather.mockResolvedValue({ pack: pack("forum", "third_party", "low"), metrics: [] });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0, latency_ms: 1 });
+
+    const out = await runTrack1(ctx);
+    expect(out.evidence_items).toHaveLength(0);
+    expect(out.weight_validation?.[0].rejection_reason).toBe("provenance");
+  });
+});
