@@ -1,0 +1,70 @@
+import { describe, it, expect } from "vitest";
+import { validateWeights, VALIDATION_VERSION } from "./weightValidation";
+import type { SourceProfile } from "@/lib/research/source_profile";
+
+const profiles = (m: Record<string, SourceProfile>) => m;
+const prop = (evidence_id: string, proposed_weight_key: string, cited_source_ids: string[]) =>
+  ({ evidence_id, proposed_weight_key, cited_source_ids });
+
+describe("validateWeights firewall", () => {
+  it("stamps validation_version on every record", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "government_registration", ["s1"])] });
+    expect(r[0].validation_version).toBe(VALIDATION_VERSION);
+  });
+  it("grounding (first): an item citing no valid source id is rejected before any key check", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "totally_made_up", ["nope"])] });
+    expect(r[0].gate).toBe("grounding");
+    expect(r[0].rejection_reason).toBe("no_valid_citation");
+  });
+  it("registry: a key in no registry (but grounded) is rejected", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "totally_made_up", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("registry");
+  });
+  it("track: a key valid for a DIFFERENT track is rejected with 'track'", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "dealer_page_listed", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("track");
+  });
+  it("provenance: a forum source cannot earn a government key", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "forum" }), proposals: [prop("e1", "government_registration", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("provenance");
+  });
+  it("authority skipped for fixed-trust profile: government_record proposal is accepted", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "government_registration", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("government_registration");
+  });
+  it("authority evaluated for variable-trust profile: forum negative_reputation (min low) is accepted", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "forum" }), proposals: [prop("e1", "negative_reputation", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("negative_reputation");
+  });
+  it("UNKNOWN short-circuits to llm_returned_unknown (gate null)", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "UNKNOWN", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("llm_returned_unknown");
+    expect(r[0].gate).toBeNull();
+  });
+  it("contradiction equal-authority: two whois domain-age buckets reject BOTH", () => {
+    const r = validateWeights({
+      track: "supplier_identity",
+      sourceProfileById: profiles({ s1: "whois", s2: "whois" }),
+      proposals: [prop("e1", "domain_age_5_plus", ["s1"]), prop("e2", "domain_age_2_5", ["s2"])],
+    });
+    expect(r.every((x) => x.validated_weight_key === null)).toBe(true);
+    expect(r.every((x) => x.rejection_reason === "contradiction_equal_authority")).toBe(true);
+  });
+  it("contradiction hard_fail vs positive on same source: hard_fail wins", () => {
+    const r = validateWeights({
+      track: "supplier_identity",
+      sourceProfileById: profiles({ s1: "government_record" }),
+      proposals: [prop("e1", "government_registration", ["s1"]), prop("e2", "registration_fabricated", ["s1"])],
+    });
+    expect(r.find((x) => x.validated_weight_key)?.validated_weight_key).toBe("registration_fabricated");
+    expect(r.find((x) => x.proposed_weight_key === "government_registration")?.rejection_reason).toBe("contradiction");
+  });
+  it("dedupes identical proposals (same key + same source)", () => {
+    const r = validateWeights({
+      track: "supplier_identity",
+      sourceProfileById: profiles({ s1: "government_record" }),
+      proposals: [prop("e1", "government_registration", ["s1"]), prop("e2", "government_registration", ["s1"])],
+    });
+    expect(r.filter((x) => x.validated_weight_key === "government_registration")).toHaveLength(1);
+  });
+});
