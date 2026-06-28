@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -9,6 +9,11 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 import { runPipeline } from "@/lib/research/pipeline";
+
+// The pipeline runs in the background via after() (below) so the client can redirect to
+// the case page immediately instead of blocking on real Layer-1 research (WHOIS/Serper/LLM).
+// 60s covers the current track set; raise as Tracks 2–5 make real external calls.
+export const maxDuration = 60;
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
 
@@ -145,23 +150,26 @@ export async function POST(req: Request) {
     }
   }
 
-  // ---- run the Intelligence-OS pipeline (Stage 2: synchronous, stubbed reasoning) ----
-  // Layers 1→5 reach report-ready autonomously (no human gate). Non-fatal: the case + charge
-  // already exist; a failure is logged (never silently swallowed) and can be re-run. Inngest
-  // takes over the Layer-1 loop in Phase 5 when tracks make real external calls.
-  try {
-    const result = await runPipeline({
-      case_id: created.id,
-      vendor_name: vendorName,
-      vendor_website: vendorWebsite,
-      brands_submitted: brands,
-      marketplace,
-      plan_type: plan,
-    });
-    if (result.error) console.error("[submit] pipeline error:", result.error, { case_id: created.id });
-  } catch (e) {
-    console.error("[submit] pipeline threw:", e, { case_id: created.id });
-  }
+  // ---- run the Intelligence-OS pipeline in the BACKGROUND (after the response) ----
+  // The case + charge already exist, so we respond immediately and let the client redirect to
+  // the case page (which shows research-in-progress). after() keeps the function alive via
+  // waitUntil until the pipeline finishes — decoupled from the request so real Layer-1 calls
+  // (WHOIS/Serper/LLM) never block the redirect. Non-fatal + logged; Inngest durabilizes this later.
+  after(async () => {
+    try {
+      const result = await runPipeline({
+        case_id: created.id,
+        vendor_name: vendorName,
+        vendor_website: vendorWebsite,
+        brands_submitted: brands,
+        marketplace,
+        plan_type: plan,
+      });
+      if (result.error) console.error("[submit] pipeline error:", result.error, { case_id: created.id });
+    } catch (e) {
+      console.error("[submit] pipeline threw:", e, { case_id: created.id });
+    }
+  });
 
   return NextResponse.json({
     ok: true,

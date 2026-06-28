@@ -48,7 +48,6 @@ export function SubmitForm({
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Result | null>(null);
 
   const cost = creditsRequired(brands.length || 1, plan);
   const remainingAfter = creditsAvailable - cost;
@@ -107,50 +106,14 @@ export function SubmitForm({
       if (!res.ok) {
         throw new Error(data?.message || data?.error || "Submission failed.");
       }
-      setResult(data as Result);
+      // The case exists now; research runs in the background. Go straight to the case page
+      // (it shows research-in-progress). Keep busy=true through navigation so the form doesn't
+      // flash back before the page unmounts.
+      router.push(`/portal/cases/${(data as Result).case_id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
       setBusy(false);
     }
-  }
-
-  // ---- success state (values come straight from the submit response — no
-  // re-derivation, no race with a separate balance fetch) ----
-  if (result) {
-    return (
-      <div className="mx-auto max-w-lg rounded-card border border-line bg-surface p-8 text-center">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-clear-bg text-xl text-clear-ink">✓</div>
-        <h2 className="mt-4 font-display text-xl font-bold text-ink">Research request submitted</h2>
-        <p className="mt-1 text-sm text-ink-2">
-          Case <span className="font-mono font-semibold">{result.case_number}</span> is in the queue.
-        </p>
-        <div className="mt-5 grid grid-cols-2 gap-3 text-left">
-          <div className="rounded-lg border border-line bg-base p-3">
-            <div className="text-[12px] uppercase tracking-wide text-muted">Credit Deducted</div>
-            <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.credits_charged}</div>
-          </div>
-          <div className="rounded-lg border border-line bg-base p-3">
-            <div className="text-[12px] uppercase tracking-wide text-muted">Remaining Balance</div>
-            <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.remaining_balance}</div>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href={`/portal/cases/${result.case_id}`}
-            className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
-          >
-            View case →
-          </Link>
-          <Link
-            href="/portal/dashboard"
-            className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
-          >
-            Dashboard
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
