@@ -12,6 +12,10 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks/(.*)",
   "/api/health",
+  // Inngest's serve endpoint must bypass Clerk — it's hit server-to-server (sync + run invocations)
+  // with no Clerk session, and authenticates itself via INNGEST_SIGNING_KEY. Without this, Clerk
+  // blocks the sync → Inngest reports "Not found response from URL".
+  "/api/inngest(.*)",
 ]);
 
 // Clerk v7: the callback receives an async `auth`; protect with
