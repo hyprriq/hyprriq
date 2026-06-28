@@ -39,24 +39,28 @@ async function main() {
   const { data: cases, error } = await db
     .from("cases")
     .select("id, case_number")
-    .like("case_number", "SEED-REVIEW-%");
+    .like("case_number", "SEED-%"); // SEED-REVIEW-% (review screens) + SEED-VALIDATE-% (acquisition validation)
   if (error) throw new Error(`query: ${error.message}`);
   if (!cases || cases.length === 0) {
-    console.log("No SEED-REVIEW-% cases found. Nothing to clean up.");
+    console.log("No SEED-% cases found. Nothing to clean up.");
     return;
   }
 
-  console.log(`Found ${cases.length} scenario case(s):`);
+  console.log(`Found ${cases.length} throwaway case(s):`);
   for (const c of cases) {
-    const { error: sErr } = await db.from("case_synthesis").delete().eq("case_id", c.id);
-    if (sErr) throw new Error(`case_synthesis ${c.case_number}: ${sErr.message}`);
-    const { error: tErr } = await db.from("case_track_results").delete().eq("case_id", c.id);
-    if (tErr) throw new Error(`case_track_results ${c.case_number}: ${tErr.message}`);
+    // child rows (case_evidence_packs / case_acquisition_metrics also cascade on the cases delete)
+    for (const t of ["case_synthesis", "case_track_results", "case_evidence_packs", "case_acquisition_metrics"]) {
+      const { error: e } = await db.from(t).delete().eq("case_id", c.id);
+      if (e) throw new Error(`${t} ${c.case_number}: ${e.message}`);
+    }
     const { error: cErr } = await db.from("cases").delete().eq("id", c.id);
     if (cErr) throw new Error(`cases ${c.case_number}: ${cErr.message}`);
     console.log(`  ✓ deleted ${c.case_number} (${c.id})`);
   }
-  console.log(`\n✅ Cleaned up ${cases.length} scenario case(s).`);
+  console.log(`\n✅ Cleaned up ${cases.length} throwaway case(s).`);
+  console.log("Note: vendor_intelligence / brand_intelligence rows are keyed by normalized name (no");
+  console.log("case link) and are NOT removed here. If the validation vendor should not seed the");
+  console.log("corpus, delete it manually by vendor_name_normalized.");
 }
 
 main().catch((e) => { console.error("\n❌ Cleanup failed:", e.message); process.exit(1); });
