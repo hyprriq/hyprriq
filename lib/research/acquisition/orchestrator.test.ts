@@ -41,6 +41,23 @@ describe("Orchestrator", () => {
     });
     expect(pack.sources).toEqual([]);
   });
+  it("runs acquisitions CONCURRENTLY, not sequentially (60s-cap fix)", async () => {
+    const delayed = (id: AcquisitionPlugin["id"], caps: AcquisitionPlugin["capabilities"], ms: number): AcquisitionPlugin => ({
+      id, capabilities: caps,
+      acquire: async () => {
+        await new Promise((r) => setTimeout(r, ms));
+        return { sources: [], retry_count: 0, final_status: "ok" as const, cost_usd: 0 };
+      },
+    });
+    const orch = new Orchestrator([delayed("whois", ["domain_age"], 100), delayed("serper", ["business_registry"], 100)]);
+    const start = Date.now();
+    await orch.gather({
+      case_id: "c1", track_key: "supplier_identity",
+      requests: [{ question: "domain_age", input: "a" }, { question: "business_registry", input: "b" }],
+    });
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(180); // ~100ms parallel; sequential would be ~200ms
+  });
   it("degrades gracefully when a plugin throws (pack still built from the rest)", async () => {
     const throwing: AcquisitionPlugin = { id: "serper", capabilities: ["business_registry"], acquire: async () => { throw new Error("down"); } };
     const orch = new Orchestrator([fakePlugin("whois", ["domain_age"], 1), throwing]);
