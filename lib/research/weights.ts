@@ -139,3 +139,10 @@ export const TRACK_WEIGHTS: Record<string, number> = {
   supplier_identity: 0.30, supply_chain_relationship: 0.25,
   brand_risk_assessment: 0.30, documentation_review: 0.15,
 };
+
+// Phase 5.1b — does an evidence_type exist in ANY track's registry? Distinguishes a totally-unknown
+// key (firewall gate ①) from a key valid for a DIFFERENT track (gate ④). Additive; no scoring change.
+export function weightKeyExistsInAnyTrack(evidenceType: string): boolean {
+  const tables = WEIGHTS as Record<string, Record<string, WeightEntry>>;
+  return Object.values(tables).some((t) => evidenceType in t);
+}
