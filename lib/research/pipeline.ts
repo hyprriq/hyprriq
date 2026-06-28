@@ -44,11 +44,33 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
 
   const trackOutputs: TrackOutput[] = [];
   const signals: Partial<Record<TrackKey, TrackSignal>> = {};
+  let identityAcquisitionFailed = false;
   for (const n of [1, 2, 3, 4, 5]) {
     if (!included.has(n)) continue; // skipped for this plan
     const def = trackByNumber(n);
     const out = await TRACK_FNS[n](ctx);
     trackOutputs.push(out);
+
+    // ── Acquisition-failure guard (correctness) — an EMPTY Evidence Pack means we COULD NOT research,
+    // not that we researched and found nothing. Such a track must NOT score (→ n_a, excluded from the
+    // verdict), must NOT write institutional memory, and must escalate to manual review. ──
+    if (out.acquisition_failed) {
+      if (def.track_key === "supplier_identity") identityAcquisitionFailed = true;
+      signals[def.track_key] = "n_a";
+      await upsertTrackResult({
+        case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n,
+        source_mode: "ai_generated",
+        evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
+        track_verdict_signal: "n_a", finding_certainty: "unknown",
+        manual_review_required: true, manual_review_reason: "acquisition produced no sources — could not research",
+        failure_type: "soft", founder_review_status: "pending",
+        compiled_findings_json: { signal: "n_a", acquisition_failed: true, summary: out.reasoning_notes },
+        weight_validation: out.weight_validation ?? null,
+        track_validation_report: out.track_validation_report ?? null,
+        classifications_total: 0, classifications_accepted: 0, classifications_rejected: 0, classifications_unknown: 0, acceptance_rate: null,
+      });
+      continue;
+    }
 
     // ── Layer 4a — CODE-derived signal (the LLM never decides PASS/FAIL) ──
     // Dedupe evidence_types: each ADR-G003 type scores ONCE (presence is binary). Without this, the
@@ -101,15 +123,23 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   // ── Layer 5 — Communication (deterministic; explains, never changes the verdict) ──
   buildReport(synthesis, verdict); // payload computed here; Phase H renders the PDF from it.
 
-  // ── Institutional memory write-side (ADR-G006) — feed Track 1's real signal ──
-  await writeIntelligence(ctx, signals.supplier_identity ?? null);
+  // ── Institutional memory write-side (ADR-G006) — feed Track 1's real signal. SKIP when the
+  // identity acquisition failed: never pollute the corpus with a "couldn't research" non-signal. ──
+  if (!identityAcquisitionFailed) {
+    await writeIntelligence(ctx, signals.supplier_identity ?? null);
+  }
 
-  // ── Persist case state — report-ready, reached autonomously ──
+  // ── Persist case state. If the identity acquisition failed, escalate to manual_override_required
+  // (distinct status) instead of awaiting_review — a human must look, not the autonomous report. ──
   const caseUpdate: Record<string, unknown> = {
-    status: "awaiting_review", synthesis_status: "complete",
+    status: identityAcquisitionFailed ? "manual_override_required" : "awaiting_review",
+    synthesis_status: "complete",
     verdict: verdict.verdict, confidence_score: verdict.confidence_0_15, track_0_status: "complete",
   };
-  for (let n = 1; n <= 5; n++) caseUpdate[`track_${n}_status`] = included.has(n) ? "complete" : "skipped";
+  for (let n = 1; n <= 5; n++) {
+    caseUpdate[`track_${n}_status`] = !included.has(n) ? "skipped"
+      : (n === 1 && identityAcquisitionFailed) ? "manual_required" : "complete";
+  }
   const { error } = await supabaseAdmin.from("cases").update(caseUpdate).eq("id", ctx.case_id);
   return { error: error?.message ?? null };
 }

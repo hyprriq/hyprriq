@@ -45,6 +45,7 @@ export interface TrackOutput {
   suggested_signal?: TrackSignal; // QA ONLY — never the verdict input (enhancement #1)
   weight_validation?: WeightValidation[];          // Phase 5.1b — Track 1 firewall audit (plumbed to the row)
   track_validation_report?: Record<string, unknown>; // Phase 5.1b — deterministic regression artifact (jsonb)
+  acquisition_failed?: boolean;                    // Phase 5.1b — pack had 0 sources: do NOT score / write memory; escalate
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that

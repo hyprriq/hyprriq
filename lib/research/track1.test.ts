@@ -42,4 +42,14 @@ describe("runTrack1", () => {
     expect(out.evidence_items).toHaveLength(0);
     expect(out.weight_validation?.[0].rejection_reason).toBe("provenance");
   });
+
+  it("acquisition-failure guard: an EMPTY pack flags acquisition_failed and never calls the model", async () => {
+    gather.mockResolvedValue({ pack: { schema_version: "1.0.0", case_id: "c1", track_key: "supplier_identity", evidence_hash: "h", collected_at: "t", sources: [] }, metrics: [{ plugin_id: "serper", latency_ms: 1, api_cost_usd: 0, evidence_items_returned: 0 }] });
+    const out = await runTrack1(ctx);
+    expect(out.acquisition_failed).toBe(true);
+    expect(out.evidence_items).toHaveLength(0);
+    expect(out.weight_validation).toEqual([]);
+    expect(runModel).not.toHaveBeenCalled(); // short-circuit: no doomed model call
+    expect((out.track_validation_report as Record<string, unknown>)?.derived_signal).toBe("n_a");
+  });
 });

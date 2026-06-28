@@ -23,6 +23,24 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   await persistEvidencePack(pack);
   await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
 
+  // ── Acquisition-failure guard: an EMPTY pack means we could not research (provider unavailable /
+  // no results) — NOT "researched and found nothing". Do not call the model, do not score, flag for
+  // escalation. The pipeline maps acquisition_failed → n_a (no verdict drag) + manual review + no
+  // memory write. (A non-empty pack with no validated evidence is a legitimate soft_fail, not this.)
+  if (pack.sources.length === 0) {
+    const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
+    const track_validation_report = buildValidationReport({
+      track_key: "supplier_identity", validation_version: VALIDATION_VERSION, schema_version: EVIDENCE_PACK_SCHEMA_VERSION,
+      generated_at: new Date().toISOString(), validations: [], accepted: [], rejected: [],
+      derived_signal: "n_a", current_verdict: "pending", provider_usage, llm_cost_usd: 0,
+    });
+    return {
+      track_key: "supplier_identity", evidence_items: [], evidence_weights_applied: [],
+      reasoning_notes: "Acquisition produced no sources — could not research this vendor (provider unavailable or no results). Escalated for manual review.",
+      unknowns: [], weight_validation: [], track_validation_report, acquisition_failed: true,
+    };
+  }
+
   const byId = new Map<string, RawSource>();
   const sourceProfileById: Record<string, SourceProfile> = {};
   const promptSources = pack.sources.map((s, idx) => {
