@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runPipeline } from "@/lib/research/pipeline";
 import { finalizePack } from "@/lib/research/acquisition/pack";
+import { buildTrack1Prompt } from "@/lib/research/track1.prompt";
+import { runModel } from "@/lib/ai/runModel";
 import { normalizeName } from "@/lib/utils/normalize-name";
 import type { RawSource } from "@/lib/research/acquisition/types";
 import type { PlanType } from "@/lib/constants/plans";
@@ -75,6 +77,38 @@ export async function POST(req: Request) {
   const validatedKeys = evItems.map((e) => e.weight_key).filter((k): k is string => !!k);
   const distinctKeys = [...new Set(validatedKeys)];
 
+  // ── Phase 1 boundary diagnostics (root-cause evidence; NO fixes here) ──
+  // (1) env propagation: are the provider keys present in THIS (deployed) environment?
+  const env_present = {
+    serper: !!process.env.SERPER_API_KEY,
+    whois: !!process.env.WHOIS_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+  };
+  // (2) acquisition boundary: did each plugin return sources, or skip/fail?
+  const { data: acqMetrics } = await supabaseAdmin
+    .from("case_acquisition_metrics")
+    .select("plugin_id, final_status, retry_count, evidence_items_returned, latency_ms, api_cost_usd")
+    .eq("case_id", caseId);
+  // (3) Evidence Pack boundary: what did the pack actually contain?
+  const packSources = (epack?.pack as RawSource[] | null) ?? [];
+  const pack_summary = {
+    source_count: packSources.length,
+    by_profile: packSources.reduce<Record<string, number>>((a, s) => {
+      a[s.provenance.source_profile] = (a[s.provenance.source_profile] ?? 0) + 1; return a;
+    }, {}),
+    sample: packSources.slice(0, 3).map((s) => ({ url: s.url, title: s.title, profile: s.provenance.source_profile, method: s.provenance.acquisition_method })),
+  };
+  // (4) model boundary: re-run the prompt on the PERSISTED pack and capture the raw output / error.
+  let model_diagnostic: Record<string, unknown>;
+  try {
+    const promptSources = packSources.map((s, i) => ({ source_id: `src_${i}`, url: s.url, title: s.title, snippet: s.snippet }));
+    const { system, user } = buildTrack1Prompt({ vendor_name: vendorName, vendor_website: vendorWebsite }, promptSources);
+    const res = await runModel({ task: "track", system, user, temperature: 0 });
+    model_diagnostic = { ok: true, model_version: res.model_version, tokens: res.tokens, raw_json: res.json };
+  } catch (e) {
+    model_diagnostic = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   return NextResponse.json({
     ok: true,
     pipeline_error: pipeErr.error,
@@ -100,6 +134,12 @@ export async function POST(req: Request) {
     checks: {
       evidence_hash: epack?.evidence_hash ?? null,
       evidence_hash_stable, // re-hashing the persisted pack reproduces the stored hash
+    },
+    diagnostics: {
+      env_present,           // false here = key not set in THIS (Vercel) environment → H1
+      acquisition_metrics: acqMetrics, // per-plugin final_status: "skipped" = no key; "ok" = worked
+      pack_summary,          // source_count 0 = acquisition produced nothing
+      model_diagnostic,      // raw_json shows the model output; {_parse_error,_raw} = brittle-JSON (H2); error = call failed
     },
     inspect: {
       track1_row: `select track_verdict_signal, classifications_total, classifications_accepted, acceptance_rate, weight_validation, track_validation_report from case_track_results where case_id = '${caseId}' and track_number = 1;`,
