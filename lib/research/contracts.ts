@@ -43,6 +43,25 @@ export interface TrackOutput {
   reasoning_notes: string;
   unknowns: Unknown[];
   suggested_signal?: TrackSignal; // QA ONLY — never the verdict input (enhancement #1)
+  weight_validation?: WeightValidation[];          // Phase 5.1b — Track 1 firewall audit (plumbed to the row)
+  track_validation_report?: Record<string, unknown>; // Phase 5.1b — deterministic regression artifact (jsonb)
+}
+
+// Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that
+// decided + the firewall version). Persisted to case_track_results.weight_validation. The locked
+// EvidenceItem.weight_key stays = the VALIDATED key only; proposed/rejected live here.
+export type RejectionReason =
+  | "registry" | "track" | "no_valid_citation" | "provenance" | "authority"
+  | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown";
+export type ValidationGate =
+  | "grounding" | "registry" | "track" | "provenance" | "authority" | "contradiction";
+export interface WeightValidation {
+  evidence_id: string;
+  proposed_weight_key: string;
+  validated_weight_key: string | null;
+  gate: ValidationGate | null;          // the gate that rejected it; null if accepted
+  rejection_reason: RejectionReason | null;
+  validation_version: string;           // firewall version (independent of pack schema_version)
 }
 
 // Layer 2 output
