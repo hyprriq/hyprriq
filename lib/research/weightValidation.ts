@@ -22,6 +22,18 @@ const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   address_fraudulent: ["government_record", "registry", "news"],
   website_fraudulent: ["news", "forum", "marketplace"],
   scam_reports_corroborated: ["forum", "social", "news", "marketplace"],
+  // Track 2 — supply_chain_relationship. loa_legitimate is intentionally ABSENT: an LOA is NOT an
+  // authorization-discovery signal here (pre-purchase, unverifiable) — it routes to the Compliance
+  // Documentation layer (ADR-T2-001). It remains a Track 4 (documentation_review) key.
+  dealer_page_listed: ["official_brand", "official_company"],
+  invoice_matches_distributor: ["user_upload", "official_company"],
+  purchases_from_mega_distributor: ["user_upload", "official_company", "registry"],
+  trade_press_connection: ["news", "official_company"],
+  claims_authorization_unverified: ["official_company", "user_upload", "inference"],
+  no_connection_found: ["inference"],
+  grey_market_signals: ["forum", "social", "news", "marketplace"],
+  counterfeit_channel: ["government_record", "news", "forum", "marketplace"],
+  conflicting_authorization: ["official_brand", "official_company", "registry", "news"],
 };
 const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   government_registration: "high", domain_age_5_plus: "high", domain_age_2_5: "high",
@@ -29,6 +41,11 @@ const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   phone_verifiable: "low", website_quality: "low", bbb_or_trade_association: "low",
   negative_reputation: "low", registration_fabricated: "high", address_fraudulent: "medium",
   website_fraudulent: "low", scam_reports_corroborated: "low",
+  // Track 2 (supply_chain_relationship)
+  dealer_page_listed: "high", invoice_matches_distributor: "low",
+  purchases_from_mega_distributor: "low", trade_press_connection: "low",
+  claims_authorization_unverified: "low", no_connection_found: "low", grey_market_signals: "low",
+  counterfeit_channel: "medium", conflicting_authorization: "medium",
 };
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit
 // entry) because authority is already implied by provenance. 'inference' has no external source → skip.

@@ -68,3 +68,28 @@ describe("validateWeights firewall", () => {
     expect(r.filter((x) => x.validated_weight_key === "government_registration")).toHaveLength(1);
   });
 });
+
+describe("validateWeights — Track 2 (supply_chain_relationship)", () => {
+  it("official_brand earns dealer_page_listed", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "official_brand" }), proposals: [prop("e1", "dealer_page_listed", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("dealer_page_listed");
+    expect(r[0].rejection_reason).toBeNull();
+  });
+  it("a forum source cannot earn dealer_page_listed (provenance)", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "forum" }), proposals: [prop("e1", "dealer_page_listed", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("provenance");
+  });
+  it("a Track 1 key is rejected on the Track 2 registry (track gate)", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "government_registration", ["s1"])] });
+    expect(r[0].rejection_reason).toBe("track");
+  });
+  it("grey_market_signals accepts a forum source (variable-trust)", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "forum" }), proposals: [prop("e1", "grey_market_signals", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("grey_market_signals");
+  });
+  it("loa_legitimate has NO Track 2 provenance config → firewall-rejected (LOA never scores in Track 2; ADR-T2-001)", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "official_brand" }), proposals: [prop("e1", "loa_legitimate", ["s1"])] });
+    expect(r[0].validated_weight_key).toBeNull();
+    expect(r[0].rejection_reason).toBe("provenance");
+  });
+});
