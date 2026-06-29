@@ -14,6 +14,7 @@ export const serperPlugin: AcquisitionPlugin = {
   capabilities: [
     "business_registry", "linkedin_presence", "bbb_listing", "marketplace_signals",
     "dealer_page", "trade_directory", "scam_reports", "address_verification", "contact_consistency",
+    "brand_authorization", "reseller_certificate", "b2b_archetype", // Track 2
   ],
   async acquire(query: AcquisitionQuery): Promise<AcquisitionResult> {
     const key = process.env.SERPER_API_KEY;

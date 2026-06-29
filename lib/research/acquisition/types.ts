@@ -5,7 +5,9 @@ import type { TrackKey } from "@/lib/constants/tracks";
 export type ResearchQuestion =
   | "domain_age" | "registration_date" | "business_registry" | "linkedin_presence"
   | "bbb_listing" | "marketplace_signals" | "dealer_page" | "trade_directory"
-  | "scam_reports" | "address_verification" | "contact_consistency";
+  | "scam_reports" | "address_verification" | "contact_consistency"
+  // Track 2 (supply_chain_relationship) — Serper search questions
+  | "brand_authorization" | "reseller_certificate" | "b2b_archetype";
 
 export type AcquisitionMethod = "serper" | "whois" | "native_web_search" | "manual" | "inference";
 
