@@ -23,6 +23,13 @@ const DIMENSIONS: { track: keyof CaseDetail; name: string }[] = [
   { track: "track_5_status", name: "Sourcing Logic" },
 ];
 
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_CLS: Record<string, string> = {
+  high: "bg-deny-bg text-deny-ink",
+  medium: "bg-conditional-bg text-conditional-ink",
+  low: "bg-subtle text-muted",
+};
+
 function dimStatus(s: string): { label: string; cls: string } {
   switch (s) {
     case "complete":
@@ -94,7 +101,11 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
   const entered = c.brands_submitted ?? [];
   const detected = c.brands_from_ocr ?? [];
   const hasMismatch = detected.length > 0 && detected.join("|") !== entered.join("|");
-  const questions = extractQuestions(findings);
+  // Track 2 rich questions (with priority); fall back to legacy compiled_findings_json questions.
+  const richQuestions = findings
+    .flatMap((f) => f.questions_to_ask ?? [])
+    .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
+  const legacyQuestions = extractQuestions(findings);
 
   function confirmScope(brands: string[]) {
     setError(null);
@@ -267,13 +278,30 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
           <div className="mb-4 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3 text-[14px] text-brand-ink">
             💬 Ask your supplier these before placing an order. Satisfactory answers do not guarantee invoice acceptance.
           </div>
-          {questions.length === 0 ? (
+          {richQuestions.length > 0 ? (
+            <div className="overflow-hidden rounded-card border border-line bg-surface">
+              {richQuestions.map((q, i) => (
+                <div key={i} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[13px] font-bold text-brand-ink">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-medium text-ink">{q.question}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${PRIORITY_CLS[q.priority]}`}>{q.priority}</span>
+                    </div>
+                    {q.reason && <div className="mt-0.5 text-[13px] text-muted">{q.reason}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : legacyQuestions.length === 0 ? (
             <div className="rounded-card border border-line bg-surface p-10 text-center text-sm text-muted">
               Supplier questions will appear here once research completes.
             </div>
           ) : (
             <div className="overflow-hidden rounded-card border border-line bg-surface">
-              {questions.map((q, i) => (
+              {legacyQuestions.map((q, i) => (
                 <div key={i} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[13px] font-bold text-brand-ink">
                     {i + 1}

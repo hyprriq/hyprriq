@@ -95,6 +95,9 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     finding_certainty: "unknown",
     compiled_findings_json: {
       signal: sig.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
+      // Track 2 advisory metadata (stored for the analyst, NOT scored). null on tracks that don't emit them.
+      auth_level: out.auth_level ?? null, auth_level_reasoning: out.auth_level_reasoning ?? null,
+      b2b_only_detected: out.b2b_only_detected ?? null, b2b_only_brands: out.b2b_only_brands ?? null,
     },
     founder_review_status: "approved", manual_review_required: false,
     weight_validation: out.weight_validation ?? null,
@@ -102,6 +105,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     classifications_rejected: cRejected, classifications_unknown: cUnknown,
     acceptance_rate: cTotal > 0 ? Number((cAccepted / cTotal).toFixed(2)) : null,
     track_validation_report: out.track_validation_report ?? null,
+    questions_to_ask: out.questions_to_ask ?? null,
   });
 
   return { output: out, signal: sig.signal, acquisition_failed: false };

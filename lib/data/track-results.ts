@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { ConfidenceBand } from "@/lib/research/confidence";
-import type { EvidenceItem, EvidenceWeight, TrackSignal, Unknown, WeightValidation } from "@/lib/research/contracts";
+import type { EvidenceItem, EvidenceWeight, TrackSignal, Unknown, WeightValidation, QuestionToAsk } from "@/lib/research/contracts";
 
 // Read/write helpers for case_track_results — the single authoritative track table
 // (ADR-G001 + v2.1 evidence columns). Service-role; callers are admin-guarded routes,
@@ -39,10 +39,11 @@ export type TrackResultRow = {
   classifications_unknown?: number | null;
   acceptance_rate?: number | null;
   track_validation_report?: Record<string, unknown> | null;
+  questions_to_ask?: QuestionToAsk[] | null; // Phase 5.1c — Track 2 client-facing questions
 };
 
 const COLS =
-  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report";
+  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report, questions_to_ask";
 
 export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin

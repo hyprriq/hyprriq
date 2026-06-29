@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
+import type { QuestionToAsk } from "@/lib/research/contracts";
 
 export type CaseRow = {
   id: string;
@@ -104,6 +105,7 @@ export type Finding = {
   compiled_findings_json: Record<string, unknown> | null;
   ai_output_json: Record<string, unknown> | null;
   manual_notes: string | null;
+  questions_to_ask: QuestionToAsk[] | null; // Phase 5.1c — Track 2 client-facing questions
 };
 
 // Findings for a case, scoped via the parent case's ownership. Reads the
@@ -123,7 +125,7 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   if (!owned) return [];
   const { data } = await supa
     .from("case_track_results")
-    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, ai_output_json, manual_notes")
+    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, ai_output_json, manual_notes, questions_to_ask")
     .eq("case_id", caseId)
     .gte("track_number", 1)
     .is("deleted_at", null)
