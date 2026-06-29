@@ -38,8 +38,14 @@ export interface EvidenceWeight { evidence_type: string; points: number; note?: 
 export interface Unknown { unknown: string; why_unresolvable: string; resolvable_by_client: boolean }
 
 // Phase 5.1c — Track 2 client-facing question (rendered on the case "Questions to Ask" tab). Rich
-// object: the question, the gap it addresses, and the weight_key an answer would unlock.
-export interface QuestionToAsk { question: string; reason: string; blocking_weight_key: string }
+// object: the question, the gap it addresses, the weight_key an answer would unlock, and a priority
+// (high = affects the authorization determination; medium = strengthens confidence; low = useful, not blocking).
+export interface QuestionToAsk {
+  question: string;
+  reason: string;
+  blocking_weight_key: string;
+  priority: "high" | "medium" | "low";
+}
 
 export interface TrackOutput {
   track_key: TrackKey;

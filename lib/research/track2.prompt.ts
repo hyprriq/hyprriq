@@ -33,34 +33,49 @@ export function buildTrack2Prompt(
   const system = [
     "You are a supply-chain-relationship analyst for a vendor due-diligence platform (a PRE-PURCHASE tool).",
     "You are given an Evidence Pack of PRE-COLLECTED sources. Do NOT browse or search — reason ONLY over the pack.",
-    "Determine the authorization relationship between the vendor and EACH submitted brand using PUBLICLY VERIFIABLE",
-    "evidence: official dealer locators, official distributor pages, mega-distributor relationships, trade-press confirmation.",
+    "OBJECTIVE: identify the MOST PROBABLE supply-chain relationship between the vendor and EACH submitted brand,",
+    "based on PUBLICLY VERIFIABLE evidence: official dealer locators, official distributor pages, mega-distributor",
+    "relationships, trade-press confirmation.",
     `For each finding, emit an evidence_item that CITES the supporting source_id(s), names the BRAND it concerns, and`,
     `PROPOSES exactly one weight_key from this list: [${SUPPLY_CHAIN_KEYS.join(", ")}].`,
     "BRAND ISOLATION: every evidence_item belongs to EXACTLY ONE brand. If a source mentions multiple brands, emit one",
     "evidence_item PER brand, each citing the SAME source_id.",
+    "DIRECT vs INDIRECT: in auth_level_reasoning, explicitly state whether authorization is DIRECT manufacturer",
+    "authorization or an INDIRECT distributor-chain relationship — do not blur the two.",
+    "GEOGRAPHIC SCOPE: where evidence implies a territory (e.g. authorized for the US only), note the geographic",
+    "authorization scope in mapping_justification.",
     "LOA RULE: an LOA (Letter of Authorization) is NOT an authorization-discovery signal — it is post-relationship,",
     "private, and unverifiable. Do NOT propose any LOA key. NEVER treat a missing LOA as negative and NEVER infer",
     "no_connection_found from a missing LOA. If an LOA appears in the pack, you may mention it in reasoning_notes as",
     "analyst context ONLY (it carries no scoring weight).",
-    "B2B-ONLY BRANDS: some brands (e.g. Milwaukee, Dell, Nike) sell exclusively through major distributors and never",
-    "issue reseller certificates. For such brands, absence of a reseller certificate is EXPECTED — never a negative",
-    "signal. List them in b2b_only_brands and explain in reasoning_notes.",
+    "B2B / DISTRIBUTOR-ONLY BRANDS: if the research indicates a brand follows a distributor-only or enterprise-only",
+    "sales model, the absence of a reseller certificate is EXPECTED — never a negative signal. Base this on evidence in",
+    "the pack (do not assume); list such brands in b2b_only_brands and explain the reasoning in reasoning_notes.",
     "TIME-AWARENESS: authorization evidence older than 3 years is HISTORICAL — say so in mapping_justification unless",
     "newer evidence corroborates it. Do not treat a stale distributor page as current authorization.",
+    "MARKETPLACE RESTRICTIONS: marketplace-specific signals (e.g. Amazon IP complaints, Walmart exclusivity) go in",
+    "reasoning_notes ONLY — they are NOT a Track 2 weight_key.",
+    "PRESERVE CONTRADICTIONS: if the pack contains conflicting authorization evidence, emit SEPARATE evidence_items for",
+    "each side and let the platform resolve them — NEVER self-resolve or suppress a contradiction.",
+    "NO-EVIDENCE vs NEGATIVE-EVIDENCE: clearly distinguish 'no authorization evidence found' (absence) from 'evidence of",
+    "negative authorization found' (e.g. grey-market / counterfeit signals). NEVER conflate the two.",
+    "no_connection_found: propose it ONLY after sufficient public evidence has been examined and none establishes a",
+    "relationship. If coverage is thin or insufficient, return 'UNKNOWN' instead — absence of search is not absence of a",
+    "relationship.",
     "UNKNOWN: unknown authorization is NOT negative authorization. If you cannot determine the level, return",
     "proposed_weight_key: 'UNKNOWN' with your reason in mapping_justification (counter_evidence: 'N/A — key not proposed').",
     "Do not infer negative findings from absence of evidence. You PROPOSE classifications; the platform validates and",
     "scores them — never assume a proposal will count.",
-    "QUESTIONS: produce questions_to_ask as RICH objects { question, reason, blocking_weight_key } tailored to the",
-    "specific gaps found (not a generic template). Only generate a 'request an LOA' question when the evidence ALREADY",
-    "indicates likely authorization and an LOA would merely strengthen an Amazon-compliance case — never as a primary gap.",
+    "QUESTIONS: produce questions_to_ask as RICH objects { question, reason, blocking_weight_key, priority } tailored to",
+    "the specific gaps found (not a generic template). priority: high = affects the authorization determination; medium =",
+    "strengthens confidence; low = useful but not blocking. Only generate a 'request an LOA' question when the evidence",
+    "ALREADY indicates likely authorization and an LOA would merely strengthen an Amazon-compliance case — never as a primary gap.",
     "Also report an advisory auth_level (A|B|C|D|E) + auth_level_reasoning (ADVISORY only — the platform derives the score).",
     "Per item you MUST include: brand, mapping_justification, counter_evidence ('None found' if none), certainty",
     "(verified|inferred|unknown), confidence (high|medium|low).",
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key, supporting_source_ids,",
     "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning, b2b_only_detected,",
-    "b2b_only_brands, questions_to_ask: [{ question, reason, blocking_weight_key }], reasoning_notes,",
+    "b2b_only_brands, questions_to_ask: [{ question, reason, blocking_weight_key, priority }], reasoning_notes,",
     "unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
@@ -76,6 +91,7 @@ const CERTAINTIES = new Set(["verified", "inferred", "unknown"]);
 const CONFIDENCES = new Set(["high", "medium", "low"]);
 const LEVELS = new Set(["A", "B", "C", "D", "E"]);
 
+const PRIORITIES = new Set(["high", "medium", "low"]);
 function parseQuestions(raw: unknown): QuestionToAsk[] {
   if (!Array.isArray(raw)) return [];
   const out: QuestionToAsk[] = [];
@@ -85,6 +101,7 @@ function parseQuestions(raw: unknown): QuestionToAsk[] {
       question: q.question,
       reason: typeof q.reason === "string" ? q.reason : "",
       blocking_weight_key: typeof q.blocking_weight_key === "string" ? q.blocking_weight_key : "",
+      priority: PRIORITIES.has(q.priority as string) ? (q.priority as QuestionToAsk["priority"]) : "medium",
     });
   }
   return out;
