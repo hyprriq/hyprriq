@@ -32,9 +32,14 @@ export interface EvidenceItem {
   supports: string;
   weight_key?: string; // ADR-G003 evidence_type tag the CODE weight engine scores (Phase 5)
   provenance?: Provenance; // Phase 5.1a — full acquisition→verdict provenance chain
+  brand?: string; // Phase 5.1c — Track 2 brand isolation (which submitted brand this evidence concerns)
 }
 export interface EvidenceWeight { evidence_type: string; points: number; note?: string }
 export interface Unknown { unknown: string; why_unresolvable: string; resolvable_by_client: boolean }
+
+// Phase 5.1c — Track 2 client-facing question (rendered on the case "Questions to Ask" tab). Rich
+// object: the question, the gap it addresses, and the weight_key an answer would unlock.
+export interface QuestionToAsk { question: string; reason: string; blocking_weight_key: string }
 
 export interface TrackOutput {
   track_key: TrackKey;
@@ -46,6 +51,13 @@ export interface TrackOutput {
   weight_validation?: WeightValidation[];          // Phase 5.1b — Track 1 firewall audit (plumbed to the row)
   track_validation_report?: Record<string, unknown>; // Phase 5.1b — deterministic regression artifact (jsonb)
   acquisition_failed?: boolean;                    // Phase 5.1b — pack had 0 sources: do NOT score / write memory; escalate
+  // Phase 5.1c — Track 2 advisory metadata (STORED for the analyst, NEVER scored — the signal is
+  // code-derived from validated weight_keys). auth_level mirrors the master-spec Auth Level the LLM read.
+  auth_level?: "A" | "B" | "C" | "D" | "E";
+  auth_level_reasoning?: string;
+  b2b_only_detected?: boolean;
+  b2b_only_brands?: string[];
+  questions_to_ask?: QuestionToAsk[];
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that
