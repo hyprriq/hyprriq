@@ -23,7 +23,9 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   // Official-domain metadata so the classifier tags the brand's own pages official_brand and the
   // vendor's own pages official_company (instead of defaulting to "news"). Drives the provenance gate.
   const classification = {
-    vendorHost: ctx.vendor_website,
+    // Phase 5.1c.5 — prefer the Track 0.5 resolved domain (high-confidence identity); fall back to the
+    // raw website so behavior is unchanged when an identity wasn't resolved. (Track 1 still uses vendor_website.)
+    vendorHost: ctx.supplier_identity?.resolved_domain ?? ctx.vendor_website,
     brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
   };
   const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification });

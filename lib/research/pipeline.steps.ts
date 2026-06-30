@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
+import type { TrackContext, TrackOutput, TrackSignal, SupplierIdentity } from "@/lib/research/contracts";
 import { type TrackKey, trackByNumber } from "@/lib/constants/tracks";
 import { runTrack0 } from "@/lib/research/track0";
+import { resolveSupplierIdentity } from "@/lib/research/track05";
 import { runTrack1 } from "@/lib/research/track1";
 import { runTrack2 } from "@/lib/research/track2";
 import { runTrack3 } from "@/lib/research/track3";
@@ -47,6 +48,13 @@ export async function stageTrack0(ctx: TrackContext): Promise<void> {
     source_mode: "ai_generated", compiled_findings_json: t0 as unknown as Record<string, unknown>,
     track_verdict_signal: "n_a", founder_review_status: "approved", manual_review_required: false,
   });
+}
+
+// Track 0.5 — Supplier Identity Resolution (Phase 5.1c.5). Runs AFTER Track 0, BEFORE the finding-track
+// fan-out: resolves the supplier identity once so Track 2+ classify against resolved_domain instead of
+// the raw (optional) vendor_website. Pure compute + research; persistence happens in the orchestrators.
+export async function stageResolveIdentity(ctx: TrackContext): Promise<SupplierIdentity> {
+  return resolveSupplierIdentity(ctx);
 }
 
 // One finding track (n ∈ 1..5): run it, apply the acquisition-failure guard, derive the CODE signal,
@@ -139,10 +147,14 @@ export async function stageMemoryWrite(ctx: TrackContext, identitySignal: TrackS
 // Finalize: persist case state + per-track statuses + the orchestration version.
 export async function stageFinalize(
   ctx: TrackContext,
-  args: { included: Set<number>; identityAcquisitionFailed: boolean; verdict: string; confidence_0_15: number },
+  args: { included: Set<number>; identityAcquisitionFailed: boolean; identityUnconfirmed?: boolean; verdict: string; confidence_0_15: number },
 ): Promise<{ error: string | null }> {
+  // Phase 5.1c.5 — an unconfirmed supplier identity (genuine multi-candidate ambiguity / no resolution)
+  // caps the outcome: escalate to human review rather than deliver a confident verdict on an unknown
+  // supplier. Mirrors the acquisition-failure guard (same status); computeVerdict stays untouched (OQ-4).
+  const escalate = args.identityAcquisitionFailed || !!args.identityUnconfirmed;
   const caseUpdate: Record<string, unknown> = {
-    status: args.identityAcquisitionFailed ? "manual_override_required" : "awaiting_review",
+    status: escalate ? "manual_override_required" : "awaiting_review",
     synthesis_status: "complete",
     verdict: args.verdict, confidence_score: args.confidence_0_15, track_0_status: "complete",
     pipeline_version: PIPELINE_VERSION,

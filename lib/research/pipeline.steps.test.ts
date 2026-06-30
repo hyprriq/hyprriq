@@ -3,18 +3,35 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock the data layer + the Track 1 fn so the stage runs in isolation; deriveTrackSignal stays REAL
 // (that is the integration we are locking — dedupe feeds the real signal math).
 // vi.hoisted so the mock fns exist when the (hoisted) vi.mock factories run.
-const { runTrack1, upsertTrackResult } = vi.hoisted(() => ({ runTrack1: vi.fn(), upsertTrackResult: vi.fn() }));
+const { runTrack1, upsertTrackResult, resolveSupplierIdentity, casesUpdate, casesEq } = vi.hoisted(() => {
+  const casesEq = vi.fn().mockResolvedValue({ error: null });
+  const casesUpdate = vi.fn((_update: Record<string, unknown>) => ({ eq: casesEq }));
+  return { runTrack1: vi.fn(), upsertTrackResult: vi.fn(), resolveSupplierIdentity: vi.fn(), casesUpdate, casesEq };
+});
 vi.mock("@/lib/data/track-results", () => ({ upsertTrackResult }));
 vi.mock("@/lib/research/track1", () => ({ runTrack1 }));
+vi.mock("@/lib/research/track05", () => ({ resolveSupplierIdentity }));
+vi.mock("@/lib/supabase/admin", () => ({ supabaseAdmin: { from: () => ({ update: casesUpdate }) } }));
 
-import { stageFindingTrack } from "./pipeline.steps";
+import { stageFindingTrack, stageResolveIdentity, stageFinalize } from "./pipeline.steps";
+import type { TrackContext, SupplierIdentity } from "@/lib/research/contracts";
 
-const ctx = {
+const ctx: TrackContext = {
   case_id: "c1", vendor_name: "Acme", vendor_website: null,
   brands_submitted: [], marketplace: "amazon_us", plan_type: "growth_279",
-} as const;
+};
 
-beforeEach(() => { upsertTrackResult.mockReset().mockResolvedValue({ error: null }); runTrack1.mockReset(); });
+const identity = (over: Partial<SupplierIdentity> = {}): SupplierIdentity => ({
+  original_input: { name: "Acme", website: null }, resolved_name: "Acme", resolved_domain: null,
+  candidate_domains: [], registration_signals: [], identity_confidence: "low",
+  identity_unconfirmed: false, resolution_method: "unresolved", resolution_notes: "", ...over,
+});
+
+beforeEach(() => {
+  upsertTrackResult.mockReset().mockResolvedValue({ error: null });
+  runTrack1.mockReset(); resolveSupplierIdentity.mockReset();
+  casesUpdate.mockClear(); casesEq.mockClear().mockResolvedValue({ error: null });
+});
 
 describe("stageFindingTrack", () => {
   it("dedupes evidence_types before deriving the signal (anti-double-count preserved)", async () => {
@@ -49,5 +66,27 @@ describe("stageFindingTrack", () => {
     const row = upsertTrackResult.mock.calls[0][0];
     expect(row.manual_review_required).toBe(true);
     expect(row.track_verdict_signal).toBe("n_a");
+  });
+});
+
+describe("stageResolveIdentity", () => {
+  it("returns the SupplierIdentity from resolveSupplierIdentity", async () => {
+    const resolved = identity({ resolved_domain: "tdsynnex.com", identity_confidence: "high", resolution_method: "provided" });
+    resolveSupplierIdentity.mockResolvedValue(resolved);
+    expect(await stageResolveIdentity(ctx)).toBe(resolved);
+    expect(resolveSupplierIdentity).toHaveBeenCalledWith(ctx);
+  });
+});
+
+describe("stageFinalize identity escalation", () => {
+  const args = (over: object) => ({ included: new Set([1, 2]), identityAcquisitionFailed: false, verdict: "verify_before_purchase", confidence_0_15: 7, ...over });
+
+  it("an unconfirmed identity escalates the case to manual_override_required", async () => {
+    await stageFinalize(ctx, args({ identityUnconfirmed: true }));
+    expect(casesUpdate.mock.calls[0][0].status).toBe("manual_override_required");
+  });
+  it("a confirmed identity leaves the case at awaiting_review", async () => {
+    await stageFinalize(ctx, args({ identityUnconfirmed: false }));
+    expect(casesUpdate.mock.calls[0][0].status).toBe("awaiting_review");
   });
 });
