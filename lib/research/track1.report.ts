@@ -1,7 +1,7 @@
 import type { WeightValidation } from "@/lib/research/contracts";
 
-export interface ReportAccepted { evidence_id: string; validated_weight_key: string; certainty: string; confidence: string; source_profile: string }
-export interface ReportRejected { evidence_id: string; proposed_weight_key: string; rejection_reason: string; gate: string | null; source_profile: string | null }
+export interface ReportAccepted { evidence_id: string; validated_weight_key: string; certainty: string; confidence: string; source_profile: string; source_url?: string | null }
+export interface ReportRejected { evidence_id: string; proposed_weight_key: string; rejection_reason: string; gate: string | null; source_profile: string | null; source_url?: string | null }
 export interface ReportProvider { plugin: string; latency_ms: number; api_cost_usd: number; evidence_items_returned: number }
 export interface ValidationReportInput {
   track_key: string; validation_version: string; schema_version: string; generated_at: string;
