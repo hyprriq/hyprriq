@@ -21,3 +21,11 @@ export function domainLabel(host: string): string {
   const multi = /^(co|com|org|net|gov|ac)\.[a-z]{2}$/.test(tld2);
   return (multi ? parts[parts.length - 3] : parts[parts.length - 2]) ?? "";
 }
+
+// Canonical resolved domain = tolerant host parse, www-stripped (tdsynnex.com, not www.tdsynnex.com).
+// The single source of truth for comparing/storing a vendor's own domain across Track 0.5 + the
+// classifier. Returns null if unparseable.
+export function canonicalDomain(value: string): string | null {
+  const host = hostOf(value);
+  return host ? host.replace(/^www\./, "") : null;
+}

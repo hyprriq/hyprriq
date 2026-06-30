@@ -5,7 +5,7 @@
 // When in doubt it resolves NOTHING (degrade gracefully) and flags — under-resolving (lose a benefit)
 // beats over-resolving (false official classification poisoning Track 2 trust signals).
 import type { SupplierIdentity } from "@/lib/research/contracts";
-import { hostOf } from "./host";
+import { canonicalDomain } from "./host";
 
 // A proposed candidate carries code-derivable signals (the LLM never sets these booleans).
 export interface IdentityCandidate {
@@ -27,13 +27,6 @@ function scoreOf(c: IdentityCandidate): number {
     + (c.registry_hit ? WEIGHTS.registry_hit : 0)
     + (c.self_identifies ? WEIGHTS.self_identifies : 0)
     + (c.address_consistent ? WEIGHTS.address_consistent : 0);
-}
-
-// Canonical resolved domain = tolerant host parse, www-stripped (tdsynnex.com, not www.tdsynnex.com).
-// The classifier re-normalizes via domainLabel downstream, so this is purely the canonical audit form.
-function canonicalDomain(value: string): string | null {
-  const host = hostOf(value);
-  return host ? host.replace(/^www\./, "") : null;
 }
 
 export function resolveIdentity(input: ResolveInput): SupplierIdentity {
