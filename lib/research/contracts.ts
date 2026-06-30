@@ -10,11 +10,29 @@ export type Certainty = "verified" | "inferred" | "unknown";
 export type TrackSignal = "pass" | "infer" | "flag" | "soft_fail" | "hard_fail" | "n_a";
 export type Verdict = "source_clear" | "usable_with_conditions" | "verify_before_purchase" | "do_not_rely";
 
+// Phase 5.1c.5 — Track 0.5 Supplier Identity Resolution. The resolve-identity stage runs after
+// Track 0, before the finding-track fan-out, and resolves the supplier's identity ONCE from
+// vendor_name + optional vendor_website + (when needed) identity-discovery research. Tracks consume
+// resolved_domain (Track 2+ vendorHost) instead of raw vendor_website. Designed as the seed of a
+// future reusable Supplier Intelligence Profile (ADR-G006) — kept extensible, no coupling beyond it.
+export interface SupplierIdentity {
+  original_input: { name: string; website: string | null }; // RAW client input — ALWAYS preserved/logged (point 4)
+  resolved_name: string;                  // canonical; tracks use THIS, not original_input (point 3)
+  resolved_domain: string | null;         // feeds vendorHost when identity_confidence === "high"
+  candidate_domains: string[];
+  registration_signals: string[];
+  identity_confidence: "high" | "medium" | "low";
+  identity_unconfirmed: boolean;          // ONLY for genuine multi-candidate ambiguity / no resolution — NOT typos
+  resolution_method: "provided" | "resolved_dominant" | "normalized" | "ambiguous" | "unresolved";
+  resolution_notes: string;
+}
+
 // What a track receives (Layer 1 input).
 export interface TrackContext {
   case_id: string;
   vendor_name: string | null;
   vendor_website: string | null;
+  supplier_identity?: SupplierIdentity; // Phase 5.1c.5 — resolved identity (Track 0.5); tracks read resolved_domain
   brands_submitted: string[];
   marketplace: string;
   plan_type: PlanType;
