@@ -37,6 +37,15 @@ describe("classifySource — official-domain awareness (Track 2 fix, metadata-dr
   it("classifies the vendor's own domain as official_company", () => {
     expect(classifySource("https://www.tdsynnex.com/en-us/lenovo", "serper", ctx)).toBe("official_company");
   });
+  it("normalizes loosely-formatted vendor_website (no protocol, www, path, mixed-case protocol, whitespace)", () => {
+    for (const vendorHost of [
+      "tdsynnex.com", "www.tdsynnex.com", "https://www.tdsynnex.com/en-us",
+      "HTTP://TDSynnex.com", "Https://tdsynnex.com/", "  tdsynnex.com  ",
+    ]) {
+      expect(classifySource("https://www.tdsynnex.com/lenovo", "serper", { vendorHost, brandTokens: [] }))
+        .toBe("official_company");
+    }
+  });
   it("still applies host rules / news default for non-official domains", () => {
     expect(classifySource("https://www.linkedin.com/company/td-synnex", "serper", ctx)).toBe("social");
     expect(classifySource("https://somerandomblog.com/post", "serper", ctx)).toBe("news");

@@ -54,9 +54,13 @@ export function normalizeBrandToken(brand: string): string {
   return brand.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+// Tolerant host parse for loosely-formatted client input: trims whitespace, accepts protocol-less
+// ("tdsynnex.com"), www variants, paths, and any-case protocol ("HTTP://", "Https://"). Returns the
+// lowercase hostname, or null if unparseable.
 function hostOf(value: string): string | null {
-  if (!value) return null;
-  try { return new URL(value.startsWith("http") ? value : `https://${value}`).hostname.toLowerCase(); }
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  try { return new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`).hostname.toLowerCase(); }
   catch { return null; }
 }
 

@@ -47,3 +47,27 @@ surface (a forged/overstated LOA inflating the score).
   Track 4 documentation_review use of the same key.
 - **Keep LOA as a non-scored Track 2 evidence item** — rejected (founder): conflates compliance documentation with
   authorization discovery; a separate Compliance layer is the correct boundary.
+
+## Final state — Track 2 FROZEN (2026-06-28)
+Track 2 (Supply Chain Relationship) is **frozen** after live re-validation (TD Synnex / Lenovo + Bosch). The LOA
+decision above is locked, plus the following **provenance trust-model correction** surfaced during live validation
+(the original gate config assumed `source_profile` values the acquisition layer never produced for web search):
+
+1. **Official-domain classification (metadata-driven)** — `classifySource` accepts an optional `ClassifyContext`
+   (vendor host + submitted brand tokens): a brand's own domain → `official_brand`, the vendor's own domain →
+   `official_company`. Threaded through the orchestrator → plugin → `buildProvenance`. Optional, so Track 1 + the
+   frozen Evidence Pack classification are byte-identical when no context is passed. `hostOf` tolerantly normalises
+   loosely-formatted input (protocol-less, www, paths, any-case protocol). (commit `b3759e5` + `1adfa31` + this work)
+2. **`dealer_page_listed` → `official_brand` only** (the brand's own page lists the vendor). A vendor self-claim is
+   `official_company` → maps to `claims_authorization_unverified`. `no_connection_found` broadened to the profiles an
+   absence finding actually cites (`official_brand`/`official_company`/`registry`/`news`/`inference`).
+3. **Provenance gate v1.1.0** — accepts when ANY cited source matches an allowed profile (was: highest-authority cited
+   source only). Deterministic; uses the highest-authority *matching* source.
+4. **Social-host anchoring** (`1adfa31`) — social domains matched against the parsed hostname, anchored, fixing the
+   `x.com` substring false-positive (`tdsynnex.com`/`netflix.com` no longer misclassify as `social`).
+
+Validated end-to-end: `tdsynnex.com → official_company` (vendor self-claim correctly rejected for `dealer_page_listed`),
+`trade_press_connection` + `no_connection_found` validating; LOA never scores (triple-guarded). 194 tests green;
+`deriveTrackSignal`/`computeVerdict`/`weights.ts` scoring + the Evidence Pack contract (`schema_version 1.0.0`)
+untouched. `VALIDATION_VERSION` = `1.1.0`. **Track 2 is frozen — do not reopen.** Known input dependency (blank
+`vendor_website`) is addressed by the next phase, Track 0.5 (Supplier Identity Resolution, 5.1c.5).
