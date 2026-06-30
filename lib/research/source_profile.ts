@@ -39,9 +39,47 @@ const HOST_RULES: { test: RegExp; profile: SourceProfile }[] = [
   { test: /(bbb\.org|dnb\.com|opencorporates\.com|companieshouse)/i, profile: "registry" },
   { test: /(reddit\.com|quora\.com|forum)/i, profile: "forum" },
 ];
-export function classifySource(url: string, pluginId: string): SourceProfile {
+
+// Optional metadata that lets the classifier recognise OFFICIAL domains it otherwise can't infer
+// from the host alone (the web has no generic "this is the brand's own site" signal). Driven by the
+// case's submitted brands + the vendor's own website — NOT a hard-coded brand→domain table.
+export interface ClassifyContext {
+  vendorHost?: string | null;   // the vendor's own website host (any form; normalised internally)
+  brandTokens?: string[];       // normalised brand-name tokens, e.g. ["lenovo", "bosch"]
+}
+
+export function normalizeBrandToken(brand: string): string {
+  return brand.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function hostOf(value: string): string | null {
+  if (!value) return null;
+  try { return new URL(value.startsWith("http") ? value : `https://${value}`).hostname.toLowerCase(); }
+  catch { return null; }
+}
+
+// Second-level domain label, handling common 2-part TLDs (co.uk, com.au): lenovo.com → "lenovo",
+// www.lenovo.co.uk → "lenovo".
+function domainLabel(host: string): string {
+  const parts = host.replace(/^www\./, "").split(".");
+  if (parts.length <= 2) return parts[0] ?? "";
+  const tld2 = parts.slice(-2).join(".");
+  const multi = /^(co|com|org|net|gov|ac)\.[a-z]{2}$/.test(tld2);
+  return (multi ? parts[parts.length - 3] : parts[parts.length - 2]) ?? "";
+}
+
+export function classifySource(url: string, pluginId: string, ctx?: ClassifyContext): SourceProfile {
   if (pluginId === "whois") return "whois";
   if (pluginId === "inference") return "inference";
+  // Official-domain recognition (metadata-driven, most specific) — runs before the host rules so a
+  // brand's / vendor's own site is tagged official rather than defaulting to "news".
+  const host = hostOf(url);
+  if (host && ctx) {
+    const label = domainLabel(host);
+    if (label && (ctx.brandTokens ?? []).includes(label)) return "official_brand";   // brand's own domain
+    const vendorLabel = ctx.vendorHost ? domainLabel(hostOf(ctx.vendorHost) ?? "") : "";
+    if (label && vendorLabel && label === vendorLabel) return "official_company";     // vendor's own domain
+  }
   for (const r of HOST_RULES) if (r.test.test(url)) return r.profile;
   return "news"; // default for an unclassified third-party web result
 }

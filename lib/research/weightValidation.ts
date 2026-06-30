@@ -6,7 +6,9 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 
 // Firewall version (independent of the Evidence Pack schema_version). Bump on gate / ALLOWED_PROFILES
 // / MIN_AUTHORITY / contradiction-rule changes — NOT when a weight_key is added to the registry.
-export const VALIDATION_VERSION = "1.0.0";
+// 1.1.0 (2026-06-28): provenance gate now accepts when ANY cited source matches an allowed profile
+// (was: highest-authority cited source only); + Track 2 ALLOWED_PROFILES corrections (ADR-T2-001 area).
+export const VALIDATION_VERSION = "1.1.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
@@ -25,12 +27,17 @@ const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   // Track 2 — supply_chain_relationship. loa_legitimate is intentionally ABSENT: an LOA is NOT an
   // authorization-discovery signal here (pre-purchase, unverifiable) — it routes to the Compliance
   // Documentation layer (ADR-T2-001). It remains a Track 4 (documentation_review) key.
-  dealer_page_listed: ["official_brand", "official_company"],
+  // dealer_page_listed = the BRAND's own page lists/recognises the vendor → official_brand ONLY.
+  // A vendor self-claim ("we are an authorized distributor") is official_company → it must map to
+  // claims_authorization_unverified instead (vendor self-assertion), not dealer_page_listed.
+  dealer_page_listed: ["official_brand"],
   invoice_matches_distributor: ["user_upload", "official_company"],
   purchases_from_mega_distributor: ["user_upload", "official_company", "registry"],
   trade_press_connection: ["news", "official_company"],
   claims_authorization_unverified: ["official_company", "user_upload", "inference"],
-  no_connection_found: ["inference"],
+  // An ABSENCE finding necessarily cites the official pages it examined (brand dealer/distributor
+  // pages, registries, news) — so it must accept those profiles, not just inference.
+  no_connection_found: ["official_brand", "official_company", "registry", "news", "inference"],
   grey_market_signals: ["forum", "social", "news", "marketplace"],
   counterfeit_channel: ["government_record", "news", "forum", "marketplace"],
   conflicting_authorization: ["official_brand", "official_company", "registry", "news"],
@@ -75,10 +82,15 @@ export function validateWeights(input: FirewallInput): WeightValidation[] {
     if (!weightKeyExistsInAnyTrack(key)) { out.push(rec(p.evidence_id, key, null, "registry", "registry")); continue; }
     const w = weightFor(track, key);
     if (!w) { out.push(rec(p.evidence_id, key, null, "track", "track")); continue; }
-    const sourceId = cited.reduce((best, id) =>
+    // Provenance gate (v1.1.0): evaluate EACH cited source — accept if ANY cited source's profile is
+    // allowed for this key (an item is not rejected just because a DIFFERENT, higher-authority cited
+    // source happens not to match). Among the matching sources, use the highest-authority one.
+    const allowed = ALLOWED_PROFILES[key] ?? [];
+    const matching = cited.filter((id) => allowed.includes(sourceProfileById[id]));
+    if (matching.length === 0) { out.push(rec(p.evidence_id, key, null, "provenance", "provenance")); continue; }
+    const sourceId = matching.reduce((best, id) =>
       AUTH_RANK[authorityFor(sourceProfileById[id])] > AUTH_RANK[authorityFor(sourceProfileById[best])] ? id : best);
     const profile = sourceProfileById[sourceId];
-    if (!(ALLOWED_PROFILES[key] ?? []).includes(profile)) { out.push(rec(p.evidence_id, key, null, "provenance", "provenance")); continue; }
     if (VARIABLE_TRUST_PROFILES.includes(profile)) {
       if (AUTH_RANK[authorityFor(profile)] < AUTH_RANK[MIN_AUTHORITY[key] ?? "low"]) { out.push(rec(p.evidence_id, key, null, "authority", "authority")); continue; }
     } // fixed-trust profiles skip authority (no audit entry)

@@ -11,7 +11,7 @@ import { deriveTrackSignal } from "@/lib/research/signals";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
-import type { SourceProfile } from "@/lib/research/source_profile";
+import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
 
 // Track 2 — Supply Chain Relationship. Mirrors Track 1: the orchestrator acquires (per vendor×brand);
 // the LLM proposes; the firewall decides; deriveTrackSignal (unchanged) scores. Evidence is
@@ -20,7 +20,13 @@ import type { SourceProfile } from "@/lib/research/source_profile";
 export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   const requests = buildTrack2Requests(ctx);
   const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
-  const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests });
+  // Official-domain metadata so the classifier tags the brand's own pages official_brand and the
+  // vendor's own pages official_company (instead of defaulting to "news"). Drives the provenance gate.
+  const classification = {
+    vendorHost: ctx.vendor_website,
+    brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
+  };
+  const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification });
   await persistEvidencePack(pack);
   await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
 

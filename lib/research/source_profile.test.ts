@@ -27,3 +27,31 @@ describe("source_profile registry", () => {
     expect(Object.keys(SOURCE_PROFILES)).toHaveLength(11);
   });
 });
+
+describe("classifySource — official-domain awareness (Track 2 fix, metadata-driven)", () => {
+  const ctx = { vendorHost: "https://www.tdsynnex.com", brandTokens: ["lenovo", "bosch"] };
+  it("classifies a submitted brand's own domain as official_brand", () => {
+    expect(classifySource("https://www.lenovo.com/awards/distributor-of-the-year", "serper", ctx)).toBe("official_brand");
+    expect(classifySource("https://lenovo.co.uk/dealers", "serper", ctx)).toBe("official_brand");
+  });
+  it("classifies the vendor's own domain as official_company", () => {
+    expect(classifySource("https://www.tdsynnex.com/en-us/lenovo", "serper", ctx)).toBe("official_company");
+  });
+  it("still applies host rules / news default for non-official domains", () => {
+    expect(classifySource("https://www.linkedin.com/company/td-synnex", "serper", ctx)).toBe("social");
+    expect(classifySource("https://somerandomblog.com/post", "serper", ctx)).toBe("news");
+  });
+  it("WITHOUT context behaviour is unchanged (preserves Track 1 + the frozen pack)", () => {
+    // No context → official domains are NOT specially recognised (Track 1 path is untouched).
+    expect(classifySource("https://www.lenovo.com", "serper")).toBe("news");
+    expect(classifySource("https://lenovo.co.uk/dealers", "serper")).toBe("news");
+  });
+  it("WITH context the vendor-domain check precedes host rules (fixes the x.com false-positive for the vendor)", () => {
+    // NOTE: the x.com host rule matches 'tdsynnex.com' as a substring → 'social' without context
+    // (a pre-existing classifier quirk). With context, the vendor-domain match wins first.
+    expect(classifySource("https://www.tdsynnex.com/lenovo", "serper", ctx)).toBe("official_company");
+  });
+  it("whois/inference plugins ignore the context", () => {
+    expect(classifySource("https://www.lenovo.com", "whois", ctx)).toBe("whois");
+  });
+});

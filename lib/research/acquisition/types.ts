@@ -1,4 +1,4 @@
-import type { SourceProfile, AuthorityScore, CoarseSourceType } from "@/lib/research/source_profile";
+import type { SourceProfile, AuthorityScore, CoarseSourceType, ClassifyContext } from "@/lib/research/source_profile";
 import type { TrackKey } from "@/lib/constants/tracks";
 
 // The questions a track can ask. Plugins declare which they answer (capability matrix).
@@ -45,6 +45,7 @@ export interface AcquisitionQuery {
   input: string;                       // domain (whois) or search string (serper)
   case_id: string;
   track_key: TrackKey;
+  classification?: ClassifyContext;    // optional official-domain metadata (Track 2+); whois/native ignore it
 }
 
 // What a plugin returns from one acquire() call: the sources plus retry/cost/status for metrics.

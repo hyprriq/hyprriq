@@ -1,13 +1,13 @@
 import type { Provenance, AcquisitionMethod } from "./types";
-import { classifySource, authorityFor, sourceTypeFor, freshnessExpectationFor } from "@/lib/research/source_profile";
+import { classifySource, authorityFor, sourceTypeFor, freshnessExpectationFor, type ClassifyContext } from "@/lib/research/source_profile";
 
 const DAY_MS = 86_400_000;
 
 export function buildProvenance(input: {
   url: string | null; pluginId: AcquisitionMethod; provider: string; providerVersion: string;
-  collectedAt: string; freshnessDays: number | null;
+  collectedAt: string; freshnessDays: number | null; classification?: ClassifyContext;
 }): Provenance {
-  const profile = classifySource(input.url ?? "", input.pluginId);
+  const profile = classifySource(input.url ?? "", input.pluginId, input.classification);
   const expires = new Date(new Date(input.collectedAt).getTime() + freshnessExpectationFor(profile) * DAY_MS);
   return {
     provider: input.provider,

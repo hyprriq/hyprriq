@@ -92,4 +92,20 @@ describe("validateWeights — Track 2 (supply_chain_relationship)", () => {
     expect(r[0].validated_weight_key).toBeNull();
     expect(r[0].rejection_reason).toBe("provenance");
   });
+  it("dealer_page_listed accepts official_brand but REJECTS a vendor self-claim (official_company)", () => {
+    const brand = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "official_brand" }), proposals: [prop("e1", "dealer_page_listed", ["s1"])] });
+    expect(brand[0].validated_weight_key).toBe("dealer_page_listed");
+    const vendor = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "official_company" }), proposals: [prop("e1", "dealer_page_listed", ["s1"])] });
+    expect(vendor[0].rejection_reason).toBe("provenance"); // vendor self-claim is NOT a dealer-page listing
+  });
+  it("provenance gate accepts when a LOWER-authority cited source matches (the v1.1.0 per-source fix)", () => {
+    // trade_press_connection allows news (medium); item cites registry (high, NOT allowed) + news (medium, allowed).
+    // Old highest-authority-only logic picked registry → rejected; per-source logic accepts via news.
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "registry", s2: "news" }), proposals: [prop("e1", "trade_press_connection", ["s1", "s2"])] });
+    expect(r[0].validated_weight_key).toBe("trade_press_connection");
+  });
+  it("no_connection_found accepts an official source it examined (absence finding cites what it checked)", () => {
+    const r = validateWeights({ track: "supply_chain_relationship", sourceProfileById: profiles({ s1: "official_brand" }), proposals: [prop("e1", "no_connection_found", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("no_connection_found");
+  });
 });

@@ -37,7 +37,7 @@ export const serperPlugin: AcquisitionPlugin = {
         raw: o,
         provenance: buildProvenance({
           url: o.link, pluginId: "serper", provider: PROVIDER, providerVersion: PROVIDER_VERSION,
-          collectedAt: now, freshnessDays: null,
+          collectedAt: now, freshnessDays: null, classification: query.classification,
         }),
       }));
       return { sources, status: sources.length ? "ok" : "empty", retryable: false, cost_usd: COST_PER_QUERY };

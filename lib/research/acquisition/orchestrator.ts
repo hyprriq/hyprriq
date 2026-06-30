@@ -9,6 +9,7 @@ export interface GatherRequest {
   case_id: string;
   track_key: TrackKey;
   requests: { question: ResearchQuestion; input: string }[];
+  classification?: import("@/lib/research/source_profile").ClassifyContext; // official-domain metadata (Track 2+)
 }
 
 // Routes ResearchQuestions to capable plugins (the capability matrix), aggregates a single
@@ -32,7 +33,7 @@ export class Orchestrator {
         const start = Date.now();
         let result: AcquisitionResult;
         try {
-          result = await plugin.acquire({ question: r.question, input: r.input, case_id: req.case_id, track_key: req.track_key });
+          result = await plugin.acquire({ question: r.question, input: r.input, case_id: req.case_id, track_key: req.track_key, classification: req.classification });
         } catch {
           result = { sources: [], retry_count: 0, final_status: "network_error", cost_usd: 0 }; // isolate the failure
         }
