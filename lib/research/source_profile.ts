@@ -2,6 +2,7 @@
 // deterministic IP, updatable by code deployment ONLY (never a DB table, never an admin UI,
 // never LLM-assigned). This influences reasoning QUALITY + confidence explanation only — it
 // never enters deriveTrackSignal/computeVerdict (ADR-G003/G004 stay locked).
+import { hostOf, domainLabel } from "./host";
 export type SourceProfile =
   | "government_record" | "official_brand" | "official_company" | "registry" | "whois"
   | "marketplace" | "news" | "social" | "forum" | "user_upload" | "inference";
@@ -54,25 +55,8 @@ export function normalizeBrandToken(brand: string): string {
   return brand.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-// Tolerant host parse for loosely-formatted client input: trims whitespace, accepts protocol-less
-// ("tdsynnex.com"), www variants, paths, and any-case protocol ("HTTP://", "Https://"). Returns the
-// lowercase hostname, or null if unparseable.
-function hostOf(value: string): string | null {
-  const v = (value ?? "").trim();
-  if (!v) return null;
-  try { return new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`).hostname.toLowerCase(); }
-  catch { return null; }
-}
-
-// Second-level domain label, handling common 2-part TLDs (co.uk, com.au): lenovo.com → "lenovo",
-// www.lenovo.co.uk → "lenovo".
-function domainLabel(host: string): string {
-  const parts = host.replace(/^www\./, "").split(".");
-  if (parts.length <= 2) return parts[0] ?? "";
-  const tld2 = parts.slice(-2).join(".");
-  const multi = /^(co|com|org|net|gov|ac)\.[a-z]{2}$/.test(tld2);
-  return (multi ? parts[parts.length - 3] : parts[parts.length - 2]) ?? "";
-}
+// Host-parse helpers (hostOf / domainLabel) now live in ./host so the Track 0.5 resolver and this
+// classifier share ONE implementation (DRY). Behavior is identical to the prior inline versions.
 
 export function classifySource(url: string, pluginId: string, ctx?: ClassifyContext): SourceProfile {
   if (pluginId === "whois") return "whois";
