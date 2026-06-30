@@ -34,11 +34,13 @@ export const sourceTypeFor = (p: SourceProfile): CoarseSourceType => SOURCE_PROF
 // otherwise classify by host. Order matters (most specific first).
 const HOST_RULES: { test: RegExp; profile: SourceProfile }[] = [
   { test: /(\.gov|\.gov\.[a-z]{2}|sos\.|sec\.gov)/i, profile: "government_record" },
-  { test: /(linkedin\.com|facebook\.com|twitter\.com|x\.com|instagram\.com)/i, profile: "social" },
   { test: /(amazon\.|ebay\.|walmart\.com|etsy\.com)/i, profile: "marketplace" },
   { test: /(bbb\.org|dnb\.com|opencorporates\.com|companieshouse)/i, profile: "registry" },
   { test: /(reddit\.com|quora\.com|forum)/i, profile: "forum" },
 ];
+// Social domains — matched against the parsed HOSTNAME (anchored), not a substring of the full URL.
+// (A loose /x\.com/ on the URL wrongly matched 'tdsynnex.com', 'netflix.com', etc.)
+const SOCIAL_HOST = /(^|\.)(?:linkedin|facebook|twitter|x|instagram)\.com$/i;
 
 // Optional metadata that lets the classifier recognise OFFICIAL domains it otherwise can't infer
 // from the host alone (the web has no generic "this is the brand's own site" signal). Driven by the
@@ -80,6 +82,7 @@ export function classifySource(url: string, pluginId: string, ctx?: ClassifyCont
     const vendorLabel = ctx.vendorHost ? domainLabel(hostOf(ctx.vendorHost) ?? "") : "";
     if (label && vendorLabel && label === vendorLabel) return "official_company";     // vendor's own domain
   }
+  if (host && SOCIAL_HOST.test(host)) return "social"; // hostname-anchored (no x.com substring trap)
   for (const r of HOST_RULES) if (r.test.test(url)) return r.profile;
   return "news"; // default for an unclassified third-party web result
 }

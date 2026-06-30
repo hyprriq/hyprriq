@@ -55,3 +55,17 @@ describe("classifySource — official-domain awareness (Track 2 fix, metadata-dr
     expect(classifySource("https://www.lenovo.com", "whois", ctx)).toBe("whois");
   });
 });
+
+describe("classifySource — social-host anchoring (x.com substring fix)", () => {
+  it("does NOT classify '...x.com' substring hosts as social", () => {
+    expect(classifySource("https://www.tdsynnex.com", "serper")).toBe("news");
+    expect(classifySource("https://www.netflix.com/title/x", "serper")).toBe("news");
+    expect(classifySource("https://vertex.com", "serper")).toBe("news");
+  });
+  it("still classifies the real social domains as social", () => {
+    expect(classifySource("https://x.com/foo", "serper")).toBe("social");
+    expect(classifySource("https://www.linkedin.com/x", "serper")).toBe("social");
+    expect(classifySource("https://twitter.com/foo", "serper")).toBe("social");
+    expect(classifySource("https://careers.instagram.com", "serper")).toBe("social");
+  });
+});
