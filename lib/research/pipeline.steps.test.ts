@@ -24,7 +24,8 @@ const ctx: TrackContext = {
 const identity = (over: Partial<SupplierIdentity> = {}): SupplierIdentity => ({
   original_input: { name: "Acme", website: null }, resolved_name: "Acme", resolved_domain: null,
   candidate_domains: [], registration_signals: [], identity_confidence: "low",
-  identity_unconfirmed: false, resolution_method: "unresolved", resolution_notes: "", ...over,
+  identity_unconfirmed: false, resolution_method: "unresolved", resolution_notes: "",
+  resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [] }, ...over,
 });
 
 beforeEach(() => {

@@ -77,4 +77,25 @@ describe("resolveSupplierIdentity", () => {
     expect(r.resolved_domain).toBeNull();
     expect(["ambiguous", "unresolved"]).toContain(r.resolution_method);
   });
+
+  // LOCKED REGRESSION (Track 0.5 required matrix — CRITICAL): a fake/nonexistent supplier must
+  // NEVER yield a hallucinated domain or false confidence. Two honesty modes the model may take:
+  it("fake supplier, model honestly returns no candidates → unresolved/low, NO domain, NOT high", async () => {
+    gather.mockResolvedValue(pack([src("https://news.example/unrelated", "news")]));
+    runModel.mockResolvedValue(model({ candidates: [], reasoning_notes: "no supporting evidence for this name" }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Zzqxwv Nonexistent Trading Co" }));
+    expect(r.resolution_method).toBe("unresolved");
+    expect(r.identity_confidence).not.toBe("high");
+    expect(r.resolved_domain).toBeNull();
+    expect(r.identity_unconfirmed).toBe(true);
+  });
+  it("fake supplier, model hallucinates ONE weak candidate (name only, no registry/self) → NOT resolved", async () => {
+    gather.mockResolvedValue(pack([src("https://news.example/unrelated", "news")]));
+    // The domain fuzzy-matches the (fake) name but nothing corroborates it → score 2 < threshold 4.
+    runModel.mockResolvedValue(model({ candidates: [{ domain: "zzqxwv-trading.com", supporting_source_ids: ["src_0"] }] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Zzqxwv Trading" }));
+    expect(r.resolved_domain).toBeNull();      // no false-confidence domain
+    expect(r.identity_confidence).not.toBe("high");
+    expect(r.identity_unconfirmed).toBe(true);
+  });
 });

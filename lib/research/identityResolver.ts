@@ -4,7 +4,7 @@
 // domain at high confidence ONLY when signals strongly converge AND beat the runner-up by a margin.
 // When in doubt it resolves NOTHING (degrade gracefully) and flags — under-resolving (lose a benefit)
 // beats over-resolving (false official classification poisoning Track 2 trust signals).
-import type { SupplierIdentity } from "@/lib/research/contracts";
+import type { SupplierIdentity, ResolutionAudit } from "@/lib/research/contracts";
 import { canonicalDomain } from "./host";
 
 // A proposed candidate carries code-derivable signals (the LLM never sets these booleans).
@@ -29,6 +29,16 @@ function scoreOf(c: IdentityCandidate): number {
     + (c.address_consistent ? WEIGHTS.address_consistent : 0);
 }
 
+// The signal names that fired for a candidate (for the resolution_audit dispute record).
+function signalsOf(c: IdentityCandidate): string[] {
+  const s: string[] = [];
+  if (c.name_match) s.push("name_match");
+  if (c.registry_hit) s.push("registry_hit");
+  if (c.self_identifies) s.push("self_identifies");
+  if (c.address_consistent) s.push("address_consistent");
+  return s;
+}
+
 export function resolveIdentity(input: ResolveInput): SupplierIdentity {
   const { vendor_name, vendor_website, candidates } = input;
   const original_input = { name: vendor_name, website: vendor_website };
@@ -49,6 +59,7 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
       identity_unconfirmed: false,
       resolution_method: "provided",
       resolution_notes: `Client provided website ${vendor_website}; resolved_domain = ${providedHost}.`,
+      resolution_audit: { winner: providedHost, score: 0, runner_up: null, runner_up_score: 0, matched_by: ["provided"] },
     };
   }
 
@@ -64,6 +75,7 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
       identity_unconfirmed: true,
       resolution_method: "unresolved",
       resolution_notes: "No candidate identities found for the vendor name; proceeding degraded.",
+      resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [] },
     };
   }
 
@@ -74,10 +86,12 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
   const top = ranked[0];
   const topScore = scoreOf(top);
   const runnerUpScore = ranked.length > 1 ? scoreOf(ranked[1]) : 0;
+  const runnerUpDomain = ranked.length > 1 ? (ranked[1].domain ?? null) : null;
   const dominant = !!top.domain && topScore >= HIGH_THRESHOLD && topScore - runnerUpScore >= MARGIN;
 
   if (dominant) {
     const resolved_domain = canonicalDomain(top.domain as string);
+    const audit: ResolutionAudit = { winner: resolved_domain, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top) };
     return {
       original_input,
       resolved_name: vendor_name,
@@ -88,10 +102,12 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
       identity_unconfirmed: false,
       resolution_method: "resolved_dominant",
       resolution_notes: `Dominant candidate ${top.domain} (score ${topScore} vs runner-up ${runnerUpScore}).`,
+      resolution_audit: audit,
     };
   }
 
-  // Candidates exist but none is dominant → ambiguous: escalate, never guess.
+  // Candidates exist but none is dominant → ambiguous: escalate, never guess. Record the near-miss
+  // leader + runner-up (winner stays null — nothing was resolved) for future dispute resolution.
   return {
     original_input,
     resolved_name: vendor_name,
@@ -102,5 +118,6 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
     identity_unconfirmed: true,
     resolution_method: "ambiguous",
     resolution_notes: `No dominant candidate (top score ${topScore}, runner-up ${runnerUpScore}); ${candidate_domains.length} candidate(s) considered.`,
+    resolution_audit: { winner: null, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top) },
   };
 }

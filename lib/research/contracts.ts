@@ -15,6 +15,16 @@ export type Verdict = "source_clear" | "usable_with_conditions" | "verify_before
 // vendor_name + optional vendor_website + (when needed) identity-discovery research. Tracks consume
 // resolved_domain (Track 2+ vendorHost) instead of raw vendor_website. Designed as the seed of a
 // future reusable Supplier Intelligence Profile (ADR-G006) — kept extensible, no coupling beyond it.
+// Structured, machine-readable record of HOW the resolver decided — formalizes what resolution_notes
+// says in prose. Kept for future dispute resolution + as an extensible seed of the ADR-G006 profile.
+export interface ResolutionAudit {
+  winner: string | null;      // the resolved domain, or null when not resolved (ambiguous/unresolved)
+  score: number;              // winning/leading candidate score (0 for provided fast-path + unresolved)
+  runner_up: string | null;   // second-ranked candidate domain (near-miss, for audit/dispute)
+  runner_up_score: number;
+  matched_by: string[];       // signals that fired for the leader (name_match|registry_hit|self_identifies|address_consistent), or ["provided"]
+}
+
 export interface SupplierIdentity {
   original_input: { name: string; website: string | null }; // RAW client input — ALWAYS preserved/logged (point 4)
   resolved_name: string;                  // canonical; tracks use THIS, not original_input (point 3)
@@ -25,6 +35,7 @@ export interface SupplierIdentity {
   identity_unconfirmed: boolean;          // ONLY for genuine multi-candidate ambiguity / no resolution — NOT typos
   resolution_method: "provided" | "resolved_dominant" | "normalized" | "ambiguous" | "unresolved";
   resolution_notes: string;
+  resolution_audit: ResolutionAudit;      // structured decision record (winner/score/runner_up/matched_by)
 }
 
 // What a track receives (Layer 1 input).

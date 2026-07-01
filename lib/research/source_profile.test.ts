@@ -63,6 +63,15 @@ describe("classifySource — official-domain awareness (Track 2 fix, metadata-dr
   it("whois/inference plugins ignore the context", () => {
     expect(classifySource("https://www.lenovo.com", "whois", ctx)).toBe("whois");
   });
+  // LOCKED REGRESSION (Track 0.5 required matrix): when a marketplace IS the vendor, its own pages
+  // must classify official_company — official-domain recognition MUST run before the marketplace
+  // host-rule. Amazon (normally 'marketplace') as the vendor → official_company. Do not reorder.
+  it("Amazon as the vendor → amazon.com classifies official_company (not marketplace)", () => {
+    const amazonCtx = { vendorHost: "https://www.amazon.com", brandTokens: [] };
+    expect(classifySource("https://www.amazon.com/about", "serper", amazonCtx)).toBe("official_company");
+    // sanity: with a DIFFERENT vendor, amazon.com is still the marketplace default
+    expect(classifySource("https://www.amazon.com/dp/x", "serper", ctx)).toBe("marketplace");
+  });
 });
 
 describe("classifySource — social-host anchoring (x.com substring fix)", () => {
