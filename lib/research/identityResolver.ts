@@ -6,6 +6,7 @@
 // beats over-resolving (false official classification poisoning Track 2 trust signals).
 import type { SupplierIdentity, ResolutionAudit } from "@/lib/research/contracts";
 import { canonicalDomain } from "./host";
+import { nameMatch } from "./nameMatch";
 
 // A proposed candidate carries code-derivable signals (the LLM never sets these booleans).
 export interface IdentityCandidate {
@@ -45,21 +46,30 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
   const candidate_domains = candidates.map((c) => c.domain).filter((d): d is string => !!d);
   const registration_signals = candidates.filter((c) => c.registry_hit && c.domain).map((c) => c.domain as string);
 
-  // Fast-path: a parseable website provided → high-confidence, zero research. Behaviorally identical
-  // to today when a client gives a website. (An unparseable string falls through to resolution.)
+  // Fast-path: a parseable website provided → resolve on it, zero research. (An unparseable string
+  // falls through to resolution.) ADVISORY sanity check (never blocks): if the host does NOT relate to
+  // the vendor name, we STILL resolve on the client's website (pipeline continues) but lower confidence
+  // high→medium and attach a visible warning for the reviewer. identity_unconfirmed stays false — this
+  // is advisory, not an escalation. Semantic aliases (IBM ↔ ibm.com) will warn (accepted v1 limitation).
   const providedHost = vendor_website ? canonicalDomain(vendor_website) : null;
   if (providedHost) {
+    const related = nameMatch(vendor_name, providedHost).match;
+    const warnings = related ? [] : [
+      `Provided website ${providedHost} does not appear to match the vendor name "${vendor_name}". Using it as supplied, but with lowered confidence — verify the website belongs to this supplier.`,
+    ];
     return {
       original_input,
       resolved_name: vendor_name,
       resolved_domain: providedHost,
       candidate_domains,
       registration_signals,
-      identity_confidence: "high",
+      identity_confidence: related ? "high" : "medium",
       identity_unconfirmed: false,
       resolution_method: "provided",
-      resolution_notes: `Client provided website ${vendor_website}; resolved_domain = ${providedHost}.`,
-      resolution_audit: { winner: providedHost, score: 0, runner_up: null, runner_up_score: 0, matched_by: ["provided"] },
+      resolution_notes: related
+        ? `Client provided website ${vendor_website}; resolved_domain = ${providedHost}.`
+        : `Client provided website ${vendor_website}; resolved_domain = ${providedHost}. WARNING: host does not match vendor name "${vendor_name}" — advisory confidence lowered, not blocked.`,
+      resolution_audit: { winner: providedHost, score: 0, runner_up: null, runner_up_score: 0, matched_by: ["provided"], warnings },
     };
   }
 
@@ -75,7 +85,7 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
       identity_unconfirmed: true,
       resolution_method: "unresolved",
       resolution_notes: "No candidate identities found for the vendor name; proceeding degraded.",
-      resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [] },
+      resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
     };
   }
 
@@ -91,7 +101,7 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
 
   if (dominant) {
     const resolved_domain = canonicalDomain(top.domain as string);
-    const audit: ResolutionAudit = { winner: resolved_domain, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top) };
+    const audit: ResolutionAudit = { winner: resolved_domain, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top), warnings: [] };
     return {
       original_input,
       resolved_name: vendor_name,
@@ -118,6 +128,6 @@ export function resolveIdentity(input: ResolveInput): SupplierIdentity {
     identity_unconfirmed: true,
     resolution_method: "ambiguous",
     resolution_notes: `No dominant candidate (top score ${topScore}, runner-up ${runnerUpScore}); ${candidate_domains.length} candidate(s) considered.`,
-    resolution_audit: { winner: null, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top) },
+    resolution_audit: { winner: null, score: topScore, runner_up: runnerUpDomain, runner_up_score: runnerUpScore, matched_by: signalsOf(top), warnings: [] },
   };
 }

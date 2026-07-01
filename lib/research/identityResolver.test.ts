@@ -40,6 +40,25 @@ describe("resolveIdentity", () => {
     expect(r.resolution_method).toBe("unresolved");
     expect(r.identity_unconfirmed).toBe(true);
   });
+  describe("provided-website name sanity check (advisory only — NEVER blocks)", () => {
+    it("website that matches the vendor name → high confidence, no warning", () => {
+      const r = resolveIdentity({ vendor_name: "Bosch", vendor_website: "https://www.bosch.com", candidates: [] });
+      expect(r.identity_confidence).toBe("high");
+      expect(r.resolution_audit.warnings).toEqual([]);
+      expect(r.resolved_domain).toBe("bosch.com");
+      expect(r.identity_unconfirmed).toBe(false);
+    });
+    it("website conflicting with the vendor name → still resolves (never blocks), medium + visible warning, original preserved", () => {
+      const r = resolveIdentity({ vendor_name: "Bosch", vendor_website: "https://randomblog.example", candidates: [] });
+      expect(r.resolution_method).toBe("provided");        // NOT blocked — pipeline continues
+      expect(r.resolved_domain).toBe("randomblog.example"); // client input still used
+      expect(r.identity_confidence).toBe("medium");         // advisory confidence lowered
+      expect(r.identity_unconfirmed).toBe(false);           // advisory, NOT an escalation
+      expect(r.resolution_audit.warnings.length).toBeGreaterThan(0);
+      expect(r.original_input.website).toBe("https://randomblog.example");
+    });
+  });
+
   // LOCKED REGRESSION (Track 0.5 required matrix): Amazon with its real website → provided/high,
   // resolved_domain amazon.com (feeds the classifier's official_company path for Amazon-as-vendor).
   it("Amazon → provided website → provided/high, resolved_domain amazon.com", () => {

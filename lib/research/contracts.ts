@@ -23,6 +23,7 @@ export interface ResolutionAudit {
   runner_up: string | null;   // second-ranked candidate domain (near-miss, for audit/dispute)
   runner_up_score: number;
   matched_by: string[];       // signals that fired for the leader (name_match|registry_hit|self_identifies|address_consistent), or ["provided"]
+  warnings: string[];         // advisory, non-blocking flags (e.g. provided website conflicts with the vendor name) — surfaced to the reviewer/UX, never escalates
 }
 
 export interface SupplierIdentity {
