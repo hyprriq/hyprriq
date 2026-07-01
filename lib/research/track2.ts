@@ -12,6 +12,8 @@ import { buildValidationReport, type ReportAccepted, type ReportRejected } from 
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
 import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
+import { IDENTITY_SCOPE_NOTE, AUTHORIZATION_SCOPE_NOTE, MARKETPLACE_ELIGIBILITY_DISCLAIMER } from "@/lib/research/track2.disclaimers";
+import { containsProcurementLanguage } from "@/lib/research/procurementLanguage";
 
 // Track 2 — Supply Chain Relationship. Mirrors Track 1: the orchestrator acquires (per vendor×brand);
 // the LLM proposes; the firewall decides; deriveTrackSignal (unchanged) scores. Evidence is
@@ -57,7 +59,13 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     return { source_id: id, url: s.url, title: s.title, snippet: s.snippet };
   });
 
-  const { system, user } = buildTrack2Prompt({ vendor_name: ctx.vendor_name, brands: ctx.brands_submitted ?? [] }, promptSources);
+  // D2 (ADR-T2-002): if Track 0.5 resolved the identity (not low/unconfirmed), tell Track 2 it is settled
+  // so its narrative does not re-litigate identity. Track 0.5 runs upstream, so ctx.supplier_identity is set.
+  const si = ctx.supplier_identity;
+  const identity = si && si.identity_confidence !== "low"
+    ? { confidence: si.identity_confidence, resolved_name: si.resolved_name }
+    : null;
+  const { system, user } = buildTrack2Prompt({ vendor_name: ctx.vendor_name, brands: ctx.brands_submitted ?? [], identity }, promptSources);
   let parsed: ReturnType<typeof parseTrack2Output>;
   let llmCost = 0;
   try {
@@ -115,11 +123,17 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     derived_signal, current_verdict: "pending", provider_usage, llm_cost_usd: llmCost,
   });
 
+  // ADR-T2-002 non-blocking guard: brand_relationship_finding must never imply a purchase. If the LLM
+  // slips procurement language through, surface an advisory for the reviewer (never rewrite/block the finding).
+  const reasoning_notes = containsProcurementLanguage(parsed.brand_relationship_finding)
+    ? `${parsed.reasoning_notes}\n[ADVISORY: procurement language detected in brand_relationship_finding — review; Track 2 must not imply a purchase decision.]`
+    : parsed.reasoning_notes;
+
   return {
     track_key: "supply_chain_relationship",
     evidence_items,
     evidence_weights_applied: [],
-    reasoning_notes: parsed.reasoning_notes,
+    reasoning_notes,
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,
@@ -128,5 +142,10 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     b2b_only_detected: parsed.b2b_only_detected,
     b2b_only_brands: parsed.b2b_only_brands,
     questions_to_ask: parsed.questions_to_ask,
+    // ADR-T2-002 — lane-isolated narrative + code-templated boundary notes (deterministic, never LLM-varied).
+    brand_relationship_finding: parsed.brand_relationship_finding,
+    identity_scope_note: IDENTITY_SCOPE_NOTE,
+    authorization_scope_note: AUTHORIZATION_SCOPE_NOTE,
+    marketplace_eligibility_disclaimer: MARKETPLACE_ELIGIBILITY_DISCLAIMER,
   };
 }

@@ -113,6 +113,11 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       // Track 2 advisory metadata (stored for the analyst, NOT scored). null on tracks that don't emit them.
       auth_level: out.auth_level ?? null, auth_level_reasoning: out.auth_level_reasoning ?? null,
       b2b_only_detected: out.b2b_only_detected ?? null, b2b_only_brands: out.b2b_only_brands ?? null,
+      // ADR-T2-002 — Track 2 lane-isolated narrative + code-templated boundary notes.
+      brand_relationship_finding: out.brand_relationship_finding ?? null,
+      identity_scope_note: out.identity_scope_note ?? null,
+      authorization_scope_note: out.authorization_scope_note ?? null,
+      marketplace_eligibility_disclaimer: out.marketplace_eligibility_disclaimer ?? null,
     },
     founder_review_status: "approved", manual_review_required: false,
     weight_validation: out.weight_validation ?? null,

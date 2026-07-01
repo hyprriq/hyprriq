@@ -30,6 +30,23 @@ describe("buildTrack2Prompt", () => {
     expect(user).toContain("Bosch");
     expect(user).toContain("src_0");
   });
+  it("ADR-T2-002: carries lane discipline, three-part structure, per-brand naming, and the procurement prohibition", () => {
+    expect(system).toContain("brand_relationship_finding");
+    expect(system).toMatch(/do not assess.*(legitimacy|identity)/i);        // legitimacy lane handed off
+    expect(system).toMatch(/confirmed positives/i);                          // positives-first
+    expect(system).toMatch(/what those unknowns do not imply/i);             // three-part structure
+    expect(system).toMatch(/name each (submitted )?brand/i);                 // per-brand naming
+    expect(system).toMatch(/never.*(recommend|imply).*(buy|purchase)/i);     // no purchase recommendation
+    expect(system).toMatch(/questions_to_ask.*brand|brand.*questions_to_ask/i); // brand on questions
+  });
+  it("ADR-T2-002 (D2): tells the model the identity is already resolved so it does not re-litigate it", () => {
+    const p = buildTrack2Prompt(
+      { vendor_name: "TD Synexx", brands: ["Microsoft"], identity: { confidence: "high", resolved_name: "TD SYNNEX Corporation" } },
+      [{ source_id: "src_0", url: "u", title: "t", snippet: "s" }],
+    );
+    expect(p.user).toMatch(/identity.*(resolved|settled)/i);
+    expect(p.user).toContain("high");
+  });
 });
 
 describe("parseTrack2Output", () => {
@@ -52,6 +69,19 @@ describe("parseTrack2Output", () => {
   it("defaults question priority to medium when absent", () => {
     const out = parseTrack2Output({ evidence_items: [], questions_to_ask: [{ question: "q", reason: "r", blocking_weight_key: "k" }] });
     expect(out.questions_to_ask[0].priority).toBe("medium");
+  });
+  it("ADR-T2-002: parses brand_relationship_finding and per-question brand", () => {
+    const out = parseTrack2Output({
+      evidence_items: [],
+      brand_relationship_finding: "Lenovo: confirmed authorized distributor. Bosch: no verified relationship — additional verification required.",
+      questions_to_ask: [
+        { question: "Confirm Bosch authorization?", reason: "r", blocking_weight_key: "k", priority: "high", brand: "Bosch" },
+        { question: "Vendor-level q", reason: "r", blocking_weight_key: "k" }, // no brand → defaults ""
+      ],
+    });
+    expect(out.brand_relationship_finding).toContain("Lenovo");
+    expect(out.questions_to_ask[0].brand).toBe("Bosch");
+    expect(out.questions_to_ask[1].brand).toBe("");
   });
   it("degrades to empty on malformed JSON (never throws)", () => {
     const out = parseTrack2Output({ _parse_error: true });

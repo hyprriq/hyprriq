@@ -19,6 +19,7 @@ export interface ParsedTrack2 {
   items: ProposedTrack2Item[];
   auth_level: "A" | "B" | "C" | "D" | "E" | null;
   auth_level_reasoning: string;
+  brand_relationship_finding: string; // ADR-T2-002 — scoped, positives-first, per-brand narrative
   b2b_only_detected: boolean;
   b2b_only_brands: string[];
   questions_to_ask: QuestionToAsk[];
@@ -27,7 +28,7 @@ export interface ParsedTrack2 {
 }
 
 export function buildTrack2Prompt(
-  ctx: { vendor_name: string | null; brands: string[] },
+  ctx: { vendor_name: string | null; brands: string[]; identity?: { confidence: string; resolved_name: string } | null },
   sources: PackSourceForPrompt[],
 ): { system: string; user: string } {
   const system = [
@@ -46,8 +47,25 @@ export function buildTrack2Prompt(
     "authorization scope in mapping_justification.",
     "LOA RULE: an LOA (Letter of Authorization) is NOT an authorization-discovery signal — it is post-relationship,",
     "private, and unverifiable. Do NOT propose any LOA key. NEVER treat a missing LOA as negative and NEVER infer",
-    "no_connection_found from a missing LOA. If an LOA appears in the pack, you may mention it in reasoning_notes as",
-    "analyst context ONLY (it carries no scoring weight).",
+    "no_connection_found from a missing LOA. Mention LOA in brand_relationship_finding ONLY when an LOA actually",
+    "appears in the pack, OR when you are specifically recommending the client obtain one for brand/marketplace",
+    "compliance — otherwise omit LOA entirely (most cases should never mention it; its absence carries no weight).",
+    "",
+    "LANE DISCIPLINE (ADR-T2-002): you assess the vendor↔brand relationship ONLY.",
+    "Do NOT assess or comment on supplier legitimacy or identity — a separate Supplier Identity track owns that; treat",
+    "the supplier's identity as already settled. Do NOT judge whether a marketplace will approve resale (out of scope).",
+    "Keep each conclusion in its own lane; success or failure of one does NOT imply the others.",
+    "BRAND_RELATIONSHIP_FINDING: write Track 2's conclusion here, scoped strictly to the vendor↔brand relationship, in",
+    "THREE parts: (1) state CONFIRMED POSITIVES FIRST, plainly (never bury a strong verified finding under hedging);",
+    "(2) then state REMAINING UNKNOWNS / what needs verification, clearly separated from (1);",
+    "(3) then state WHAT THOSE UNKNOWNS DO NOT IMPLY — an unverified relationship is NOT evidence against the supplier",
+    "and NOT a vendor-wide conclusion.",
+    "When MULTIPLE brands are submitted, NAME EACH BRAND explicitly within this single field and NEVER extend one",
+    "brand's confirmed or unverified status to another brand (a vendor can be strong on one brand and unverified on another).",
+    "LEGITIMACY ≠ AUTHORIZATION: brand_relationship_finding must NEVER imply a purchase decision. Do NOT write 'buy',",
+    "'don't buy', 'safe to purchase', 'recommend purchasing', or any close equivalent. A legitimate supplier with an",
+    "unverified brand relationship yields a NEUTRAL 'additional brand-specific verification required' — route that gap",
+    "into questions_to_ask, never into an implied green light. Unknown authorization is neutral, never a warning.",
     "B2B / DISTRIBUTOR-ONLY BRANDS: if the research indicates a brand follows a distributor-only or enterprise-only",
     "sales model, the absence of a reseller certificate is EXPECTED — never a negative signal. Base this on evidence in",
     "the pack (do not assume); list such brands in b2b_only_brands and explain the reasoning in reasoning_notes.",
@@ -66,21 +84,29 @@ export function buildTrack2Prompt(
     "proposed_weight_key: 'UNKNOWN' with your reason in mapping_justification (counter_evidence: 'N/A — key not proposed').",
     "Do not infer negative findings from absence of evidence. You PROPOSE classifications; the platform validates and",
     "scores them — never assume a proposal will count.",
-    "QUESTIONS: produce questions_to_ask as RICH objects { question, reason, blocking_weight_key, priority } tailored to",
-    "the specific gaps found (not a generic template). priority: high = affects the authorization determination; medium =",
-    "strengthens confidence; low = useful but not blocking. Only generate a 'request an LOA' question when the evidence",
-    "ALREADY indicates likely authorization and an LOA would merely strengthen an Amazon-compliance case — never as a primary gap.",
-    "Also report an advisory auth_level (A|B|C|D|E) + auth_level_reasoning (ADVISORY only — the platform derives the score).",
+    "QUESTIONS: produce questions_to_ask as RICH objects { question, reason, blocking_weight_key, priority, brand }",
+    "tailored to the specific gaps found (not a generic template). brand = the submitted brand the question concerns",
+    "(use \"\" only for a genuinely vendor-level question) — in multi-brand cases each question MUST carry its brand.",
+    "priority: high = affects the authorization determination; medium = strengthens confidence; low = useful but not",
+    "blocking. Only generate a 'request an LOA' question when the evidence ALREADY indicates likely authorization and an",
+    "LOA would merely strengthen an Amazon-compliance case — never as a primary gap.",
+    "Also report an advisory auth_level (A|B|C|D|E) + auth_level_reasoning (ADVISORY only, brief DIRECT/INDIRECT +",
+    "geographic-scope justification for the letter grade — the full relationship narrative goes in brand_relationship_finding).",
     "Per item you MUST include: brand, mapping_justification, counter_evidence ('None found' if none), certainty",
     "(verified|inferred|unknown), confidence (high|medium|low).",
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key, supporting_source_ids,",
-    "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning, b2b_only_detected,",
-    "b2b_only_brands, questions_to_ask: [{ question, reason, blocking_weight_key, priority }], reasoning_notes,",
-    "unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
+    "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning,",
+    "brand_relationship_finding, b2b_only_detected, b2b_only_brands, questions_to_ask: [{ question, reason,",
+    "blocking_weight_key, priority, brand }], reasoning_notes, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
+  // D2 (ADR-T2-002): tell the model the identity is already resolved so it does not re-litigate it.
+  const identityLine = ctx.identity
+    ? `Supplier identity already resolved (confidence: ${ctx.identity.confidence}) as "${ctx.identity.resolved_name}" — treat identity as settled; do NOT re-assess or hedge on it.`
+    : null;
   const user = [
     `Vendor: ${ctx.vendor_name ?? "unknown"}`,
+    ...(identityLine ? [identityLine] : []),
     `Brands (analyze each separately): ${ctx.brands.length ? ctx.brands.join(", ") : "(none submitted)"}`,
     "Evidence Pack:", packLines || "(empty)",
   ].join("\n");
@@ -102,6 +128,7 @@ function parseQuestions(raw: unknown): QuestionToAsk[] {
       reason: typeof q.reason === "string" ? q.reason : "",
       blocking_weight_key: typeof q.blocking_weight_key === "string" ? q.blocking_weight_key : "",
       priority: PRIORITIES.has(q.priority as string) ? (q.priority as QuestionToAsk["priority"]) : "medium",
+      brand: typeof q.brand === "string" ? q.brand : "", // ADR-T2-002
     });
   }
   return out;
@@ -110,7 +137,7 @@ function parseQuestions(raw: unknown): QuestionToAsk[] {
 export function parseTrack2Output(json: unknown): ParsedTrack2 {
   const o = (json ?? {}) as Record<string, unknown> & { _parse_error?: boolean };
   const empty: ParsedTrack2 = {
-    items: [], auth_level: null, auth_level_reasoning: "", b2b_only_detected: false,
+    items: [], auth_level: null, auth_level_reasoning: "", brand_relationship_finding: "", b2b_only_detected: false,
     b2b_only_brands: [], questions_to_ask: [], reasoning_notes: "could not parse model output", unknowns: [],
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
@@ -134,6 +161,7 @@ export function parseTrack2Output(json: unknown): ParsedTrack2 {
     items,
     auth_level: LEVELS.has(o.auth_level as string) ? (o.auth_level as ParsedTrack2["auth_level"]) : null,
     auth_level_reasoning: typeof o.auth_level_reasoning === "string" ? o.auth_level_reasoning : "",
+    brand_relationship_finding: typeof o.brand_relationship_finding === "string" ? o.brand_relationship_finding : "",
     b2b_only_detected: o.b2b_only_detected === true,
     b2b_only_brands: Array.isArray(o.b2b_only_brands) ? (o.b2b_only_brands as unknown[]).filter((x): x is string => typeof x === "string") : [],
     questions_to_ask: parseQuestions(o.questions_to_ask),

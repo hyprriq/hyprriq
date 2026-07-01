@@ -75,6 +75,7 @@ export interface QuestionToAsk {
   reason: string;
   blocking_weight_key: string;
   priority: "high" | "medium" | "low";
+  brand: string; // ADR-T2-002 — which submitted brand this question concerns ("" = vendor-level / unspecified)
 }
 
 export interface TrackOutput {
@@ -94,6 +95,13 @@ export interface TrackOutput {
   b2b_only_detected?: boolean;
   b2b_only_brands?: string[];
   questions_to_ask?: QuestionToAsk[];
+  // ADR-T2-002 — Track 2 lane-isolated narrative. brand_relationship_finding is the LLM's scoped
+  // conclusion (positives-first, per-brand, never a purchase implication); the three *_note/disclaimer
+  // fields are code-templated boundary notes (identity ↑ / authorization = this lane / marketplace ↓).
+  brand_relationship_finding?: string;
+  identity_scope_note?: string;
+  authorization_scope_note?: string;
+  marketplace_eligibility_disclaimer?: string;
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that
