@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // vi.hoisted so the mock fns exist when the (hoisted) vi.mock factories run.
 const { runTrack1, upsertTrackResult, resolveSupplierIdentity, casesUpdate, casesEq } = vi.hoisted(() => {
   const casesEq = vi.fn().mockResolvedValue({ error: null });
-  const casesUpdate = vi.fn((_update: Record<string, unknown>) => ({ eq: casesEq }));
+  const casesUpdate = vi.fn(() => ({ eq: casesEq }));
   return { runTrack1: vi.fn(), upsertTrackResult: vi.fn(), resolveSupplierIdentity: vi.fn(), casesUpdate, casesEq };
 });
 vi.mock("@/lib/data/track-results", () => ({ upsertTrackResult }));
@@ -80,13 +80,15 @@ describe("stageResolveIdentity", () => {
 
 describe("stageFinalize identity escalation", () => {
   const args = (over: object) => ({ included: new Set([1, 2]), identityAcquisitionFailed: false, verdict: "verify_before_purchase", confidence_0_15: 7, ...over });
+  // casesUpdate's impl takes no params, so its call tuple is empty at the type level — read the update via a cast.
+  const lastUpdate = () => (casesUpdate.mock.calls as unknown as Record<string, unknown>[][])[0][0];
 
   it("an unconfirmed identity escalates the case to manual_override_required", async () => {
     await stageFinalize(ctx, args({ identityUnconfirmed: true }));
-    expect(casesUpdate.mock.calls[0][0].status).toBe("manual_override_required");
+    expect(lastUpdate().status).toBe("manual_override_required");
   });
   it("a confirmed identity leaves the case at awaiting_review", async () => {
     await stageFinalize(ctx, args({ identityUnconfirmed: false }));
-    expect(casesUpdate.mock.calls[0][0].status).toBe("awaiting_review");
+    expect(lastUpdate().status).toBe("awaiting_review");
   });
 });
