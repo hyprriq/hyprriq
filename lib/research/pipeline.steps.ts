@@ -57,6 +57,13 @@ export async function stageResolveIdentity(ctx: TrackContext): Promise<SupplierI
   return resolveSupplierIdentity(ctx);
 }
 
+// Persist the resolved identity onto the case EARLY (right after resolution) so the manual-review
+// human sees candidates/confidence/notes while research is still running. Idempotent (a plain column
+// update keyed by case_id); stageFinalize re-persists it as part of the final case record.
+export async function stagePersistIdentity(caseId: string, identity: SupplierIdentity): Promise<void> {
+  await supabaseAdmin.from("cases").update({ supplier_identity: identity }).eq("id", caseId);
+}
+
 // One finding track (n ∈ 1..5): run it, apply the acquisition-failure guard, derive the CODE signal,
 // persist the row + classification metrics. Returns the output + signal for fan-in.
 export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<FindingTrackResult> {
@@ -147,7 +154,7 @@ export async function stageMemoryWrite(ctx: TrackContext, identitySignal: TrackS
 // Finalize: persist case state + per-track statuses + the orchestration version.
 export async function stageFinalize(
   ctx: TrackContext,
-  args: { included: Set<number>; identityAcquisitionFailed: boolean; identityUnconfirmed?: boolean; verdict: string; confidence_0_15: number },
+  args: { included: Set<number>; identityAcquisitionFailed: boolean; identityUnconfirmed?: boolean; supplierIdentity?: SupplierIdentity; verdict: string; confidence_0_15: number },
 ): Promise<{ error: string | null }> {
   // Phase 5.1c.5 — an unconfirmed supplier identity (genuine multi-candidate ambiguity / no resolution)
   // caps the outcome: escalate to human review rather than deliver a confident verdict on an unknown
@@ -159,6 +166,7 @@ export async function stageFinalize(
     verdict: args.verdict, confidence_score: args.confidence_0_15, track_0_status: "complete",
     pipeline_version: PIPELINE_VERSION,
   };
+  if (args.supplierIdentity !== undefined) caseUpdate.supplier_identity = args.supplierIdentity; // final identity record (idempotent)
   for (let n = 1; n <= 5; n++) {
     caseUpdate[`track_${n}_status`] = !args.included.has(n) ? "skipped"
       : (n === 1 && args.identityAcquisitionFailed) ? "manual_required" : "complete";

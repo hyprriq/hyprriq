@@ -4,8 +4,8 @@ import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/cont
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan, executionGroupsForPlan, PIPELINE_VERSION } from "@/lib/research/pipeline.registry";
 import {
-  stageTrack0, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize,
-  type FindingTrackResult,
+  stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis,
+  stageVerdict, stageMemoryWrite, stageFinalize, type FindingTrackResult,
 } from "@/lib/research/pipeline.steps";
 
 // Minimal structural type for an Inngest step — keeps the handler unit-testable with a fake step.
@@ -30,11 +30,18 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
   );
   await step.run("track-0", () => stageTrack0(ctx));
 
+  // Track 0.5 — resolve the supplier identity once (durable step), persist it early for the
+  // manual-review human, then thread it onto the ctx the finding tracks receive (Track 2+ classify
+  // against resolved_domain).
+  const identity = await step.run("resolve-identity", () => stageResolveIdentity(ctx));
+  await step.run("persist-identity", () => stagePersistIdentity(ctx.case_id, identity));
+  const ictx: TrackContext = { ...ctx, supplier_identity: identity };
+
   // Fan out by execution group: group 1 (Tracks 1–4) runs in parallel; group 2 (Track 5) runs after.
   const results: FindingTrackResult[] = [];
   for (const group of executionGroupsForPlan(ctx.plan_type)) {
     const groupResults = await Promise.all(
-      group.map((t) => step.run(t.step_name, () => stageFindingTrack(ctx, t.track_number))),
+      group.map((t) => step.run(t.step_name, () => stageFindingTrack(ictx, t.track_number))),
     );
     results.push(...groupResults);
   }
@@ -50,9 +57,12 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs));
   const verdict = await step.run("verdict", () => stageVerdict(signals, synthesis));
-  await step.run("memory-write", () => stageMemoryWrite(ctx, signals.supplier_identity ?? null, identityAcquisitionFailed));
+  await step.run("memory-write", () => stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityAcquisitionFailed));
   await step.run("finalize", () =>
-    stageFinalize(ctx, { included, identityAcquisitionFailed, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15 }),
+    stageFinalize(ictx, {
+      included, identityAcquisitionFailed, identityUnconfirmed: identity.identity_unconfirmed,
+      supplierIdentity: identity, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
+    }),
   );
 }
 

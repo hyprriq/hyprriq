@@ -2,7 +2,8 @@ import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/cont
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan } from "@/lib/research/pipeline.registry";
 import {
-  stageTrack0, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize,
+  stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis,
+  stageVerdict, stageMemoryWrite, stageFinalize,
 } from "@/lib/research/pipeline.steps";
 
 // The Intelligence-OS pipeline — orchestrates the STAGES (lib/research/pipeline.steps) sequentially.
@@ -21,11 +22,18 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   // ── Layer 1 — Evidence Collection ──
   await stageTrack0(ctx);
 
+  // ── Track 0.5 — resolve the supplier identity ONCE, then thread it onto the ctx every finding
+  // track receives (Track 2+ classify against resolved_domain). Persist early so the manual-review
+  // human sees it during research. ──
+  const identity = await stageResolveIdentity(ctx);
+  await stagePersistIdentity(ctx.case_id, identity);
+  const ictx: TrackContext = { ...ctx, supplier_identity: identity };
+
   const trackOutputs: TrackOutput[] = [];
   const signals: Partial<Record<TrackKey, TrackSignal>> = {};
   let identityAcquisitionFailed = false;
   for (const t of tracksForPlan(plan)) {
-    const r = await stageFindingTrack(ctx, t.track_number);
+    const r = await stageFindingTrack(ictx, t.track_number);
     trackOutputs.push(r.output);
     signals[t.track_key] = r.signal;
     if (r.acquisition_failed && t.track_key === "supplier_identity") identityAcquisitionFailed = true;
@@ -43,10 +51,11 @@ export async function runPipeline(ctx: TrackContext): Promise<{ error: string | 
   const verdict = stageVerdict(signals, synthesis);
 
   // ── Institutional memory write-side (ADR-G006) ──
-  await stageMemoryWrite(ctx, signals.supplier_identity ?? null, identityAcquisitionFailed);
+  await stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityAcquisitionFailed);
 
   // ── Persist case state ──
-  return stageFinalize(ctx, {
-    included, identityAcquisitionFailed, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
+  return stageFinalize(ictx, {
+    included, identityAcquisitionFailed, identityUnconfirmed: identity.identity_unconfirmed,
+    supplierIdentity: identity, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
   });
 }
