@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge, VerdictBadge, CertaintyBadge, type FindingCertainty } from "@/components/portal/badges";
 import type { CaseDetail, Finding } from "@/lib/data/cases";
+import { findingText, findingNotes } from "@/lib/portal/finding-view";
 import { isResearchInProgress } from "@/lib/portal/case-status";
 
 const TABS = [
@@ -48,20 +49,6 @@ function dimStatus(s: string): { label: string; cls: string } {
 function fmt(iso: string | null): string {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
-
-function findingText(f: Finding): { title: string; detail: string } {
-  const j = (f.compiled_findings_json ?? f.ai_output_json ?? {}) as Record<string, unknown>;
-  const title =
-    (typeof j.title === "string" && j.title) ||
-    (typeof j.heading === "string" && j.heading) ||
-    f.track.replace("track_", "Dimension ");
-  const detail =
-    (typeof j.summary === "string" && j.summary) ||
-    (typeof j.detail === "string" && j.detail) ||
-    f.manual_notes ||
-    "";
-  return { title, detail };
 }
 
 function extractQuestions(findings: Finding[]): { text: string; why?: string }[] {
@@ -258,12 +245,20 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
           ) : (
             findings.map((f) => {
               const { title, detail } = findingText(f);
+              const notes = findingNotes(f);
               const cert = (f.finding_certainty ?? "unknown") as FindingCertainty;
               return (
                 <div key={f.id} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
                   <div className="flex-1">
                     <div className="text-[14px] font-semibold text-ink">{title}</div>
-                    {detail && <div className="mt-0.5 text-[13px] text-ink-2">{detail}</div>}
+                    {detail && <div className="mt-0.5 whitespace-pre-line text-[13px] text-ink-2">{detail}</div>}
+                    {/* ADR-T2-002 — Track 2 boundary notes as separate labeled lines (decision separation) */}
+                    {notes.map((n) => (
+                      <div key={n.label} className="mt-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
+                        <div className="text-[12px] text-muted">{n.text}</div>
+                      </div>
+                    ))}
                   </div>
                   <CertaintyBadge certainty={cert} />
                 </div>
