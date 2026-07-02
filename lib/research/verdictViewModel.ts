@@ -7,6 +7,7 @@ import type {
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
+import { brandFindingFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
 
 // Phase 4 — the SINGLE assembly service for the admin review surface. Every admin UI section
 // (Executive Intelligence Summary, Verdict Panel, Cross-Track Intelligence, Track Intelligence,
@@ -41,6 +42,9 @@ export interface TrackIntelView {
   score_0_15: number | null;
   evidence_items: EvidenceItem[];
   reasoning_notes: string | null;
+  // ADR-T2-002 — Track 2 lane-isolated narrative + boundary notes (null/[] on tracks that don't emit them).
+  brand_relationship_finding: string | null;
+  boundary_notes: { label: string; text: string }[];
   unknowns: Unknown[];
 }
 
@@ -116,6 +120,9 @@ export function buildVerdictViewModel(input: {
     score_0_15: r.confidence_score,
     evidence_items: r.evidence_items ?? [],
     reasoning_notes: r.reasoning_notes,
+    // ADR-T2-002 — surface the structured Track 2 fields from compiled_findings_json (shared helpers).
+    brand_relationship_finding: brandFindingFrom(r.compiled_findings_json) || null,
+    boundary_notes: boundaryNotesFrom(r.compiled_findings_json),
     unknowns: r.unknowns ?? [],
   }));
 

@@ -265,7 +265,22 @@ export function CaseReview({
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${sm.cls}`}>{sm.label}</span>
                   </div>
                 </div>
-                {t.reasoning_notes && <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{t.reasoning_notes}</p>}
+                {/* ADR-T2-002 — scoped Track 2 finding + boundary notes; reasoning_notes kept as analyst context. */}
+                {t.brand_relationship_finding && (
+                  <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-ink-2">{t.brand_relationship_finding}</p>
+                )}
+                {t.boundary_notes.map((n) => (
+                  <div key={n.label} className="mt-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
+                    <div className="text-[12px] text-muted">{n.text}</div>
+                  </div>
+                ))}
+                {t.reasoning_notes && (
+                  <p className={`mt-2 text-[13px] leading-relaxed ${t.brand_relationship_finding ? "text-muted" : "text-ink-2"}`}>
+                    {t.brand_relationship_finding && <span className="text-[11px] font-semibold uppercase tracking-wide">Analyst context: </span>}
+                    {t.reasoning_notes}
+                  </p>
+                )}
                 {t.evidence_items.length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {t.evidence_items.map((e) => (

@@ -33,6 +33,24 @@ const rows: TrackResultRow[] = [
   trackRow(3, "brand_risk_assessment", "pass"),
 ];
 
+describe("buildVerdictViewModel — ADR-T2-002 fields", () => {
+  it("surfaces brand_relationship_finding + boundary notes from compiled_findings_json", () => {
+    const t2 = trackRow(2, "supply_chain_relationship", "infer");
+    t2.compiled_findings_json = {
+      summary: "old conflated narrative",
+      brand_relationship_finding: "Lenovo: confirmed authorized distributor.",
+      identity_scope_note: "id", authorization_scope_note: "auth", marketplace_eligibility_disclaimer: "mkt",
+    };
+    const vm = buildVerdictViewModel({ trackRows: [trackRow(1, "supplier_identity", "pass"), t2], synthesis: null, ios: null });
+    const track2 = vm.tracks.find((t) => t.track_number === 2)!;
+    expect(track2.brand_relationship_finding).toContain("Lenovo");
+    expect(track2.boundary_notes.map((n) => n.label)).toEqual(["Identity scope", "Authorization scope", "Marketplace eligibility"]);
+    const track1 = vm.tracks.find((t) => t.track_number === 1)!;
+    expect(track1.brand_relationship_finding).toBeNull();
+    expect(track1.boundary_notes).toEqual([]);
+  });
+});
+
 describe("buildVerdictViewModel", () => {
   it("recomputed verdict matches computeVerdict on the same persisted signals (determinism)", () => {
     const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });

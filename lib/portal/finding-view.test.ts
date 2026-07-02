@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findingText, findingNotes } from "./finding-view";
+import { findingText, findingNotes, brandFindingFrom, boundaryNotesFrom } from "./finding-view";
 import type { Finding } from "@/lib/data/cases";
 
 const mk = (track: string, j: Record<string, unknown> | null): Finding => ({
@@ -34,5 +34,25 @@ describe("findingText / findingNotes (ADR-T2-002 Evidence rendering)", () => {
     const f = mk("track_2", null);
     expect(findingText(f).detail).toBe("");
     expect(findingNotes(f)).toEqual([]);
+  });
+});
+
+describe("json-based helpers (shared by portal + admin surfaces)", () => {
+  it("brandFindingFrom returns the scoped finding or '' ", () => {
+    expect(brandFindingFrom({ brand_relationship_finding: "Lenovo: confirmed." })).toBe("Lenovo: confirmed.");
+    expect(brandFindingFrom({ summary: "x" })).toBe("");
+    expect(brandFindingFrom(null)).toBe("");
+  });
+  it("boundaryNotesFrom returns the three notes in order, present only when set", () => {
+    const notes = boundaryNotesFrom({
+      identity_scope_note: "id", authorization_scope_note: "auth", marketplace_eligibility_disclaimer: "mkt",
+    });
+    expect(notes).toEqual([
+      { label: "Identity scope", text: "id" },
+      { label: "Authorization scope", text: "auth" },
+      { label: "Marketplace eligibility", text: "mkt" },
+    ]);
+    expect(boundaryNotesFrom({ authorization_scope_note: "auth" })).toEqual([{ label: "Authorization scope", text: "auth" }]);
+    expect(boundaryNotesFrom(null)).toEqual([]);
   });
 });
