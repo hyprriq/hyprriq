@@ -90,6 +90,18 @@ export interface AdditionalQuestion {
   required?: boolean;                      // blocking (must be answered) vs helpful
   created_by: string;                      // Clerk user id of the analyst
   created_at: string;                      // ISO
+  history?: AdditionalQuestionEdit[];      // prior versions preserved on edit (never silent overwrite)
+}
+
+// One preserved prior version of an AdditionalQuestion, snapshotted before an edit overwrites it.
+export interface AdditionalQuestionEdit {
+  edited_at: string;
+  edited_by: string;
+  previous_question: string;
+  previous_reason?: string;
+  previous_brand?: string;
+  previous_priority?: "high" | "medium" | "low";
+  previous_required?: boolean;
 }
 
 export interface TrackOutput {

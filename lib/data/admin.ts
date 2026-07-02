@@ -3,6 +3,7 @@ import { getCurrentClient, type Role } from "@/lib/data/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
+import type { AdditionalQuestion } from "@/lib/research/contracts";
 
 // Admin-role guard. The (admin) layout enforces authentication; this enforces
 // the role (clients.is_admin). Non-admins are bounced to their own portal.
@@ -139,13 +140,14 @@ export type AdminCaseDetail = {
   sla_deadline: string | null;
   created_at: string;
   client_id: string;
+  additional_questions: AdditionalQuestion[] | null; // ADR-T2-002 follow-up — analyst/review-team questions
   clients: { full_name: string | null; company_name: string | null; email: string } | null;
 };
 
 export async function getAdminCase(id: string): Promise<AdminCaseDetail | null> {
   const { data } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, vendor_name, vendor_website, brands_submitted, brands_from_ocr, client_notes, internal_notes, status, verdict, confidence_score, plan_type, sla_deadline, created_at, client_id, clients(full_name, company_name, email)")
+    .select("id, case_number, vendor_name, vendor_website, brands_submitted, brands_from_ocr, client_notes, internal_notes, status, verdict, confidence_score, plan_type, sla_deadline, created_at, client_id, additional_questions, clients(full_name, company_name, email)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();

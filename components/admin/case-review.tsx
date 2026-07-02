@@ -95,7 +95,35 @@ export function CaseReview({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
+  // Gap B — analyst/review-team questions (create/edit/delete against cases.additional_questions).
+  const [qBusy, setQBusy] = useState(false);
+  const [qError, setQError] = useState<string | null>(null);
+  const [nq, setNq] = useState<{ question: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", brand: "", priority: "medium", required: false });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [ef, setEf] = useState<{ question: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", brand: "", priority: "medium", required: false });
+
   const delivered = caseStatus === "delivered" || caseStatus === "complete";
+  const questions = mergeCaseQuestions(vm.tracks, additionalQuestions);
+
+  async function questionAction(method: "POST" | "PATCH" | "DELETE", body: object): Promise<boolean> {
+    if (qBusy) return false;
+    setQBusy(true);
+    setQError(null);
+    try {
+      const res = await fetch(`/api/admin/cases/${caseId}/questions`, {
+        method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || data?.error || "Could not save the question.");
+      router.refresh();
+      return true;
+    } catch (e) {
+      setQError(e instanceof Error ? e.message : "Could not save the question.");
+      return false;
+    } finally {
+      setQBusy(false);
+    }
+  }
 
   async function send(action: "publish" | "override" | "request_investigation") {
     if (busy) return;
@@ -375,31 +403,77 @@ export function CaseReview({
         </Section>
       )}
 
-      {/* 4.6 — Questions to Ask (Gap A: system questions surfaced to the analyst; Gap B adds analyst input) */}
+      {/* 4.6 — Questions to Ask (Gap A: system questions; Gap B: analyst add/edit/delete). Merge is
+          view-model-only (source-tagged); the AI questions_to_ask are never mutated. */}
       <Section eyebrow="Layer 5 · What to ask the supplier" title="Questions to Ask">
-        {(() => {
-          const questions = mergeCaseQuestions(vm.tracks, additionalQuestions);
-          if (questions.length === 0) {
-            return <p className="text-[13px] text-muted">No questions generated for this case.</p>;
-          }
-          return (
-            <ul className="space-y-2">
-              {questions.map((q, i) => (
-                <li key={q.id ?? `sys-${i}`} className="rounded-lg border border-line bg-base p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[14px] font-medium text-ink">{q.question}</span>
-                    <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{SOURCE_LABEL[q.source]}</span>
-                    {q.brand && <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand-ink">{q.brand}</span>}
-                    <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{q.priority}</span>
-                    {q.required && <span className="rounded-full bg-deny-bg px-2 py-0.5 text-[11px] font-semibold text-deny-ink">required</span>}
+        {questions.length === 0 ? (
+          <p className="text-[13px] text-muted">No system questions for this case. Add your own below.</p>
+        ) : (
+          <ul className="space-y-2">
+            {questions.map((q, i) => (
+              <li key={q.id ?? `sys-${i}`} className="rounded-lg border border-line bg-base p-3">
+                {editingId && q.id === editingId ? (
+                  <div className="space-y-2">
+                    <textarea value={ef.question} onChange={(e) => setEf({ ...ef, question: e.target.value })} rows={2}
+                      className="w-full rounded-lg border border-line bg-surface p-2 text-[13px]" />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input value={ef.brand} onChange={(e) => setEf({ ...ef, brand: e.target.value })} placeholder="brand (optional)"
+                        className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]" />
+                      <select value={ef.priority} onChange={(e) => setEf({ ...ef, priority: e.target.value as typeof ef.priority })}
+                        className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]">
+                        <option value="high">high</option><option value="medium">medium</option><option value="low">low</option>
+                      </select>
+                      <label className="flex items-center gap-1 text-[12px] text-ink-2"><input type="checkbox" checked={ef.required} onChange={(e) => setEf({ ...ef, required: e.target.checked })} /> required</label>
+                      <button type="button" disabled={qBusy || !ef.question.trim()} onClick={async () => { if (await questionAction("PATCH", { id: q.id, ...ef })) setEditingId(null); }}
+                        className="rounded-lg bg-brand px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50">Save</button>
+                      <button type="button" onClick={() => setEditingId(null)} className="rounded-lg border border-line bg-base px-3 py-1 text-[12px] font-semibold text-ink-2">Cancel</button>
+                    </div>
                   </div>
-                  {q.reason && <div className="mt-0.5 text-[13px] text-muted">{q.reason}</div>}
-                  {q.blocking_weight_key && <div className="mt-0.5 text-[11px] text-muted">unlocks: {q.blocking_weight_key}</div>}
-                </li>
-              ))}
-            </ul>
-          );
-        })()}
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[14px] font-medium text-ink">{q.question}</span>
+                      <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{SOURCE_LABEL[q.source]}</span>
+                      {q.brand && <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand-ink">{q.brand}</span>}
+                      <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{q.priority}</span>
+                      {q.required && <span className="rounded-full bg-deny-bg px-2 py-0.5 text-[11px] font-semibold text-deny-ink">required</span>}
+                      {q.source === "additional" && q.id && (
+                        <span className="ml-auto flex gap-2">
+                          <button type="button" disabled={qBusy} onClick={() => { setEditingId(q.id!); setEf({ question: q.question, brand: q.brand, priority: q.priority, required: !!q.required }); }}
+                            className="text-[12px] font-semibold text-brand hover:text-brand-hover disabled:opacity-50">Edit</button>
+                          <button type="button" disabled={qBusy} onClick={() => questionAction("DELETE", { id: q.id })}
+                            className="text-[12px] font-semibold text-deny-ink hover:opacity-80 disabled:opacity-50">Delete</button>
+                        </span>
+                      )}
+                    </div>
+                    {q.reason && <div className="mt-0.5 text-[13px] text-muted">{q.reason}</div>}
+                    {q.blocking_weight_key && <div className="mt-0.5 text-[11px] text-muted">unlocks: {q.blocking_weight_key}</div>}
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Analyst add form — always available, even with zero system questions. */}
+        <div className="mt-4 rounded-lg border border-dashed border-line bg-base p-3">
+          <div className="mb-2 text-[12px] font-semibold text-muted">Add a question (analyst)</div>
+          <textarea value={nq.question} onChange={(e) => setNq({ ...nq, question: e.target.value })} rows={2} placeholder="What should the client ask their supplier?"
+            className="w-full rounded-lg border border-line bg-surface p-2 text-[13px]" />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input value={nq.brand} onChange={(e) => setNq({ ...nq, brand: e.target.value })} placeholder="brand (optional)"
+              className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]" />
+            <select value={nq.priority} onChange={(e) => setNq({ ...nq, priority: e.target.value as typeof nq.priority })}
+              className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]">
+              <option value="high">high</option><option value="medium">medium</option><option value="low">low</option>
+            </select>
+            <label className="flex items-center gap-1 text-[12px] text-ink-2"><input type="checkbox" checked={nq.required} onChange={(e) => setNq({ ...nq, required: e.target.checked })} /> required</label>
+            <button type="button" disabled={qBusy || !nq.question.trim()}
+              onClick={async () => { if (await questionAction("POST", nq)) setNq({ question: "", brand: "", priority: "medium", required: false }); }}
+              className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50">Add question</button>
+          </div>
+          {qError && <p className="mt-2 text-[12px] text-deny-ink">{qError}</p>}
+        </div>
       </Section>
 
       {/* 5 — Analyst Decision */}
