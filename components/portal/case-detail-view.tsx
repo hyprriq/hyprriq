@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { StatusBadge, VerdictBadge, CertaintyBadge, type FindingCertainty } from "@/components/portal/badges";
 import type { CaseDetail, Finding } from "@/lib/data/cases";
 import { findingText, findingNotes } from "@/lib/portal/finding-view";
-import { isResearchInProgress } from "@/lib/portal/case-status";
+import { isResearchInProgress, findingsVisibleToClient } from "@/lib/portal/case-status";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -85,14 +85,18 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
   }, [c.status, router]);
 
   const awaiting = c.status === "awaiting_client";
+  // Interim client guard (until Phase H): only show raw research findings/questions once the case is
+  // delivered; before that the client sees a placeholder so unreviewed raw output is never exposed.
+  const showFindings = findingsVisibleToClient(c.status);
   const entered = c.brands_submitted ?? [];
   const detected = c.brands_from_ocr ?? [];
   const hasMismatch = detected.length > 0 && detected.join("|") !== entered.join("|");
   // Track 2 rich questions (with priority); fall back to legacy compiled_findings_json questions.
-  const richQuestions = findings
-    .flatMap((f) => f.questions_to_ask ?? [])
-    .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
-  const legacyQuestions = extractQuestions(findings);
+  // Gated by the interim client guard — hidden until the case is delivered (raw research output).
+  const richQuestions = showFindings
+    ? findings.flatMap((f) => f.questions_to_ask ?? []).sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
+    : [];
+  const legacyQuestions = showFindings ? extractQuestions(findings) : [];
 
   function confirmScope(brands: string[]) {
     setError(null);
@@ -238,7 +242,14 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
 
       {tab === "evidence" && (
         <div className="overflow-hidden rounded-card border border-line bg-surface">
-          {findings.length === 0 ? (
+          {!showFindings ? (
+            <div className="p-10 text-center">
+              <div className="text-sm font-semibold text-ink">Detailed research summary</div>
+              <p className="mx-auto mt-1 max-w-md text-[13px] text-muted">
+                Your full formatted report will be available here once your case has been completed and reviewed.
+              </p>
+            </div>
+          ) : findings.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted">
               Evidence will appear here once research completes.
             </div>
