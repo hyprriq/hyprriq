@@ -98,9 +98,9 @@ export function CaseReview({
   // Gap B — analyst/review-team questions (create/edit/delete against cases.additional_questions).
   const [qBusy, setQBusy] = useState(false);
   const [qError, setQError] = useState<string | null>(null);
-  const [nq, setNq] = useState<{ question: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", brand: "", priority: "medium", required: false });
+  const [nq, setNq] = useState<{ question: string; reason: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", reason: "", brand: "", priority: "medium", required: false });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [ef, setEf] = useState<{ question: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", brand: "", priority: "medium", required: false });
+  const [ef, setEf] = useState<{ question: string; reason: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", reason: "", brand: "", priority: "medium", required: false });
 
   const delivered = caseStatus === "delivered" || caseStatus === "complete";
   const questions = mergeCaseQuestions(vm.tracks, additionalQuestions);
@@ -416,6 +416,8 @@ export function CaseReview({
                   <div className="space-y-2">
                     <textarea value={ef.question} onChange={(e) => setEf({ ...ef, question: e.target.value })} rows={2}
                       className="w-full rounded-lg border border-line bg-surface p-2 text-[13px]" />
+                    <input value={ef.reason} onChange={(e) => setEf({ ...ef, reason: e.target.value })} placeholder="reason / why it matters (optional)"
+                      className="w-full rounded-lg border border-line bg-surface px-2 py-1.5 text-[13px]" />
                     <div className="flex flex-wrap items-center gap-2">
                       <input value={ef.brand} onChange={(e) => setEf({ ...ef, brand: e.target.value })} placeholder="brand (optional)"
                         className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]" />
@@ -439,7 +441,7 @@ export function CaseReview({
                       {q.required && <span className="rounded-full bg-deny-bg px-2 py-0.5 text-[11px] font-semibold text-deny-ink">required</span>}
                       {q.source === "additional" && q.id && (
                         <span className="ml-auto flex gap-2">
-                          <button type="button" disabled={qBusy} onClick={() => { setEditingId(q.id!); setEf({ question: q.question, brand: q.brand, priority: q.priority, required: !!q.required }); }}
+                          <button type="button" disabled={qBusy} onClick={() => { setEditingId(q.id!); setEf({ question: q.question, reason: q.reason ?? "", brand: q.brand, priority: q.priority, required: !!q.required }); }}
                             className="text-[12px] font-semibold text-brand hover:text-brand-hover disabled:opacity-50">Edit</button>
                           <button type="button" disabled={qBusy} onClick={() => questionAction("DELETE", { id: q.id })}
                             className="text-[12px] font-semibold text-deny-ink hover:opacity-80 disabled:opacity-50">Delete</button>
@@ -460,6 +462,8 @@ export function CaseReview({
           <div className="mb-2 text-[12px] font-semibold text-muted">Add a question (analyst)</div>
           <textarea value={nq.question} onChange={(e) => setNq({ ...nq, question: e.target.value })} rows={2} placeholder="What should the client ask their supplier?"
             className="w-full rounded-lg border border-line bg-surface p-2 text-[13px]" />
+          <input value={nq.reason} onChange={(e) => setNq({ ...nq, reason: e.target.value })} placeholder="reason / why it matters (optional)"
+            className="mt-2 w-full rounded-lg border border-line bg-surface px-2 py-1.5 text-[13px]" />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <input value={nq.brand} onChange={(e) => setNq({ ...nq, brand: e.target.value })} placeholder="brand (optional)"
               className="rounded-lg border border-line bg-surface px-2 py-1 text-[12px]" />
@@ -469,7 +473,7 @@ export function CaseReview({
             </select>
             <label className="flex items-center gap-1 text-[12px] text-ink-2"><input type="checkbox" checked={nq.required} onChange={(e) => setNq({ ...nq, required: e.target.checked })} /> required</label>
             <button type="button" disabled={qBusy || !nq.question.trim()}
-              onClick={async () => { if (await questionAction("POST", nq)) setNq({ question: "", brand: "", priority: "medium", required: false }); }}
+              onClick={async () => { if (await questionAction("POST", nq)) setNq({ question: "", reason: "", brand: "", priority: "medium", required: false }); }}
               className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50">Add question</button>
           </div>
           {qError && <p className="mt-2 text-[12px] text-deny-ink">{qError}</p>}
