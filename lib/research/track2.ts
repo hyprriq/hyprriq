@@ -123,10 +123,18 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     derived_signal, current_verdict: "pending", provider_usage, llm_cost_usd: llmCost,
   });
 
-  // ADR-T2-002 non-blocking guard: brand_relationship_finding must never imply a purchase. If the LLM
-  // slips procurement language through, surface an advisory for the reviewer (never rewrite/block the finding).
-  const reasoning_notes = containsProcurementLanguage(parsed.brand_relationship_finding)
-    ? `${parsed.reasoning_notes}\n[ADVISORY: procurement language detected in brand_relationship_finding — review; Track 2 must not imply a purchase decision.]`
+  // ADR-T2-002 non-blocking guards (advisory only — never rewrite/block the finding):
+  //  (1) brand_relationship_finding must never imply a purchase decision;
+  //  (2) a case with structured unknowns must not ship zero questions (the analyst/client needs actionable gaps).
+  const advisories: string[] = [];
+  if (containsProcurementLanguage(parsed.brand_relationship_finding)) {
+    advisories.push("procurement language detected in brand_relationship_finding — review; Track 2 must not imply a purchase decision.");
+  }
+  if (parsed.unknowns.length > 0 && parsed.questions_to_ask.length === 0) {
+    advisories.push("unknowns present but questions_to_ask is empty — stated gaps produced no actionable questions; review.");
+  }
+  const reasoning_notes = advisories.length
+    ? `${parsed.reasoning_notes}${advisories.map((a) => `\n[ADVISORY: ${a}]`).join("")}`
     : parsed.reasoning_notes;
 
   return {

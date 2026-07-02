@@ -84,6 +84,9 @@ export function buildTrack2Prompt(
     "proposed_weight_key: 'UNKNOWN' with your reason in mapping_justification (counter_evidence: 'N/A — key not proposed').",
     "Do not infer negative findings from absence of evidence. You PROPOSE classifications; the platform validates and",
     "scores them — never assume a proposal will count.",
+    "QUESTIONS — MANDATORY COVERAGE: for EACH remaining unknown / verification-needed point you state in",
+    "brand_relationship_finding (part 2), you MUST emit a corresponding questions_to_ask item. If the finding names any",
+    "open gap, questions_to_ask must NOT be empty — never return an empty questions_to_ask when unknowns exist.",
     "QUESTIONS: produce questions_to_ask as RICH objects { question, reason, blocking_weight_key, priority, brand }",
     "tailored to the specific gaps found (not a generic template). brand = the submitted brand the question concerns",
     "(use \"\" only for a genuinely vendor-level question) — in multi-brand cases each question MUST carry its brand.",
@@ -121,11 +124,22 @@ const PRIORITIES = new Set(["high", "medium", "low"]);
 function parseQuestions(raw: unknown): QuestionToAsk[] {
   if (!Array.isArray(raw)) return [];
   const out: QuestionToAsk[] = [];
-  for (const q of raw as Record<string, unknown>[]) {
-    if (typeof q?.question !== "string") continue;
+  for (const item of raw) {
+    // TOLERANT: accept a bare string, or an object keyed `question` OR `text` — never silently drop an
+    // actionable gap because of shape. (Bug: strict {question} parsing dropped string/{text} questions →
+    // a case with clear unknowns persisted zero questions.)
+    if (typeof item === "string") {
+      const text = item.trim();
+      if (text) out.push({ question: text, reason: "", blocking_weight_key: "", priority: "medium", brand: "" });
+      continue;
+    }
+    if (!item || typeof item !== "object") continue;
+    const q = item as Record<string, unknown>;
+    const question = typeof q.question === "string" ? q.question : typeof q.text === "string" ? q.text : "";
+    if (!question.trim()) continue;
     out.push({
-      question: q.question,
-      reason: typeof q.reason === "string" ? q.reason : "",
+      question,
+      reason: typeof q.reason === "string" ? q.reason : typeof q.why === "string" ? q.why : "",
       blocking_weight_key: typeof q.blocking_weight_key === "string" ? q.blocking_weight_key : "",
       priority: PRIORITIES.has(q.priority as string) ? (q.priority as QuestionToAsk["priority"]) : "medium",
       brand: typeof q.brand === "string" ? q.brand : "", // ADR-T2-002

@@ -107,6 +107,28 @@ describe("runTrack2", () => {
     expect(promptUser).toContain("TD SYNNEX Corporation");
   });
 
+  it("consistency guard: unknowns present but zero questions_to_ask raises a non-blocking advisory", async () => {
+    gather.mockResolvedValue(pack([brandSrc(0)]));
+    runModel.mockResolvedValue(model({
+      evidence_items: [], brand_relationship_finding: "Bosch: relationship unverified.",
+      questions_to_ask: [], unknowns: [{ unknown: "SupplyOn portal listing", why_unresolvable: "not public", resolvable_by_client: true }],
+      reasoning_notes: "base",
+    }));
+    const out = await runTrack2(ctx);
+    expect(out.reasoning_notes).toMatch(/ADVISORY: unknowns present but/i);
+  });
+  it("no consistency advisory when questions_to_ask covers the unknowns", async () => {
+    gather.mockResolvedValue(pack([brandSrc(0)]));
+    runModel.mockResolvedValue(model({
+      evidence_items: [], brand_relationship_finding: "Bosch: relationship unverified.",
+      questions_to_ask: [{ question: "Confirm SupplyOn listing?", reason: "r", blocking_weight_key: "k", priority: "high", brand: "Bosch" }],
+      unknowns: [{ unknown: "SupplyOn portal listing", why_unresolvable: "not public", resolvable_by_client: true }],
+      reasoning_notes: "base",
+    }));
+    const out = await runTrack2(ctx);
+    expect(out.reasoning_notes).not.toMatch(/ADVISORY: unknowns present but/i);
+  });
+
   it("procurement guard: procurement language in brand_relationship_finding raises a non-blocking advisory", async () => {
     gather.mockResolvedValue(pack([brandSrc(0)]));
     runModel.mockResolvedValue(model({ evidence_items: [], brand_relationship_finding: "This vendor is safe to purchase from.", reasoning_notes: "base", unknowns: [] }));

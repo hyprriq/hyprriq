@@ -39,6 +39,11 @@ describe("buildTrack2Prompt", () => {
     expect(system).toMatch(/never.*(recommend|imply).*(buy|purchase)/i);     // no purchase recommendation
     expect(system).toMatch(/questions_to_ask.*brand|brand.*questions_to_ask/i); // brand on questions
   });
+  it("hard-requires a brand-tagged question for every stated unknown (no zero-question cases with open gaps)", () => {
+    expect(system).toMatch(/for each remaining unknown/i);
+    expect(system).toMatch(/emit a corresponding questions_to_ask/i);
+    expect(system).toMatch(/never return an empty questions_to_ask/i);
+  });
   it("ADR-T2-002 (D2): tells the model the identity is already resolved so it does not re-litigate it", () => {
     const p = buildTrack2Prompt(
       { vendor_name: "TD Synexx", brands: ["Microsoft"], identity: { confidence: "high", resolved_name: "TD SYNNEX Corporation" } },
@@ -89,8 +94,22 @@ describe("parseTrack2Output", () => {
     expect(out.auth_level).toBeNull();
     expect(out.reasoning_notes).toMatch(/could not parse/i);
   });
-  it("drops malformed questions (missing question text)", () => {
+  it("drops malformed questions (no question text under any key)", () => {
     const out = parseTrack2Output({ evidence_items: [], questions_to_ask: [{ reason: "x" }, { question: "ok" }] });
     expect(out.questions_to_ask).toHaveLength(1);
+  });
+  it("TOLERATES string-shaped questions (never silently drops actionable gaps)", () => {
+    const out = parseTrack2Output({ evidence_items: [], questions_to_ask: ["Confirm the SupplyOn portal listing for Bosch?", "Verify the Bosch sub-brand list?"] });
+    expect(out.questions_to_ask).toHaveLength(2);
+    expect(out.questions_to_ask[0].question).toContain("SupplyOn");
+    expect(out.questions_to_ask[0].brand).toBe("");
+    expect(out.questions_to_ask[0].priority).toBe("medium");
+  });
+  it("TOLERATES the alternate {text, why} object shape", () => {
+    const out = parseTrack2Output({ evidence_items: [], questions_to_ask: [{ text: "Confirm distributor chain?", why: "no direct evidence", brand: "Bosch" }] });
+    expect(out.questions_to_ask).toHaveLength(1);
+    expect(out.questions_to_ask[0].question).toBe("Confirm distributor chain?");
+    expect(out.questions_to_ask[0].reason).toBe("no direct evidence");
+    expect(out.questions_to_ask[0].brand).toBe("Bosch");
   });
 });
