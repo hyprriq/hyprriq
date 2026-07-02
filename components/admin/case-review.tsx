@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
-import type { TrackSignal, Verdict, VerdictResult } from "@/lib/research/contracts";
+import type { TrackSignal, Verdict, VerdictResult, AdditionalQuestion } from "@/lib/research/contracts";
+import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
 // buildVerdictViewModel(): Executive Intelligence Summary → Verdict Panel → Cross-Track
@@ -70,14 +71,21 @@ function List({ items, empty }: { items: string[]; empty: string }) {
   );
 }
 
+const SOURCE_LABEL: Record<"system" | "additional", string> = {
+  system: "System-generated",
+  additional: "Analyst-added",
+};
+
 export function CaseReview({
   caseId,
   vm,
   caseStatus,
+  additionalQuestions = [],
 }: {
   caseId: string;
   vm: VerdictViewModel;
   caseStatus: string;
+  additionalQuestions?: AdditionalQuestion[];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"idle" | "override" | "investigate">("idle");
@@ -366,6 +374,33 @@ export function CaseReview({
           </div>
         </Section>
       )}
+
+      {/* 4.6 — Questions to Ask (Gap A: system questions surfaced to the analyst; Gap B adds analyst input) */}
+      <Section eyebrow="Layer 5 · What to ask the supplier" title="Questions to Ask">
+        {(() => {
+          const questions = mergeCaseQuestions(vm.tracks, additionalQuestions);
+          if (questions.length === 0) {
+            return <p className="text-[13px] text-muted">No questions generated for this case.</p>;
+          }
+          return (
+            <ul className="space-y-2">
+              {questions.map((q, i) => (
+                <li key={q.id ?? `sys-${i}`} className="rounded-lg border border-line bg-base p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[14px] font-medium text-ink">{q.question}</span>
+                    <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{SOURCE_LABEL[q.source]}</span>
+                    {q.brand && <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand-ink">{q.brand}</span>}
+                    <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">{q.priority}</span>
+                    {q.required && <span className="rounded-full bg-deny-bg px-2 py-0.5 text-[11px] font-semibold text-deny-ink">required</span>}
+                  </div>
+                  {q.reason && <div className="mt-0.5 text-[13px] text-muted">{q.reason}</div>}
+                  {q.blocking_weight_key && <div className="mt-0.5 text-[11px] text-muted">unlocks: {q.blocking_weight_key}</div>}
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
+      </Section>
 
       {/* 5 — Analyst Decision */}
       <Section eyebrow="Optional · the engine already reached report-ready" title="Analyst Decision">

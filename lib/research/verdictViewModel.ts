@@ -2,7 +2,7 @@ import type { TrackKey } from "@/lib/constants/tracks";
 import { trackByNumber } from "@/lib/constants/tracks";
 import type { ConfidenceBand } from "@/lib/research/confidence";
 import type {
-  EvidenceItem, IosVersion, SynthesisOutput, TrackSignal, Unknown, VerdictResult,
+  EvidenceItem, IosVersion, QuestionToAsk, SynthesisOutput, TrackSignal, Unknown, VerdictResult,
 } from "@/lib/research/contracts";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
@@ -45,6 +45,7 @@ export interface TrackIntelView {
   // ADR-T2-002 — Track 2 lane-isolated narrative + boundary notes (null/[] on tracks that don't emit them).
   brand_relationship_finding: string | null;
   boundary_notes: { label: string; text: string }[];
+  questions_to_ask: QuestionToAsk[]; // Gap A — system-generated questions, surfaced to admin review
   unknowns: Unknown[];
 }
 
@@ -123,6 +124,7 @@ export function buildVerdictViewModel(input: {
     // ADR-T2-002 — surface the structured Track 2 fields from compiled_findings_json (shared helpers).
     brand_relationship_finding: brandFindingFrom(r.compiled_findings_json) || null,
     boundary_notes: boundaryNotesFrom(r.compiled_findings_json),
+    questions_to_ask: r.questions_to_ask ?? [],
     unknowns: r.unknowns ?? [],
   }));
 

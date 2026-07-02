@@ -78,6 +78,20 @@ export interface QuestionToAsk {
   brand: string; // ADR-T2-002 — which submitted brand this question concerns ("" = vendor-level / unspecified)
 }
 
+// Analyst/review-team question added during admin review (cases.additional_questions). SEPARATE from
+// the immutable AI QuestionToAsk (never mixed at the data layer — merged only in the view-model with a
+// source tag). No status field (client-response feature is future + out of scope).
+export interface AdditionalQuestion {
+  id: string;                              // client-generated; targets edit/delete
+  question: string;
+  reason?: string;
+  brand?: string;
+  priority?: "high" | "medium" | "low";
+  required?: boolean;                      // blocking (must be answered) vs helpful
+  created_by: string;                      // Clerk user id of the analyst
+  created_at: string;                      // ISO
+}
+
 export interface TrackOutput {
   track_key: TrackKey;
   evidence_items: EvidenceItem[];
