@@ -49,7 +49,11 @@ function inputFor(capability_key: string, vendor: string, h: string | null): str
 
 export function buildTrack1Requests(ctx: TrackContext): { question: ResearchQuestion; input: string }[] {
   const vendor = ctx.vendor_name ?? "";
-  const h = host(ctx.vendor_website);
+  // OQ-2 retrofit — prefer the Track 0.5 resolved_domain (high-confidence identity) for the domain_age
+  // (whois) lookup; fall back to the raw website. Behaviorally identical when a website was provided
+  // (resolved_domain == its host), and strictly ADDITIVE when it was blank (Track 1 gains domain-age it
+  // never had). resolved_domain is null when identity didn't resolve → falls back to vendor_website.
+  const h = host(ctx.supplier_identity?.resolved_domain ?? ctx.vendor_website);
   const reqs: { question: ResearchQuestion; input: string }[] = [];
   for (const cap of TRACK1_CAPABILITIES) {
     if (!cap.available || !cap.question) continue;
