@@ -62,6 +62,8 @@ const MIN_AUTHORITY: Record<string, AuthorityScore> = {
 // is a hard_fail (irreversible veto) that the profile/authority gates cannot distinguish from the mild
 // negative_reputation (identical ALLOWED_PROFILES + MIN_AUTHORITY) — so a single low-authority source must
 // not be able to trigger it. Value = minimum DISTINCT valid cited sources required. Default (unlisted) = 1.
+// See docs/adr-t1-001-scam-corroboration-gate.md (collision-class audit + KNOWN RESIDUAL SEAM: 2+
+// reseller-scoped scams mis-attributed to the vendor still pass — the prompt is then the only guard).
 const CORROBORATION_REQUIRED: Record<string, number> = { scam_reports_corroborated: 2 };
 
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit

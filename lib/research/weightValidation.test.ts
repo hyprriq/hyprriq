@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateWeights, VALIDATION_VERSION } from "./weightValidation";
+import { deriveTrackSignal } from "./signals";
 import type { SourceProfile } from "@/lib/research/source_profile";
 
 const profiles = (m: Record<string, SourceProfile>) => m;
@@ -56,6 +57,14 @@ describe("validateWeights firewall", () => {
   it("the corroboration requirement is scoped to the fraud key — negative_reputation still validates from one source", () => {
     const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social" }), proposals: [prop("e1", "negative_reputation", ["s1"])] });
     expect(r[0].validated_weight_key).toBe("negative_reputation");
+  });
+  // POSITIVE PATH — the conservative corroboration gate must NOT over-reject a GENUINE fraud vendor:
+  // 2 corroborating sources → scam_reports_corroborated validates AND still drives a hard_fail verdict.
+  it("genuine fraud (2 corroborating sources) validates scam_reports_corroborated AND still hard-fails", () => {
+    const v = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social", s2: "news" }), proposals: [prop("e1", "scam_reports_corroborated", ["s1", "s2"])] });
+    expect(v[0].validated_weight_key).toBe("scam_reports_corroborated");
+    const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
+    expect(deriveTrackSignal("supplier_identity", found).signal).toBe("hard_fail");
   });
   it("UNKNOWN short-circuits to llm_returned_unknown (gate null)", () => {
     const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "UNKNOWN", ["s1"])] });
