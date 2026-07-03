@@ -22,6 +22,14 @@ describe("buildTrack1Prompt", () => {
     expect(system).toMatch(/operational|reputational/i);             // route bad-reviews → negative_reputation
     expect(system).toMatch(/third-party reseller|reseller.*not.*vendor|not.*this vendor/i); // reseller-scoped exclusion
   });
+  it("registration_fabricated requires AFFIRMATIVE fabrication evidence — not-found/inactive/other-entity → UNKNOWN", () => {
+    const { system } = buildTrack1Prompt({ vendor_name: "Acme", vendor_website: null }, []);
+    expect(system).toMatch(/registration_fabricated/);
+    expect(system).toMatch(/nonexistent|forged|contradicted/i);      // affirmative fabrication only
+    expect(system).toMatch(/not found|cannot verify/i);              // absence → UNKNOWN
+    expect(system).toMatch(/dissolved|inactive/i);                   // dissolved-but-real → not fabricated
+    expect(system).toMatch(/parent|dba|different.*entity/i);         // different/parent/DBA → not fabricated
+  });
 });
 
 describe("parseTrack1Output", () => {
