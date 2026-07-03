@@ -8,7 +8,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // / MIN_AUTHORITY / contradiction-rule changes — NOT when a weight_key is added to the registry.
 // 1.1.0 (2026-06-28): provenance gate now accepts when ANY cited source matches an allowed profile
 // (was: highest-authority cited source only); + Track 2 ALLOWED_PROFILES corrections (ADR-T2-001 area).
-export const VALIDATION_VERSION = "1.1.0";
+// 1.2.0 (2026-07-03): corroboration gate — scam_reports_corroborated (a fraud hard_fail whose ALLOWED_
+// PROFILES + MIN_AUTHORITY are identical to the mild negative_reputation) now requires ≥2 DISTINCT valid
+// cited sources. Prevents a single low-authority source (one Facebook post → MotoTec USA false hard_fail)
+// from triggering an irreversible veto. Strictly more conservative — cannot produce a false PASS.
+export const VALIDATION_VERSION = "1.2.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
@@ -54,6 +58,12 @@ const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   claims_authorization_unverified: "low", no_connection_found: "low", grey_market_signals: "low",
   counterfeit_channel: "medium", conflicting_authorization: "medium",
 };
+// Corroboration gate — keys whose meaning REQUIRES multiple independent sources. scam_reports_corroborated
+// is a hard_fail (irreversible veto) that the profile/authority gates cannot distinguish from the mild
+// negative_reputation (identical ALLOWED_PROFILES + MIN_AUTHORITY) — so a single low-authority source must
+// not be able to trigger it. Value = minimum DISTINCT valid cited sources required. Default (unlisted) = 1.
+const CORROBORATION_REQUIRED: Record<string, number> = { scam_reports_corroborated: 2 };
+
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit
 // entry) because authority is already implied by provenance. 'inference' has no external source → skip.
 const VARIABLE_TRUST_PROFILES: SourceProfile[] = ["news", "forum", "social", "marketplace", "user_upload"];
@@ -88,6 +98,9 @@ export function validateWeights(input: FirewallInput): WeightValidation[] {
     const allowed = ALLOWED_PROFILES[key] ?? [];
     const matching = cited.filter((id) => allowed.includes(sourceProfileById[id]));
     if (matching.length === 0) { out.push(rec(p.evidence_id, key, null, "provenance", "provenance")); continue; }
+    // Corroboration gate — a "_corroborated" fraud hard_fail needs ≥N DISTINCT valid sources (not one,
+    // and not the same id repeated). Runs after provenance (we know which cited sources are valid).
+    if (new Set(matching).size < (CORROBORATION_REQUIRED[key] ?? 1)) { out.push(rec(p.evidence_id, key, null, "corroboration", "corroboration")); continue; }
     const sourceId = matching.reduce((best, id) =>
       AUTH_RANK[authorityFor(sourceProfileById[id])] > AUTH_RANK[authorityFor(sourceProfileById[best])] ? id : best);
     const profile = sourceProfileById[sourceId];

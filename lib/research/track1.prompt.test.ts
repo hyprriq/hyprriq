@@ -15,6 +15,13 @@ describe("buildTrack1Prompt", () => {
     expect(SUPPLIER_IDENTITY_KEYS.every((k) => system.includes(k))).toBe(true);
     expect(user).toContain("src_0");
   });
+  it("keeps fraud (scam_reports_corroborated) distinct from operational negative_reputation + reseller-scoped scams", () => {
+    const { system } = buildTrack1Prompt({ vendor_name: "MotoTec", vendor_website: null }, []);
+    expect(system).toMatch(/scam_reports_corroborated/);
+    expect(system).toMatch(/multiple independent/i);                 // corroboration requirement
+    expect(system).toMatch(/operational|reputational/i);             // route bad-reviews → negative_reputation
+    expect(system).toMatch(/third-party reseller|reseller.*not.*vendor|not.*this vendor/i); // reseller-scoped exclusion
+  });
 });
 
 describe("parseTrack1Output", () => {

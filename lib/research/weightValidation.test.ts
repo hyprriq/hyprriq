@@ -36,6 +36,27 @@ describe("validateWeights firewall", () => {
     const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "forum" }), proposals: [prop("e1", "negative_reputation", ["s1"])] });
     expect(r[0].validated_weight_key).toBe("negative_reputation");
   });
+
+  // ── Corroboration gate — the fraud hard-fail key scam_reports_corroborated must NOT be triggerable by
+  // a single low-authority source (MotoTec USA false hard_fail: one Facebook post → hard_fail veto). ──
+  it("scam_reports_corroborated with a SINGLE cited source is REJECTED (corroboration gate)", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social" }), proposals: [prop("e1", "scam_reports_corroborated", ["s1"])] });
+    expect(r[0].validated_weight_key).toBeNull();
+    expect(r[0].gate).toBe("corroboration");
+    expect(r[0].rejection_reason).toBe("corroboration");
+  });
+  it("the same source cited twice does NOT satisfy corroboration (needs 2 DISTINCT sources)", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social" }), proposals: [prop("e1", "scam_reports_corroborated", ["s1", "s1"])] });
+    expect(r[0].gate).toBe("corroboration");
+  });
+  it("scam_reports_corroborated with TWO distinct valid sources validates (genuinely corroborated)", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social", s2: "forum" }), proposals: [prop("e1", "scam_reports_corroborated", ["s1", "s2"])] });
+    expect(r[0].validated_weight_key).toBe("scam_reports_corroborated");
+  });
+  it("the corroboration requirement is scoped to the fraud key — negative_reputation still validates from one source", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social" }), proposals: [prop("e1", "negative_reputation", ["s1"])] });
+    expect(r[0].validated_weight_key).toBe("negative_reputation");
+  });
   it("UNKNOWN short-circuits to llm_returned_unknown (gate null)", () => {
     const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "UNKNOWN", ["s1"])] });
     expect(r[0].rejection_reason).toBe("llm_returned_unknown");

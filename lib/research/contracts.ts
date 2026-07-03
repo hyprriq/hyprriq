@@ -135,9 +135,9 @@ export interface TrackOutput {
 // EvidenceItem.weight_key stays = the VALIDATED key only; proposed/rejected live here.
 export type RejectionReason =
   | "registry" | "track" | "no_valid_citation" | "provenance" | "authority"
-  | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown";
+  | "corroboration" | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown";
 export type ValidationGate =
-  | "grounding" | "registry" | "track" | "provenance" | "authority" | "contradiction";
+  | "grounding" | "registry" | "track" | "provenance" | "authority" | "corroboration" | "contradiction";
 export interface WeightValidation {
   evidence_id: string;
   proposed_weight_key: string;
