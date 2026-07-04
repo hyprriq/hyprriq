@@ -164,7 +164,7 @@ export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutpu
   // Memoize (enhancement #2): identical evidence under the same IOS version → same synthesis.
   const memoized = await getSynthesisByEvidenceHash(enriched.evidence_hash, ios.ios_version);
   const synthesis = memoized ?? (await runSynthesis(enriched));
-  const synthErr = await upsertCaseSynthesis(ctx.case_id, synthesis, ios);
+  const synthErr = await upsertCaseSynthesis(ctx.case_id, synthesis, ios, ctx.attempt_number ?? 1);
   if (synthErr.error) throw new Error(`synthesis persist failed: ${synthErr.error}`);
   return { synthesis };
 }

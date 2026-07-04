@@ -4,14 +4,18 @@ import type { SynthesisOutput, IosVersion } from "@/lib/research/contracts";
 // case_synthesis data layer (admin/service-role). Modules 1–8 are role-gated IP; only the
 // client-facing Module 9 (decision_snapshot) + Module 8 (vendor_questions) are exposed to
 // clients, via a column-scoped read (never the reasoning modules).
+// H1 — one synthesis row per (case, attempt): a re-investigation writes its own row and can never
+// overwrite the reasoning behind a prior (possibly delivered) attempt.
 export async function upsertCaseSynthesis(
   caseId: string,
   output: SynthesisOutput,
   ios: IosVersion,
+  attemptNumber: number,
 ): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin.from("case_synthesis").upsert(
     {
       case_id: caseId,
+      attempt_number: attemptNumber,
       normalized_evidence: output.module_1_normalized_evidence,
       claim_attributions: output.module_2_claim_attributions,
       assertions: output.module_3_assertions,
@@ -31,7 +35,7 @@ export async function upsertCaseSynthesis(
       model_version: ios.model_version,
       ios_version: ios.ios_version,
     },
-    { onConflict: "case_id" },
+    { onConflict: "case_id,attempt_number" },
   );
   return { error: error?.message ?? null };
 }
@@ -85,6 +89,8 @@ export async function getCaseIntelligence(
     )
     .eq("case_id", caseId)
     .is("deleted_at", null)
+    .order("attempt_number", { ascending: false }) // H1 — latest investigation (case_id alone is no longer unique)
+    .limit(1)
     .maybeSingle();
   if (!data) return null;
   const r = data as SynthRow & {
@@ -113,13 +119,20 @@ export async function getCaseIntelligence(
 }
 
 // Client-facing: ONLY Module 9 + vendor questions (reasoning modules never exposed).
+// H1 — client reads are pinned to the DELIVERED attempt (immutability); latest attempt pre-delivery.
 export type ClientSnapshot = { decision_snapshot: unknown; vendor_questions: unknown };
 export async function getClientDecisionSnapshot(caseId: string): Promise<ClientSnapshot | null> {
-  const { data } = await supabaseAdmin
+  const { data: c } = await supabaseAdmin
+    .from("cases").select("delivered_attempt").eq("id", caseId).maybeSingle();
+  const deliveredAttempt = (c as { delivered_attempt?: number | null } | null)?.delivered_attempt ?? null;
+  let q = supabaseAdmin
     .from("case_synthesis")
     .select("decision_snapshot, vendor_questions")
     .eq("case_id", caseId)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .is("deleted_at", null);
+  q = deliveredAttempt != null
+    ? q.eq("attempt_number", deliveredAttempt)
+    : q.order("attempt_number", { ascending: false }).limit(1);
+  const { data } = await q.maybeSingle();
   return (data as ClientSnapshot) ?? null;
 }
