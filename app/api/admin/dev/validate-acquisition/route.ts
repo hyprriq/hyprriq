@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   const orchestrator = new Orchestrator([whoisPlugin, serperPlugin, nativeWebSearchPlugin]);
   const { pack, metrics } = await orchestrator.gather({ case_id: caseId, track_key: "supplier_identity", requests });
 
-  const packErr = await persistEvidencePack(pack);
+  const packErr = await persistEvidencePack(pack, 1); // dev validation seeds are always attempt 1
   const metricsErr = await persistAcquisitionMetrics(caseId, "supplier_identity", metrics);
   await writeIntelligence({
     case_id: caseId, vendor_name: vendorName, vendor_website: vendorWebsite,

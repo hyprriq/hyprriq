@@ -2,8 +2,8 @@ import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/cont
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan } from "@/lib/research/pipeline.registry";
 import {
-  stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis,
-  stageVerdict, stageMemoryWrite, stageFinalize,
+  stageResolveAttempt, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack,
+  stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize,
 } from "@/lib/research/pipeline.steps";
 
 // The Intelligence-OS pipeline — orchestrates the STAGES (lib/research/pipeline.steps) sequentially.
@@ -15,9 +15,13 @@ import {
 //   Layer 1 Evidence → Layer 2 Normalization → (Layer 2.5 Evidence Graph, reserved seam)
 //   → Layer 3 Intelligence (the ONLY adaptive layer) → Layer 4 Judgment (deterministic)
 //   → Layer 5 Communication (explains, never changes the verdict)
-export async function runPipeline(ctx: TrackContext): Promise<{ error: string | null }> {
-  const plan = ctx.plan_type;
+export async function runPipeline(base: TrackContext): Promise<{ error: string | null }> {
+  const plan = base.plan_type;
   const included = new Set(tracksForPlan(plan).map((t) => t.track_number)); // finding tracks for this plan
+
+  // H1 — resolve this execution's investigation attempt ONCE, then thread it through every stage.
+  const attempt = await stageResolveAttempt(base.case_id);
+  const ctx: TrackContext = { ...base, attempt_number: attempt };
 
   // ── Layer 1 — Evidence Collection ──
   await stageTrack0(ctx);

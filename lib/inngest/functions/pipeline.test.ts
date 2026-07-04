@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the stages so no real work runs — we are testing ORCHESTRATION (ordering + fan-out) only.
-const { stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize } = vi.hoisted(() => ({
+const { stageResolveAttempt, stageSetRunning, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize } = vi.hoisted(() => ({
+  stageResolveAttempt: vi.fn().mockResolvedValue(1), // H1 — investigation attempt resolved first
+  stageSetRunning: vi.fn().mockResolvedValue(undefined),
   stageTrack0: vi.fn().mockResolvedValue(undefined),
   stageResolveIdentity: vi.fn().mockResolvedValue({ resolved_domain: "acme.com", identity_confidence: "high", identity_unconfirmed: false, resolution_method: "resolved_dominant" }),
   stagePersistIdentity: vi.fn().mockResolvedValue(undefined),
@@ -11,7 +13,7 @@ const { stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTra
   stageMemoryWrite: vi.fn().mockResolvedValue(undefined),
   stageFinalize: vi.fn().mockResolvedValue({ error: null }),
 }));
-vi.mock("@/lib/research/pipeline.steps", () => ({ stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize }));
+vi.mock("@/lib/research/pipeline.steps", () => ({ stageResolveAttempt, stageSetRunning, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize }));
 vi.mock("@/lib/supabase/admin", () => ({ supabaseAdmin: { from: () => ({ update: () => ({ eq: () => Promise.resolve({ error: null }) }) }) } }));
 
 import { pipelineHandler } from "./pipeline";
@@ -23,12 +25,14 @@ const makeStep = () => {
 };
 const ctx: TrackContext = { case_id: "c1", vendor_name: "Acme", vendor_website: null, brands_submitted: [], marketplace: "amazon_us", plan_type: "growth_279" };
 
-beforeEach(() => { stageFindingTrack.mockClear(); stageResolveIdentity.mockClear(); stagePersistIdentity.mockClear(); stageFinalize.mockClear(); });
+beforeEach(() => { stageFindingTrack.mockClear(); stageResolveIdentity.mockClear(); stagePersistIdentity.mockClear(); stageFinalize.mockClear(); stageMemoryWrite.mockClear(); stageResolveAttempt.mockClear().mockResolvedValue(1); stageSetRunning.mockClear(); });
 
 describe("pipelineHandler orchestration", () => {
   it("runs set-running → track-0 → resolve-identity → persist-identity → tracks 1–4 → track-5 → synthesis → verdict → memory-write → finalize", async () => {
     const step = makeStep();
     await pipelineHandler({ event: { data: ctx }, step });
+    // H1 — the investigation attempt is resolved before anything writes
+    expect(step.ids[0]).toBe("resolve-attempt");
     expect(step.ids).toContain("set-running");
     expect(step.ids).toContain("track-0");
     // Track 0.5 resolves between track-0 and the fan-out
@@ -50,6 +54,16 @@ describe("pipelineHandler orchestration", () => {
     const finalizeArgs = stageFinalize.mock.calls[0][1] as { identityUnconfirmed?: boolean; supplierIdentity?: { resolved_domain: string } };
     expect(finalizeArgs.identityUnconfirmed).toBe(false);
     expect(finalizeArgs.supplierIdentity?.resolved_domain).toBe("acme.com");
+  });
+
+  it("H1: threads the resolved attempt_number onto the ctx every stage receives", async () => {
+    stageResolveAttempt.mockResolvedValueOnce(2);
+    const step = makeStep();
+    await pipelineHandler({ event: { data: ctx }, step });
+    const trackCtx = stageFindingTrack.mock.calls[0][0] as TrackContext;
+    expect(trackCtx.attempt_number).toBe(2);
+    const memoryCtx = stageMemoryWrite.mock.calls[0][0] as TrackContext;
+    expect(memoryCtx.attempt_number).toBe(2);
   });
 
   it("a single-plan case skips tracks 2 and 4 (registry plan-gating)", async () => {

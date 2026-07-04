@@ -1,11 +1,10 @@
 import { inngest } from "@/lib/inngest/client";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey } from "@/lib/constants/tracks";
-import { tracksForPlan, executionGroupsForPlan, PIPELINE_VERSION } from "@/lib/research/pipeline.registry";
+import { tracksForPlan, executionGroupsForPlan } from "@/lib/research/pipeline.registry";
 import {
-  stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack, stageSynthesis,
-  stageVerdict, stageMemoryWrite, stageFinalize, type FindingTrackResult,
+  stageResolveAttempt, stageSetRunning, stageTrack0, stageResolveIdentity, stagePersistIdentity,
+  stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize, type FindingTrackResult,
 } from "@/lib/research/pipeline.steps";
 
 // Minimal structural type for an Inngest step — keeps the handler unit-testable with a fake step.
@@ -22,12 +21,15 @@ interface InngestStep {
 // identical to the synchronous runPipeline (one source: pipeline.steps). Steps are idempotent
 // (upserts keyed by case_id/track), so a retry/replay never duplicates evidence or memory.
 export async function pipelineHandler({ event, step }: { event: { data: TrackContext }; step: InngestStep }) {
-  const ctx = event.data;
-  const included = new Set(tracksForPlan(ctx.plan_type).map((t) => t.track_number));
+  const base = event.data;
+  const included = new Set(tracksForPlan(base.plan_type).map((t) => t.track_number));
 
-  await step.run("set-running", () =>
-    supabaseAdmin.from("cases").update({ status: "research_running", pipeline_version: PIPELINE_VERSION }).eq("id", ctx.case_id),
-  );
+  // H1 — resolve this execution's investigation attempt ONCE (durable step; memoized across
+  // retries), then thread it through every stage so all writes land under this attempt.
+  const attempt = await step.run("resolve-attempt", () => stageResolveAttempt(base.case_id));
+  const ctx: TrackContext = { ...base, attempt_number: attempt };
+
+  await step.run("set-running", () => stageSetRunning(ctx.case_id));
   await step.run("track-0", () => stageTrack0(ctx));
 
   // Track 0.5 — resolve the supplier identity once (durable step), persist it early for the
