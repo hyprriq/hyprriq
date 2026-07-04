@@ -44,14 +44,20 @@ export type TrackResultRow = {
 const COLS =
   "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report, questions_to_ask";
 
-export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
+// H1 — attempt-aware read: `attempt` pins an investigation; default = the LATEST attempt
+// (admin review + report-ready + banned-language all evaluate the newest investigation).
+// Legacy rows with NULL attempt_number count as attempt 1.
+export async function getCaseTrackResults(caseId: string, attempt?: number): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin
     .from("case_track_results")
     .select(COLS)
     .eq("case_id", caseId)
     .is("deleted_at", null)
     .order("track_number", { ascending: true });
-  return (data as TrackResultRow[]) ?? [];
+  const rows = (data as TrackResultRow[]) ?? [];
+  if (rows.length === 0) return rows;
+  const chosen = attempt ?? Math.max(...rows.map((r) => r.attempt_number ?? 1));
+  return rows.filter((r) => (r.attempt_number ?? 1) === chosen);
 }
 
 // H1 — the next investigation attempt for a case: max across track rows AND evidence packs

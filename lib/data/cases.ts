@@ -119,17 +119,22 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   // Confirm ownership first (service-role bypasses RLS).
   const { data: owned } = await supa
     .from("cases")
-    .select("id")
+    .select("id, delivered_attempt")
     .eq("id", caseId)
     .eq("client_id", userId)
     .maybeSingle();
   if (!owned) return [];
   const { data } = await supa
     .from("case_track_results")
-    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, ai_output_json, manual_notes, questions_to_ask")
+    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, ai_output_json, manual_notes, questions_to_ask, attempt_number")
     .eq("case_id", caseId)
     .gte("track_number", 1)
     .is("deleted_at", null)
     .order("track_number", { ascending: true });
-  return (data as Finding[]) ?? [];
+  const rows = (data as (Finding & { attempt_number: number | null })[]) ?? [];
+  if (rows.length === 0) return rows;
+  // H1 — the client always sees the DELIVERED attempt once delivered; latest attempt before that.
+  const deliveredAttempt = (owned as { delivered_attempt?: number | null }).delivered_attempt ?? null;
+  const chosen = deliveredAttempt ?? Math.max(...rows.map((r) => r.attempt_number ?? 1));
+  return rows.filter((r) => (r.attempt_number ?? 1) === chosen);
 }

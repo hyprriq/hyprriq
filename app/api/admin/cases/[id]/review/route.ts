@@ -81,8 +81,12 @@ export async function POST(
     return NextResponse.json({ error: "banned_language", violations }, { status: 422 });
   }
 
+  // H1 — pin the attempt that passed the banned-language gate; publishing resolves any pending
+  // re-investigation flag (the founder has now explicitly adopted the latest investigation).
+  const attempt = rows.length ? Math.max(...rows.map((r) => r.attempt_number ?? 1)) : 1;
   const update: Record<string, unknown> = {
-    status: "delivered", delivered_at: now, internal_notes: JSON.stringify(decision),
+    status: "delivered", delivered_at: now, delivered_attempt: attempt,
+    reinvestigation_pending: false, internal_notes: JSON.stringify(decision),
   };
   if (action === "override") {
     update.verdict = body.override_verdict;
