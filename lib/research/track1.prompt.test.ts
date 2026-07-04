@@ -22,6 +22,15 @@ describe("buildTrack1Prompt", () => {
     expect(system).toMatch(/operational|reputational/i);             // route bad-reviews → negative_reputation
     expect(system).toMatch(/third-party reseller|reseller.*not.*vendor|not.*this vendor/i); // reseller-scoped exclusion
   });
+  it("website_fraudulent is VENDOR-legitimacy only — not brand affiliation / name-vs-website mismatch", () => {
+    const { system } = buildTrack1Prompt({ vendor_name: "Bosch", vendor_website: "globaldist.com" }, []);
+    expect(system).toMatch(/deception about the vendor/i);                       // vendor-scope, not brand
+    expect(system).toMatch(/impersonates a different real company/i);           // impersonation = posing as another co
+    expect(system).toMatch(/unconfirmed brand affiliation is never vendor fraud/i); // the principle
+    expect(system).toMatch(/data-entry|identity[- ]resolution/i);              // name≠website → identity discrepancy
+    expect(system).toMatch(/vendor identity holds/i);                          // real operating site → pass on identity
+    expect(system).toMatch(/Track 2\/Track 3|Track 2\/3/);                     // affiliation is Track 2/3's lane
+  });
   it("registration_fabricated requires AFFIRMATIVE fabrication evidence — not-found/inactive/other-entity → UNKNOWN", () => {
     const { system } = buildTrack1Prompt({ vendor_name: "Acme", vendor_website: null }, []);
     expect(system).toMatch(/registration_fabricated/);
