@@ -30,8 +30,9 @@ describe("runTrack1", () => {
     expect(out.evidence_items[0].weight_key).toBe("government_registration");
     expect(out.evidence_items[0].provenance?.source_profile).toBe("government_record");
     expect(out.weight_validation?.[0].validated_weight_key).toBe("government_registration");
-    expect((out.track_validation_report as any)?.artifact_type).toBe("track_validation_report");
-    expect((out.track_validation_report as any)?.derived_signal).toBeDefined();
+    const report = out.track_validation_report as { artifact_type?: string; derived_signal?: string } | undefined;
+    expect(report?.artifact_type).toBe("track_validation_report");
+    expect(report?.derived_signal).toBeDefined();
   });
 
   it("drops a forum-sourced government key (provenance gate): no evidence_item, audit records rejection", async () => {
