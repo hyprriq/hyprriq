@@ -71,6 +71,7 @@ export interface TrackContext {
   vendor_name: string | null;
   vendor_website: string | null;
   supplier_identity?: SupplierIdentity; // Phase 5.1c.5 — resolved identity (Track 0.5); tracks read resolved_domain
+  attempt_number?: number; // H1 — this execution's investigation attempt (1 = first run; re-runs increment). Orchestration plumbing, not a research input.
   brands_submitted: string[];
   marketplace: string;
   plan_type: PlanType;
