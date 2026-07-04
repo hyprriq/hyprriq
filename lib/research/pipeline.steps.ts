@@ -15,7 +15,7 @@ import { runSynthesis } from "@/lib/research/synthesisEngine";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
-import { upsertTrackResult } from "@/lib/data/track-results";
+import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
 import { upsertCaseSynthesis, getSynthesisByEvidenceHash } from "@/lib/data/synthesis";
 import { writeIntelligence } from "@/lib/data/intelligence";
 import { PIPELINE_VERSION } from "@/lib/research/pipeline.registry";
@@ -40,11 +40,34 @@ export interface FindingTrackResult {
   acquisition_failed: boolean;
 }
 
+// H1 — resolve this execution's investigation attempt ONCE at pipeline start (durable step in
+// Inngest). A re-investigation (attempt > 1) is audit-logged; rows/packs/synthesis all write
+// under this attempt so no prior attempt is ever overwritten.
+export async function stageResolveAttempt(caseId: string): Promise<number> {
+  const attempt = await getNextAttemptNumber(caseId);
+  if (attempt > 1) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "cases", record_id: caseId, action: "UPDATE",
+      actor_id: "system", actor_type: "system", new_value: { reinvestigation_attempt: attempt },
+    });
+  }
+  return attempt;
+}
+
+// H1 — status flip guarded: a delivered/complete case keeps its client-visible status while a
+// re-investigation runs; only non-terminal cases show research_running.
+export async function stageSetRunning(caseId: string): Promise<void> {
+  await supabaseAdmin.from("cases")
+    .update({ status: "research_running", pipeline_version: PIPELINE_VERSION })
+    .eq("id", caseId)
+    .not("status", "in", "(delivered,complete)");
+}
+
 // Track 0 — intake (deterministic). Not a finding; auto-approved, signal n_a.
 export async function stageTrack0(ctx: TrackContext): Promise<void> {
   const t0 = runTrack0({ vendor_name: ctx.vendor_name, brands_submitted: ctx.brands_submitted, has_document: false });
   await upsertTrackResult({
-    case_id: ctx.case_id, track: "track_0", track_key: "intake_scope_guard", track_number: 0,
+    case_id: ctx.case_id, track: "track_0", track_key: "intake_scope_guard", track_number: 0, attempt_number: ctx.attempt_number ?? 1,
     source_mode: "ai_generated", compiled_findings_json: t0 as unknown as Record<string, unknown>,
     track_verdict_signal: "n_a", founder_review_status: "approved", manual_review_required: false,
   });
@@ -61,7 +84,9 @@ export async function stageResolveIdentity(ctx: TrackContext): Promise<SupplierI
 // human sees candidates/confidence/notes while research is still running. Idempotent (a plain column
 // update keyed by case_id); stageFinalize re-persists it as part of the final case record.
 export async function stagePersistIdentity(caseId: string, identity: SupplierIdentity): Promise<void> {
-  await supabaseAdmin.from("cases").update({ supplier_identity: identity }).eq("id", caseId);
+  // H1 — a delivered/complete case's identity record is frozen with the rest of the delivered record.
+  await supabaseAdmin.from("cases").update({ supplier_identity: identity }).eq("id", caseId)
+    .not("status", "in", "(delivered,complete)");
 }
 
 // One finding track (n ∈ 1..5): run it, apply the acquisition-failure guard, derive the CODE signal,
@@ -75,7 +100,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   // must NOT write institutional memory, and must escalate to manual review. ──
   if (out.acquisition_failed) {
     await upsertTrackResult({
-      case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n,
+      case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
       source_mode: "ai_generated",
       evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
       track_verdict_signal: "n_a", finding_certainty: "unknown",
@@ -102,7 +127,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   const cRejected = cTotal - cAccepted - cUnknown;
 
   await upsertTrackResult({
-    case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n,
+    case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
     source_mode: "ai_generated",
     evidence_items: out.evidence_items, reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
     evidence_weights_applied: sig.applied, suggested_signal: out.suggested_signal ?? null,
@@ -152,8 +177,10 @@ export function stageVerdict(signals: Partial<Record<TrackKey, TrackSignal>>, sy
 }
 
 // Institutional memory write-side (ADR-G006). SKIP when identity acquisition failed (no corpus pollution).
+// H1 interim guard (full event ledger lands in H6): only a case's FIRST investigation feeds the
+// corpus — re-runs must never inflate case_count or overwrite history.
 export async function stageMemoryWrite(ctx: TrackContext, identitySignal: TrackSignal | null, identityAcquisitionFailed: boolean): Promise<void> {
-  if (!identityAcquisitionFailed) await writeIntelligence(ctx, identitySignal);
+  if (!identityAcquisitionFailed && (ctx.attempt_number ?? 1) === 1) await writeIntelligence(ctx, identitySignal);
 }
 
 // Finalize: persist case state + per-track statuses + the orchestration version.
@@ -161,6 +188,15 @@ export async function stageFinalize(
   ctx: TrackContext,
   args: { included: Set<number>; identityAcquisitionFailed: boolean; identityUnconfirmed?: boolean; supplierIdentity?: SupplierIdentity; verdict: string; confidence_0_15: number },
 ): Promise<{ error: string | null }> {
+  // H1 — Case Investigation Ledger: a delivered case is IMMUTABLE. A re-investigation persists its
+  // rows under the new attempt (already done upstream) and only raises a flag for admin review;
+  // verdict/status/delivered_at/delivered_attempt never change outside an explicit admin publish.
+  const { data: current } = await supabaseAdmin.from("cases").select("status").eq("id", ctx.case_id).maybeSingle();
+  if (current?.status === "delivered" || current?.status === "complete") {
+    const { error } = await supabaseAdmin.from("cases").update({ reinvestigation_pending: true }).eq("id", ctx.case_id);
+    return { error: error?.message ?? null };
+  }
+
   // Phase 5.1c.5 — an unconfirmed supplier identity (genuine multi-candidate ambiguity / no resolution)
   // caps the outcome: escalate to human review rather than deliver a confident verdict on an unknown
   // supplier. Mirrors the acquisition-failure guard (same status); computeVerdict stays untouched (OQ-4).
