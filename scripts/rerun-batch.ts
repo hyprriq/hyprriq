@@ -1,17 +1,17 @@
 /**
- * Backup-first re-run harness — re-scores the 8 stale cases under the CURRENT fixed logic
- * (VALIDATION_VERSION 1.2.0: scam_reports_corroborated corroboration gate + Track 1 fraud-vs-reputation
- * and registration_fabricated prompt rules).
+ * Backup-first re-run harness (founder-run; Claude does NOT run it).
  *
- * The FOUNDER runs this against the DEPLOYED FIXED environment (prod keys in .env). Claude does NOT run it.
+ * H1 (Case Investigation Ledger): a re-run now writes a NEW attempt_number — it never overwrites
+ * prior attempts, and a delivered case's verdict/status stay frozen (only reinvestigation_pending
+ * is raised). The local JSON backups are kept as belt-and-braces, no longer the only undo.
+ * runPipeline still re-collects from LIVE Serper/WHOIS/Anthropic (~$0.10-0.25/case) — for a
+ * zero-API re-score of STORED evidence use scripts/rejudge-case.ts instead.
  *
- * SAFETY (the pipeline OVERWRITES case_track_results attempt_number:1 in place — the backups are the only undo):
- *   1. Asserts VALIDATION_VERSION === "1.2.0" AND all required env vars BEFORE anything → else STOP.
- *   2. Per case: writes a local JSON backup (cases row + ALL case_track_results rows, full evidence +
- *      weight_validation) and VERIFIES it on disk BEFORE that case is re-run. No backup → no re-run.
- *   3. Requires --run to actually fire runPipeline. Without --run it is a DRY pass: backs up + prints the
- *      plan, makes NO changes to research data. runPipeline re-collects from LIVE Serper/WHOIS/Anthropic
- *      (~$1-2 total) and re-runs the LLM — it does not "re-score" stored evidence.
+ * SAFETY:
+ *   1. Asserts VALIDATION_VERSION AND all required env vars BEFORE anything → else STOP.
+ *   2. Per case: writes a local JSON backup (cases row + ALL case_track_results rows) and VERIFIES
+ *      it on disk BEFORE that case is re-run. No backup → no re-run.
+ *   3. Requires --run to actually fire runPipeline. Without --run it is a DRY pass.
  *
  * Run:
  *   npx tsx --env-file=.env scripts/rerun-batch.ts          # DRY  — backups + plan only, no re-run
@@ -101,10 +101,13 @@ async function main() {
       if (pipe.error) console.error(`   ! runPipeline error: ${pipe.error}`);
 
       // 3) READ BACK new state + the requested checks
+      // H1 — compare like-with-like: only the NEWEST attempt's rows (re-runs append, never overwrite).
       const { data: newRows } = await supabaseAdmin
-        .from("case_track_results").select("track_number, track_verdict_signal, evidence_items, track_validation_report").eq("case_id", id).is("deleted_at", null).order("track_number");
+        .from("case_track_results").select("track_number, attempt_number, track_verdict_signal, evidence_items, track_validation_report").eq("case_id", id).is("deleted_at", null).order("track_number");
       const { data: newCase } = await supabaseAdmin.from("cases").select("verdict, status").eq("id", id).maybeSingle();
-      const rows = (newRows ?? []) as Row[];
+      const allRows = (newRows ?? []) as Row[];
+      const latestAttempt = allRows.length ? Math.max(...allRows.map((r) => (r.attempt_number as number | null) ?? 1)) : 1;
+      const rows = allRows.filter((r) => ((r.attempt_number as number | null) ?? 1) === latestAttempt);
       const t1 = rows.find((r) => r.track_number === 1);
       const rejected = ((t1?.track_validation_report as Row | null)?.rejected as Row[] | undefined) ?? [];
       const scamRejectedByCorroboration = rejected.some((r) => r.proposed_weight_key === "scam_reports_corroborated" && r.gate === "corroboration");
