@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
-import type { TrackSignal, Verdict, VerdictResult, AdditionalQuestion } from "@/lib/research/contracts";
+import type { TrackSignal, Verdict, VerdictResult, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
@@ -81,11 +81,13 @@ export function CaseReview({
   vm,
   caseStatus,
   additionalQuestions = [],
+  supplierIdentity = null,
 }: {
   caseId: string;
   vm: VerdictViewModel;
   caseStatus: string;
   additionalQuestions?: AdditionalQuestion[];
+  supplierIdentity?: SupplierIdentity | null;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"idle" | "override" | "investigate">("idle");
@@ -180,6 +182,22 @@ export function CaseReview({
 
   return (
     <div className="space-y-5">
+      {/* Spec-B — Identity discrepancy (name/website mismatch): informational only, NEVER a verdict/fraud penalty. */}
+      {supplierIdentity?.identity_discrepancy && (
+        <div className="rounded-card border border-conditional-ink/30 bg-conditional-bg p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] font-semibold text-conditional-ink">Identity discrepancy</span>
+            <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">{supplierIdentity.identity_discrepancy.kind}</span>
+            <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">resolution {supplierIdentity.resolution_confidence ?? supplierIdentity.identity_confidence} · input {supplierIdentity.input_consistency ?? "—"}</span>
+          </div>
+          <div className="mt-1.5 text-[13px] text-ink-2">
+            Entered <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.entered_name}”</span> →
+            resolved <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.resolved_name}”</span>
+            {supplierIdentity.identity_discrepancy.resolved_domain ? <span className="text-muted"> ({supplierIdentity.identity_discrepancy.resolved_domain})</span> : null}
+          </div>
+          <div className="mt-1 text-[12px] text-muted">Client copy: {supplierIdentity.identity_discrepancy.client_note}</div>
+        </div>
+      )}
       {/* 1 — Executive Intelligence Summary (Module 9) */}
       <Section eyebrow="Module 9 · Decision Snapshot" title="Executive Intelligence Summary">
         <p className="text-[16px] font-semibold leading-snug text-ink">{es.headline || "—"}</p>

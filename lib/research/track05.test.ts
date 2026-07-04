@@ -98,4 +98,51 @@ describe("resolveSupplierIdentity", () => {
     expect(r.identity_confidence).not.toBe("high");
     expect(r.identity_unconfirmed).toBe(true);
   });
+
+  // ── Spec-B — website-anchored resolution on name/website mismatch ──
+  const domSrc = (domain: string, profile: string) => src(`https://${domain}/about`, profile);
+
+  it("globaldist (name=Bosch, website=globaldist.com, brand=Bosch): resolves from WEBSITE, name_is_brand, identity HOLDS", async () => {
+    // website research → dominant real entity on globaldist.com; nameIsBrand short-circuits name research.
+    gather.mockResolvedValueOnce(pack([src("https://opencorporates.com/globaldist", "registry"), domSrc("globaldist.com", "official_company")]));
+    runModel.mockResolvedValueOnce(model({ candidates: [
+      { domain: "globaldist.com", entity_name: "Global Distribution LLC", registration_hint: "LLC", address_hint: "TX", supporting_source_ids: ["src_0", "src_1"] },
+    ] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Bosch", vendor_website: "globaldist.com", brands_submitted: ["Bosch"] }));
+    expect(r.resolution_method).toBe("resolved_from_website");
+    expect(r.resolved_name).toBe("Global Distribution LLC");
+    expect(r.resolved_domain).toBe("globaldist.com");
+    expect(r.resolution_confidence).toBe("high");
+    expect(r.input_consistency).toBe("low");
+    expect(r.identity_unconfirmed).toBe(false);          // NO verdict penalty
+    expect(r.identity_discrepancy?.kind).toBe("name_is_brand");
+    expect(r.identity_discrepancy?.entered_name).toBe("Bosch");
+    expect(r.identity_discrepancy?.client_note).toContain("Global Distribution LLC");
+    expect(gather).toHaveBeenCalledTimes(1);             // website only — name research skipped (brand)
+  });
+
+  it("multiple_entities (name and website resolve to DIFFERENT legit entities) → escalate, no auto-pick", async () => {
+    // 1st gather/model = website (ABC Trading Canada); 2nd = name (ABC Trading) — both dominant, different.
+    gather
+      .mockResolvedValueOnce(pack([src("https://opencorporates.com/abc-ca", "registry"), domSrc("abctradingcanada.com", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://opencorporates.com/abc", "registry"), domSrc("abctrading.com", "official_company")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "abctradingcanada.com", entity_name: "ABC Trading Canada", supporting_source_ids: ["src_0", "src_1"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "abctrading.com", entity_name: "ABC Trading", supporting_source_ids: ["src_0", "src_1"] }] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "ABC Trading", vendor_website: "abctradingcanada.com", brands_submitted: [] }));
+    expect(r.identity_discrepancy?.kind).toBe("multiple_entities");
+    expect(r.identity_unconfirmed).toBe(true);           // escalates → manual_override_required, NOT fraud
+    expect(r.resolved_domain).toBeNull();
+    expect(gather).toHaveBeenCalledTimes(2);
+  });
+
+  it("dead website (does not resolve to a real entity) → escalate website_dead, NEVER a fraud veto", async () => {
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")])); // no on-domain / registry corroboration
+    runModel.mockResolvedValueOnce(model({ candidates: [] }));                    // model finds no entity for the domain
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "parked-nothing.com", brands_submitted: [] }));
+    expect(r.identity_discrepancy?.kind).toBe("website_dead");
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolved_domain).toBeNull();
+    expect(gather).toHaveBeenCalledTimes(1);             // name research skipped (website unresolved)
+  });
 });

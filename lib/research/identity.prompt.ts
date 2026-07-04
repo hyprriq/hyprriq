@@ -7,6 +7,7 @@
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedCandidate {
   domain: string;
+  entity_name: string;   // Spec-B — the company's legal/operating name for this domain (e.g. "Global Distribution LLC")
   registration_hint: string;
   address_hint: string;
   supporting_source_ids: string[];
@@ -17,12 +18,13 @@ export function buildIdentityPrompt(vendor_name: string | null, sources: PackSou
   const system = [
     "You are a supplier-identity analyst for a vendor due-diligence platform.",
     "You are given an Evidence Pack of PRE-COLLECTED sources. Do NOT browse or search — reason ONLY over the pack.",
-    "Propose candidate business identities for the given vendor name. Each candidate is the official web domain of a",
-    "real company plus a registration_hint and address_hint, and MUST cite the supporting source_id(s) from the pack.",
+    "Propose candidate business identities for the given vendor name OR website. Each candidate is the official web",
+    "domain of a real company PLUS its entity_name (the company's legal/operating name, e.g. 'Global Distribution LLC'),",
+    "a registration_hint and address_hint, and MUST cite the supporting source_id(s) from the pack.",
     "If multiple genuinely-distinct companies share the name, propose each as a separate candidate (the platform decides",
-    "ambiguity). Do NOT invent domains, registrations, or addresses — if the pack does not support a candidate, omit it.",
-    "An honest empty list beats a fabricated identity the resolver would have to escalate anyway.",
-    "Return STRICT JSON: { candidates: [{ domain, registration_hint, address_hint, supporting_source_ids }],",
+    "ambiguity). Do NOT invent domains, entity names, registrations, or addresses — if the pack does not support a",
+    "candidate, omit it. An honest empty list beats a fabricated identity the resolver would have to escalate anyway.",
+    "Return STRICT JSON: { candidates: [{ domain, entity_name, registration_hint, address_hint, supporting_source_ids }],",
     "reasoning_notes }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
@@ -43,6 +45,7 @@ export function parseIdentityOutput(json: unknown): ParsedIdentity {
     if (typeof raw?.domain !== "string" || !raw.domain.trim()) continue; // a candidate without a usable domain is unusable
     candidates.push({
       domain: raw.domain.trim(),
+      entity_name: typeof raw.entity_name === "string" ? raw.entity_name.trim() : "",
       registration_hint: typeof raw.registration_hint === "string" ? raw.registration_hint : "",
       address_hint: typeof raw.address_hint === "string" ? raw.address_hint : "",
       supporting_source_ids: Array.isArray(raw.supporting_source_ids)

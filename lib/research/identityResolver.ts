@@ -15,6 +15,7 @@ export interface IdentityCandidate {
   registry_hit: boolean;     // a cited source is registry/government_record profile
   address_consistent: boolean;
   self_identifies: boolean;  // a cited source on this domain is official_company-classified
+  entity_name?: string;      // Spec-B — the discovered legal/company name for this candidate (LLM-proposed; resolver ignores it for scoring)
 }
 export interface ResolveInput { vendor_name: string; vendor_website: string | null; candidates: IdentityCandidate[] }
 

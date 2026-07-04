@@ -73,7 +73,7 @@ export default async function CaseReviewPage({
           )}
         </div>
 
-        <CaseReview caseId={c.id} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} />
+        <CaseReview caseId={c.id} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} />
       </div>
     </AdminShell>
   );

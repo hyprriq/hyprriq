@@ -8,8 +8,17 @@ import { normalizeName } from "@/lib/utils/normalize-name";
 // is the fixed lookup key. Read-modify-write upsert so case_count increments and array fields
 // append without a DB function.
 export async function writeIntelligence(ctx: TrackContext, signal?: TrackSignal | null): Promise<void> {
-  if (ctx.vendor_name) {
-    await upsertVendorIntelligence(ctx.vendor_name, ctx.brands_submitted ?? [], signal ?? null);
+  // Spec-B — key the corpus on the RESOLVED identity, NEVER the entered name. For the globaldist case
+  // (entered "Bosch", resolved "Global Distribution LLC") this stops a "bosch" vendor row being written
+  // for what is really Global Distribution LLC. When the name was mislabeled, record the entered name as
+  // an alias so G6 can later learn "this supplier is often mis-entered as X". (Write-side only — ADR-G006
+  // engine/query/admin views are deferred.)
+  const identity = ctx.supplier_identity;
+  const enteredName = ctx.vendor_name ?? "";
+  const resolvedName = identity?.resolved_name || enteredName; // resolved_name == entered on the matched path
+  if (resolvedName) {
+    const enteredAlias = enteredName && normalizeName(enteredName) !== normalizeName(resolvedName) ? enteredName : null;
+    await upsertVendorIntelligence(resolvedName, ctx.brands_submitted ?? [], signal ?? null, enteredAlias);
   }
   for (const brand of ctx.brands_submitted ?? []) {
     await upsertBrandIntelligence(brand);
@@ -17,20 +26,23 @@ export async function writeIntelligence(ctx: TrackContext, signal?: TrackSignal 
 }
 
 export async function upsertVendorIntelligence(
-  vendorName: string, brands: string[], signal: TrackSignal | null,
+  vendorName: string, brands: string[], signal: TrackSignal | null, enteredAlias: string | null = null,
 ): Promise<{ error: string | null }> {
   const key = normalizeName(vendorName);
   const { data: existing } = await supabaseAdmin
     .from("vendor_intelligence")
-    .select("id, case_count, known_brand_relationships")
+    .select("id, case_count, known_brand_relationships, entered_names")
     .eq("vendor_name_normalized", key)
     .maybeSingle();
   const prevBrands = (existing?.known_brand_relationships as string[] | undefined) ?? [];
   const mergedBrands = Array.from(new Set([...prevBrands, ...brands.map(normalizeName).filter(Boolean)]));
+  const prevEntered = (existing?.entered_names as string[] | undefined) ?? [];
+  const mergedEntered = enteredAlias ? Array.from(new Set([...prevEntered, enteredAlias])) : prevEntered;
   const row: Record<string, unknown> = {
     vendor_name: vendorName,
     vendor_name_normalized: key,
     known_brand_relationships: mergedBrands,
+    entered_names: mergedEntered, // Spec-B — client-entered aliases (requires the 20260705 migration)
     case_count: (existing?.case_count ?? 0) + 1,
     last_reviewed_at: new Date().toISOString(),
   };

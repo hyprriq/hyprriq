@@ -1,0 +1,71 @@
+import { describe, it, expect } from "vitest";
+import { decideWebsiteAnchored, type EntityResolution } from "./websiteAnchor";
+
+const dom = (entity_name: string | null, resolved = true, confidence: "high" | "medium" | "low" = "high"): EntityResolution =>
+  ({ resolved, entity_name, confidence });
+
+describe("decideWebsiteAnchored (Spec-B branches 2a/2b/2c + name_is_brand)", () => {
+  it("globaldist / name_is_brand: client typed a brand → resolve from website, identity HOLDS, no penalty", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Bosch", provided_host: "globaldist.com", brands: ["Bosch"],
+      website: dom("Global Distribution LLC"), name: null,
+    });
+    expect(d.outcome).toBe("resolve_from_website");
+    expect(d.identity_discrepancy.kind).toBe("name_is_brand");
+    expect(d.resolved_name).toBe("Global Distribution LLC");
+    expect(d.resolved_domain).toBe("globaldist.com");
+    expect(d.resolution_confidence).toBe("high");
+    expect(d.input_consistency).toBe("low");
+    expect(d.identity_unconfirmed).toBe(false);          // NO verdict penalty
+    expect(d.identity_discrepancy.client_note).toContain("Global Distribution LLC");
+    expect(d.identity_discrepancy.entered_name).toBe("Bosch");
+  });
+
+  it("name_website_mismatch (name is NOT a brand): resolve from website, input_consistency low", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Acme Corp", provided_host: "globaldist.com", brands: [],
+      website: dom("Global Distribution LLC"), name: null,
+    });
+    expect(d.outcome).toBe("resolve_from_website");
+    expect(d.identity_discrepancy.kind).toBe("name_website_mismatch");
+    expect(d.identity_unconfirmed).toBe(false);
+  });
+
+  it("multiple_entities: name AND website each resolve to different legit entities → ESCALATE, no auto-pick", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "ABC Trading", provided_host: "abctradingcanada.com", brands: [],
+      website: dom("ABC Trading Canada"), name: dom("ABC Trading"),
+    });
+    expect(d.outcome).toBe("escalate");
+    expect(d.identity_discrepancy.kind).toBe("multiple_entities");
+    expect(d.identity_unconfirmed).toBe(true);           // conservative escalation, NOT fraud
+    expect(d.resolved_domain).toBeNull();
+  });
+
+  it("name_is_brand PRECEDENCE: even if the brand-name also resolves an entity, resolve from website (not ambiguous)", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Bosch", provided_host: "globaldist.com", brands: ["Bosch"],
+      website: dom("Global Distribution LLC"), name: dom("Robert Bosch GmbH"), // brand resolves, but it's a brand
+    });
+    expect(d.outcome).toBe("resolve_from_website");
+    expect(d.identity_discrepancy.kind).toBe("name_is_brand");
+  });
+
+  it("website_dead: website does not resolve to a real entity → ESCALATE, never fraud", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Acme Corp", provided_host: "parked-nothing.com", brands: [],
+      website: dom(null, false), name: null,
+    });
+    expect(d.outcome).toBe("escalate");
+    expect(d.identity_discrepancy.kind).toBe("website_dead");
+    expect(d.identity_unconfirmed).toBe(true);
+    expect(d.resolved_domain).toBeNull();
+  });
+
+  it("never emits a fraud key — the decision only sets identity fields + a flag", () => {
+    const d = decideWebsiteAnchored({ entered_name: "Bosch", provided_host: "globaldist.com", brands: ["Bosch"], website: dom("Global Distribution LLC"), name: null });
+    // sanity: the decision object carries no weight_key / veto surface at all
+    expect(Object.keys(d)).not.toContain("weight_key");
+    expect(d.resolution_method).toBe("resolved_from_website");
+  });
+});

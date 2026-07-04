@@ -45,3 +45,16 @@ export function buildIdentityRequests(ctx: TrackContext): { question: ResearchQu
   }
   return reqs;
 }
+
+// Spec-B — WEBSITE-anchored discovery: research the DOMAIN itself to resolve its real operating entity
+// (name ≠ website case). Same routable ResearchQuestions (serper/native); no whois in Track 0.5's plugin
+// set, so realness comes from registry / official-site / LinkedIn signals on the domain.
+export function buildDomainIdentityRequests(domain: string): { question: ResearchQuestion; input: string }[] {
+  const d = (domain ?? "").trim();
+  if (!d) return [];
+  return [
+    { question: "business_registry", input: `${d} company legal name business registration entity` },
+    { question: "linkedin_presence", input: `${d} company LinkedIn official about` },
+    { question: "address_verification", input: `${d} headquarters address contact` },
+  ];
+}

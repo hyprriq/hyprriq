@@ -210,6 +210,14 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
 
       {tab === "overview" && (
         <div>
+          {/* Spec-B — Identity clarification (name/website mismatch). A data-correction prompt, NOT a
+              finding, so it shows as early as identity resolves (pre-delivery), regardless of status. */}
+          {c.supplier_identity?.identity_discrepancy?.client_note && (
+            <div className="mb-5 rounded-lg border border-conditional-ink/30 bg-conditional-bg px-4 py-3">
+              <div className="text-[14px] font-semibold text-conditional-ink">⚠ Please confirm the supplier</div>
+              <div className="mt-0.5 text-[13px] text-ink-2">{c.supplier_identity.identity_discrepancy.client_note}</div>
+            </div>
+          )}
           {awaiting ? (
             <div className="mb-5 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3">
               <div className="text-[14px] font-semibold text-brand-ink">🔍 Research queued — confirm scope above to begin</div>

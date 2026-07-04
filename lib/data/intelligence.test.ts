@@ -52,6 +52,26 @@ describe("writeIntelligence (ADR-G006 write-side)", () => {
     expect(brandUpserts.length).toBe(2);
   });
 
+  it("Spec-B: mismatch case keys memory on the RESOLVED identity (never the entered name) + records the alias", async () => {
+    const supplier_identity = {
+      original_input: { name: "Bosch", website: "globaldist.com" },
+      resolved_name: "Global Distribution LLC", resolved_domain: "globaldist.com",
+      candidate_domains: [], registration_signals: [], identity_confidence: "high" as const,
+      identity_unconfirmed: false, resolution_method: "resolved_from_website" as const, resolution_notes: "",
+      resolution_audit: { winner: "globaldist.com", score: 0, runner_up: null, runner_up_score: 0, matched_by: ["website_anchored"], warnings: [] },
+      resolution_confidence: "high" as const, input_consistency: "low" as const,
+      identity_discrepancy: { kind: "name_is_brand" as const, entered_name: "Bosch", resolved_name: "Global Distribution LLC", resolved_domain: "globaldist.com", client_note: "…" },
+    };
+    await writeIntelligence({
+      case_id: "c1", vendor_name: "Bosch", vendor_website: "globaldist.com", supplier_identity,
+      brands_submitted: ["Bosch"], marketplace: "amazon_us", plan_type: "growth_279",
+    }, "infer");
+    const vendorRow = upsert.mock.calls.map((c) => c[0] as Record<string, unknown>).find((r) => "vendor_name_normalized" in r)!;
+    expect(vendorRow.vendor_name_normalized).toBe(normalizeName("Global Distribution LLC"));
+    expect(vendorRow.vendor_name_normalized).not.toBe(normalizeName("Bosch")); // the pollution bug: never key on the entered/brand name
+    expect(vendorRow.entered_names).toContain("Bosch");
+  });
+
   it("skips the vendor upsert when there is no vendor name", async () => {
     await writeIntelligence({
       case_id: "c1", vendor_name: null, vendor_website: null,

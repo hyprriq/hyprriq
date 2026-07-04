@@ -76,6 +76,7 @@ export type CaseDetail = CaseRow & {
   track_3_status: TrackStatus;
   track_4_status: TrackStatus;
   track_5_status: TrackStatus;
+  supplier_identity: import("@/lib/research/contracts").SupplierIdentity | null; // Spec-B — Track 0.5 resolved identity + discrepancy
 };
 
 // A single case, scoped to the current client. Returns null if not found or not
@@ -87,7 +88,7 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
   const { data } = await supa
     .from("cases")
     .select(
-      `${LIST_COLUMNS}, client_id, vendor_website, brands_from_ocr, client_notes, marketplace, credits_required, credits_charged, confidence_score, submission_type, plan_type, track_1_status, track_2_status, track_3_status, track_4_status, track_5_status`,
+      `${LIST_COLUMNS}, client_id, vendor_website, brands_from_ocr, client_notes, marketplace, credits_required, credits_charged, confidence_score, submission_type, plan_type, track_1_status, track_2_status, track_3_status, track_4_status, track_5_status, supplier_identity`,
     )
     .eq("id", id)
     .eq("client_id", userId)

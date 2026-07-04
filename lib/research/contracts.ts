@@ -26,17 +26,43 @@ export interface ResolutionAudit {
   warnings: string[];         // advisory, non-blocking flags (e.g. provided website conflicts with the vendor name) — surfaced to the reviewer/UX, never escalates
 }
 
+// Spec-B — a name/website mismatch is a first-class INTELLIGENCE SIGNAL, never a validation error and
+// never fraud. Full enum defined now so it can grow WITHOUT a schema change; only a SUBSET has handlers
+// today (name_is_brand, name_website_mismatch, multiple_entities, website_dead). The other five are
+// reserved — no handler until a real case needs each.
+export type IdentityDiscrepancyKind =
+  | "name_is_brand"          // client typed a brand into the vendor-name slot (globaldist: name=Bosch, brand=Bosch)
+  | "name_website_mismatch"  // name ≠ website; the website resolved a dominant real entity
+  | "multiple_entities"      // name AND website each resolve to DIFFERENT plausible legit entities → escalate
+  | "website_dead"           // website did not resolve to a real entity → escalate (never fraud)
+  // reserved (defined, NOT implemented — handlers added per real case):
+  | "website_redirect" | "holding_company" | "subsidiary" | "dba" | "alias";
+
+export interface IdentityDiscrepancy {
+  kind: IdentityDiscrepancyKind;
+  entered_name: string;                   // what the client typed (preserved separately from original_input)
+  resolved_name: string;                  // who we actually resolved
+  resolved_domain: string | null;
+  client_note: string;                    // plain client-facing copy — NO track/internal jargon
+}
+
 export interface SupplierIdentity {
   original_input: { name: string; website: string | null }; // RAW client input — ALWAYS preserved/logged (point 4)
   resolved_name: string;                  // canonical; tracks use THIS, not original_input (point 3)
   resolved_domain: string | null;         // feeds vendorHost when identity_confidence === "high"
   candidate_domains: string[];
   registration_signals: string[];
-  identity_confidence: "high" | "medium" | "low";
+  identity_confidence: "high" | "medium" | "low";  // legacy single axis — kept working for the matched/backward-compat path
   identity_unconfirmed: boolean;          // ONLY for genuine multi-candidate ambiguity / no resolution — NOT typos
-  resolution_method: "provided" | "resolved_dominant" | "normalized" | "ambiguous" | "unresolved";
+  resolution_method: "provided" | "resolved_dominant" | "normalized" | "resolved_from_website" | "ambiguous" | "unresolved";
   resolution_notes: string;
   resolution_audit: ResolutionAudit;      // structured decision record (winner/score/runner_up/matched_by)
+  // Spec-B two-dimension confidence — split "who is the supplier" from "was the client's input consistent".
+  // A mismatch = HIGH resolution_confidence + LOW input_consistency (we know who they are; the client mislabeled).
+  // input_consistency NEVER lowers resolution_confidence and NEVER touches the verdict/confidence score.
+  resolution_confidence?: "high" | "medium" | "low";
+  input_consistency?: "high" | "medium" | "low";
+  identity_discrepancy?: IdentityDiscrepancy | null; // informational flag; surfaced client+admin+memory; zero verdict effect
 }
 
 // What a track receives (Layer 1 input).
