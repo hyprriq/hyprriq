@@ -3,12 +3,8 @@
 **Working dir:** `D:\Projects\Hyprriq\portal` (lowercase "iq"). **Branch:** `staging`. **Next-build model:** **Fable**.
 **Read this file first — it is the single source. Do NOT re-derive; resume from "IMMEDIATE NEXT".** Auto-memory `build-progress.md` points here.
 
-## ⛔ IMMEDIATE NEXT — Spec-B is a HELD FOUNDER GATE (nothing shipped yet)
-Spec-B (Track 0.5 website-anchored vendor-identity resolution) is **BUILT + fully tested** but committed **LOCAL-ONLY** as `c2c61c2` — **NOT pushed, NOT deployed, migration NOT run.** `origin/staging` is still at `fe51002`. Order (founder-run — Claude never touches prod/migrations/live-validation):
-1. Founder reviews `c2c61c2` (`git show c2c61c2 --stat`).
-2. Founder runs migration **BEFORE deploy** (this one adds a column the new code writes — opposite of a drop): `supabase/migrations/20260705000000_vendor_intelligence_entered_names.sql` → `ALTER TABLE vendor_intelligence ADD COLUMN IF NOT EXISTS entered_names text[] NOT NULL DEFAULT '{}';`
-3. Then push/deploy: `git push origin staging`.
-4. Founder live-validates globaldist (name="Bosch", website=globaldist.com, brand="Bosch"): resolves **"Global Distribution LLC"** from the website, `identity_discrepancy.kind="name_is_brand"`, `resolution_confidence=high` + `input_consistency=low`, `identity_unconfirmed=false` (no verdict penalty), client "⚠ Please confirm the supplier" banner shows, **memory keyed on resolved identity, NOT "bosch"**. Entity-name discovery is LLM-behavioral (branch logic is unit-locked).
+## ⛔ IMMEDIATE NEXT — Spec-B SHIPPED; only founder live-validation remains
+Spec-B (Track 0.5 website-anchored vendor-identity resolution) is **SHIPPED (2026-07-05)**: migration `supabase/migrations/20260705000000_vendor_intelligence_entered_names.sql` **RUN by founder**, code `c2c61c2` **PUSHED** to `origin/staging` (now `6252de4`) → deploying on Vercel. **ONLY remaining:** founder **live-validates globaldist** (name="Bosch", website=globaldist.com, brand="Bosch"): resolves **"Global Distribution LLC"** from the website, `identity_discrepancy.kind="name_is_brand"`, `resolution_confidence=high` + `input_consistency=low`, `identity_unconfirmed=false` (no verdict penalty), client "⚠ Please confirm the supplier" banner shows, **memory keyed on resolved identity, NOT "bosch"**. Entity-name discovery is LLM-behavioral (branch logic is unit-locked). If it validates → Spec-B done → move to the held sequence below.
 
 ## What Spec-B did (commit `c2c61c2`, additive to FROZEN Track 0.5; verdict math/fraud keys/Track1-2-3 untouched)
 A name/website mismatch is an **intelligence signal, never fraud, never a verdict/confidence penalty** (lowers `input_consistency` only). Key files:
