@@ -54,13 +54,25 @@ export async function getCaseTrackResults(caseId: string): Promise<TrackResultRo
   return (data as TrackResultRow[]) ?? [];
 }
 
+// H1 — the next investigation attempt for a case: max across track rows AND evidence packs
+// (packs preserved true history through the pre-H1 era when track rows were overwritten in place).
+export async function getNextAttemptNumber(caseId: string): Promise<number> {
+  const latest = (table: string) =>
+    supabaseAdmin.from(table).select("attempt_number").eq("case_id", caseId)
+      .order("attempt_number", { ascending: false }).limit(1).maybeSingle();
+  const [ctr, packs] = await Promise.all([latest("case_track_results"), latest("case_evidence_packs")]);
+  const maxCtr = (ctr.data as { attempt_number?: number } | null)?.attempt_number ?? 0;
+  const maxPack = (packs.data as { attempt_number?: number } | null)?.attempt_number ?? 0;
+  return Math.max(maxCtr, maxPack) + 1;
+}
+
 // Upsert a single track row on the (case_id, track, attempt_number) natural key.
-// Defaults attempt_number to 1 (the active row in G1 — Tier-2 reruns arrive in G2).
+// H1: attempt_number is REQUIRED from the caller — a re-run writes a NEW attempt, never attempt 1 again.
 export async function upsertTrackResult(
-  row: Partial<TrackResultRow> & { case_id: string; track: string; track_key: string; track_number: number },
+  row: Partial<TrackResultRow> & { case_id: string; track: string; track_key: string; track_number: number; attempt_number: number },
 ): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin
     .from("case_track_results")
-    .upsert({ attempt_number: 1, ...row }, { onConflict: "case_id,track,attempt_number" });
+    .upsert(row, { onConflict: "case_id,track,attempt_number" });
   return { error: error?.message ?? null };
 }
