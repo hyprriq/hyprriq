@@ -20,7 +20,7 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   const requests = buildTrack1Requests(ctx);
   const orchestrator = new Orchestrator([whoisPlugin, serperPlugin, nativeWebSearchPlugin]);
   const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
-  await persistEvidencePack(pack);
+  await persistEvidencePack(pack, ctx.attempt_number ?? 1);
   await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
 
   // ── Acquisition-failure guard: an EMPTY pack means we could not research (provider unavailable /

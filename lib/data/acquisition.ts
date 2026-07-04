@@ -4,11 +4,15 @@ import type { EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition
 
 // Persist the raw Evidence Pack (replay + future cache invalidation) and per-plugin metrics
 // (cost optimization + calibration). Service-role; admin-guarded callers / pipeline only.
-export async function persistEvidencePack(pack: EvidencePack): Promise<{ error: string | null }> {
-  const { error } = await supabaseAdmin.from("case_evidence_packs").insert({
+// H1 — packs are the frozen input-of-record, one per (case, track, attempt). Upsert (not insert):
+// an Inngest step retry re-gathers and REPLACES its own attempt's pack (keeping the stored pack
+// consistent with what was actually scored) — it can never touch another attempt's pack.
+export async function persistEvidencePack(pack: EvidencePack, attemptNumber: number): Promise<{ error: string | null }> {
+  const { error } = await supabaseAdmin.from("case_evidence_packs").upsert({
     case_id: pack.case_id, track_key: pack.track_key, pack: pack.sources,
-    evidence_hash: pack.evidence_hash, schema_version: pack.schema_version, collected_at: pack.collected_at,
-  });
+    evidence_hash: pack.evidence_hash, schema_version: pack.schema_version,
+    collected_at: pack.collected_at, attempt_number: attemptNumber,
+  }, { onConflict: "case_id,track_key,attempt_number" });
   return { error: error?.message ?? null };
 }
 

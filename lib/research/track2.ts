@@ -31,7 +31,7 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
   };
   const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification });
-  await persistEvidencePack(pack);
+  await persistEvidencePack(pack, ctx.attempt_number ?? 1);
   await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
 
   const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
