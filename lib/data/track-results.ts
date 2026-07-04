@@ -28,7 +28,6 @@ export type TrackResultRow = {
   evidence_weights_applied: EvidenceWeight[] | null;
   track_verdict_signal: TrackSignal | null;
   suggested_signal: TrackSignal | null;
-  failure_type: "soft" | "hard" | null;
   attempt_number: number;
   // Phase 5.1b — Track 1 firewall audit + classification metrics + regression artifact (optional:
   // present on Track 1 rows, absent on stub/manual rows + older read sites).
@@ -43,7 +42,7 @@ export type TrackResultRow = {
 };
 
 const COLS =
-  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, failure_type, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report, questions_to_ask";
+  "id, case_id, track, track_key, track_number, source_mode, compiled_findings_json, confidence_score, confidence_band, finding_certainty, founder_review_status, manual_review_required, manual_review_reason, manual_notes, evidence_items, reasoning_notes, unknowns, evidence_weights_applied, track_verdict_signal, suggested_signal, attempt_number, weight_validation, classifications_total, classifications_accepted, classifications_rejected, classifications_unknown, acceptance_rate, track_validation_report, questions_to_ask";
 
 export async function getCaseTrackResults(caseId: string): Promise<TrackResultRow[]> {
   const { data } = await supabaseAdmin

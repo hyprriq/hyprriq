@@ -24,7 +24,7 @@ const trackRow = (n: number, key: string, signal: TrackSignal | null): TrackResu
   manual_review_required: false, manual_review_reason: null, manual_notes: null,
   evidence_items: [], reasoning_notes: `notes ${n}`, unknowns: [],
   evidence_weights_applied: [], track_verdict_signal: signal, suggested_signal: signal,
-  failure_type: null, attempt_number: 1,
+  attempt_number: 1,
 });
 
 const rows: TrackResultRow[] = [

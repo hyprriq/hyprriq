@@ -13,7 +13,7 @@ const row = (
   founder_review_status: status, manual_review_required: false, manual_review_reason: null,
   manual_notes: null, evidence_items: null, reasoning_notes: null, unknowns: null,
   evidence_weights_applied: null, track_verdict_signal: null, suggested_signal: null,
-  failure_type: null, attempt_number: 1,
+  attempt_number: 1,
 });
 
 describe("evaluateReportReady", () => {

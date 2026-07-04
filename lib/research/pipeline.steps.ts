@@ -80,7 +80,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: true, manual_review_reason: "acquisition produced no sources — could not research",
-      failure_type: "soft", founder_review_status: "pending",
+      founder_review_status: "pending",
       compiled_findings_json: { signal: "n_a", acquisition_failed: true, summary: out.reasoning_notes },
       weight_validation: out.weight_validation ?? null,
       track_validation_report: out.track_validation_report ?? null,
