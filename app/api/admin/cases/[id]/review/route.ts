@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
 
@@ -48,7 +49,7 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, status, verdict")
+    .select("id, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -56,8 +57,22 @@ export async function POST(
   const now = new Date().toISOString();
   const decision = { action, reason: body.reason ?? null, notes: body.notes ?? null, reviewed_by: userId, at: now };
 
-  // Request Further Investigation — send back into research; no delivery, no banned-language gate.
+  // Request Further Investigation — actually re-drives the pipeline (H2; pre-H2 this set a status
+  // nothing consumed). H1 makes the re-run safe: it writes a NEW attempt, never overwriting the
+  // prior one. Enqueue FIRST — if the send fails, the status is untouched and the admin is told.
   if (action === "request_investigation") {
+    try {
+      await inngest.send({
+        name: "pipeline/run-case",
+        data: {
+          case_id: id, vendor_name: c.vendor_name, vendor_website: c.vendor_website,
+          brands_submitted: (c.brands_confirmed as string[] | null) ?? (c.brands_submitted as string[] | null) ?? [],
+          marketplace: c.marketplace ?? "amazon_us", plan_type: c.plan_type,
+        },
+      });
+    } catch (e) {
+      return NextResponse.json({ error: "enqueue_failed", message: `Could not start the re-investigation: ${e instanceof Error ? e.message : "enqueue failed"}` }, { status: 502 });
+    }
     await supabaseAdmin.from("audit_log").insert({
       table_name: "cases", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin", new_value: { decision },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { inngest } from "@/lib/inngest/client";
 
 // Client confirms the brand scope on a paused (awaiting_client) case. Sets the
 // confirmed brand list and re-enters the queue so research can begin. Idempotent
@@ -29,7 +30,7 @@ export async function POST(
   const supa = createServerClient();
   const { data: existing } = await supa
     .from("cases")
-    .select("id, status, brands_submitted")
+    .select("id, status, brands_submitted, vendor_name, vendor_website, marketplace, plan_type")
     .eq("id", id)
     .eq("client_id", userId)
     .maybeSingle();
@@ -55,6 +56,22 @@ export async function POST(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // H2 — a confirmed scope actually starts research (pre-H2, 'queued' was a dead end nothing
+  // consumed). On enqueue failure: revert to awaiting_client so the client can simply retry;
+  // the watchdog also sweeps any 'queued' case that somehow never starts.
+  try {
+    await inngest.send({
+      name: "pipeline/run-case",
+      data: {
+        case_id: id, vendor_name: existing.vendor_name, vendor_website: existing.vendor_website,
+        brands_submitted: confirmed, marketplace: existing.marketplace ?? "amazon_us", plan_type: existing.plan_type,
+      },
+    });
+  } catch {
+    await supa.from("cases").update({ status: "awaiting_client" }).eq("id", id).eq("client_id", userId);
+    return NextResponse.json({ error: "enqueue_failed", message: "Could not start research — please try confirming again." }, { status: 502 });
   }
   return NextResponse.json({ ok: true, brands_confirmed: confirmed });
 }

@@ -148,7 +148,9 @@ export async function POST(req: Request) {
   // ---- enqueue the durable Intelligence-OS pipeline (Inngest) ----
   // Credits are deducted + the case exists, so we respond immediately; research runs as a durable
   // Inngest workflow (pipeline/run-case) outside this request — not bound by the serverless 60s cap.
-  // A send failure is logged (never silently swallowed); the case exists and can be re-driven.
+  // H2 — an enqueue failure is told to the client TRUTHFULLY: credit refunded, case marked
+  // submission_failed (excluded from the client's case list), audit-logged. Pre-H2 this returned
+  // ok:true and left a charged case wedged in pending_intake.
   try {
     await inngest.send({
       name: "pipeline/run-case",
@@ -163,6 +165,17 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     console.error("[submit] inngest enqueue failed:", e, { case_id: created.id });
+    await supa.rpc("refund_client_credits", { p_client_id: userId, p_amount: cost });
+    await supabaseAdmin.from("cases").update({ status: "submission_failed" }).eq("id", created.id);
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "cases", record_id: created.id, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { submission_failed: true, credit_refunded: cost, error: e instanceof Error ? e.message : "enqueue failed" },
+    });
+    return NextResponse.json(
+      { error: "enqueue_failed", message: "Submission could not start — your credit was refunded. Please try again." },
+      { status: 502 },
+    );
   }
 
   return NextResponse.json({
