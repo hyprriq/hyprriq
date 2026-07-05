@@ -24,3 +24,14 @@ describe("findingsVisibleToClient (interim client guard until Phase H)", () => {
     }
   });
 });
+
+describe("H2 — failure states (research_failed / submission_failed)", () => {
+  it("failure states are terminal: polling stops", () => {
+    expect(isResearchInProgress("research_failed")).toBe(false);
+    expect(isResearchInProgress("submission_failed")).toBe(false);
+  });
+  it("failure states never expose findings to the client", () => {
+    expect(findingsVisibleToClient("research_failed")).toBe(false);
+    expect(findingsVisibleToClient("submission_failed")).toBe(false);
+  });
+});

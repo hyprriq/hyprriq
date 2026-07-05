@@ -63,6 +63,10 @@ export const FOUNDER_QUEUE_STATUSES: CaseStatus[] = [
   "manual_override_required",
   "qa_in_progress",
   "approved",
+  // H2 — failure states surface in the FOUNDER queue (the client never sees submission_failed;
+  // research_failed shows as "Delayed — under review" client-side).
+  "research_failed",
+  "submission_failed",
 ];
 
 const inFounderQueue = (s: CaseStatus) => FOUNDER_QUEUE_STATUSES.includes(s);

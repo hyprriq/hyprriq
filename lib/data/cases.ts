@@ -32,6 +32,8 @@ export function isActive(c: Pick<CaseRow, "status">): boolean {
 
 // All non-deleted cases for the current client, newest first. Scoped by Clerk
 // user id (service-role client bypasses RLS — see lib/supabase/server.ts).
+// H2 (OQ-3) — submission_failed is excluded: the enqueue failed, the credit was refunded, and the
+// client was told at submit time; a refunded failed submission is not a case they own a result for.
 export async function getClientCases(): Promise<CaseRow[]> {
   const { userId } = await auth();
   if (!userId) return [];
@@ -40,6 +42,7 @@ export async function getClientCases(): Promise<CaseRow[]> {
     .from("cases")
     .select(LIST_COLUMNS)
     .eq("client_id", userId)
+    .neq("status", "submission_failed")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   return (data as CaseRow[]) ?? [];

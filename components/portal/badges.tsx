@@ -14,7 +14,9 @@ export type CaseStatus =
   | "approved"
   | "delivered"
   | "complete"
-  | "cancelled";
+  | "cancelled"
+  | "research_failed"      // H2 — pipeline exhausted retries / watchdog sweep (client sees a neutral delay)
+  | "submission_failed";   // H2 — enqueue failed at submit; credit refunded; excluded from the client list
 
 export type Verdict =
   | "source_clear"
@@ -40,6 +42,9 @@ const STATUS_META: Record<CaseStatus, { label: string; cls: string }> = {
   delivered: { label: "✓ Ready", cls: "bg-clear-bg text-clear-ink" },
   complete: { label: "Completed", cls: "bg-subtle text-ink-2" },
   cancelled: { label: "Cancelled", cls: "bg-subtle text-muted" },
+  // H2 (OQ-3) — client-language, banned-language-safe; the admin dashboard shows the real state.
+  research_failed: { label: "Delayed — under review", cls: "bg-verify-bg text-verify-ink" },
+  submission_failed: { label: "Submission failed", cls: "bg-subtle text-muted" },
 };
 
 const VERDICT_META: Record<Verdict, { label: string; cls: string }> = {
