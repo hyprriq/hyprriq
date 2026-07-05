@@ -5,6 +5,7 @@ import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/native
 import { persistEvidencePack, persistAcquisitionMetrics } from "@/lib/data/acquisition";
 import { runModel } from "@/lib/ai/runModel";
 import { buildTrack2Requests } from "@/lib/research/tracks/track2.queries";
+import { researchIdentityFor } from "@/lib/research/researchIdentity";
 import { buildTrack2Prompt, parseTrack2Output } from "@/lib/research/track2.prompt";
 import { validateWeights, VALIDATION_VERSION } from "@/lib/research/weightValidation";
 import { deriveTrackSignal } from "@/lib/research/signals";
@@ -68,7 +69,9 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   const identity = si && si.identity_confidence !== "low"
     ? { confidence: si.identity_confidence, resolved_name: si.resolved_name }
     : null;
-  const { system, user } = buildTrack2Prompt({ vendor_name: ctx.vendor_name, brands: ctx.brands_submitted ?? [], identity }, promptSources);
+  // H4 — the vendor under analysis is the RESOLVED entity (same selector as the query builders).
+  const rid = researchIdentityFor(ctx);
+  const { system, user } = buildTrack2Prompt({ vendor_name: rid.name, brands: ctx.brands_submitted ?? [], identity, research_alias: rid.alias }, promptSources);
   let parsed: ReturnType<typeof parseTrack2Output>;
   let llmCost = 0;
   try {
@@ -161,5 +164,6 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     identity_scope_note: IDENTITY_SCOPE_NOTE,
     authorization_scope_note: AUTHORIZATION_SCOPE_NOTE,
     marketplace_eligibility_disclaimer: MARKETPLACE_ELIGIBILITY_DISCLAIMER,
+    research_identity: { name: rid.name, alias: rid.alias },
   };
 }

@@ -6,6 +6,7 @@ import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/native
 import { persistEvidencePack, persistAcquisitionMetrics } from "@/lib/data/acquisition";
 import { runModel } from "@/lib/ai/runModel";
 import { buildTrack1Requests } from "@/lib/research/tracks/track1.queries";
+import { researchIdentityFor } from "@/lib/research/researchIdentity";
 import { buildTrack1Prompt, parseTrack1Output } from "@/lib/research/track1.prompt";
 import { validateWeights, VALIDATION_VERSION } from "@/lib/research/weightValidation";
 import { deriveTrackSignal } from "@/lib/research/signals";
@@ -54,7 +55,9 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
     return { source_id: id, url: s.url, title: s.title, snippet: s.snippet };
   });
 
-  const { system, user } = buildTrack1Prompt({ vendor_name: ctx.vendor_name, vendor_website: ctx.vendor_website }, promptSources);
+  // H4 — investigate the RESOLVED entity (same selector as the query builders — one decision point).
+  const rid = researchIdentityFor(ctx);
+  const { system, user } = buildTrack1Prompt({ vendor_name: rid.name, vendor_website: ctx.vendor_website, research_alias: rid.alias }, promptSources);
   let parsed: ReturnType<typeof parseTrack1Output>;
   let llmCost = 0;
   try {
@@ -123,5 +126,6 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
     weight_validation: validations,
     track_validation_report,
     llm_failed: llmFailed,
+    research_identity: { name: rid.name, alias: rid.alias },
   };
 }

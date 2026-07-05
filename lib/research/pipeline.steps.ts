@@ -180,6 +180,9 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     finding_certainty: "unknown",
     compiled_findings_json: {
       signal: sig.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
+      // H4 — WHO was researched is part of the frozen record (SQL-checkable per attempt).
+      research_name: out.research_identity?.name ?? null,
+      research_alias: out.research_identity?.alias ?? null,
       // Track 2 advisory metadata (stored for the analyst, NOT scored). null on tracks that don't emit them.
       auth_level: out.auth_level ?? null, auth_level_reasoning: out.auth_level_reasoning ?? null,
       b2b_only_detected: out.b2b_only_detected ?? null, b2b_only_brands: out.b2b_only_brands ?? null,

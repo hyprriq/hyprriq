@@ -290,3 +290,16 @@ describe("H3 stageFinalize skippedTracks (absence never escalates)", () => {
     expect(lastUpdate().status).toBe("manual_override_required");
   });
 });
+
+describe("H4 — the record says WHO was researched", () => {
+  it("stageFindingTrack persists research_name/research_alias into compiled_findings_json", async () => {
+    runTrack1.mockResolvedValue({
+      track_key: "supplier_identity", evidence_items: [], reasoning_notes: "n", unknowns: [],
+      weight_validation: [], research_identity: { name: "Global Distribution LLC", alias: "Bosch" },
+    });
+    await stageFindingTrack(ctx, 1);
+    const cf = upsertTrackResult.mock.calls[0][0].compiled_findings_json as Record<string, unknown>;
+    expect(cf.research_name).toBe("Global Distribution LLC");
+    expect(cf.research_alias).toBe("Bosch");
+  });
+});

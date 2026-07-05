@@ -76,3 +76,25 @@ describe("H2 — llm_failed (model failure is a state, never a soft_fail)", () =
     expect(out.llm_failed).toBe(false);
   });
 });
+
+describe("H4 — Track 1 investigates the resolved entity and records it", () => {
+  it("output carries research_identity { name, alias } from the resolved identity", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1({
+      ...ctx, vendor_name: "Bosch",
+      supplier_identity: {
+        original_input: { name: "Bosch", website: "https://globaldist.com" },
+        resolved_name: "Global Distribution LLC", resolved_domain: "globaldist.com",
+        candidate_domains: [], registration_signals: [], identity_confidence: "high",
+        identity_unconfirmed: false, resolution_method: "resolved_from_website", resolution_notes: "",
+        resolution_audit: { winner: "globaldist.com", score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
+      },
+    });
+    expect(out.research_identity).toEqual({ name: "Global Distribution LLC", alias: "Bosch" });
+    // and the prompt actually named the resolved entity
+    const promptUser = runModel.mock.calls[0][0].user as string;
+    expect(promptUser).toContain("Vendor: Global Distribution LLC");
+    expect(promptUser).toContain('The client entered this supplier as "Bosch"');
+  });
+});
