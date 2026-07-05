@@ -1,5 +1,6 @@
 import type { TrackContext } from "@/lib/research/contracts";
 import type { ResearchQuestion } from "@/lib/research/acquisition/types";
+import { researchIdentityFor } from "@/lib/research/researchIdentity";
 
 // Track 1 capability surface. Active capabilities map to a ResearchQuestion + plugin; future plugins
 // are declared with available:false (declared only — flip to true + add the plugin when it ships).
@@ -48,7 +49,10 @@ function inputFor(capability_key: string, vendor: string, h: string | null): str
 }
 
 export function buildTrack1Requests(ctx: TrackContext): { question: ResearchQuestion; input: string }[] {
-  const vendor = ctx.vendor_name ?? "";
+  // H4 — investigate the RESOLVED entity (audit N1): the client's raw entry is never the research
+  // subject once Track 0.5 confirmed who the supplier is. researchIdentityFor is the single
+  // decision point shared with the prompts.
+  const vendor = researchIdentityFor(ctx).name;
   // OQ-2 retrofit — prefer the Track 0.5 resolved_domain (high-confidence identity) for the domain_age
   // (whois) lookup; fall back to the raw website. Behaviorally identical when a website was provided
   // (resolved_domain == its host), and strictly ADDITIVE when it was blank (Track 1 gains domain-age it

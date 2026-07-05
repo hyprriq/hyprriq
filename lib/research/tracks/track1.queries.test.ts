@@ -60,3 +60,30 @@ describe("buildTrack1Requests", () => {
     expect(domainAge(ctx({ vendor_website: null, supplier_identity: si(null) }))).toBeUndefined();
   });
 });
+
+// H4 — the queries must investigate the RESOLVED entity, never the client's raw entry (audit N1).
+describe("H4 — buildTrack1Requests researches the resolved entity", () => {
+  const resolvedGlobalDist: SupplierIdentity = {
+    original_input: { name: "Bosch", website: "https://globaldist.com" },
+    resolved_name: "Global Distribution LLC", resolved_domain: "globaldist.com",
+    candidate_domains: [], registration_signals: [], identity_confidence: "high",
+    identity_unconfirmed: false, resolution_method: "resolved_from_website", resolution_notes: "",
+    resolution_audit: { winner: "globaldist.com", score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
+  };
+
+  it("with a confirmed resolved identity, NO serper query contains the entered name (AT-1b lock)", () => {
+    const reqs = buildTrack1Requests(ctx({ vendor_name: "Bosch", vendor_website: "https://globaldist.com", supplier_identity: resolvedGlobalDist }));
+    const serperInputs = reqs.filter((r) => r.question !== "domain_age").map((r) => r.input);
+    expect(serperInputs.length).toBeGreaterThan(0);
+    for (const q of serperInputs) {
+      expect(q).toContain("Global Distribution LLC");
+      expect(q).not.toContain("Bosch");
+    }
+  });
+
+  it("unconfirmed identity (SO-2) → queries use the entered name", () => {
+    const reqs = buildTrack1Requests(ctx({ supplier_identity: si(null) }));
+    const q = reqs.find((r) => r.question === "business_registry")!;
+    expect(q.input).toContain("Meridian Wholesale Co.");
+  });
+});

@@ -1,5 +1,6 @@
 import type { TrackContext } from "@/lib/research/contracts";
 import type { ResearchQuestion } from "@/lib/research/acquisition/types";
+import { researchIdentityFor } from "@/lib/research/researchIdentity";
 
 // Track 2 capability surface (Supply Chain Relationship). Active capabilities map to a
 // ResearchQuestion + plugin; future plugins are declared available:false (flip + add the plugin when
@@ -40,7 +41,8 @@ function inputFor(capability_key: string, vendor: string, brand: string): string
 }
 
 export function buildTrack2Requests(ctx: TrackContext): { question: ResearchQuestion; input: string }[] {
-  const vendor = ctx.vendor_name ?? "";
+  // H4 — vendor = the RESOLVED entity (see track1.queries.ts); brand terms are untouched.
+  const vendor = researchIdentityFor(ctx).name;
   const brands = ctx.brands_submitted ?? [];
   const reqs: { question: ResearchQuestion; input: string }[] = [];
   for (const brand of brands) {

@@ -25,3 +25,23 @@ describe("buildTrack2Requests", () => {
     expect(buildTrack2Requests(ctx({ brands_submitted: [] }))).toHaveLength(0);
   });
 });
+
+// H4 — same lock for Track 2: brand terms stay, but the vendor is the RESOLVED entity.
+describe("H4 — buildTrack2Requests researches the resolved entity", () => {
+  it("with a confirmed resolved identity, every vendor-bearing query names the resolved entity, never the entered name", () => {
+    const reqs = buildTrack2Requests(ctx({
+      vendor_name: "Bosch",
+      supplier_identity: {
+        original_input: { name: "Bosch", website: "https://globaldist.com" },
+        resolved_name: "Global Distribution LLC", resolved_domain: "globaldist.com",
+        candidate_domains: [], registration_signals: [], identity_confidence: "high",
+        identity_unconfirmed: false, resolution_method: "resolved_from_website", resolution_notes: "",
+        resolution_audit: { winner: "globaldist.com", score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
+      },
+    }));
+    expect(reqs.some((r) => r.input === "Global Distribution LLC authorized distributor Lenovo")).toBe(true);
+    // brand terms survive; the entered vendor name appears ONLY where it IS the brand term
+    const vendorBearing = reqs.filter((r) => !r.input.startsWith("Lenovo ") && !r.input.startsWith("Bosch "));
+    for (const r of vendorBearing) expect(r.input).toContain("Global Distribution LLC");
+  });
+});
