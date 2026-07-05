@@ -13,6 +13,7 @@ import { normalizeEvidence } from "@/lib/research/normalize";
 import { enrichWithGraph } from "@/lib/research/graph";
 import { runSynthesis } from "@/lib/research/synthesisEngine";
 import { computeVerdict } from "@/lib/research/verdictEngine";
+import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
@@ -215,10 +216,16 @@ export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutpu
 }
 
 // Layer 4 verdict (deterministic) + Layer 5 report payload. Pure compute.
-export function stageVerdict(signals: Partial<Record<TrackKey, TrackSignal>>, synthesis: Synthesis): Verdict {
+// H3 — the verdict ceiling (shared fn, all three verdict sites) is applied here for the pipeline:
+// the returned .verdict is the CEILED one (what cases.verdict stores); the pre-cap score-verdict
+// and reason ride along for the admin explanation. confidence_0_15 stays evidence-derived.
+export function stageVerdict(
+  signals: Partial<Record<TrackKey, TrackSignal>>, synthesis: Synthesis,
+): Verdict & Omit<CeilingResult, "verdict"> {
   const verdict = computeVerdict(signals, synthesis);
   buildReport(synthesis, verdict); // payload computed here; Phase H renders the PDF from it.
-  return verdict;
+  const ceiled = applyVerdictCeiling(verdict, signals);
+  return { ...verdict, ...ceiled };
 }
 
 // Institutional memory write-side (ADR-G006). SKIP when identity acquisition failed (no corpus pollution).
