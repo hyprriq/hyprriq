@@ -1,20 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { normalizeName } from "@/lib/utils/normalize-name";
 
-const { maybeSingle, eq, select, upsert, from } = vi.hoisted(() => {
+const { maybeSingle, eq, select, upsert, from, auditInsert } = vi.hoisted(() => {
   const maybeSingle = vi.fn().mockResolvedValue({ data: null });
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const upsert = vi.fn().mockResolvedValue({ error: null });
-  const from = vi.fn(() => ({ select, upsert }));
-  return { maybeSingle, eq, select, upsert, from };
+  const auditInsert = vi.fn().mockResolvedValue({ error: null }); // H2 — memory-write failure audit trail
+  const from = vi.fn((table: string) => (table === "audit_log" ? { insert: auditInsert } : { select, upsert }));
+  return { maybeSingle, eq, select, upsert, from, auditInsert };
 });
 vi.mock("@/lib/supabase/admin", () => ({ supabaseAdmin: { from } }));
 
 import { writeIntelligence, upsertVendorIntelligence } from "./intelligence";
 
 beforeEach(() => {
-  from.mockClear(); select.mockClear(); eq.mockClear(); upsert.mockClear();
+  from.mockClear(); select.mockClear(); eq.mockClear(); auditInsert.mockClear();
+  upsert.mockClear().mockResolvedValue({ error: null });
   maybeSingle.mockResolvedValue({ data: null });
 });
 
@@ -78,5 +80,28 @@ describe("writeIntelligence (ADR-G006 write-side)", () => {
       brands_submitted: [], marketplace: "amazon_us", plan_type: "growth_279",
     });
     expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe("H2 — memory-write failures are loud, never silent (OQ-2: log-don't-throw until H6)", () => {
+  it("a vendor upsert error → degraded:true + audit_log row; does NOT throw", async () => {
+    upsert.mockResolvedValueOnce({ error: { message: "column missing" } });
+    const res = await writeIntelligence({
+      case_id: "c9", vendor_name: "Acme Co", vendor_website: null,
+      brands_submitted: [], marketplace: "amazon_us", plan_type: "growth_279",
+    });
+    expect(res.degraded).toBe(true);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      record_id: "c9",
+      new_value: expect.objectContaining({ memory_write_failed: expect.stringContaining("column missing") }),
+    }));
+  });
+  it("a clean write reports degraded:false and no audit entry", async () => {
+    const res = await writeIntelligence({
+      case_id: "c9", vendor_name: "Acme Co", vendor_website: null,
+      brands_submitted: ["BrandX"], marketplace: "amazon_us", plan_type: "growth_279",
+    });
+    expect(res.degraded).toBe(false);
+    expect(auditInsert).not.toHaveBeenCalled();
   });
 });

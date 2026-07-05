@@ -7,7 +7,10 @@ import { normalizeName } from "@/lib/utils/normalize-name";
 // vendor_intelligence / brand_intelligence are live (migration 20260626000000). normalizeName()
 // is the fixed lookup key. Read-modify-write upsert so case_count increments and array fields
 // append without a DB function.
-export async function writeIntelligence(ctx: TrackContext, signal?: TrackSignal | null): Promise<void> {
+// H2 (OQ-2) — memory-write failures are LOUD but non-fatal: logged + audit_log row, never thrown
+// (throw-and-retry would re-increment the name-keyed case_count on partial failure; the H6 event
+// ledger makes this atomic/idempotent properly). Returns degraded:true when any write was lost.
+export async function writeIntelligence(ctx: TrackContext, signal?: TrackSignal | null): Promise<{ degraded: boolean }> {
   // Spec-B — key the corpus on the RESOLVED identity, NEVER the entered name. For the globaldist case
   // (entered "Bosch", resolved "Global Distribution LLC") this stops a "bosch" vendor row being written
   // for what is really Global Distribution LLC. When the name was mislabeled, record the entered name as
@@ -16,13 +19,26 @@ export async function writeIntelligence(ctx: TrackContext, signal?: TrackSignal 
   const identity = ctx.supplier_identity;
   const enteredName = ctx.vendor_name ?? "";
   const resolvedName = identity?.resolved_name || enteredName; // resolved_name == entered on the matched path
+  const failures: string[] = [];
   if (resolvedName) {
     const enteredAlias = enteredName && normalizeName(enteredName) !== normalizeName(resolvedName) ? enteredName : null;
-    await upsertVendorIntelligence(resolvedName, ctx.brands_submitted ?? [], signal ?? null, enteredAlias);
+    const res = await upsertVendorIntelligence(resolvedName, ctx.brands_submitted ?? [], signal ?? null, enteredAlias);
+    if (res.error) failures.push(`vendor(${resolvedName}): ${res.error}`);
   }
   for (const brand of ctx.brands_submitted ?? []) {
-    await upsertBrandIntelligence(brand);
+    const res = await upsertBrandIntelligence(brand);
+    if (res.error) failures.push(`brand(${brand}): ${res.error}`);
   }
+  if (failures.length > 0) {
+    const detail = failures.join("; ");
+    console.error(`[intelligence] memory write failed (case ${ctx.case_id}): ${detail}`);
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "vendor_intelligence", record_id: ctx.case_id, action: "UPDATE",
+      actor_id: "system", actor_type: "system", new_value: { memory_write_failed: detail },
+    });
+    return { degraded: true };
+  }
+  return { degraded: false };
 }
 
 export async function upsertVendorIntelligence(
