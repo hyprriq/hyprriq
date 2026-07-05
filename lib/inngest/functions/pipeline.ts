@@ -55,10 +55,12 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
   let identityAcquisitionFailed = false;
   let identityFailed = false; // H2 — acquisition OR llm failure on Track 1: identity unscored → no memory write
   const failedTracks = new Set<number>(); // H2 — every unscored included track escalates (OQ-1)
+  const skippedTracks = new Set<number>(); // H3 — not-implemented dimensions: skipped, never escalated
   for (const r of results) {
     const tk = r.output.track_key as TrackKey;
     signals[tk] = r.signal;
     if (r.failed) failedTracks.add(r.track_number);
+    if (r.not_implemented) skippedTracks.add(r.track_number);
     if (r.acquisition_failed && tk === "supplier_identity") identityAcquisitionFailed = true;
     if (r.failed && tk === "supplier_identity") identityFailed = true;
   }
@@ -68,7 +70,7 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
   await step.run("memory-write", () => stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityFailed));
   await step.run("finalize", () =>
     stageFinalize(ictx, {
-      included, identityAcquisitionFailed, failedTracks, identityUnconfirmed: identity.identity_unconfirmed,
+      included, identityAcquisitionFailed, failedTracks, skippedTracks, identityUnconfirmed: identity.identity_unconfirmed,
       supplierIdentity: identity, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
     }),
   );

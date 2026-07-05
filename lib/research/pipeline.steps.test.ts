@@ -245,3 +245,48 @@ describe("H2 stageFinalize escalation breadth (OQ-1: ANY failed included track e
     await expect(stageFinalize(ctx, { included: new Set([1]), identityAcquisitionFailed: false, verdict: "do_not_rely", confidence_0_15: 0 })).rejects.toThrow(/db down/);
   });
 });
+
+// ── H3 — Verdict semantics (absence ≠ failure ≠ finding) ──
+
+describe("H3 stageFindingTrack not_implemented mapping", () => {
+  it("not_implemented → n_a, auto-approved, NOT held, NOT failed", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "dimension not yet available — excluded from scoring", unknowns: [], not_implemented: true });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("n_a");
+    expect(r.failed).toBe(false);
+    expect(r.not_implemented).toBe(true);
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect(row.track_verdict_signal).toBe("n_a");
+    expect(row.manual_review_required).toBe(false);
+    expect(row.founder_review_status).toBe("approved");
+    expect((row.compiled_findings_json as Record<string, unknown>).not_implemented).toBe(true);
+  });
+
+  it("failure branches report not_implemented:false (three n_a causes stay distinct)", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "no sources", unknowns: [], weight_validation: [], acquisition_failed: true });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.not_implemented).toBe(false);
+    expect(r.failed).toBe(true);
+  });
+});
+
+describe("H3 stageFinalize skippedTracks (absence never escalates)", () => {
+  const lastUpdate = () => (casesUpdate.mock.calls as unknown as Record<string, unknown>[][])[0][0];
+
+  it("not-implemented tracks are marked skipped and the case stays awaiting_review", async () => {
+    statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
+    await stageFinalize(ctx, { included: new Set([1, 2, 3, 4, 5]), identityAcquisitionFailed: false, failedTracks: new Set(), skippedTracks: new Set([3, 4, 5]), verdict: "usable_with_conditions", confidence_0_15: 10 });
+    expect(lastUpdate().status).toBe("awaiting_review");
+    expect(lastUpdate().track_3_status).toBe("skipped");
+    expect(lastUpdate().track_4_status).toBe("skipped");
+    expect(lastUpdate().track_5_status).toBe("skipped");
+    expect(lastUpdate().track_1_status).toBe("complete");
+  });
+
+  it("failed beats skipped when both sets name a track (failure visibility wins)", async () => {
+    statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
+    await stageFinalize(ctx, { included: new Set([1, 2]), identityAcquisitionFailed: false, failedTracks: new Set([2]), skippedTracks: new Set([2]), verdict: "verify_before_purchase", confidence_0_15: 7 });
+    expect(lastUpdate().track_2_status).toBe("manual_required");
+    expect(lastUpdate().status).toBe("manual_override_required");
+  });
+});

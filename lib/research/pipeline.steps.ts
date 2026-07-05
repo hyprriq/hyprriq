@@ -38,8 +38,9 @@ export interface FindingTrackResult {
   output: TrackOutput;
   signal: TrackSignal;
   acquisition_failed: boolean;
-  failed: boolean;       // H2 — unified failure flag (acquisition OR llm): track could not score
-  track_number: number;  // H2 — lets orchestrators aggregate failedTracks for finalize
+  failed: boolean;          // H2 — unified failure flag (acquisition OR llm): track could not score
+  not_implemented: boolean; // H3 — deliberate absence (dimension not built): skipped, never escalated
+  track_number: number;     // H2 — lets orchestrators aggregate failed/skipped tracks for finalize
 }
 
 // H1 — resolve this execution's investigation attempt ONCE at pipeline start (durable step in
@@ -100,6 +101,23 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   const def = trackByNumber(n);
   const out = await TRACK_FNS[n](ctx);
 
+  // ── H3 — not-implemented guard: the dimension is not built yet. A deliberate ABSENCE — n_a
+  // (excluded, weights redistribute), status 'skipped', auto-approved (nothing to review), and
+  // NEVER an escalation (absence ≠ failure ≠ finding). Pre-H3 these scored soft_fail and Track 3's
+  // floor pinned every case at verify_before_purchase. ──
+  if (out.not_implemented) {
+    const res = await upsertTrackResult({
+      case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
+      source_mode: "ai_generated",
+      evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
+      track_verdict_signal: "n_a", finding_certainty: "unknown",
+      manual_review_required: false, founder_review_status: "approved",
+      compiled_findings_json: { signal: "n_a", not_implemented: true, summary: out.reasoning_notes },
+    });
+    if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
+    return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: true, track_number: n };
+  }
+
   // ── Acquisition-failure guard — an EMPTY Evidence Pack means we COULD NOT research, not that we
   // researched and found nothing. Such a track must NOT score (→ n_a, excluded from the verdict),
   // must NOT write institutional memory, and must escalate to manual review. ──
@@ -117,7 +135,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       classifications_total: 0, classifications_accepted: 0, classifications_rejected: 0, classifications_unknown: 0, acceptance_rate: null,
     });
     if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
-    return { output: out, signal: "n_a", acquisition_failed: true, failed: true, track_number: n };
+    return { output: out, signal: "n_a", acquisition_failed: true, failed: true, not_implemented: false, track_number: n };
   }
 
   // ── H2 — LLM-failure guard: the model call failed or returned unparseable output. The track was
@@ -137,7 +155,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       classifications_total: 0, classifications_accepted: 0, classifications_rejected: 0, classifications_unknown: 0, acceptance_rate: null,
     });
     if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
-    return { output: out, signal: "n_a", acquisition_failed: false, failed: true, track_number: n };
+    return { output: out, signal: "n_a", acquisition_failed: false, failed: true, not_implemented: false, track_number: n };
   }
 
   // ── Layer 4a — CODE-derived signal (the LLM never decides PASS/FAIL). Dedupe evidence_types so
@@ -180,7 +198,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   });
   if (persisted.error) throw new Error(`${def.track} row persist failed: ${persisted.error}`);
 
-  return { output: out, signal: sig.signal, acquisition_failed: false, failed: false, track_number: n };
+  return { output: out, signal: sig.signal, acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
 }
 
 // Layers 2 / 2.5 / 3 + memoized synthesis persist. Throws on persist error so the step retries.
@@ -213,7 +231,7 @@ export async function stageMemoryWrite(ctx: TrackContext, identitySignal: TrackS
 // Finalize: persist case state + per-track statuses + the orchestration version.
 export async function stageFinalize(
   ctx: TrackContext,
-  args: { included: Set<number>; identityAcquisitionFailed: boolean; failedTracks?: Set<number>; identityUnconfirmed?: boolean; supplierIdentity?: SupplierIdentity; verdict: string; confidence_0_15: number },
+  args: { included: Set<number>; identityAcquisitionFailed: boolean; failedTracks?: Set<number>; skippedTracks?: Set<number>; identityUnconfirmed?: boolean; supplierIdentity?: SupplierIdentity; verdict: string; confidence_0_15: number },
 ): Promise<{ error: string | null }> {
   // H1 — Case Investigation Ledger: a delivered case is IMMUTABLE. A re-investigation persists its
   // rows under the new attempt (already done upstream) and only raises a flag for admin review;
@@ -241,9 +259,13 @@ export async function stageFinalize(
     pipeline_version: PIPELINE_VERSION,
   };
   if (args.supplierIdentity !== undefined) caseUpdate.supplier_identity = args.supplierIdentity; // final identity record (idempotent)
+  // H3 — precedence: not-in-plan → skipped; FAILED → manual_required (failure visibility wins over
+  // any other marker); not-implemented → skipped (deliberate absence); else complete.
+  const skippedTracks = args.skippedTracks ?? new Set<number>();
   for (let n = 1; n <= 5; n++) {
     caseUpdate[`track_${n}_status`] = !args.included.has(n) ? "skipped"
-      : failedTracks.has(n) ? "manual_required" : "complete";
+      : failedTracks.has(n) ? "manual_required"
+      : skippedTracks.has(n) ? "skipped" : "complete";
   }
   const { error } = await supabaseAdmin.from("cases").update(caseUpdate).eq("id", ctx.case_id);
   if (error) throw new Error(`finalize persist failed: ${error.message}`); // H2 — fail loud
