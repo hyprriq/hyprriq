@@ -142,6 +142,7 @@ export interface TrackOutput {
   track_validation_report?: Record<string, unknown>; // Phase 5.1b — deterministic regression artifact (jsonb)
   acquisition_failed?: boolean;                    // Phase 5.1b — pack had 0 sources: do NOT score / write memory; escalate
   llm_failed?: boolean;                            // H2 — model call failed or unparseable: do NOT score / write memory; escalate (mirror of acquisition_failed)
+  not_implemented?: boolean;                       // H3 — dimension not built yet: a deliberate ABSENCE — n_a + skipped, never scored, never escalated
   // Phase 5.1c — Track 2 advisory metadata (STORED for the analyst, NEVER scored — the signal is
   // code-derived from validated weight_keys). auth_level mirrors the master-spec Auth Level the LLM read.
   auth_level?: "A" | "B" | "C" | "D" | "E";
