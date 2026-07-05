@@ -5,7 +5,7 @@
  * Investigation Ledger property.
  *
  * Run (founder):
- *   npx tsx --env-file=.env scripts/rejudge-case.ts <case_id> [attempt]
+ *   npx tsx --env-file=.env.local scripts/rejudge-case.ts <case_id> [attempt]
  * Default attempt = the case's latest. Note: cases.verdict reflects the LATEST finalized attempt
  * unless the case is delivered (frozen) — when re-judging a non-delivered attempt the verdict
  * comparison is skipped for other attempts (reported, not failed).
