@@ -60,6 +60,10 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   } catch {
     parsed = parseTrack1Output({ _parse_error: true });
   }
+  // H2 — BOTH failure classes flow through parse_failed: a thrown API call (catch above) AND
+  // unparseable model text (parseModelJson returns {_parse_error} without throwing). Either way
+  // the model produced nothing usable — that is a STATE (n_a + hold), never "found nothing".
+  const llmFailed = parsed.parse_failed === true;
 
   const validations = validateWeights({
     track: "supplier_identity",
@@ -114,5 +118,6 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,
+    llm_failed: llmFailed,
   };
 }

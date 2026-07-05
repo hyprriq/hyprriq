@@ -54,3 +54,25 @@ describe("runTrack1", () => {
     expect((out.track_validation_report as Record<string, unknown>)?.derived_signal).toBe("n_a");
   });
 });
+
+describe("H2 — llm_failed (model failure is a state, never a soft_fail)", () => {
+  it("an unparseable model response sets llm_failed (nothing scored)", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel.mockResolvedValue({ json: { _parse_error: true, _raw: "garbled" }, model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1(ctx);
+    expect(out.llm_failed).toBe(true);
+    expect(out.evidence_items).toHaveLength(0);
+  });
+  it("a thrown model call (API error / 429) sets llm_failed", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel.mockRejectedValue(new Error("429 rate limited"));
+    const out = await runTrack1(ctx);
+    expect(out.llm_failed).toBe(true);
+  });
+  it("a successful run does not set llm_failed", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1(ctx);
+    expect(out.llm_failed).toBe(false);
+  });
+});

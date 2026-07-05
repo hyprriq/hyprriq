@@ -14,7 +14,9 @@ export interface ProposedEvidenceItem {
   supporting_source_ids: string[]; mapping_justification: string; counter_evidence: string;
   certainty: "verified" | "inferred" | "unknown"; confidence: "high" | "medium" | "low";
 }
-export interface ParsedTrack1 { items: ProposedEvidenceItem[]; reasoning_notes: string; unknowns: Unknown[] }
+// H2 — parse_failed marks "the model call produced no usable output" (API error or unparseable
+// text). Distinct from a valid-but-empty response: failure is a STATE (→ n_a + hold), never a finding.
+export interface ParsedTrack1 { items: ProposedEvidenceItem[]; reasoning_notes: string; unknowns: Unknown[]; parse_failed?: true }
 
 export function buildTrack1Prompt(
   ctx: { vendor_name: string | null; vendor_website: string | null },
@@ -76,7 +78,7 @@ const CONFIDENCES = new Set(["high", "medium", "low"]);
 export function parseTrack1Output(json: unknown): ParsedTrack1 {
   const o = (json ?? {}) as { evidence_items?: unknown; reasoning_notes?: unknown; unknowns?: unknown; _parse_error?: boolean };
   if (o._parse_error || !Array.isArray(o.evidence_items)) {
-    return { items: [], reasoning_notes: "could not parse model output", unknowns: [] };
+    return { items: [], reasoning_notes: "could not parse model output", unknowns: [], parse_failed: true };
   }
   const items: ProposedEvidenceItem[] = [];
   for (const raw of o.evidence_items as Record<string, unknown>[]) {

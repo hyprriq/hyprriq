@@ -75,6 +75,8 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   } catch {
     parsed = parseTrack2Output({ _parse_error: true });
   }
+  // H2 — thrown API call OR unparseable text: the model produced nothing usable → a STATE, never a finding.
+  const llmFailed = parsed.parse_failed === true;
 
   const validations = validateWeights({
     track: "supply_chain_relationship",
@@ -145,6 +147,7 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,
+    llm_failed: llmFailed,
     auth_level: parsed.auth_level ?? undefined,
     auth_level_reasoning: parsed.auth_level_reasoning,
     b2b_only_detected: parsed.b2b_only_detected,

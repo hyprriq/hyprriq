@@ -138,3 +138,16 @@ describe("runTrack2", () => {
     expect(out.brand_relationship_finding).toContain("safe to purchase");
   });
 });
+
+describe("H2 — llm_failed (Track 2)", () => {
+  const h2ctx: TrackContext = { case_id: "c1", vendor_name: "TD Synnex", vendor_website: "https://tdsynnex.com", brands_submitted: ["Lenovo"], marketplace: "amazon_us", plan_type: "growth_279" };
+  const h2pack = { schema_version: "1.0.0", case_id: "c1", track_key: "supply_chain_relationship", evidence_hash: "h", collected_at: "t", sources: [{ url: "https://example.com/x", title: "t", snippet: "s", raw: {}, provenance: { provider: "Serper", provider_version: "v1", plugin: "serper", acquisition_method: "serper", source_profile: "news", source_type: "third_party", authority_score: "low", freshness_days: null, collected_at: "t", expires_at: "t", refresh_required: false } }] };
+  it("unparseable model response sets llm_failed; thrown call sets llm_failed", async () => {
+    gather.mockResolvedValue({ pack: h2pack, metrics: [] });
+    runModel.mockResolvedValue({ json: { _parse_error: true }, model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    expect((await runTrack2(h2ctx)).llm_failed).toBe(true);
+    gather.mockResolvedValue({ pack: h2pack, metrics: [] });
+    runModel.mockRejectedValue(new Error("500"));
+    expect((await runTrack2(h2ctx)).llm_failed).toBe(true);
+  });
+});

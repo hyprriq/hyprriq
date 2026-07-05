@@ -25,6 +25,7 @@ export interface ParsedTrack2 {
   questions_to_ask: QuestionToAsk[];
   reasoning_notes: string;
   unknowns: Unknown[];
+  parse_failed?: true; // H2 — model call produced no usable output (API error / unparseable)
 }
 
 export function buildTrack2Prompt(
@@ -153,6 +154,7 @@ export function parseTrack2Output(json: unknown): ParsedTrack2 {
   const empty: ParsedTrack2 = {
     items: [], auth_level: null, auth_level_reasoning: "", brand_relationship_finding: "", b2b_only_detected: false,
     b2b_only_brands: [], questions_to_ask: [], reasoning_notes: "could not parse model output", unknowns: [],
+    parse_failed: true, // H2 — model output unusable: a STATE (→ n_a + hold), never a finding
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
 

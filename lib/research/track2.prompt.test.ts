@@ -113,3 +113,13 @@ describe("parseTrack2Output", () => {
     expect(out.questions_to_ask[0].brand).toBe("Bosch");
   });
 });
+
+describe("H2 — parse_failed flag (Track 2)", () => {
+  it("marks parse failure explicitly on _parse_error and invalid shapes", () => {
+    expect(parseTrack2Output({ _parse_error: true }).parse_failed).toBe(true);
+    expect(parseTrack2Output(null).parse_failed).toBe(true);
+  });
+  it("does NOT mark a valid-but-empty response as failed", () => {
+    expect(parseTrack2Output({ evidence_items: [], reasoning_notes: "n", unknowns: [] }).parse_failed).toBeUndefined();
+  });
+});

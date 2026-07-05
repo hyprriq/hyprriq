@@ -63,3 +63,16 @@ describe("parseTrack1Output", () => {
     expect(out.items[0].confidence).toBe("low");
   });
 });
+
+describe("H2 — parse_failed flag (model failure is a state, never empty findings)", () => {
+  it("marks parse failure explicitly on _parse_error", () => {
+    expect(parseTrack1Output({ _parse_error: true }).parse_failed).toBe(true);
+  });
+  it("marks parse failure on structurally invalid output (null / missing evidence_items)", () => {
+    expect(parseTrack1Output(null).parse_failed).toBe(true);
+    expect(parseTrack1Output({ reasoning_notes: "hi" }).parse_failed).toBe(true);
+  });
+  it("does NOT mark a valid-but-empty response as failed (legitimate found-nothing)", () => {
+    expect(parseTrack1Output({ evidence_items: [], reasoning_notes: "nothing found", unknowns: [] }).parse_failed).toBeUndefined();
+  });
+});
