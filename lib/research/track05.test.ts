@@ -146,3 +146,22 @@ describe("resolveSupplierIdentity", () => {
     expect(gather).toHaveBeenCalledTimes(1);             // name research skipped (website unresolved)
   });
 });
+
+// H4 (SO-1) — the zero-research fast path is EXACT-only. A fuzzy near-miss (a typo — or a
+// different company one letter away: Medline vs medlink.com) must VERIFY via the existing
+// Spec-B website-anchored discovery instead of silently binding with high confidence.
+describe("H4 (SO-1) — fast path exact-only", () => {
+  it("a fuzzy (non-exact) name↔host near-miss runs website-anchored discovery (no silent bind)", async () => {
+    gather.mockResolvedValue(pack([]));
+    runModel.mockResolvedValue(model({ _parse_error: true }));
+    await resolveSupplierIdentity(ctx({ vendor_name: "Medline", vendor_website: "https://medlink.com" }));
+    expect(gather).toHaveBeenCalled(); // discovery ran — the pre-H4 behavior was zero research here
+  });
+
+  it("an EXACT match keeps the zero-research fast path (no cost added)", async () => {
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex", vendor_website: "https://tdsynnex.com" }));
+    expect(r.resolution_method).toBe("provided");
+    expect(gather).not.toHaveBeenCalled();
+    expect(runModel).not.toHaveBeenCalled();
+  });
+});

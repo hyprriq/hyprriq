@@ -83,8 +83,12 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
   const vendor_name = ctx.vendor_name ?? "";
   const providedHost = ctx.vendor_website ? canonicalDomain(ctx.vendor_website) : null;
 
-  // ── Branch 1 — a parseable website that MATCHES the name → zero-research fast-path (unchanged). ──
-  if (providedHost && nameMatch(vendor_name, providedHost).match) {
+  // ── Branch 1 — a parseable website that EXACTLY matches the name → zero-research fast-path. ──
+  // H4 (SO-1): exact match only. A FUZZY near-miss (a client typo — or a DIFFERENT company one
+  // letter away: Medline vs medlink.com) must not silently bind with high confidence; it falls
+  // through to the Spec-B website-anchored discovery below, which resolves the real entity and
+  // records the input-consistency signal (never fraud, never a verdict penalty).
+  if (providedHost && nameMatch(vendor_name, providedHost).exact) {
     const identity = resolveIdentity({ vendor_name, vendor_website: ctx.vendor_website, candidates: [] });
     return withConsistency(identity, identity.identity_confidence, "high");
   }
