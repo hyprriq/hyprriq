@@ -25,13 +25,16 @@ import { runPipeline } from "@/lib/research/pipeline";
 import { VALIDATION_VERSION } from "@/lib/research/weightValidation";
 import type { PlanType } from "@/lib/constants/plans";
 
+// NOTE (fixture rule, earned twice): labels below are founder shorthand — ALWAYS verify a fixture's
+// vendor_name/vendor_website in the DB before using a case in an acceptance test.
+// (c14dc564 "TD Synnex" is actually the "TD Synexx" TYPO case in the DB.)
 const CASES: { id: string; label: string }[] = [
   { id: "eb63ba97-cff0-4e9c-89c3-ba8c98e9eace", label: "JC Sales" },
-  { id: "c14dc564-d941-4df3-923e-7b45d3214dc6", label: "TD Synnex" },
+  { id: "c14dc564-d941-4df3-923e-7b45d3214dc6", label: "TD Synnex (DB: TD Synexx typo)" },
   { id: "6336bada-ffa1-4a75-a291-acfc14844ee0", label: "Ingram Micro" },
-  { id: "3478c9b3-53ae-4da0-ae44-45c37f2b2d58", label: "TD Synnex" },
+  { id: "3478c9b3-53ae-4da0-ae44-45c37f2b2d58", label: "TD Synnex (DB: TD Synexx typo, no website)" },
   { id: "086655bb-1e0d-4818-9df7-2343e650ea0d", label: "Bosch / globaldist" },
-  { id: "81b3edf4-c827-4603-b71f-d9834775523c", label: "TD Synnex" },
+  { id: "81b3edf4-c827-4603-b71f-d9834775523c", label: "Td Synnex" },
   { id: "2b359a6a-98f9-49c9-8f57-c19f4d8daaac", label: "TD Synnex" },
   { id: "ac552e68-8ba1-4e69-b0a2-898f912c4f8c", label: "MotoTec USA" },
 ];
