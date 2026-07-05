@@ -1,4 +1,5 @@
 import type { Unknown, QuestionToAsk } from "@/lib/research/contracts";
+import { aliasGuardLine } from "@/lib/research/researchIdentity";
 
 // The exact supply_chain_relationship evidence_types the LLM may propose. loa_legitimate is
 // DELIBERATELY EXCLUDED (ADR-T2-001): an LOA is post-relationship, private, and unverifiable — it is
@@ -29,7 +30,8 @@ export interface ParsedTrack2 {
 }
 
 export function buildTrack2Prompt(
-  ctx: { vendor_name: string | null; brands: string[]; identity?: { confidence: string; resolved_name: string } | null },
+  // H4 — vendor_name is the RESEARCH identity (resolved entity); research_alias = entered name when different.
+  ctx: { vendor_name: string | null; brands: string[]; identity?: { confidence: string; resolved_name: string } | null; research_alias?: string | null },
   sources: PackSourceForPrompt[],
 ): { system: string; user: string } {
   const system = [
@@ -111,6 +113,7 @@ export function buildTrack2Prompt(
   const user = [
     `Vendor: ${ctx.vendor_name ?? "unknown"}`,
     ...(identityLine ? [identityLine] : []),
+    ...(ctx.research_alias ? [aliasGuardLine(ctx.research_alias)] : []),
     `Brands (analyze each separately): ${ctx.brands.length ? ctx.brands.join(", ") : "(none submitted)"}`,
     "Evidence Pack:", packLines || "(empty)",
   ].join("\n");

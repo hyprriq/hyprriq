@@ -76,3 +76,23 @@ describe("H2 — parse_failed flag (model failure is a state, never empty findin
     expect(parseTrack1Output({ evidence_items: [], reasoning_notes: "nothing found", unknowns: [] }).parse_failed).toBeUndefined();
   });
 });
+
+// H4 — the prompt investigates the RESOLVED entity; alias evidence is guarded, never merged blindly.
+describe("H4 — buildTrack1Prompt research identity + alias guard", () => {
+  it("names the research identity as the Vendor and guards the entered-name alias", () => {
+    const { user } = buildTrack1Prompt(
+      { vendor_name: "Global Distribution LLC", vendor_website: "https://globaldist.com", research_alias: "Bosch" },
+      [{ source_id: "src_0", url: "u", title: "t", snippet: "s" }],
+    );
+    expect(user).toContain("Vendor: Global Distribution LLC");
+    expect(user).toContain('The client entered this supplier as "Bosch"');
+    expect(user).toMatch(/ONLY where it clearly refers to the same company/);
+  });
+  it("no alias → no guard line", () => {
+    const { user } = buildTrack1Prompt(
+      { vendor_name: "TD Synnex", vendor_website: null },
+      [{ source_id: "src_0", url: "u", title: "t", snippet: "s" }],
+    );
+    expect(user).not.toContain("The client entered this supplier as");
+  });
+});

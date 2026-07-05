@@ -1,4 +1,5 @@
 import type { Unknown } from "@/lib/research/contracts";
+import { aliasGuardLine } from "@/lib/research/researchIdentity";
 
 // The exact ADR-G003 supplier_identity evidence_types the LLM may propose (constrained output).
 export const SUPPLIER_IDENTITY_KEYS = [
@@ -19,7 +20,9 @@ export interface ProposedEvidenceItem {
 export interface ParsedTrack1 { items: ProposedEvidenceItem[]; reasoning_notes: string; unknowns: Unknown[]; parse_failed?: true }
 
 export function buildTrack1Prompt(
-  ctx: { vendor_name: string | null; vendor_website: string | null },
+  // H4 — vendor_name is the RESEARCH identity (resolved entity); research_alias carries the
+  // client's entered name when it differs, rendered with the shared alias guard.
+  ctx: { vendor_name: string | null; vendor_website: string | null; research_alias?: string | null },
   sources: PackSourceForPrompt[],
 ): { system: string; user: string } {
   const system = [
@@ -68,6 +71,7 @@ export function buildTrack1Prompt(
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
   const user = [
     `Vendor: ${ctx.vendor_name ?? "unknown"}  Website: ${ctx.vendor_website ?? "unknown"}`,
+    ...(ctx.research_alias ? [aliasGuardLine(ctx.research_alias)] : []),
     "Evidence Pack:", packLines || "(empty)",
   ].join("\n");
   return { system, user };

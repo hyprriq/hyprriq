@@ -16,6 +16,12 @@ export interface ResearchIdentity {
   domain: string | null;
 }
 
+// H4 — the ONE wording of the alias guard, shared by every track prompt: alias-scoped evidence
+// counts only when it clearly refers to the same company. Never merged blindly.
+export function aliasGuardLine(alias: string): string {
+  return `The client entered this supplier as "${alias}". Treat evidence naming "${alias}" as this entity ONLY where it clearly refers to the same company (same domain, address, or registration) — never merge evidence about a different company that happens to share the name.`;
+}
+
 export function researchIdentityFor(ctx: TrackContext): ResearchIdentity {
   const entered = ctx.vendor_name ?? "";
   const si = ctx.supplier_identity;
