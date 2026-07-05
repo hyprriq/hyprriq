@@ -12,6 +12,21 @@ export function emailEnabled(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
+// H2 — ops alert to the admin inbox only (watchdog sweeps, pipeline onFailure). Key-safe like
+// sendDualNotification: silently no-ops when Resend or the inbox isn't configured — the audit_log
+// row written by every caller is the durable record; email is the pager.
+export async function sendAdminAlert(subject: string, html: string): Promise<{ sent: boolean; reason?: string }> {
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!ADMIN_INBOX) return { sent: false, reason: "no_admin_inbox" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: FROM, to: ADMIN_INBOX, subject: `[HyprrIQ ops] ${subject}`, html });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
 export async function sendDualNotification(opts: {
   clientEmail: string | null;
   subject: string;

@@ -1,4 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { sendAdminAlert } from "@/lib/email/notify";
 import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan, executionGroupsForPlan } from "@/lib/research/pipeline.registry";
@@ -73,6 +75,25 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
 }
 
 export const pipelineStart = inngest.createFunction(
-  { id: "pipeline-run-case", name: "Research pipeline", retries: 2, triggers: [{ event: "pipeline/run-case" }] },
+  {
+    id: "pipeline-run-case", name: "Research pipeline", retries: 2,
+    // H2 — cap parallel case runs so a submission burst can't self-inflict Anthropic/Serper 429
+    // storms (each case fans out multiple provider calls).
+    concurrency: { limit: 5 },
+    // H2 — fail LOUD: when every retry is exhausted the case must not wedge in research_running.
+    // Mark research_failed (never touching a delivered/complete case), audit it, page the admin.
+    onFailure: async ({ event, error }) => {
+      const data = event.data.event.data as TrackContext;
+      await supabaseAdmin.from("cases").update({ status: "research_failed" })
+        .eq("id", data.case_id).not("status", "in", "(delivered,complete)");
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "cases", record_id: data.case_id, action: "UPDATE",
+        actor_id: "system", actor_type: "system",
+        new_value: { pipeline_failed: true, attempt: data.attempt_number ?? null, error: error.message },
+      });
+      await sendAdminAlert(`Pipeline failed for case ${data.case_id}`, `<p>All retries exhausted; case marked research_failed.</p><p>${error.message}</p>`);
+    },
+    triggers: [{ event: "pipeline/run-case" }],
+  },
   async ({ event, step }) => pipelineHandler({ event: { data: event.data as TrackContext }, step: step as unknown as InngestStep }),
 );
