@@ -14,9 +14,9 @@
  *   3. Requires --run to actually fire runPipeline. Without --run it is a DRY pass.
  *
  * Run:
- *   npx tsx --env-file=.env scripts/rerun-batch.ts          # DRY  — backups + plan only, no re-run
- *   npx tsx --env-file=.env scripts/rerun-batch.ts --run    # LIVE — backup-first, then re-run each case
- *   (Node ≥20.6 for --env-file; otherwise `dotenv -e .env -- npx tsx scripts/rerun-batch.ts [--run]`.)
+ *   npx tsx --env-file=.env.local scripts/rerun-batch.ts          # DRY  — backups + plan only, no re-run
+ *   npx tsx --env-file=.env.local scripts/rerun-batch.ts --run    # LIVE — backup-first, then re-run each case
+ *   (Node ≥20.6 for --env-file; otherwise `dotenv -e .env.local -- npx tsx scripts/rerun-batch.ts [--run]`.)
  */
 import { writeFileSync, mkdirSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
