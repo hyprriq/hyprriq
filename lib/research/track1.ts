@@ -20,8 +20,12 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   const requests = buildTrack1Requests(ctx);
   const orchestrator = new Orchestrator([whoisPlugin, serperPlugin, nativeWebSearchPlugin]);
   const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
-  await persistEvidencePack(pack, ctx.attempt_number ?? 1);
-  await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
+  // H2 — the pack is the frozen input-of-record (H1): if it cannot persist, the step must retry.
+  // Metrics are ops data: failure is logged, never fatal.
+  const packRes = await persistEvidencePack(pack, ctx.attempt_number ?? 1);
+  if (packRes.error) throw new Error(`evidence pack persist failed: ${packRes.error}`);
+  const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
+  if (metricsRes.error) console.error(`[track1] metrics persist failed (non-fatal): ${metricsRes.error}`);
 
   // ── Acquisition-failure guard: an EMPTY pack means we could not research (provider unavailable /
   // no results) — NOT "researched and found nothing". Do not call the model, do not score, flag for

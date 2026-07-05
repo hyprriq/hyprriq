@@ -11,10 +11,12 @@ const {
   casesUpdate, casesEq, casesNot, statusMaybeSingle, auditInsert,
 } = vi.hoisted(() => {
   const casesNot = vi.fn().mockResolvedValue({ error: null });
-  // thenable: awaiting `.update().eq()` resolves; chaining `.not()` also works.
-  const casesEq = vi.fn(() => ({
+  // thenable: awaiting `.update().eq()` resolves; chaining `.not()` also works. Error typed
+  // nullable so H2 failure-path tests can resolve a non-null error.
+  type EqResult = { error: { message: string } | null };
+  const casesEq = vi.fn((): { not: typeof casesNot; then: (resolve: (v: EqResult) => void) => void } => ({
     not: casesNot,
-    then: (resolve: (v: { error: null }) => void) => resolve({ error: null }),
+    then: (resolve: (v: EqResult) => void) => resolve({ error: null }),
   }));
   const casesUpdate = vi.fn(() => ({ eq: casesEq }));
   const statusMaybeSingle = vi.fn();
@@ -183,5 +185,63 @@ describe("H1 stageFinalize immutability (delivered cases are frozen)", () => {
     statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
     await stageFinalize(ctx, { ...args, verdict: "verify_before_purchase", confidence_0_15: 7 });
     expect(lastUpdate()).toMatchObject({ status: "awaiting_review", verdict: "verify_before_purchase" });
+  });
+});
+
+// ── H2 — Fail-loud ──
+
+describe("H2 stageFindingTrack failure mapping", () => {
+  it("llm_failed → n_a + manual_review_required + held from auto-approve (mirrors acquisition guard)", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "could not parse model output", unknowns: [], weight_validation: [], llm_failed: true });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("n_a");
+    expect(r.failed).toBe(true);
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect(row.track_verdict_signal).toBe("n_a");
+    expect(row.manual_review_required).toBe(true);
+    expect(row.founder_review_status).toBe("pending");
+    expect(row.manual_review_reason).toMatch(/model/i);
+  });
+
+  it("acquisition failure also reports failed:true (unified failure flag)", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "no sources", unknowns: [], weight_validation: [], acquisition_failed: true });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.failed).toBe(true);
+  });
+
+  it("a successful track reports failed:false", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "n", unknowns: [], weight_validation: [] });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.failed).toBe(false);
+  });
+
+  it("H2: a failed track-row persist THROWS so the Inngest step retries", async () => {
+    upsertTrackResult.mockResolvedValueOnce({ error: "boom" });
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "n", unknowns: [], weight_validation: [], acquisition_failed: true });
+    await expect(stageFindingTrack(ctx, 1)).rejects.toThrow(/persist/i);
+  });
+});
+
+describe("H2 stageFinalize escalation breadth (OQ-1: ANY failed included track escalates)", () => {
+  const lastUpdate = () => (casesUpdate.mock.calls as unknown as Record<string, unknown>[][])[0][0];
+
+  it("a failed non-identity track (Track 2) escalates the case and marks the track manual_required", async () => {
+    statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
+    await stageFinalize(ctx, { included: new Set([1, 2]), identityAcquisitionFailed: false, failedTracks: new Set([2]), verdict: "verify_before_purchase", confidence_0_15: 7 });
+    expect(lastUpdate().status).toBe("manual_override_required");
+    expect(lastUpdate().track_2_status).toBe("manual_required");
+    expect(lastUpdate().track_1_status).toBe("complete");
+  });
+
+  it("no failed tracks → no escalation (unchanged behavior)", async () => {
+    statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
+    await stageFinalize(ctx, { included: new Set([1, 2]), identityAcquisitionFailed: false, failedTracks: new Set(), verdict: "verify_before_purchase", confidence_0_15: 7 });
+    expect(lastUpdate().status).toBe("awaiting_review");
+  });
+
+  it("finalize case-update persistence error THROWS", async () => {
+    statusMaybeSingle.mockResolvedValueOnce({ data: { status: "research_running" } });
+    casesEq.mockImplementationOnce(() => ({ not: casesNot, then: (resolve: (v: { error: { message: string } }) => void) => resolve({ error: { message: "db down" } }) }));
+    await expect(stageFinalize(ctx, { included: new Set([1]), identityAcquisitionFailed: false, verdict: "do_not_rely", confidence_0_15: 0 })).rejects.toThrow(/db down/);
   });
 });

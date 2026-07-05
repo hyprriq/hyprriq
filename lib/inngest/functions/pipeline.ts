@@ -51,18 +51,22 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
   const trackOutputs: TrackOutput[] = results.map((r) => r.output);
   const signals: Partial<Record<TrackKey, TrackSignal>> = {};
   let identityAcquisitionFailed = false;
+  let identityFailed = false; // H2 — acquisition OR llm failure on Track 1: identity unscored → no memory write
+  const failedTracks = new Set<number>(); // H2 — every unscored included track escalates (OQ-1)
   for (const r of results) {
     const tk = r.output.track_key as TrackKey;
     signals[tk] = r.signal;
+    if (r.failed) failedTracks.add(r.track_number);
     if (r.acquisition_failed && tk === "supplier_identity") identityAcquisitionFailed = true;
+    if (r.failed && tk === "supplier_identity") identityFailed = true;
   }
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs));
   const verdict = await step.run("verdict", () => stageVerdict(signals, synthesis));
-  await step.run("memory-write", () => stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityAcquisitionFailed));
+  await step.run("memory-write", () => stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityFailed));
   await step.run("finalize", () =>
     stageFinalize(ictx, {
-      included, identityAcquisitionFailed, identityUnconfirmed: identity.identity_unconfirmed,
+      included, identityAcquisitionFailed, failedTracks, identityUnconfirmed: identity.identity_unconfirmed,
       supplierIdentity: identity, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
     }),
   );

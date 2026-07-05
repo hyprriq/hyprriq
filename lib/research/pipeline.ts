@@ -36,11 +36,15 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
   const trackOutputs: TrackOutput[] = [];
   const signals: Partial<Record<TrackKey, TrackSignal>> = {};
   let identityAcquisitionFailed = false;
+  let identityFailed = false; // H2 — acquisition OR llm failure on Track 1: identity unscored → no memory write
+  const failedTracks = new Set<number>(); // H2 — every unscored included track escalates (OQ-1)
   for (const t of tracksForPlan(plan)) {
     const r = await stageFindingTrack(ictx, t.track_number);
     trackOutputs.push(r.output);
     signals[t.track_key] = r.signal;
+    if (r.failed) failedTracks.add(r.track_number);
     if (r.acquisition_failed && t.track_key === "supplier_identity") identityAcquisitionFailed = true;
+    if (r.failed && t.track_key === "supplier_identity") identityFailed = true;
   }
 
   // ── Layers 2 / 2.5 / 3 — Normalization → Graph → Intelligence (memoized synthesis) ──
@@ -55,11 +59,11 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
   const verdict = stageVerdict(signals, synthesis);
 
   // ── Institutional memory write-side (ADR-G006) ──
-  await stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityAcquisitionFailed);
+  await stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityFailed);
 
   // ── Persist case state ──
   return stageFinalize(ictx, {
-    included, identityAcquisitionFailed, identityUnconfirmed: identity.identity_unconfirmed,
+    included, identityAcquisitionFailed, failedTracks, identityUnconfirmed: identity.identity_unconfirmed,
     supplierIdentity: identity, verdict: verdict.verdict, confidence_0_15: verdict.confidence_0_15,
   });
 }

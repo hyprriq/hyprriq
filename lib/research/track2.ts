@@ -31,8 +31,11 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
   };
   const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification });
-  await persistEvidencePack(pack, ctx.attempt_number ?? 1);
-  await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
+  // H2 — pack = frozen input-of-record: persist failure throws (step retries); metrics non-fatal.
+  const packRes = await persistEvidencePack(pack, ctx.attempt_number ?? 1);
+  if (packRes.error) throw new Error(`evidence pack persist failed: ${packRes.error}`);
+  const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
+  if (metricsRes.error) console.error(`[track2] metrics persist failed (non-fatal): ${metricsRes.error}`);
 
   const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
 
