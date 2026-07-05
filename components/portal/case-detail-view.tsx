@@ -245,6 +245,14 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               );
             })}
           </div>
+          {/* H3 — honest scope note on delivered reports: which dimensions this report did not
+              assess (plan-excluded or not yet available). Code-templated, client-language. */}
+          {showFindings && DIMENSIONS.some((d) => String(c[d.track]) === "skipped") && (
+            <p className="mt-3 text-[13px] text-muted">
+              This report did not assess: {DIMENSIONS.filter((d) => String(c[d.track]) === "skipped").map((d) => d.name).join(", ")}.
+              The verdict reflects only the dimensions marked Complete.
+            </p>
+          )}
         </div>
       )}
 

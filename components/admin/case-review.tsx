@@ -105,6 +105,11 @@ export function CaseReview({
   const [ef, setEf] = useState<{ question: string; reason: string; brand: string; priority: "high" | "medium" | "low"; required: boolean }>({ question: "", reason: "", brand: "", priority: "medium", required: false });
 
   const delivered = caseStatus === "delivered" || caseStatus === "complete";
+  // H3 — display names for unassessed scoring dimensions (ceiling panel).
+  const DIM_NAME: Record<string, string> = {
+    supplier_identity: "Supplier Identity", supply_chain_relationship: "Supply Chain Relationship",
+    brand_risk_assessment: "Brand Risk Assessment", documentation_review: "Documentation Review",
+  };
   const questions = mergeCaseQuestions(vm.tracks, additionalQuestions);
 
   async function questionAction(method: "POST" | "PATCH" | "DELETE", body: object): Promise<boolean> {
@@ -233,6 +238,19 @@ export function CaseReview({
             <span>Decision confidence <b className="capitalize">{v.decision_confidence}</b></span>
           </div>
         </div>
+        {/* H3 — verdict ceiling: explains why a score-clear case shows Usable With Conditions
+            while Brand Risk is unbuilt. Same shared applyVerdictCeiling as the pipeline/rejudge. */}
+        {vm.ceiling?.ceiling_applied && (
+          <div className="mt-3 rounded-lg border border-conditional-ink/30 bg-conditional-bg p-3">
+            <div className="text-[12px] font-semibold uppercase tracking-wide text-conditional-ink">Verdict ceiling applied</div>
+            <p className="mt-1 text-[13px] text-conditional-ink">{vm.ceiling.ceiling_reason}</p>
+          </div>
+        )}
+        {vm.ceiling && vm.ceiling.unassessed.length > 0 && (
+          <p className="mt-2 text-[12px] text-muted">
+            Not assessed in this investigation: {vm.ceiling.unassessed.map((k) => DIM_NAME[k] ?? k).join(", ")}.
+          </p>
+        )}
         {v.veto_fired && (
           <div className="mt-3 rounded-lg border border-deny-ink/30 bg-deny-bg p-3">
             <div className="text-[12px] font-semibold uppercase tracking-wide text-deny-ink">Verdict constrained by</div>

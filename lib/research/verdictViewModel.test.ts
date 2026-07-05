@@ -147,3 +147,27 @@ describe("buildVerdictViewModel", () => {
     expect(vm.gaps).toBeNull();
   });
 });
+
+// H3 — the ceiling is applied at THIS site too (one shared fn, three sites — divergence guard).
+describe("buildVerdictViewModel — H3 verdict ceiling", () => {
+  it("caps a score-clear case at usable_with_conditions when brand risk is n_a, and exposes the reason", () => {
+    const vm = buildVerdictViewModel({
+      trackRows: [
+        trackRow(1, "supplier_identity", "pass"),
+        trackRow(2, "supply_chain_relationship", "pass"),
+        trackRow(3, "brand_risk_assessment", "n_a"),
+        trackRow(4, "documentation_review", "n_a"),
+      ],
+      synthesis: synth(), ios: null,
+    });
+    expect(vm.verdict?.verdict).toBe("usable_with_conditions");
+    expect(vm.ceiling?.ceiling_applied).toBe(true);
+    expect(vm.ceiling?.original_verdict).toBe("source_clear");
+    expect(vm.ceiling?.unassessed).toContain("brand_risk_assessment");
+  });
+
+  it("no ceiling when brand risk is assessed (existing fixture: verdict stands)", () => {
+    const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
+    expect(vm.ceiling?.ceiling_applied).toBe(false);
+  });
+});

@@ -6,6 +6,7 @@ import type {
 } from "@/lib/research/contracts";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
+import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
 import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
 import { brandFindingFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
 
@@ -81,7 +82,8 @@ export interface EvidenceGaps { per_track: TrackGaps[] }
 
 export interface VerdictViewModel {
   engineComplete: boolean;                 // synthesis present → engine reached report-ready
-  verdict: VerdictResult | null;           // recomputed; null until synthesis exists
+  verdict: VerdictResult | null;           // recomputed + CEILED (H3); null until synthesis exists
+  ceiling: CeilingResult | null;           // H3 — ceiling meta (applied?, original, unassessed dims, reason)
   executiveSummary: ExecutiveSummaryView | null;
   crossTrack: CrossTrackView | null;
   tracks: TrackIntelView[];                // finding tracks (1–5), ordered
@@ -110,7 +112,11 @@ export function buildVerdictViewModel(input: {
   }
 
   const engineComplete = synthesis !== null;
-  const verdict = engineComplete ? computeVerdict(signals, synthesis) : null;
+  // H3 — the ceiling is applied HERE exactly as in the pipeline's stageVerdict and the rejudge
+  // script (one shared fn, three sites) so the displayed verdict always equals cases.verdict.
+  const rawVerdict = engineComplete ? computeVerdict(signals, synthesis) : null;
+  const ceiling = rawVerdict ? applyVerdictCeiling(rawVerdict, signals) : null;
+  const verdict = rawVerdict && ceiling ? { ...rawVerdict, verdict: ceiling.verdict } : null;
 
   const tracks: TrackIntelView[] = findingRows.map((r) => ({
     track_number: r.track_number,
@@ -158,7 +164,7 @@ export function buildVerdictViewModel(input: {
   const coverage = engineComplete ? computeCoverage(tracks, requiredTracks) : null;
   const gaps = engineComplete ? computeGaps(tracks) : null;
 
-  return { engineComplete, verdict, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
+  return { engineComplete, verdict, ceiling, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
 }
 
 // item 3 — aggregate evidence completeness over the finding tracks.
