@@ -49,7 +49,7 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type")
+    .select("id, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -85,9 +85,18 @@ export async function POST(
     return NextResponse.json({ ok: true, delivered: false, status: "research_running" });
   }
 
-  // Delivery path (publish | override) — banned-language gate over authoritative track findings.
+  // Delivery path (publish | override) — HARD-tier banned-language gate over EVERY client-visible
+  // string (H5): compiled findings + client-facing questions + the Spec-B identity client_note.
+  // (Assertion-tier advisories are review material on the admin panel, not gated here.)
   const rows = await getCaseTrackResults(id);
-  const violations = [...new Set(rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)))];
+  const identityNote =
+    ((c as { supplier_identity?: { identity_discrepancy?: { client_note?: string } | null } | null })
+      .supplier_identity?.identity_discrepancy?.client_note) ?? null;
+  const violations = [...new Set([
+    ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
+    ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
+    ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
+  ])];
   if (violations.length > 0) {
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",
