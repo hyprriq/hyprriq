@@ -27,8 +27,11 @@ export function boundaryNotesFrom(json: Record<string, unknown> | null | undefin
 }
 
 // ── Finding-based presenters (portal Evidence tab) ──
+// H5 — compiled findings ONLY: the client Finding type no longer carries raw model output
+// (ai_output_json) or internal reviewer notes (manual_notes). Verified against the one delivered
+// case (Morendelli): its manual_notes were empty strings, so no rendered content changes.
 export function findingText(f: Finding): { title: string; detail: string } {
-  const j = (f.compiled_findings_json ?? f.ai_output_json ?? {}) as Record<string, unknown>;
+  const j = (f.compiled_findings_json ?? {}) as Record<string, unknown>;
   const title =
     (typeof j.title === "string" && j.title) ||
     (typeof j.heading === "string" && j.heading) ||
@@ -37,11 +40,10 @@ export function findingText(f: Finding): { title: string; detail: string } {
     brandFindingFrom(j) || // ADR-T2-002 (Track 2) — prefer the scoped finding over the legacy summary
     (typeof j.summary === "string" && j.summary) ||
     (typeof j.detail === "string" && j.detail) ||
-    f.manual_notes ||
     "";
   return { title, detail };
 }
 
 export function findingNotes(f: Finding): { label: string; text: string }[] {
-  return boundaryNotesFrom(f.compiled_findings_json ?? f.ai_output_json);
+  return boundaryNotesFrom(f.compiled_findings_json);
 }

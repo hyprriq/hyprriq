@@ -54,7 +54,8 @@ function fmt(iso: string | null): string {
 function extractQuestions(findings: Finding[]): { text: string; why?: string }[] {
   const out: { text: string; why?: string }[] = [];
   for (const f of findings) {
-    const j = (f.compiled_findings_json ?? f.ai_output_json ?? {}) as Record<string, unknown>;
+    // H5 — compiled findings only: the client Finding type no longer carries raw model output.
+    const j = (f.compiled_findings_json ?? {}) as Record<string, unknown>;
     const qs = j.questions;
     if (Array.isArray(qs)) {
       for (const q of qs) {
