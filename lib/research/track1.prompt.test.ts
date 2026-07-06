@@ -96,3 +96,11 @@ describe("H4 — buildTrack1Prompt research identity + alias guard", () => {
     expect(user).not.toContain("The client entered this supplier as");
   });
 });
+
+describe("H5 — attribution guard (regression-locked so a future prompt edit cannot drop it)", () => {
+  it("system prompt carries the ATTRIBUTION instruction", () => {
+    const { system } = buildTrack1Prompt({ vendor_name: "X", vendor_website: null }, []);
+    expect(system).toMatch(/ATTRIBUTION:/);
+    expect(system).toMatch(/never state authorization\/approval status as your own conclusion/i);
+  });
+});

@@ -135,3 +135,11 @@ describe("H4 — buildTrack2Prompt research identity + alias guard", () => {
     expect(user).toContain('The client entered this supplier as "Bosch"');
   });
 });
+
+describe("H5 — attribution guard (Track 2)", () => {
+  it("system prompt carries the ATTRIBUTION instruction", () => {
+    const { system } = buildTrack2Prompt({ vendor_name: "X", brands: ["B"] }, []);
+    expect(system).toMatch(/ATTRIBUTION:/);
+    expect(system).toMatch(/never state authorization\/approval status as your own conclusion/i);
+  });
+});
