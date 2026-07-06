@@ -171,3 +171,22 @@ describe("buildVerdictViewModel — H3 verdict ceiling", () => {
     expect(vm.ceiling?.ceiling_applied).toBe(false);
   });
 });
+
+// H5 — assertion-tier advisories: presence-based, never trusts the LLM to attribute; surfaced to
+// the admin pre-publish (hold-from-auto-publish once auto-delivery exists), never blocking here.
+describe("buildVerdictViewModel — H5 assertion advisories", () => {
+  it("collects assertion-tier phrases from compiled findings and questions across rows", () => {
+    const t2 = trackRow(2, "supply_chain_relationship", "infer");
+    t2.compiled_findings_json = { brand_relationship_finding: "Lenovo's dealer locator lists the vendor as an authorized distributor." };
+    t2.questions_to_ask = [{ question: "Are you an approved reseller for Bosch?", reason: "", blocking_weight_key: "", priority: "high", brand: "Bosch" }];
+    const vm = buildVerdictViewModel({ trackRows: [trackRow(1, "supplier_identity", "pass"), t2], synthesis: synth(), ios: null });
+    expect(vm.assertion_advisories).toEqual(expect.arrayContaining([
+      "authorized seller/distributor/dealer",
+      "approved seller/reseller",
+    ]));
+  });
+  it("clean findings → no advisories", () => {
+    const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
+    expect(vm.assertion_advisories).toEqual([]);
+  });
+});

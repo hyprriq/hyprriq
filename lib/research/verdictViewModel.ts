@@ -7,6 +7,7 @@ import type {
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
+import { assertionAdvisories } from "@/lib/utils/banned-language";
 import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
 import { brandFindingFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
 
@@ -84,6 +85,7 @@ export interface VerdictViewModel {
   engineComplete: boolean;                 // synthesis present → engine reached report-ready
   verdict: VerdictResult | null;           // recomputed + CEILED (H3); null until synthesis exists
   ceiling: CeilingResult | null;           // H3 — ceiling meta (applied?, original, unassessed dims, reason)
+  assertion_advisories: string[];          // H5 — status-assertion phrases found in narrative/question fields (review before publish; hold-from-auto-publish)
   executiveSummary: ExecutiveSummaryView | null;
   crossTrack: CrossTrackView | null;
   tracks: TrackIntelView[];                // finding tracks (1–5), ordered
@@ -164,7 +166,14 @@ export function buildVerdictViewModel(input: {
   const coverage = engineComplete ? computeCoverage(tracks, requiredTracks) : null;
   const gaps = engineComplete ? computeGaps(tracks) : null;
 
-  return { engineComplete, verdict, ceiling, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
+  // H5 — presence-based assertion scan over everything the client could see from these rows.
+  // Advisory only: the admin judges attribution at publish; the hard tier gates delivery separately.
+  const assertion_advisories = [...new Set(findingRows.flatMap((r) => [
+    ...assertionAdvisories(r.compiled_findings_json),
+    ...assertionAdvisories(r.questions_to_ask ?? null),
+  ]))];
+
+  return { engineComplete, verdict, ceiling, assertion_advisories, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
 }
 
 // item 3 — aggregate evidence completeness over the finding tracks.

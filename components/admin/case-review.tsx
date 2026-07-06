@@ -518,6 +518,16 @@ export function CaseReview({
 
       {/* 5 — Analyst Decision */}
       <Section eyebrow="Optional · the engine already reached report-ready" title="Analyst Decision">
+        {/* H5 — assertion-tier advisories: status vocabulary present in narrative/question fields.
+            Non-blocking; the publish click is the attribution judgment. Hard tier gates separately. */}
+        {vm.assertion_advisories.length > 0 && !delivered && (
+          <div className="mb-3 rounded-lg border border-conditional-ink/30 bg-conditional-bg p-3">
+            <div className="text-[12px] font-semibold uppercase tracking-wide text-conditional-ink">Review wording before publish</div>
+            <p className="mt-1 text-[13px] text-conditional-ink">
+              Status-assertion phrases found (verify each is attributed to its source, never stated as our conclusion): {vm.assertion_advisories.join(" · ")}
+            </p>
+          </div>
+        )}
         {delivered ? (
           <p className="text-[14px] font-semibold text-clear-ink">✓ This case has been delivered.</p>
         ) : (
