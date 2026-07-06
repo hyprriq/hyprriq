@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** DRAFT — founder-review artifact. **No code until approved** (same gate as H1–H4, all FROZEN).
+**Status:** APPROVED + BUILT (2026-07-06). OQ-1 two-tier structure approved; phrase-to-tier list founder-ruled: HARD H1–H9 all confirmed (incl. H2 `guarantee*` HARD-even-attributed; founder additions: H9 suspension promises, H5 extended to "partnered with"); ASSERTION A1–A5 confirmed (+`dealer` in A1). Attribution design approved: presence-based backstop (safety never depends on the LLM attributing), advisory = hold-from-auto-publish, machinery unit-locked, `scripts/validate-attribution.ts` samples behavior (Task 5b). OQ-2 approved.
 **Phase:** H5 ONLY. No corpus work (H6), no firewall work (H7), no prompt-philosophy work.
 
 **Goal:** nothing a client's browser receives has bypassed the gates — findings ship server-side only after delivery, every client-visible string passes compliance, and the compliance gate stops being an accidental total-block so the **first clean publish** becomes possible (closing H1's pin-write caveat in the same motion).
