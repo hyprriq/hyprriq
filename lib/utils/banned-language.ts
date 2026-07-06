@@ -9,13 +9,31 @@
 //                    based (regex never judges attribution; a human does, at publish). Rule: cases
 //                    with assertion advisories can never auto-deliver once auto-delivery exists.
 
-type Rule = { re: RegExp; label: string };
+type Rule = { re: RegExp; label: string; test?: (text: string) => boolean };
+
+// H2 — NEGATION-AWARE guarantee check (bug found via the AT-2 pre-check): the spec-MANDATED
+// disclaimer language is the DENIAL of a guarantee ("does not guarantee", "We do not guarantee:",
+// "not guarantees") and must pass; any occurrence WITHOUT a preceding negation blocks. The founder
+// ruling (guarantee = HARD even attributed) is unchanged — this only exempts the required denials.
+const NEGATION_BEFORE = /(?:\bnot|n[o'’]t|\bcannot|\bcan'?t|\bnever|\bno)\s*$/i;
+function hasUnnegatedGuarantee(text: string): boolean {
+  const re = /guarantee/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const before = text.slice(Math.max(0, m.index - 18), m.index);
+    if (!NEGATION_BEFORE.test(before)) return true;
+  }
+  return false;
+}
 
 // HARD (H1–H9) — promises, platform endorsement, affiliations, totality conclusions.
 const HARD: Rule[] = [
   { re: /ungat/i, label: "ungating" },                                                          // H1 (Hard Rule #12: never, anywhere)
-  { re: /\bguarantee/i, label: "guarantee" },                                                   // H2 — HARD even attributed (founder ruling: a shipped guarantee is unrecoverable; reword to "promises/claims")
-  { re: /account\s+(is\s+|will\s+be\s+)?safe/i, label: "account safe" },                        // H3
+  { re: /\bguarantee/i, label: "guarantee", test: hasUnnegatedGuarantee },                      // H2 — HARD even attributed (founder ruling); negation-aware (mandated disclaimers pass)
+  // H3 — the PROMISE forms only ("account is safe", "we ensure account safety"). The bare noun
+  // "account safety" appears in the MANDATED disclaimer's denial list and must not match — hence
+  // the \b (excludes "safety") + explicit promise-verb alternation.
+  { re: /account\s+(is\s+|will\s+be\s+)?safe\b|(ensur|maintain|protect|keep)\w*\s+(your\s+)?account\s+safety/i, label: "account safe" },
   { re: /amazon\s+approv/i, label: "amazon approved" },                                         // H4
   { re: /(affiliated|partnered)\s+with\s+(amazon|walmart|ebay|shopify)/i, label: "affiliated/partnered with marketplace" }, // H5 (+founder addition 2)
   { re: /fully\s+legitimate/i, label: "fully legitimate" },                                     // H6
@@ -36,7 +54,7 @@ const ASSERTION: Rule[] = [
 
 const scanWith = (rules: Rule[]) => (text: string): string[] => {
   if (!text) return [];
-  return rules.filter((b) => b.re.test(text)).map((b) => b.label);
+  return rules.filter((b) => (b.test ? b.test(text) : b.re.test(text))).map((b) => b.label);
 };
 
 // HARD tier — blocks delivery. Every client-visible string, no exceptions.

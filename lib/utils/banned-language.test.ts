@@ -86,3 +86,42 @@ describe("back-compat + Spec-B client_note templates", () => {
     }
   });
 });
+
+// H5 bug fix (found via AT-2 pre-check): H2 must be NEGATION-AWARE. The spec-MANDATED disclaimer
+// language ("does not guarantee", "We do not guarantee:") is the required DENIAL of a guarantee —
+// blocking it would make every properly-disclaimed report unpublishable. Un-negated guarantees
+// remain hard-blocked (founder ruling unchanged).
+describe("H2 guarantee — negation-aware", () => {
+  const negated = [
+    "a confirmed distributor or authorization relationship does not guarantee marketplace approval",
+    "We do not guarantee: Amazon invoice acceptance, account safety, or freedom from IP complaints",
+    "we cannot guarantee marketplace outcomes",
+    "we can't guarantee acceptance",
+    "this report never guarantees results",
+    "there is no guarantee of acceptance",
+    "findings are observations, not guarantees",
+  ];
+  for (const s of negated) {
+    it(`passes (required disclaimer language): "${s.slice(0, 50)}…"`, () => expect(scanHard(s)).toEqual([]));
+  }
+  const promises = [
+    "we guarantee results",
+    "the vendor guarantees invoice acceptance",
+    "guaranteed safe sourcing",
+    "acceptance is guaranteed",
+  ];
+  for (const s of promises) {
+    it(`still blocks (un-negated): "${s}"`, () => expect(scanHard(s).length).toBeGreaterThan(0));
+  }
+});
+
+// Same disclaimer-collision class as H2: the mandated denial list NAMES "account safety".
+describe("H3 account-safe — disclaimer-safe boundary", () => {
+  it("the mandated disclaimer's denial list passes", () => {
+    expect(scanHard("We do not guarantee: Amazon invoice acceptance, account safety, or freedom from IP complaints.")).toEqual([]);
+  });
+  it("promise forms still block", () => {
+    expect(scanHard("your account is safe").length).toBeGreaterThan(0);
+    expect(scanHard("we ensure your account safety").length).toBeGreaterThan(0);
+  });
+});
