@@ -1,0 +1,49 @@
+# HyprrIQ — Session Handover (Hardening H1–H5 → next) · 2026-07-06
+
+**Working dir:** `D:\Projects\Hyprriq\portal` (lowercase "iq"). **Branch:** `staging` (pushed through `72a92d9`; `main` stale — promote before go-live). **Next-build model:** Fable.
+**Read this file first — resume from "IMMEDIATE NEXT". Do NOT re-derive.** The founder-maintained status tracker is `D:\Projects\Hyprriq\Docs\HyprrIQ_OPEN_ITEMS.md` — read it second (planning intent; CODE is ground truth for what exists).
+
+## ⛔ IMMEDIATE NEXT — H5 is BUILT; only founder AT validation remains, then spec H6
+
+H5 (client surface) shipped 2026-07-06, commits through `72a92d9`, deployed to staging via Vercel. **Founder runs (all commands use `--env-file=.env.local` — there is NO `.env`):**
+1. **AT-1** — open a NON-delivered case in the portal + DevTools→Network: findings array EMPTY in the payload (Spec-B banner + dimension statuses still render). Delivered Morendelli (`a1ee6ef3-…`): findings present.
+2. **AT-2 — FIRST CLEAN PUBLISH (also closes H1's last caveat, the publish-time pin WRITE):** admin-review case `2b359a6a-98f9-49c9-8f57-c19f4d8daaac` (AWI-2607-021, attempt 6 — **pre-verified publishable** by running the real gate against its stored content; expect ONE amber advisory "authorized seller/distributor/dealer", non-blocking). Publish, then:
+   `SELECT status, delivered_at, delivered_attempt, reinvestigation_pending FROM cases WHERE id='2b359a6a-…';`
+   PASS = `delivered_attempt=6` written BY THE PUBLISH PATH, `reinvestigation_pending=false`, client page shows findings + H3 "did not assess" note. First AI-pipeline delivery ever.
+3. **AT-3** — hard-tier discovery SQL (in the last session message / H5 plan). May return ZERO rows — that is CORRECT (the old "every case trips" blocks were the disclaimer/assertion false positives H5 fixed); then the 17-sample unit lock covers it and the live half is a logged residual.
+4. `npx tsx --env-file=.env.local scripts/validate-attribution.ts` → expect 3/3 attributed (~$0.10; behavioral SAMPLE — the presence-based advisory is the backstop regardless).
+**On all PASS → founder declares H5 FROZEN → next session specs H6 (founder-review artifact, STOP before code, same gate).**
+
+## Where things stand (the hardening arc)
+
+Independent audit (2026-07-05, `HyprrIQ_Fable_Audit_v1`) → founder approved **ADR-G007 roadmap** (`docs/superpowers/specs/2026-07-05-engine-hardening-and-robustness-design.md`) = H1–H7 gated one at a time, then Tracks 3→4→5 → Synthesis Engine → learning loop.
+
+- **H1 Truth & Record ✅ FROZEN** — Case Investigation Ledger: attempts append (never overwrite), packs/synthesis per attempt, delivered cases immutable (`delivered_attempt` pin + `reinvestigation_pending`), `scripts/rejudge-case.ts` = zero-API determinism proof. Migration `20260706000000` run. *Last caveat (publish-time pin write) closes with H5's AT-2.*
+- **H2 Fail-loud ✅ FROZEN** — llm_failed/parse_failed → n_a+hold (dual detection); persist errors throw; ANY failed track escalates; concurrency 5 + onFailure + 15-min watchdog; dead ends re-wired; submit enqueue failure REFUNDS (dead-port validated). Migration `20260707000000` run.
+- **H3 Verdict semantics ✅ FROZEN** — stubs → `not_implemented` → n_a+skipped (never escalated; 3 n_a causes labeled); verdict ceiling (source_clear→UWC until Track 3) = ONE shared `applyVerdictCeiling` at ALL THREE verdict sites (pipeline `stageVerdict`, admin `buildVerdictViewModel`, rejudge) — **pattern rule: any post-verdict adjustment is one shared fn at every site or it doesn't ship.** Ceiling dies when Track 3 ships.
+- **H4 Identity coherence ✅ FROZEN** — `researchIdentityFor` (one shared selector) feeds track 1/2 queries AND prompts; alias guard; `research_name`/`research_alias` in the frozen record; SO-1 fast-path `.match`→`.exact` (fuzzy near-misses verify via Spec-B); SO-2 unconfirmed→entered name. N1 closed; **Spec B validated end-to-end to the extent fixtures allow** (logged limitation: live resolved-to-different-entity demo waits on the domain-resolution gated item below).
+- **H5 Client surface 🟡 BUILT, awaiting ATs above** — findings server-gated by status (N4 closed at data layer; `ai_output_json`/`manual_notes` permanently out of the client type); **two-tier scanner** (founder-ruled): HARD H1–H9 blocks everywhere (guarantee-even-attributed; +suspension promises; +partnered-with) / ASSERTION A1–A5 = presence-based advisory in narratives+questions, blocks in own-voice strings, **hold-from-auto-publish** once auto-delivery exists; delivery gate scans findings+questions+Spec-B client_note; admin advisory panel; prompt ATTRIBUTION guard regression-locked; `scripts/validate-attribution.ts`. **Two bugs found via AT-2 pre-check and fixed:** H2 negation-aware + H3 boundary-aware — the scanner was DISCLAIMER-BLIND (would have blocked the mandated "does not guarantee…"/"account safety" denial language forever). No migration.
+
+**Gate:** tsc + eslint + **398/398 vitest** + next build all green at `72a92d9`.
+
+## H6 preview (next spec): Money & corpus
+Atomic credit RPCs for the webhook top-up/rollover paths (mirror `deduct_client_credits`); retire/fix `reset_client_credits` (keys retired plan names); **append-only per-case `intelligence_events` ledger** (case_id, attempt, resolved identity+domain, signals, verdict) with profile tables as recomputable rollups; gate memory writes on `identity_unconfirmed`; add `resolved_domain` to the corpus; corpus cleanup (td synnex/synexx merge, junk rows) founder-run backup-first; **wire `case_outcomes` + 30/90-day crons — every idle week is permanently lost learning**; refactor `lib/data/intelligence.ts`'s independent alias computation onto `researchIdentityFor` (logged in H4).
+
+## Other logged gated items (do NOT fold into H6 silently)
+- **Spec-B domain-research under-resolution** (tracker, logged 2026-07-06): live major domains (tdsynnex.com, globaldist.com) score below the resolver's dominance threshold → misleading `website_dead` escalations. Scope: threshold/branch for domain subjects + rename client-facing note + H2-style llm_failed instrumentation on Track 0.5. Explains the globaldist mystery; made visible by SO-1.
+- H7: URL dedupe in packs, corroboration breadth (+`address_fraudulent`), source-diversity pass-cap, hard-fail consensus gate, LLM-replay seam, structured outputs, Track 3/4 firewall registry entries + ADR-T1-001 collision audit (pre-freeze gate for Track 3).
+- Phase H (PDF): scan RENDERED document text; mandated disclaimer in the template contract.
+- Client confirmation loop (design-round OQ-4: pause + NO credit until confirmed) — Spec-B banner is its UI seam.
+
+## Standing rules (all founder-confirmed this arc)
+- Gate rhythm: spec/plan (founder-review artifact) → founder approves (+ answers OQs/sign-offs) → migrations WRITTEN by Claude, RUN by founder, verified via information_schema → TDD build, commit per task, full verify → push staging → **founder personally runs all ATs → phase FROZEN**. Never bundle phases. STOP before code at every gate.
+- Frozen core (never touch without explicit sign-off): `deriveTrackSignal`, `computeVerdict`, `weights.ts` scoring, 6-gate firewall logic, Evidence Pack contract 1.0.0, ADR-G003/G004 + all frozen H-phase semantics.
+- **Fixture rule (earned twice):** select AT fixtures by DB mechanism (`SELECT vendor_name, vendor_website…` / signal mechanism), NEVER by harness label or observed verdict. Harness labels now annotated with DB truth.
+- Env file is `.env.local` (no `.env`). Founder runs everything touching prod (migrations, harness, publishes). Claude reads prod DB read-only only.
+- Automation model SETTLED: full automation, human optional; "manual review" = hold-from-auto-publish + optional intervention.
+- Four client verdicts LOCKED; "Need More Information" is the only sanctioned addition (maps to confirmation loop). Confidence Arbitration Layer = synthesis-phase design question (Bucket C), not architecture.
+
+## Key artifacts
+Plans/specs: `docs/superpowers/specs/2026-07-05-engine-hardening-and-robustness-design.md` (ADR-G007) · plans `2026-07-05-h1-truth-and-record.md`, `2026-07-05-h2-fail-loud.md`, `2026-07-05-h3-verdict-semantics.md`, `2026-07-05-h4-identity-coherence.md`, `2026-07-06-h5-client-surface.md` (contains the founder-ruled phrase list).
+Scripts (founder-run): `scripts/rejudge-case.ts` (zero-API determinism proof) · `scripts/validate-attribution.ts` (behavioral sampler) · `scripts/rerun-batch.ts` (re-runs append attempts now; labels DB-corrected).
+Key identifiers: Supabase `mjkacjrrrmlwlwkienvq.supabase.co` (single project = prod — env separation is ADR-G007 D5, unbuilt). Inngest app `hyprriq` (now 2 functions: pipeline + watchdog). Staging URL `hyprriq-git-staging-hyprrx-hyprriq.vercel.app`.
