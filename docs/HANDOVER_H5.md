@@ -3,16 +3,19 @@
 **Working dir:** `D:\Projects\Hyprriq\portal` (lowercase "iq"). **Branch:** `staging` (pushed through `72a92d9`; `main` stale — promote before go-live). **Next-build model:** Fable.
 **Read this file first — resume from "IMMEDIATE NEXT". Do NOT re-derive.** The founder-maintained status tracker is `D:\Projects\Hyprriq\Docs\HyprrIQ_OPEN_ITEMS.md` — read it second (planning intent; CODE is ground truth for what exists).
 
-## ⛔ IMMEDIATE NEXT — H5 is BUILT; only founder AT validation remains, then spec H6
+## ⛔ IMMEDIATE NEXT — H5 is BUILT (+ publish-confirm addendum); only founder AT re-run remains, then spec H6
 
-H5 (client surface) shipped 2026-07-06, commits through `72a92d9`, deployed to staging via Vercel. **Founder runs (all commands use `--env-file=.env.local` — there is NO `.env`):**
-1. **AT-1** — open a NON-delivered case in the portal + DevTools→Network: findings array EMPTY in the payload (Spec-B banner + dimension statuses still render). Delivered Morendelli (`a1ee6ef3-…`): findings present.
-2. **AT-2 — FIRST CLEAN PUBLISH (also closes H1's last caveat, the publish-time pin WRITE):** admin-review case `2b359a6a-98f9-49c9-8f57-c19f4d8daaac` (AWI-2607-021, attempt 6 — **pre-verified publishable** by running the real gate against its stored content; expect ONE amber advisory "authorized seller/distributor/dealer", non-blocking). Publish, then:
-   `SELECT status, delivered_at, delivered_attempt, reinvestigation_pending FROM cases WHERE id='2b359a6a-…';`
-   PASS = `delivered_attempt=6` written BY THE PUBLISH PATH, `reinvestigation_pending=false`, client page shows findings + H3 "did not assess" note. First AI-pipeline delivery ever.
-3. **AT-3** — hard-tier discovery SQL (in the last session message / H5 plan). May return ZERO rows — that is CORRECT (the old "every case trips" blocks were the disclaimer/assertion false positives H5 fixed); then the 17-sample unit lock covers it and the live half is a logged residual.
-4. `npx tsx --env-file=.env.local scripts/validate-attribution.ts` → expect 3/3 attributed (~$0.10; behavioral SAMPLE — the presence-based advisory is the backstop regardless).
+H5 (client surface) shipped 2026-07-06, through commit `a3096d9`, deployed to staging via Vercel. **Founder runs (all commands use `--env-file=.env.local` — there is NO `.env`):**
+1. **AT-1** — open a NON-delivered case in the portal + DevTools→Network: findings array EMPTY in the payload (Spec-B banner + dimension statuses still render). Delivered Morendelli (`a1ee6ef3-…`) or kehe (`AWI-2607-023`, now delivered): findings present.
+2. **AT-2 — FIRST CLEAN AI-PUBLISH — RE-RUN on the intended fixture, open BY CASE-NUMBER:** navigate to case **`AWI-2607-021`** (id `2b359a6a-98f9-49c9-8f57-c19f4d8daaac`, attempt 6, pre-verified publishable — ONE non-blocking amber advisory expected). **VERIFY the confirm dialog names "AWI-2607-021" + "TD Synnex" before you commit** (the new guard), then Publish, then:
+   `SELECT status, delivered_at, delivered_attempt, reinvestigation_pending FROM cases WHERE id='2b359a6a-98f9-49c9-8f57-c19f4d8daaac';`
+   PASS = `delivered_attempt=6` written BY THE PUBLISH PATH, `reinvestigation_pending=false`, client page shows findings + H3 "did not assess" note.
+   **NOTE — H1's pin-write caveat is ALREADY CLOSED (2026-07-06):** the prior AT-2 click published kehe/AWI-2607-023 (clicked-case ≠ queried-case) and the publish path provably wrote `delivered_attempt=2` live. This re-run is the intended-fixture confirmation + validates the new publish-confirm guard.
+3. **AT-3** — hard-tier discovery SQL. May return ZERO rows — CORRECT (old blocks were the disclaimer/assertion false positives H5 fixed); 17-sample unit lock covers it, live half a logged residual.
+4. `npx tsx --env-file=.env.local scripts/validate-attribution.ts` → expect 3/3 attributed (~$0.10; behavioral SAMPLE — presence-based advisory is the backstop regardless).
 **On all PASS → founder declares H5 FROZEN → next session specs H6 (founder-review artifact, STOP before code, same gate).**
+
+**Publish-confirm addendum (built 2026-07-06, commit `a3096d9`, part of H5):** the AT-2 "failure" was diagnosed as clicked-case ≠ queried-case — publish worked, on a different case. Real finding fixed: the publish flow had ZERO case-identity confirmation → a wrong-case click delivers the wrong client's report irreversibly (H1). Added `lib/admin/publish-confirm.ts` (pure, TDD): a confirm dialog naming case_number + vendor before any deliver/override, and a success toast that names the delivered case (route now echoes `case_number`). Decision: kehe stays delivered (H1 immutability — honest history). 405/405 tests.
 
 ## Where things stand (the hardening arc)
 
@@ -38,7 +41,7 @@ Atomic credit RPCs for the webhook top-up/rollover paths (mirror `deduct_client_
 ## Standing rules (all founder-confirmed this arc)
 - Gate rhythm: spec/plan (founder-review artifact) → founder approves (+ answers OQs/sign-offs) → migrations WRITTEN by Claude, RUN by founder, verified via information_schema → TDD build, commit per task, full verify → push staging → **founder personally runs all ATs → phase FROZEN**. Never bundle phases. STOP before code at every gate.
 - Frozen core (never touch without explicit sign-off): `deriveTrackSignal`, `computeVerdict`, `weights.ts` scoring, 6-gate firewall logic, Evidence Pack contract 1.0.0, ADR-G003/G004 + all frozen H-phase semantics.
-- **Fixture rule (earned twice):** select AT fixtures by DB mechanism (`SELECT vendor_name, vendor_website…` / signal mechanism), NEVER by harness label or observed verdict. Harness labels now annotated with DB truth.
+- **Fixture-identity rule (earned THRICE, now structurally guarded):** (a) select AT fixtures by DB mechanism (`SELECT vendor_name, vendor_website…` / signal mechanism), NEVER by harness label or observed verdict — H3 JC-Sales-by-verdict + H4 c14dc564-by-label; (b) the PUBLISH UI now confirms case-identity (case_number + vendor) before an irreversible deliver — H5 kehe clicked-case≠queried-case. Verdict-by-mechanism for fixtures; case-identity-confirmation for the publish UI. Harness labels annotated with DB truth.
 - Env file is `.env.local` (no `.env`). Founder runs everything touching prod (migrations, harness, publishes). Claude reads prod DB read-only only.
 - Automation model SETTLED: full automation, human optional; "manual review" = hold-from-auto-publish + optional intervention.
 - Four client verdicts LOCKED; "Need More Information" is the only sanctioned addition (maps to confirmation loop). Confidence Arbitration Layer = synthesis-phase design question (Bucket C), not architecture.
