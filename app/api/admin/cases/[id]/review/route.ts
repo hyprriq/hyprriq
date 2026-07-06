@@ -49,7 +49,7 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity")
+    .select("id, case_number, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -123,5 +123,6 @@ export async function POST(
 
   const { error } = await supabaseAdmin.from("cases").update(update).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, delivered: true });
+  // H5 addendum — echo the case identity so the UI success toast can name WHICH report delivered.
+  return NextResponse.json({ ok: true, delivered: true, case_number: c.case_number, delivered_attempt: attempt });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buildPublishConfirm, buildDeliveredToast } from "@/lib/admin/publish-confirm";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
 import type { TrackSignal, Verdict, VerdictResult, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
@@ -78,12 +79,16 @@ const SOURCE_LABEL: Record<"system" | "additional", string> = {
 
 export function CaseReview({
   caseId,
+  caseNumber,
+  vendorName = null,
   vm,
   caseStatus,
   additionalQuestions = [],
   supplierIdentity = null,
 }: {
   caseId: string;
+  caseNumber: string;
+  vendorName?: string | null;
   vm: VerdictViewModel;
   caseStatus: string;
   additionalQuestions?: AdditionalQuestion[];
@@ -134,6 +139,10 @@ export function CaseReview({
 
   async function send(action: "publish" | "override" | "request_investigation") {
     if (busy) return;
+    // H5 addendum — irreversible-delivery guard: confirm the CASE IDENTITY before committing a
+    // publish/override (a wrong-case click delivers the wrong client's report permanently, H1).
+    const confirmMsg = buildPublishConfirm(action, caseNumber, vendorName);
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
     setBusy(action);
     setError(null);
     try {
@@ -153,13 +162,8 @@ export function CaseReview({
         }
         throw new Error(data?.message || data?.error || "Could not save.");
       }
-      setDone(
-        action === "request_investigation"
-          ? "Sent back for further investigation."
-          : action === "override"
-            ? "Verdict overridden & report delivered."
-            : "Report delivered.",
-      );
+      // Name the delivered case in the success toast (server echoes case_number; fall back to the prop).
+      setDone(buildDeliveredToast(action, typeof data?.case_number === "string" ? data.case_number : caseNumber));
       setMode("idle");
       router.refresh();
     } catch (e) {
