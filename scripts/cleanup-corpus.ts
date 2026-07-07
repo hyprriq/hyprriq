@@ -33,7 +33,21 @@ import { normalizeName } from "@/lib/utils/normalize-name";
 // so AWI-2607-024 is INCLUDED and brand mototec stays). Every constant maps to a table row.
 // M1 — cases whose history never enters the ledger:
 const EXCLUDED_CASE_NUMBERS_PREFIX = ["SEED-VALIDATE"];               // C1
-const EXCLUDED_CASE_NUMBERS = ["AWI-2607-016", "AWI-2607-018", "AWI-2606-001"]; // C2 Zzqxwv, C3 Bosch mislabel, C4 Morendelli
+const EXCLUDED_CASE_NUMBERS = [
+  "AWI-2607-016", "AWI-2607-018", "AWI-2606-001", // C2 Zzqxwv, C3 Bosch mislabel, C4 Morendelli
+  "AWI-2606-003",                                  // C9 Global Dist mislabel (OQ-1 addendum ruling d)
+];
+
+// OQ-1 ADDENDUM (founder ruled 2026-07-07 after the first dry-run diagnosis) — founder-attested
+// identities: the resolver's HISTORICAL unconfirmed/ambiguous verdicts are false negatives for
+// these cases (the logged Spec-B under-resolution family); the founder attests the real entity,
+// so their events backfill as CONFIRMED under the attested name. This constant + the plan doc's
+// addendum section are the provenance record (the ledger schema carries no attestation column).
+const FOUNDER_ATTESTED: Record<string, { resolved_name: string; resolved_domain?: string }> = {
+  "AWI-2607-017": { resolved_name: "JC Sales" },                                              // (a) V5 KEEP
+  "AWI-2606-012": { resolved_name: "TD SYNNEX Corporation", resolved_domain: "tdsynnex.com" }, // (b) SO-1 typo case
+  "AWI-2607-015": { resolved_name: "TD SYNNEX Corporation", resolved_domain: "tdsynnex.com" }, // (b) SO-1 typo case
+};
 // M2 — junk brand keys stripped from event brands/brands_normalized at backfill (else the
 // rebuild resurrects the brand row from the ledger — the coupling the ruling table documents):
 const BACKFILL_STRIP_BRANDS = ["colox", "xyz", "nike"];               // B2, B10, B7
@@ -94,9 +108,12 @@ async function computeBackfill(): Promise<{ events: BackfillEvent[]; skipped: st
 
     const si = (c.supplier_identity ?? null) as { resolved_name?: string; resolved_domain?: string | null; identity_unconfirmed?: boolean } | null;
     const enteredName = (c.vendor_name as string | null) ?? null;
+    // OQ-1 addendum — founder attestation overrides the resolver's historical false negative.
+    const attested = caseNumber ? FOUNDER_ATTESTED[caseNumber] : undefined;
     // Legacy pre-Spec-B cases (no supplier_identity): the entered name WAS the research subject —
     // treated as confirmed, else kept vendors (ingram micro etc.) would starve at rebuild.
-    const identityUnconfirmed = si ? !!si.identity_unconfirmed : false;
+    const identityUnconfirmed = attested ? false : si ? !!si.identity_unconfirmed : false;
+    if (attested) console.log(`   ✓ attested: ${caseNumber} → "${attested.resolved_name}" (OQ-1 addendum)`);
 
     const byAttempt = new Map<number, Row[]>();
     for (const r of rows) {
@@ -114,7 +131,10 @@ async function computeBackfill(): Promise<{ events: BackfillEvent[]; skipped: st
       const researchName = aRows
         .map((r) => ((r.compiled_findings_json as Row | null)?.research_name as string | undefined))
         .find((n) => !!n);
-      const resolvedName = researchName
+      // Precedence: founder attestation > the attempt's frozen research_name > current identity >
+      // entered name. (Attestation must beat research_name — the typo cases' rows say "TD Synexx".)
+      const resolvedName = attested?.resolved_name
+        ?? researchName
         ?? (si && !identityUnconfirmed && si.resolved_name ? si.resolved_name : enteredName)
         ?? "";
       if (!resolvedName) { skipped.push(`${caseNumber} attempt ${attempt} (no resolvable name)`); continue; }
@@ -129,7 +149,7 @@ async function computeBackfill(): Promise<{ events: BackfillEvent[]; skipped: st
         entered_name: enteredName,
         resolved_name: resolvedName,
         vendor_name_normalized: normalizeName(resolvedName),
-        resolved_domain: si?.resolved_domain ?? null,
+        resolved_domain: attested?.resolved_domain ?? si?.resolved_domain ?? null,
         identity_unconfirmed: identityUnconfirmed,
         identity_failed: false, // not reconstructable historically; H2-era failures already read n_a in signals
         brands: keptBrands,
@@ -228,7 +248,17 @@ async function main() {
     .filter((k) => !vendorKeys.includes(k) && !JUNK_VENDOR_KEYS.includes(k));
   const bOrphans = ((bRows ?? []) as Row[]).map((r) => r.brand_name_normalized as string)
     .filter((k) => !brandKeys.includes(k) && !JUNK_BRAND_KEYS.includes(k));
-  console.log(`   vendor orphans: ${vOrphans.length ? vOrphans.join(", ") : "none"}`);
+  // Reporting fix (OQ-1 addendum): a Spec-B RE-KEY (entered name → resolved canonical name) must
+  // never read as a deletion — annotate orphans whose entered name lives on under a new key.
+  const rekeyOf = (orphan: string): string | null => {
+    const hit = confirmed.find((e) => e.entered_name && normalizeName(e.entered_name) === orphan && e.vendor_name_normalized !== orphan);
+    return hit ? hit.vendor_name_normalized : null;
+  };
+  const vOrphanLabel = (k: string) => {
+    const nk = rekeyOf(k);
+    return nk ? `${k} (RE-KEYED → ${nk}; entered name rides as alias — not a loss)` : k;
+  };
+  console.log(`   vendor orphans: ${vOrphans.length ? vOrphans.map(vOrphanLabel).join(", ") : "none"}`);
   console.log(`   brand orphans:  ${bOrphans.length ? bOrphans.join(", ") : "none"}`);
   if (APPLY) {
     if (vOrphans.length) await supabaseAdmin.from("vendor_intelligence").delete().in("vendor_name_normalized", vOrphans);
@@ -238,11 +268,18 @@ async function main() {
 
   console.log("\n── Phase 6 — VERIFY (case_count must equal DISTINCT confirmed cases per key)");
   const { data: vFinal } = await supabaseAdmin.from("vendor_intelligence").select("vendor_name_normalized, case_count, resolved_domain");
+  const existingVendorKeys = ((vFinal ?? []) as Row[]).map((r) => r.vendor_name_normalized as string);
   for (const v of (vFinal ?? []) as Row[]) {
     const key = v.vendor_name_normalized as string;
     const expected = new Set(confirmed.filter((e) => e.vendor_name_normalized === key).map((e) => e.case_id)).size;
     const ok = APPLY ? v.case_count === expected : true;
     console.log(`   ${ok ? "✔" : "✗ MISMATCH"} ${key}: case_count=${v.case_count}${APPLY ? ` (expected ${expected})` : ` (will become ${expected})`}`);
+  }
+  // Reporting fix (OQ-1 addendum): keys the rebuild CREATES (e.g. a re-key target) are listed so a
+  // rename shows as old-row-0 + new-row-N, never as a bare deletion. No-op on APPLY (already rows).
+  for (const key of vendorKeys.filter((k) => !existingVendorKeys.includes(k))) {
+    const expected = new Set(confirmed.filter((e) => e.vendor_name_normalized === key).map((e) => e.case_id)).size;
+    console.log(`   ➕ NEW ${key}: will be created with case_count=${expected}`);
   }
 
   console.log(`\nDONE (${APPLY ? "APPLY" : "DRY-RUN — nothing changed except backups"}). Backups → ${dir}`);

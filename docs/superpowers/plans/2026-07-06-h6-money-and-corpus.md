@@ -98,6 +98,27 @@
 
 **Note on the committed summary table (superseded):** the earlier compact OQ-1 table said "vendor jc sales KEEP (brand colox dies)" without naming a mechanism — expanding the table exposed that a Phase-3 delete alone would resurrect colox at rebuild. M2 (backfill strip) is the fix; V5/B2/C6 above are the coherent version. Task 8's constants now include `BACKFILL_STRIP_BRANDS`.
 
+### OQ-1 ADDENDUM — ruled 2026-07-07 after the first dry-run diagnosis (founder rulings a–d)
+
+The first dry-run exposed that the confirmed-identity gate, applied to HISTORICAL cases, inherits the resolver's known false negatives (the logged Spec-B domain/name under-resolution family) — starving vendors the table ruled KEEP. Root causes: jc sales' only case carries `identity_unconfirmed=true` (`ambiguous`); the td synexx typo cases likewise; kehe was not starved but RE-KEYED to its Spec-B canonical name; global dist (a legacy case with NO identity record) slipped IN via the legacy-confirmed rule. Founder rulings:
+
+- **(a) ATTEST `AWI-2607-017` → "JC Sales"** — real supplier (V5 KEEP); the ambiguous verdict is a resolver false negative, not a disqualification. Its events backfill as confirmed. *Expectation set: the rebuilt row's case_count is 1 (one real case, three attempts) — the old 4 was attempt-inflation (B6).*
+- **(b) ATTEST `AWI-2606-012` + `AWI-2607-015` → "TD SYNNEX Corporation" / tdsynnex.com** — the SO-1 typo cases genuinely WERE TD Synnex investigations; counting them under the real entity is accurate. Folds td synnex 7→9 confirmed cases and keeps brand `microsoft` alive (B5), which otherwise starved with the typo cases.
+- **(c) kehe: NO change — the `kehe` → `kehe distributors` re-key stands.** Spec-B keys the corpus on the resolved identity; "kehe" rides as an `entered_names` alias on the canonical row. Not a loss — a migration.
+- **(d) EXCLUDE `AWI-2606-003` (Global Dist) — added to M1 (row C9).** The mislabel-mystery case (logged Spec-B under-resolution) must not seed the corpus; consistent with the other mislabel exclusions. (Its brand `now foods` never enters.)
+
+**Provenance record — the attestation constant as shipped in `scripts/cleanup-corpus.ts` (the ledger schema carries no attestation column; THIS section + the constant are the record of why these events backfill as confirmed):**
+
+```ts
+const FOUNDER_ATTESTED: Record<string, { resolved_name: string; resolved_domain?: string }> = {
+  "AWI-2607-017": { resolved_name: "JC Sales" },                                              // (a) V5 KEEP
+  "AWI-2606-012": { resolved_name: "TD SYNNEX Corporation", resolved_domain: "tdsynnex.com" }, // (b) SO-1 typo case
+  "AWI-2607-015": { resolved_name: "TD SYNNEX Corporation", resolved_domain: "tdsynnex.com" }, // (b) SO-1 typo case
+};
+```
+
+**Reporting fix (also ruled):** Phase 5 annotates re-keys (`kehe (RE-KEYED → kehe distributors)`) and Phase 6 lists NEW keys, so a rename can never read as a deletion again. **Post-addendum expected end-state:** vendors = td synnex (9), ingram micro (6), mototec usa (1), d and h (1), kehe distributors (1, alias "kehe"), jc sales (1); deletes = td synexx, bosch, zzqxwv, kehe(old key, re-keyed); brands keep microsoft (2) + the real ones, delete colox/xyz/nike; `--apply` only after the founder confirms the fresh dry-run matches this.
+
 ---
 
 ## ACCEPTANCE TESTS (defined up front — founder runs all; fixtures selected BY DB MECHANISM per the thrice-earned rule)
