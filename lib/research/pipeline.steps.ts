@@ -19,6 +19,7 @@ import { assembleIosVersion } from "@/lib/research/ios";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
 import { upsertCaseSynthesis, getSynthesisByEvidenceHash } from "@/lib/data/synthesis";
 import { writeIntelligence } from "@/lib/data/intelligence";
+import type { MemoryWriteArgs } from "@/lib/data/intelligence-events";
 import { PIPELINE_VERSION } from "@/lib/research/pipeline.registry";
 
 // ── Pipeline STAGES ────────────────────────────────────────────────────────────────────────────
@@ -231,11 +232,11 @@ export function stageVerdict(
   return { ...verdict, ...ceiled };
 }
 
-// Institutional memory write-side (ADR-G006). SKIP when identity acquisition failed (no corpus pollution).
-// H1 interim guard (full event ledger lands in H6): only a case's FIRST investigation feeds the
-// corpus — re-runs must never inflate case_count or overwrite history.
-export async function stageMemoryWrite(ctx: TrackContext, identitySignal: TrackSignal | null, identityAcquisitionFailed: boolean): Promise<void> {
-  if (!identityAcquisitionFailed && (ctx.attempt_number ?? 1) === 1) await writeIntelligence(ctx, identitySignal);
+// Institutional memory (ADR-G006/G007, H6): EVERY completed attempt appends one intelligence_events
+// row (append-only, replay-idempotent); profile rollups fire only for confirmed identities. The old
+// attempt-1-only guard is retired — case_count dedupes by DISTINCT case_id by construction.
+export async function stageMemoryWrite(ctx: TrackContext, args: MemoryWriteArgs): Promise<void> {
+  await writeIntelligence(ctx, args);
 }
 
 // Finalize: persist case state + per-track statuses + the orchestration version.

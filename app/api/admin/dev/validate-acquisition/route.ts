@@ -68,10 +68,11 @@ export async function POST(req: Request) {
 
   const packErr = await persistEvidencePack(pack, 1); // dev validation seeds are always attempt 1
   const metricsErr = await persistAcquisitionMetrics(caseId, "supplier_identity", metrics);
+  // H6 signature — dev seed has no resolved identity/verdict; the event records the attempt as-is.
   await writeIntelligence({
     case_id: caseId, vendor_name: vendorName, vendor_website: vendorWebsite,
     brands_submitted: brands, marketplace: "amazon_us", plan_type: "growth_279",
-  });
+  }, { signals: {}, verdict: null, identityFailed: false, identityUnconfirmed: false });
 
   return NextResponse.json({
     ok: true,

@@ -60,8 +60,10 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
   // ── Layer 4 Judgment + Layer 5 Communication ──
   const verdict = stageVerdict(signals, synthesis);
 
-  // ── Institutional memory write-side (ADR-G006) ──
-  await stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityFailed);
+  // ── Institutional memory write-side (ADR-G006/G007) ──
+  await stageMemoryWrite(ictx, {
+    signals, verdict: verdict.verdict, identityFailed, identityUnconfirmed: identity.identity_unconfirmed,
+  });
 
   // ── Persist case state ──
   return stageFinalize(ictx, {

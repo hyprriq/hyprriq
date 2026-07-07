@@ -67,7 +67,9 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs));
   const verdict = await step.run("verdict", () => stageVerdict(signals, synthesis));
-  await step.run("memory-write", () => stageMemoryWrite(ictx, signals.supplier_identity ?? null, identityFailed));
+  await step.run("memory-write", () => stageMemoryWrite(ictx, {
+    signals, verdict: verdict.verdict, identityFailed, identityUnconfirmed: identity.identity_unconfirmed,
+  }));
   await step.run("finalize", () =>
     stageFinalize(ictx, {
       included, identityAcquisitionFailed, failedTracks, skippedTracks, identityUnconfirmed: identity.identity_unconfirmed,

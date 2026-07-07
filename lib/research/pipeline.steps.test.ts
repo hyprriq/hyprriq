@@ -154,14 +154,10 @@ describe("H1 attempt threading", () => {
     expect(casesNot).toHaveBeenCalledWith("status", "in", "(delivered,complete)");
   });
 
-  it("stageMemoryWrite fires on a first attempt", async () => {
-    await stageMemoryWrite({ ...ctx, attempt_number: 1 }, "pass", false);
-    expect(writeIntelligence).toHaveBeenCalledOnce();
-  });
-
-  it("stageMemoryWrite skips re-runs (attempt > 1) so the corpus never double-counts", async () => {
-    await stageMemoryWrite({ ...ctx, attempt_number: 2 }, "pass", false);
-    expect(writeIntelligence).not.toHaveBeenCalled();
+  it("stageMemoryWrite passes signals/verdict/identity flags through — H6: EVERY attempt appends an event (rollups dedupe by case)", async () => {
+    const args = { signals: { supplier_identity: "pass" as const }, verdict: "source_clear", identityFailed: false, identityUnconfirmed: false };
+    await stageMemoryWrite({ ...ctx, attempt_number: 2 }, args);
+    expect(writeIntelligence).toHaveBeenCalledWith({ ...ctx, attempt_number: 2 }, args);
   });
 });
 

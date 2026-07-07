@@ -20,7 +20,7 @@ const ctx: TrackContext = {
 describe("buildInvestigationEvent (pure — the ledger row is derived ONCE, via researchIdentityFor)", () => {
   it("records the RESOLVED identity, normalized keys, signals, verdict", () => {
     const ev = buildInvestigationEvent(ctx, {
-      signals: { supplier_identity: "pass", brand_relationship: "infer" }, verdict: "usable_with_conditions",
+      signals: { supplier_identity: "pass", supply_chain_relationship: "infer" }, verdict: "usable_with_conditions",
       identityFailed: false, identityUnconfirmed: false,
     });
     expect(ev).toMatchObject({
@@ -30,7 +30,7 @@ describe("buildInvestigationEvent (pure — the ledger row is derived ONCE, via 
       brands: ["Lenovo", "Bosch GmbH"], brands_normalized: ["lenovo", "bosch gmbh"],
       verdict: "usable_with_conditions",
     });
-    expect(ev.signals).toEqual({ supplier_identity: "pass", brand_relationship: "infer" });
+    expect(ev.signals).toEqual({ supplier_identity: "pass", supply_chain_relationship: "infer" });
   });
   it("unconfirmed identity → keyed on the ENTERED name (researchIdentityFor), flag recorded as truth", () => {
     const ev = buildInvestigationEvent(
