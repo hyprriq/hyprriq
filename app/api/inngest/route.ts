@@ -2,6 +2,7 @@ import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest/client";
 import { pipelineStart } from "@/lib/inngest/functions/pipeline";
 import { pipelineWatchdog } from "@/lib/inngest/functions/watchdog";
+import { outcomeCheckpoints } from "@/lib/inngest/functions/outcome-checkpoints";
 
 // Inngest serve endpoint. The durable research pipeline (pipeline/run-case) runs here, outside
 // the submit request, so it is not bound by the serverless 60s function cap.
@@ -13,7 +14,7 @@ import { pipelineWatchdog } from "@/lib/inngest/functions/watchdog";
 // Inngest can reach on every deploy. Unset → falls back to Host-header inference (local/dev).
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [pipelineStart, pipelineWatchdog],
+  functions: [pipelineStart, pipelineWatchdog, outcomeCheckpoints],
   serveOrigin: process.env.INNGEST_SERVE_ORIGIN,
   servePath: "/api/inngest",
 });
