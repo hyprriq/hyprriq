@@ -3,7 +3,8 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
-import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, PLAN_ROLLOVER_LIMIT, type PlanType } from "@/lib/constants/plans";
+import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
+import { addClientCredits, rolloverClientCredits } from "@/lib/data/credits";
 
 // Stripe webhook — the source of truth for plan/credit state. SCAFFOLDING:
 // signature verification, idempotency (stripe_events.stripe_event_id UNIQUE), and
@@ -40,12 +41,6 @@ async function activatePlan(clientId: string, plan: PlanType, opts: {
   if (!updated || updated.length === 0) {
     await supabaseAdmin.from("clients").insert({ id: clientId, email: opts.email ?? "", ...fields });
   }
-}
-
-async function addCredits(clientId: string, credits: number) {
-  const { data } = await supabaseAdmin.from("clients").select("credits_available").eq("id", clientId).maybeSingle();
-  const current = data?.credits_available ?? 0;
-  await supabaseAdmin.from("clients").update({ credits_available: current + credits }).eq("id", clientId);
 }
 
 // Item 5: append a Billing History row on every plan-state change. Idempotent by
@@ -97,13 +92,18 @@ export async function POST(req: Request) {
   );
 }
 
-  // Idempotency: the UNIQUE constraint on stripe_event_id rejects replays.
+  // Idempotency: the UNIQUE constraint on stripe_event_id rejects replays — but ONLY a replay of a
+  // COMPLETED event is ACKed (B3). A duplicate whose first attempt error'd before processed=true is
+  // REPROCESSED (handlers are idempotent-by-upsert; the credit RPCs have a one-statement residual
+  // window documented in the H6 plan — billing_audit keeps it auditable).
   const { error: dupeErr } = await supabaseAdmin
     .from("stripe_events")
     .insert({ stripe_event_id: event.id, event_type: event.type, payload_json: event as unknown as object });
   if (dupeErr) {
-    // 23505 = unique violation = already processed → ack so Stripe stops retrying.
-    return NextResponse.json({ received: true, duplicate: true });
+    const { data: prior } = await supabaseAdmin
+      .from("stripe_events").select("processed").eq("stripe_event_id", event.id).maybeSingle();
+    if (prior?.processed) return NextResponse.json({ received: true, duplicate: true });
+    // fall through: prior attempt never completed — process it now.
   }
 
   try {
@@ -119,7 +119,12 @@ export async function POST(req: Request) {
         if (kind.startsWith("topup:")) {
           const topupId = kind.slice("topup:".length) as TopupId;
           const credits = TOPUP[topupId]?.credits ?? 0;
-          if (credits > 0) await addCredits(clientId, credits);
+          if (credits > 0) {
+            const { error: creditErr } = await addClientCredits(clientId, credits);
+            // B2 — a paid top-up that fails to land must FAIL LOUD: throw → stripe_events.error is
+            // written below → Stripe retries → the unprocessed-duplicate path reprocesses (B3 fix).
+            if (creditErr) throw new Error(`top-up credit grant failed: ${creditErr}`);
+          }
           if (customerId) await supabaseAdmin.from("clients").update({ stripe_customer_id: customerId }).eq("id", clientId);
           await recordBillingEvent(clientId, { event: "one_time_purchase", stripeEventId: event.id, notes: `Top-up: ${credits} credit${credits === 1 ? "" : "s"}` });
         } else if (s.mode === "subscription" && s.subscription) {
@@ -206,19 +211,12 @@ export async function POST(req: Request) {
         const plan = priceId ? planForPriceId(priceId) : null;
         const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? null;
         if (plan && customerId) {
-          // Capped rollover (decision 2026-06-20): unused credits carry over up to
-          // the plan's cap, then the new cycle's allotment is added on top.
-          const { data } = await supabaseAdmin
-            .from("clients")
-            .select("credits_available")
-            .eq("stripe_customer_id", customerId)
-            .maybeSingle();
-          const unused = data?.credits_available ?? 0;
-          const newBalance = Math.min(unused, PLAN_ROLLOVER_LIMIT[plan]) + PLAN_CREDITS_PER_CYCLE[plan];
-          await supabaseAdmin
-            .from("clients")
-            .update({ credits_available: newBalance, credits_used_this_cycle: 0, billing_status: "active" })
-            .eq("stripe_customer_id", customerId);
+          // Capped rollover (decision 2026-06-20), now ATOMIC (N6): unused credits carry over up
+          // to the plan's cap, then the cycle's allotment lands on top — one SQL statement, no
+          // read-modify-write window against a concurrent submit deduction.
+          const { error: rolloverErr } = await rolloverClientCredits(customerId, plan);
+          if (rolloverErr) throw new Error(`renewal rollover failed: ${rolloverErr}`);
+          await supabaseAdmin.from("clients").update({ billing_status: "active" }).eq("stripe_customer_id", customerId);
         }
         break;
       }
