@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import { seedCaseOutcome } from "@/lib/data/outcomes";
 
 // Phase 4 — Founder Decision. The Intelligence Engine reaches report-ready autonomously; review is
 // OPTIONAL, never required. This route records the founder's decision on the engine's output:
@@ -123,6 +124,18 @@ export async function POST(
 
   const { error } = await supabaseAdmin.from("cases").update(update).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // H6 — outcomes ground truth: every delivery seeds/refreshes its case_outcomes row with the
+  // verdict the client received (post-override). Loud-but-non-fatal: delivery already happened.
+  const finalVerdict = action === "override" ? (body.override_verdict as string) : ((c.verdict as string) ?? "pending");
+  const seeded = await seedCaseOutcome(id, finalVerdict);
+  if (seeded.error) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_outcomes", record_id: id, action: "UPDATE",
+      actor_id: userId, actor_type: "admin", new_value: { outcome_seed_failed: seeded.error },
+    });
+  }
+
   // H5 addendum — echo the case identity so the UI success toast can name WHICH report delivered.
   return NextResponse.json({ ok: true, delivered: true, case_number: c.case_number, delivered_attempt: attempt });
 }

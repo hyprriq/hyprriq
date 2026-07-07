@@ -7,6 +7,8 @@ import { buildVerdictViewModel } from "@/lib/research/verdictViewModel";
 import { requiredFindingTracks } from "@/lib/constants/tracks";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CaseReview } from "@/components/admin/case-review";
+import { OutcomePanel } from "@/components/admin/outcome-panel";
+import { getCaseOutcome } from "@/lib/data/outcomes";
 import { PLAN_NAME } from "@/lib/constants/plans";
 
 function fmt(iso: string | null) {
@@ -35,6 +37,9 @@ export default async function CaseReviewPage({
 
   const trackRows = c.plan_type ? await getCaseTrackResults(c.id) : [];
   const intel = await getCaseIntelligence(c.id);
+  // H6 — outcome ground truth, only meaningful once delivered (row seeded by the publish route).
+  const delivered = c.status === "delivered" || c.status === "complete";
+  const outcome = delivered ? await getCaseOutcome(c.id) : null;
   const vm = buildVerdictViewModel({
     trackRows,
     synthesis: intel?.synthesis ?? null,
@@ -71,6 +76,7 @@ export default async function CaseReviewPage({
               <p className="text-[14px] leading-relaxed text-ink-2">{c.client_notes}</p>
             </div>
           )}
+          {delivered && <OutcomePanel caseId={c.id} existing={outcome} />}
         </div>
 
         <CaseReview caseId={c.id} caseNumber={c.case_number} vendorName={c.vendor_name} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} />
