@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { it, expect, vi, beforeEach } from "vitest";
 const { upsert, update, updateEq, maybeSingle } = vi.hoisted(() => {
   const updateSelect = vi.fn().mockResolvedValue({ data: [{ id: "o1" }], error: null });
   const updateEq = vi.fn(() => ({ select: updateSelect }));

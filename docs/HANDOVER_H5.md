@@ -6,7 +6,7 @@
 ## ⛔ IMMEDIATE NEXT — H5 FROZEN (2026-07-06, all ATs passed); H6 plan DRAFTED, awaiting founder review
 
 **H5 ATs all PASSED 2026-07-06 (founder-run):** AT-1 ✅ payload gating verified live · AT-2 ✅ FIRST CLEAN AI-PUBLISH on intended fixture AWI-2607-021 through the new confirm dialog (delivered_attempt=6 written by the publish path, reinvestigation_pending=false, findings + H3 note + verdict on the client surface) · AT-3 ✅ hard-tier SQL zero rows (clean corpus) · attribution sampler ✅ 3/3. H1's pin-write caveat CLOSED. **Founder declared H5 FROZEN.**
-**Now:** founder reviews `docs/superpowers/plans/2026-07-06-h6-money-and-corpus.md` (money & corpus: atomic credit RPCs, intelligence_events ledger + profile rollups, identity_unconfirmed gating, resolved_domain, founder-run corpus cleanup, case_outcomes + 30/90-day cron) and answers its 5 OQs. STOP before code holds until approval. The section below is the pre-freeze record, kept for history.
+**H6 UPDATE (2026-07-07): plan APPROVED, ALL OQs RULED (incl. the full OQ-1 cleanup table — mototec usa KEPT as real), and H6 is BUILT** — commits `60edf3c..` on staging, 430/430 tests, tsc+eslint+build green. See the tracker's H6 line + `docs/superpowers/plans/2026-07-06-h6-money-and-corpus.md` (rulings recorded inline) for the full record. **FOUNDER SEQUENCE NOW: run migration `20260708000000` + verification queries → deploy → `cleanup-corpus.ts` dry-run then `--apply` BEFORE re-running any case → ATs 1-6 → declare H6 FROZEN → next session specs H7.** The section below is the pre-H5-freeze record, kept for history.
 
 ### (historical) H5 pre-freeze AT instructions
 
