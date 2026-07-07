@@ -76,12 +76,11 @@ export default async function AdminCasesPage({
               <span className="text-[13px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span>
               <span><StatusBadge status={c.status} /></span>
               <span><VerdictBadge verdict={c.verdict} /></span>
+              {/* Always the ADMIN review page. The old delivered→/portal/cases/:id link 404'd
+                  (portal data layer scopes by client_id — the admin doesn't own the case) and hid
+                  the H6 Outcome panel, which lives on the review page for delivered cases. */}
               <Link
-                href={
-                  c.status === "delivered" || c.status === "complete"
-                    ? `/portal/cases/${c.id}`
-                    : `/admin/cases/${c.id}/review`
-                }
+                href={`/admin/cases/${c.id}/review`}
                 className="rounded-md bg-brand px-2.5 py-1 text-center text-[12px] font-bold text-white hover:bg-brand-hover"
               >
                 {c.status === "delivered" || c.status === "complete" ? "View" : "Review"}
