@@ -6,7 +6,8 @@
 ## ⛔ IMMEDIATE NEXT — H5 FROZEN (2026-07-06, all ATs passed); H6 plan DRAFTED, awaiting founder review
 
 **H5 ATs all PASSED 2026-07-06 (founder-run):** AT-1 ✅ payload gating verified live · AT-2 ✅ FIRST CLEAN AI-PUBLISH on intended fixture AWI-2607-021 through the new confirm dialog (delivered_attempt=6 written by the publish path, reinvestigation_pending=false, findings + H3 note + verdict on the client surface) · AT-3 ✅ hard-tier SQL zero rows (clean corpus) · attribution sampler ✅ 3/3. H1's pin-write caveat CLOSED. **Founder declared H5 FROZEN.**
-**H6 UPDATE (2026-07-07): plan APPROVED, ALL OQs RULED (incl. the full OQ-1 cleanup table — mototec usa KEPT as real), and H6 is BUILT** — commits `60edf3c..` on staging, 430/430 tests, tsc+eslint+build green. See the tracker's H6 line + `docs/superpowers/plans/2026-07-06-h6-money-and-corpus.md` (rulings recorded inline) for the full record. **FOUNDER SEQUENCE NOW: run migration `20260708000000` + verification queries → deploy → `cleanup-corpus.ts` dry-run then `--apply` BEFORE re-running any case → ATs 1-6 → declare H6 FROZEN → next session specs H7.** The section below is the pre-H5-freeze record, kept for history.
+**H6 FROZEN (2026-07-07): all 6 founder ATs passed** — atomic top-up live; ledger appends with case_count-by-distinct-cases verified live; unconfirmed truth recorded without touching profiles; cleanup applied backup-first (6 vendors / 7 brands / 32 events, incl. the OQ-1 ADDENDUM founder-attestations that fixed the historical-false-negative starve the first dry-run caught); outcomes recording + checkpoint cron live; rejudge clean. **H1–H6 ALL FROZEN. Tier 1 + Tier 2 of the audit fix sequence are DONE.**
+**NEXT SESSION: spec H7 (firewall hardening) as a founder-review artifact — STOP before code, same gate.** Scope per tracker "NEXT SESSION OPENS WITH": URL dedupe, corroboration breadth (+address_fraudulent), source-diversity pass-cap, hard-fail consensus gate, LLM-replay seam, structured outputs, Track 3/4 firewall registry + ADR-T1-001 collision audit. Deferred-live watches: 30-day checkpoint email ~2026-07-20 (Morendelli); rollover RPC on first real renewal. Two validation bugs logged to the deferred UI batch (admin "View" routes delivered cases to the client portal — Outcome panel unreachable by nav, `app/(admin)/admin/cases/page.tsx:79-88`; rerun-batch.ts stale hardcoded list, no case-id args). The sections below are the pre-freeze records, kept for history.
 
 ### (historical) H5 pre-freeze AT instructions
 
@@ -34,7 +35,7 @@ Independent audit (2026-07-05, `HyprrIQ_Fable_Audit_v1`) → founder approved **
 
 **Gate:** tsc + eslint + **398/398 vitest** + next build all green at `72a92d9`.
 
-## H6 preview (next spec): Money & corpus
+## H6 preview (SUPERSEDED — H6 built + FROZEN 2026-07-07; see the plan doc + tracker): Money & corpus
 Atomic credit RPCs for the webhook top-up/rollover paths (mirror `deduct_client_credits`); retire/fix `reset_client_credits` (keys retired plan names); **append-only per-case `intelligence_events` ledger** (case_id, attempt, resolved identity+domain, signals, verdict) with profile tables as recomputable rollups; gate memory writes on `identity_unconfirmed`; add `resolved_domain` to the corpus; corpus cleanup (td synnex/synexx merge, junk rows) founder-run backup-first; **wire `case_outcomes` + 30/90-day crons — every idle week is permanently lost learning**; refactor `lib/data/intelligence.ts`'s independent alias computation onto `researchIdentityFor` (logged in H4).
 
 ## Other logged gated items (do NOT fold into H6 silently)
