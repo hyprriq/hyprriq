@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** **APPROVED IN PRINCIPLE (founder, 2026-07-06)** — OQ-2/3/4/5 ANSWERED (rulings inline below). **OQ-1 cleanup ruling table PENDING: the founder rules it row-by-row (with Opus, 2026-07-07) before ANY cleanup runs — the full table is in the OQ-1 section.** Build may start on the non-cleanup tasks once OQ-1 is ruled (Task 8's constants take their final values from the rulings). Operational sequence founder-confirmed: migration (founder runs) → deploy → `cleanup-corpus.ts --apply` (founder-run, backup-first) BEFORE re-running any case. AT-5's 30-day email live-fires ~2026-07-20 (Morendelli's mark) — unit-locked now, logged deferred-live.
+**Status:** **APPROVED — ALL OQs RULED; BUILD AUTHORIZED (founder, 2026-07-07).** OQ-1 ruled row-by-row (rulings filled into the table below; headline: mototec usa CONFIRMED REAL — V6/B6/C5 all KEEP/INCLUDE; jc sales kept with colox stripped via M2; deletes = td synexx, bosch-as-vendor, zzqxwv + brands colox/xyz/nike). Task 8's constants carry the FINAL ruled values. Founder runs the Task 1 migration and the cleanup (backup-first) when ready. Operational sequence founder-confirmed: migration (founder runs) → deploy → `cleanup-corpus.ts --apply` (founder-run, backup-first) BEFORE re-running any case. AT-5's 30-day email live-fires ~2026-07-20 (Morendelli's mark) — unit-locked now, logged deferred-live.
 **Phase:** H6 ONLY. NOT in this phase (each stays its own gate): Spec-B domain-research under-resolution, H7 firewall hardening, Phase H PDF, the client confirmation loop, test/prod DB separation (ADR-G007 D5), `normalizeName` redesign (the corpus gains `resolved_domain` as the first step toward domain keying; the universal-key question stays logged).
 
 **Goal:** the money paths can never lose a write, the corpus becomes an append-only per-case event ledger with profile tables as recomputable rollups keyed on confirmed identities only, and `case_outcomes` starts accumulating the moat's ground truth — with 30/90-day checkpoints so no delivered case is silently forgotten.
@@ -38,7 +38,7 @@
 
 ## OPEN QUESTIONS — founder rulings
 
-- **OQ-1 — corpus cleanup ruling table: ⛔ PENDING (founder rules row-by-row, 2026-07-07, before ANY cleanup runs). FULL TABLE BELOW.**
+- **OQ-1 — ✅ RULED (founder, 2026-07-07), all rows — rulings filled into the table below.** All proposals accepted; the one open call (V6 mototec usa) ruled KEEP — confirmed real supplier, manufactures its own products, so brand mototec (B6) and case AWI-2607-024 (C5) stay too.
 - **OQ-2 — ANSWERED (founder, 2026-07-06): YES, drop `clients.rollover_limit`.** Dead column (only reader was `reset_client_credits`), drift source removed. Task 1's migration keeps the DROP line.
 - **OQ-3 — ANSWERED (founder, 2026-07-06): CONFIRMED admin-digest-only.** Client outcome emails stay with the gated confirmation-loop item.
 - **OQ-4 — ANSWERED (founder, 2026-07-06): CONFIRMED the B3 retry-behavior change** (an error'd Stripe event reprocesses on retry; only `processed=true` duplicates are ACKed). Founder condition: the residual one-statement double-add window MUST be documented in code (Task 3's gate comment does this) AND in the tracker (Task 9 step added).
@@ -46,7 +46,7 @@
 
 ---
 
-## OQ-1 — THE FULL CLEANUP RULING TABLE (destructive step — founder rules EVERY row; nothing runs until ruled)
+## OQ-1 — THE FULL CLEANUP RULING TABLE — ✅ RULED (founder, 2026-07-07)
 
 **Kill-mechanisms (each junk ruling must name one — found while expanding this table):** a profile row deleted in Phase 3 **resurrects in Phase 4's rebuild** if the ledger still holds confirmed events naming it. So junk dies via one of:
 - **M1 `EXCLUDED_CASE`** — the whole case never enters the ledger backfill (for cases that are junk end-to-end).
@@ -58,43 +58,43 @@
 
 | # | Key | Live state (2026-07-06 discovery) | My proposal | Mechanism | Founder ruling |
 |---|---|---|---|---|---|
-| V1 | `td synnex` | case_count 14 (inflated), brands lenovo/bosch/microsoft, entered_names ["TD Synexx"], signal pass | **KEEP** — flagship real supplier; rebuild corrects count to distinct confirmed cases | rebuild | ☐ |
-| V2 | `td synexx` | case_count 7 — the pre-SO-1 typo split of V1 | **DELETE (merge)** — V1 already carries the alias in entered_names; the backfilled ledger records those cases under the resolved name where identity confirmed | M3 (starved: its cases backfill under `td synnex`) | ☐ |
-| V3 | `bosch` (as VENDOR) | case_count 4, brands ["nike"], signal flag | **DELETE** — wrong-entity row: "Bosch" was the ENTERED name in the globaldist mislabel-class tests (AWI-2607-018); Bosch-the-company was never the supplier researched; "nike" is an artifact of the same tests | M1 (AWI-2607-018 excluded) + M3 | ☐ |
-| V4 | `zzqxwv nonexistent trading` | case_count 1, hard_fail, brand xyz | **DELETE** — deliberately fake test vendor. The CASE + frozen track rows STAY (the H3 negative fixture selects from cases by mechanism, never from the corpus) | M1 (AWI-2607-016 excluded) + M3 | ☐ |
-| V5 | `jc sales` | case_count 4, brands ["colox"], signal flag | **KEEP** — JC Sales is a real LA wholesaler and the research was real; the junk is the BRAND (colox), killed via M2 without losing the vendor history. (Veto option: exclude AWI-2607-017 entirely → this row dies by starvation) | rebuild + M2 for its brand | ☐ |
-| V6 | `mototec usa` | case_count 4, brands ["mototec"], signal flag | **FOUNDER CALL** — real-ish company, test-corpus provenance. KEEP = rebuild corrects counts, brand mototec stays. EXCLUDE = add AWI-2607-024 to M1 → vendor AND brand both starve + M3 | founder call | ☐ |
-| V7 | `ingram micro` | case_count 13 (inflated by pre-H1 re-runs), brands samsung/dell/lenovo | **KEEP** — real distributor; rebuild corrects | rebuild | ☐ |
-| V8 | `d and h` | case_count 1, brand lenovo | **KEEP** — real distributor (D&H Distributing) | rebuild | ☐ |
-| V9 | `kehe` | case_count 1, brand organic india — the delivered AWI-2607-023 | **KEEP** | rebuild | ☐ |
+| V1 | `td synnex` | case_count 14 (inflated), brands lenovo/bosch/microsoft, entered_names ["TD Synexx"], signal pass | **KEEP** — flagship real supplier; rebuild corrects count to distinct confirmed cases | rebuild | ✅ per proposal |
+| V2 | `td synexx` | case_count 7 — the pre-SO-1 typo split of V1 | **DELETE (merge)** — V1 already carries the alias in entered_names; the backfilled ledger records those cases under the resolved name where identity confirmed | M3 (starved: its cases backfill under `td synnex`) | ✅ per proposal |
+| V3 | `bosch` (as VENDOR) | case_count 4, brands ["nike"], signal flag | **DELETE** — wrong-entity row: "Bosch" was the ENTERED name in the globaldist mislabel-class tests (AWI-2607-018); Bosch-the-company was never the supplier researched; "nike" is an artifact of the same tests | M1 (AWI-2607-018 excluded) + M3 | ✅ per proposal |
+| V4 | `zzqxwv nonexistent trading` | case_count 1, hard_fail, brand xyz | **DELETE** — deliberately fake test vendor. The CASE + frozen track rows STAY (the H3 negative fixture selects from cases by mechanism, never from the corpus) | M1 (AWI-2607-016 excluded) + M3 | ✅ per proposal |
+| V5 | `jc sales` | case_count 4, brands ["colox"], signal flag | **KEEP** — JC Sales is a real LA wholesaler and the research was real; the junk is the BRAND (colox), killed via M2 without losing the vendor history. (Veto option: exclude AWI-2607-017 entirely → this row dies by starvation) | rebuild + M2 for its brand | ✅ per proposal |
+| V6 | `mototec usa` | case_count 4, brands ["mototec"], signal flag | **FOUNDER CALL** — real-ish company, test-corpus provenance. KEEP = rebuild corrects counts, brand mototec stays. EXCLUDE = add AWI-2607-024 to M1 → vendor AND brand both starve + M3 | founder call | ✅ **KEEP** — confirmed real supplier (manufactures own products) |
+| V7 | `ingram micro` | case_count 13 (inflated by pre-H1 re-runs), brands samsung/dell/lenovo | **KEEP** — real distributor; rebuild corrects | rebuild | ✅ per proposal |
+| V8 | `d and h` | case_count 1, brand lenovo | **KEEP** — real distributor (D&H Distributing) | rebuild | ✅ per proposal |
+| V9 | `kehe` | case_count 1, brand organic india — the delivered AWI-2607-023 | **KEEP** | rebuild | ✅ per proposal |
 
 ### B. Brand rows (`brand_intelligence`, 10 rows live)
 
 | # | Key | Live state | My proposal | Mechanism | Founder ruling |
 |---|---|---|---|---|---|
-| B1 | `bosch` (as BRAND) | case_count 15 (inflated) | **KEEP** — real brand, legitimately submitted in TD Synnex cases; rebuild corrects count | rebuild | ☐ |
-| B2 | `colox` | case_count 4 | **DELETE** — junk test brand (JC Sales cases) | M2 (stripped at backfill) + M3 | ☐ |
-| B3 | `dell` | case_count 5 | **KEEP** | rebuild | ☐ |
-| B4 | `lenovo` | case_count 11 | **KEEP** | rebuild | ☐ |
-| B5 | `microsoft` | case_count 4 | **KEEP** | rebuild | ☐ |
-| B6 | `mototec` | case_count 4 | **rides V6** — KEEP if mototec usa kept; dies with it (M1+M3) if excluded | rides V6 | ☐ |
-| B7 | `nike` | case_count 4 | **DELETE** — artifact of the Bosch-as-vendor mislabel cases only | M1 (source case excluded → starves) + M3 | ☐ |
-| B8 | `organic india` | case_count 1 | **KEEP** (kehe, delivered case) | rebuild | ☐ |
-| B9 | `samsung` | case_count 12 | **KEEP** | rebuild | ☐ |
-| B10 | `xyz` | case_count 1 | **DELETE** — junk (Zzqxwv case) | M1 + M3 | ☐ |
+| B1 | `bosch` (as BRAND) | case_count 15 (inflated) | **KEEP** — real brand, legitimately submitted in TD Synnex cases; rebuild corrects count | rebuild | ✅ per proposal |
+| B2 | `colox` | case_count 4 | **DELETE** — junk test brand (JC Sales cases) | M2 (stripped at backfill) + M3 | ✅ per proposal |
+| B3 | `dell` | case_count 5 | **KEEP** | rebuild | ✅ per proposal |
+| B4 | `lenovo` | case_count 11 | **KEEP** | rebuild | ✅ per proposal |
+| B5 | `microsoft` | case_count 4 | **KEEP** | rebuild | ✅ per proposal |
+| B6 | `mototec` | case_count 4 | **rides V6** — KEEP if mototec usa kept; dies with it (M1+M3) if excluded | rides V6 | ✅ **KEEP** (V6 kept) |
+| B7 | `nike` | case_count 4 | **DELETE** — artifact of the Bosch-as-vendor mislabel cases only | M1 (source case excluded → starves) + M3 | ✅ per proposal |
+| B8 | `organic india` | case_count 1 | **KEEP** (kehe, delivered case) | rebuild | ✅ per proposal |
+| B9 | `samsung` | case_count 12 | **KEEP** | rebuild | ✅ per proposal |
+| B10 | `xyz` | case_count 1 | **DELETE** — junk (Zzqxwv case) | M1 + M3 | ✅ per proposal |
 
 ### C. Backfill case rulings (which history enters the ledger)
 
 | # | Case(s) | State | My proposal | Founder ruling |
 |---|---|---|---|---|
-| C1 | 4× `SEED-VALIDATE-*` | synthetic seed-validation runs | **EXCLUDE** (M1) | ☐ |
-| C2 | AWI-2607-016 (Zzqxwv) | fake-vendor test | **EXCLUDE** (M1) — frozen H3 fixture unaffected (lives in cases/track rows) | ☐ |
-| C3 | AWI-2607-018 (Bosch mislabel) | wrong-entity test | **EXCLUDE** (M1) — also self-excludes from rollups via the unconfirmed gate; explicit for clarity | ☐ |
+| C1 | 4× `SEED-VALIDATE-*` | synthetic seed-validation runs | **EXCLUDE** (M1) | ✅ per proposal |
+| C2 | AWI-2607-016 (Zzqxwv) | fake-vendor test | **EXCLUDE** (M1) — frozen H3 fixture unaffected (lives in cases/track rows) | ✅ per proposal |
+| C3 | AWI-2607-018 (Bosch mislabel) | wrong-entity test | **EXCLUDE** (M1) — also self-excludes from rollups via the unconfirmed gate; explicit for clarity | ✅ per proposal |
 | C4 | AWI-2606-001 (Morendelli) | manual-era research | **EXCLUDE** — **RULED (OQ-5, 2026-07-06)**; outcomes row seeded regardless | ✅ ruled |
-| C5 | AWI-2607-024 (Mototec) | rides V6 | **founder call** — include iff mototec usa is kept | ☐ |
-| C6 | AWI-2607-017 (JC Sales) | real vendor + junk brand | **INCLUDE, with colox stripped (M2)** | ☐ |
+| C5 | AWI-2607-024 (Mototec) | rides V6 | **founder call** — include iff mototec usa is kept | ✅ **INCLUDE** (V6 kept) |
+| C6 | AWI-2607-017 (JC Sales) | real vendor + junk brand | **INCLUDE, with colox stripped (M2)** | ✅ per proposal |
 | C7 | AWI-2606-003 (Global Dist), AWI-2606-002 ("Ingram", research_failed), AWI-2607-025 (Mazel, submission_failed) | unconfirmed identity / never completed | **no ruling needed** — failed/incomplete cases have no completed attempts to backfill; Global Dist enters the ledger as truth and the unconfirmed gate keeps it out of rollups (auto) | — (auto) |
-| C8 | Everything else (all Ingram Micro, TD Synnex/Synexx, D and H, kehe AWI cases) | real research | **INCLUDE** | ☐ |
+| C8 | Everything else (all Ingram Micro, TD Synnex/Synexx, D and H, kehe AWI cases) | real research | **INCLUDE** | ✅ per proposal |
 
 **Note on the committed summary table (superseded):** the earlier compact OQ-1 table said "vendor jc sales KEEP (brand colox dies)" without naming a mechanism — expanding the table exposed that a Phase-3 delete alone would resurrect colox at rebuild. M2 (backfill strip) is the fix; V5/B2/C6 above are the coherent version. Task 8's constants now include `BACKFILL_STRIP_BRANDS`.
 
@@ -1037,19 +1037,17 @@ Register in `app/api/inngest/route.ts`: import `outcomeCheckpoints` and add to `
 Key contents (constants at top, founder-editable — FINAL VALUES SET FROM THE OQ-1 ANSWERS before build):
 
 ```ts
-// OQ-1 rulings — FINAL VALUES COME FROM THE RULED TABLE (see "THE FULL CLEANUP RULING TABLE");
-// the values below are the PROPOSALS and MUST be confirmed against the founder's row-by-row
-// rulings before this script is written. Every constant maps to a table row (V/B/C numbers).
+// OQ-1 rulings — FINAL (founder ruled the full table 2026-07-07; V6 mototec usa = KEEP,
+// so AWI-2607-024 is INCLUDED and brand mototec stays). Every constant maps to a table row.
 // M1 — cases whose history never enters the ledger:
 const EXCLUDED_CASE_NUMBERS_PREFIX = ["SEED-VALIDATE"];               // C1
-const EXCLUDED_CASE_NUMBERS = ["AWI-2607-016", "AWI-2607-018", "AWI-2606-001"]; // C2 Zzqxwv, C3 Bosch mislabel, C4 Morendelli (RULED)
-// + "AWI-2607-024" if V6 mototec usa = EXCLUDE (C5)
+const EXCLUDED_CASE_NUMBERS = ["AWI-2607-016", "AWI-2607-018", "AWI-2606-001"]; // C2 Zzqxwv, C3 Bosch mislabel, C4 Morendelli
 // M2 — junk brand keys stripped from event brands/brands_normalized at backfill (else the
 // rebuild resurrects the brand row from the ledger — the coupling the ruling table documents):
 const BACKFILL_STRIP_BRANDS = ["colox", "xyz", "nike"];               // B2, B10, B7
 // M3 — explicit profile-row deletes (belt; the orphan sweep is the suspenders):
-const JUNK_VENDOR_KEYS = ["td synexx", "bosch", "zzqxwv nonexistent trading"]; // V2, V3, V4 (+ "mototec usa" per V6)
-const JUNK_BRAND_KEYS = ["colox", "xyz", "nike"];                     // B2, B10, B7 (+ "mototec" per B6/V6)
+const JUNK_VENDOR_KEYS = ["td synexx", "bosch", "zzqxwv nonexistent trading"]; // V2, V3, V4
+const JUNK_BRAND_KEYS = ["colox", "xyz", "nike"];                     // B2, B10, B7
 ```
 
 Phase logic:
