@@ -9,6 +9,7 @@ import { runTrack3 } from "@/lib/research/track3";
 import { runTrack4 } from "@/lib/research/track4";
 import { runTrack5 } from "@/lib/research/track5";
 import { deriveTrackSignal } from "@/lib/research/signals";
+import { applySourceDiversityCap } from "@/lib/research/sourceDiversity";
 import { normalizeEvidence } from "@/lib/research/normalize";
 import { enrichWithGraph } from "@/lib/research/graph";
 import { runSynthesis } from "@/lib/research/synthesisEngine";
@@ -164,6 +165,9 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   // each ADR-G003 type scores ONCE (presence is binary; anti-double-count). ──
   const foundTypes = [...new Set(out.evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k))];
   const sig = deriveTrackSignal(def.track_key, foundTypes);
+  // H7 (SO-3) — source-diversity cap: a single-source pass downgrades to infer. Same shared fn at
+  // every signal site (track report signals use it too) so row/report/rejudge can never disagree.
+  const div = applySourceDiversityCap(sig.signal, out.evidence_items);
 
   // Phase 5.1b — classification metrics from the firewall audit (0/empty for stub tracks).
   const wv = out.weight_validation ?? [];
@@ -177,10 +181,12 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     source_mode: "ai_generated",
     evidence_items: out.evidence_items, reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
     evidence_weights_applied: sig.applied, suggested_signal: out.suggested_signal ?? null,
-    track_verdict_signal: sig.signal, confidence_score: sig.score_0_15, confidence_band: sig.band,
+    track_verdict_signal: div.signal, confidence_score: sig.score_0_15, confidence_band: sig.band,
     finding_certainty: "unknown",
     compiled_findings_json: {
-      signal: sig.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
+      signal: div.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
+      // H7 (SO-3) — the cap decision is part of the frozen record (SQL-checkable per attempt).
+      source_diversity: { capped: div.capped, cap_reason: div.cap_reason, distinct_sources: div.distinct_sources },
       // H4 — WHO was researched is part of the frozen record (SQL-checkable per attempt).
       research_name: out.research_identity?.name ?? null,
       research_alias: out.research_identity?.alias ?? null,
@@ -203,7 +209,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   });
   if (persisted.error) throw new Error(`${def.track} row persist failed: ${persisted.error}`);
 
-  return { output: out, signal: sig.signal, acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
+  return { output: out, signal: div.signal, acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
 }
 
 // Layers 2 / 2.5 / 3 + memoized synthesis persist. Throws on persist error so the step retries.

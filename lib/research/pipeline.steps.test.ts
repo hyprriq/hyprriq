@@ -101,6 +101,44 @@ describe("stageFindingTrack", () => {
     expect(row.manual_review_required).toBe(true);
     expect(row.track_verdict_signal).toBe("n_a");
   });
+
+  // ── H7 (SO-3) — source-diversity pass-cap at the authoritative row site. ──
+  const divItem = (id: string, key: string, url: string) => ({
+    evidence_id: id, weight_key: key, statement: "", certainty: "verified", source_type: "government_record",
+    source_url: url, claimant: "x", claimant_benefits: false, supports: "supplier_identity",
+  });
+  it("H7 (SO-3): a single-source pass is capped to infer and recorded in the frozen row", async () => {
+    // gov(4) + domain5(3) + address(2) = 9 ≥ 8 → pass by score — but all three cite ONE real source.
+    runTrack1.mockResolvedValue({
+      track_key: "supplier_identity",
+      evidence_items: [
+        divItem("e1", "government_registration", "https://www.reg.gov/x/"),
+        divItem("e2", "domain_age_5_plus", "http://reg.gov/x"),
+        divItem("e3", "address_verifiable", "https://reg.gov/x?utm_source=a"),
+      ],
+      reasoning_notes: "n", unknowns: [], weight_validation: [], acquisition_failed: false,
+    });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("infer");
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect(row.track_verdict_signal).toBe("infer");
+    expect((row.compiled_findings_json as { source_diversity: object }).source_diversity).toMatchObject({ capped: true, distinct_sources: 1 });
+  });
+  it("H7 (SO-3): a genuinely multi-source pass stands", async () => {
+    runTrack1.mockResolvedValue({
+      track_key: "supplier_identity",
+      evidence_items: [
+        divItem("e1", "government_registration", "https://reg.gov/x"),
+        divItem("e2", "domain_age_5_plus", "https://whois.example/y"),
+        divItem("e3", "address_verifiable", "https://maps.example/z"),
+      ],
+      reasoning_notes: "n", unknowns: [], weight_validation: [], acquisition_failed: false,
+    });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("pass");
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect((row.compiled_findings_json as { source_diversity: object }).source_diversity).toMatchObject({ capped: false, distinct_sources: 3 });
+  });
 });
 
 describe("stageResolveIdentity", () => {

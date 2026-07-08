@@ -10,6 +10,7 @@ import { researchIdentityFor } from "@/lib/research/researchIdentity";
 import { buildTrack1Prompt, parseTrack1Output } from "@/lib/research/track1.prompt";
 import { validateWeights, VALIDATION_VERSION } from "@/lib/research/weightValidation";
 import { deriveTrackSignal } from "@/lib/research/signals";
+import { applySourceDiversityCap } from "@/lib/research/sourceDiversity";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
@@ -108,7 +109,8 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
 
   // Dedupe so each evidence_type scores once (matches the pipeline's signal derivation; anti-gaming).
   const foundKeys = [...new Set(evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k))];
-  const derived_signal = deriveTrackSignal("supplier_identity", foundKeys).signal;
+  // H7 (SO-3) — same shared cap as stageFindingTrack so the report signal can never disagree with the row.
+  const derived_signal = applySourceDiversityCap(deriveTrackSignal("supplier_identity", foundKeys).signal, evidence_items).signal;
   const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
 
   const track_validation_report = buildValidationReport({
