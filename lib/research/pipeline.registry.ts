@@ -35,7 +35,10 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // Orchestration version (cases.pipeline_version). Bump on a step add/remove/reorder, a retry- or
 // parallelism-strategy change, or any workflow-shape change — NOT when a track prompt, the
 // Evidence Pack, the weight registry, verdict logic, or source profiles change.
-export const PIPELINE_VERSION = "1.0.0";
+// 1.1.0 (2026-07-07, H7): source-diversity cap at the signal site (SO-3), hard-fail consensus
+// second-extraction pass (SO-4), replay mode (OQ-D: stored packs + frozen identity in place of
+// live acquisition/resolution). Companion versions this phase: pack 1.1.0 (SO-1), firewall 1.3.0 (SO-2).
+export const PIPELINE_VERSION = "1.1.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

@@ -5,7 +5,8 @@ import { PLAN_TYPES } from "@/lib/constants/plans";
 
 describe("pipeline registry", () => {
   it("pins the orchestration version", () => {
-    expect(PIPELINE_VERSION).toBe("1.0.0");
+    // 1.0.0 → 1.1.0 (H7, 2026-07-07): deliberate bump — diversity cap, consensus pass, replay mode.
+    expect(PIPELINE_VERSION).toBe("1.1.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {
