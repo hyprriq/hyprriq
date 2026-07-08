@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { gather, runModel } = vi.hoisted(() => ({
+const { gather, runModel, getEvidencePack } = vi.hoisted(() => ({
   gather: vi.fn(),
   runModel: vi.fn(),
+  getEvidencePack: vi.fn(),
 }));
 
 vi.mock("@/lib/research/acquisition/orchestrator", () => ({ Orchestrator: class { gather = gather } }));
-vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack: vi.fn().mockResolvedValue({ error: null }), persistAcquisitionMetrics: vi.fn().mockResolvedValue({ error: null }) }));
+vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack: vi.fn().mockResolvedValue({ error: null }), persistAcquisitionMetrics: vi.fn().mockResolvedValue({ error: null }), getEvidencePack }));
 vi.mock("@/lib/ai/runModel", () => ({ runModel }));
 
 import { runTrack1 } from "./track1";
@@ -17,7 +18,7 @@ const prov = (source_profile: string, source_type: string, authority_score: stri
 const pack = (source_profile: string, source_type: string, authority: string) => ({ schema_version: "1.0.0", case_id: "c1", track_key: "supplier_identity", evidence_hash: "h", collected_at: "t", sources: [{ url: "https://sos.state.tx.us/x", title: "TX SOS", snippet: "active registration", raw: {}, provenance: prov(source_profile, source_type, authority) }] });
 const item = (proposed_weight_key: string) => ({ evidence_items: [{ evidence_id: "t1_e1", statement: "registered", proposed_weight_key, supporting_source_ids: ["src_0"], mapping_justification: "SOS confirms", counter_evidence: "None found", certainty: "verified", confidence: "high" }], reasoning_notes: "ok", unknowns: [] });
 
-beforeEach(() => { gather.mockReset(); runModel.mockReset(); });
+beforeEach(() => { gather.mockReset(); runModel.mockReset(); getEvidencePack.mockReset(); });
 
 describe("runTrack1", () => {
   it("validates a well-sourced government_registration proposal into an evidence_item with provenance + report", async () => {
@@ -116,6 +117,24 @@ describe("H7 (SO-4) — hard-fail consensus: veto keys must survive two extracti
     const out = await runTrack1(ctx);
     expect(runModel).toHaveBeenCalledTimes(1);
     expect(out.hard_fail_consensus).toBeUndefined();
+  });
+});
+
+describe("H7 (OQ-D) — replay: judge the frozen record again", () => {
+  it("replay loads the stored pack instead of live acquisition (same evidence in)", async () => {
+    getEvidencePack.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), error: null });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1({ ...ctx, attempt_number: 7, replay_from_attempt: 6 });
+    expect(getEvidencePack).toHaveBeenCalledWith("c1", "supplier_identity", 6);
+    expect(gather).not.toHaveBeenCalled(); // no live acquisition, no Serper/WHOIS spend
+    expect(out.evidence_items).toHaveLength(1);
+  });
+  it("replay with a missing stored pack fails LOUD (never silently re-acquires)", async () => {
+    getEvidencePack.mockResolvedValue({ pack: null, error: null });
+    let err: unknown;
+    try { await runTrack1({ ...ctx, replay_from_attempt: 3 }); } catch (e) { err = e; }
+    expect((err as Error).message).toMatch(/replay: stored track_1 pack missing/);
+    expect(gather).not.toHaveBeenCalled();
   });
 });
 

@@ -16,6 +16,32 @@ export async function persistEvidencePack(pack: EvidencePack, attemptNumber: num
   return { error: error?.message ?? null };
 }
 
+// H7 (OQ-D) — replay reads the frozen input-of-record: the stored pack for a given attempt,
+// reconstructed to the EvidencePack shape (the row stores sources in `pack` with hash/version/
+// collected_at as columns). Returned AS STORED — whatever schema_version it froze under.
+export async function getEvidencePack(
+  caseId: string, trackKey: TrackKey, attempt: number,
+): Promise<{ pack: EvidencePack | null; error: string | null }> {
+  const { data, error } = await supabaseAdmin
+    .from("case_evidence_packs")
+    .select("pack, evidence_hash, schema_version, collected_at")
+    .eq("case_id", caseId).eq("track_key", trackKey).eq("attempt_number", attempt)
+    .maybeSingle();
+  if (error) return { pack: null, error: error.message };
+  if (!data) return { pack: null, error: null };
+  return {
+    pack: {
+      schema_version: data.schema_version as string,
+      case_id: caseId,
+      track_key: trackKey,
+      sources: (data.pack ?? []) as EvidencePack["sources"],
+      evidence_hash: data.evidence_hash as string,
+      collected_at: data.collected_at as string,
+    },
+    error: null,
+  };
+}
+
 export async function persistAcquisitionMetrics(
   caseId: string, trackKey: TrackKey, metrics: AcquisitionMetric[],
 ): Promise<{ error: string | null }> {

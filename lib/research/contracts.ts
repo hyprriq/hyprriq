@@ -72,6 +72,11 @@ export interface TrackContext {
   vendor_website: string | null;
   supplier_identity?: SupplierIdentity; // Phase 5.1c.5 — resolved identity (Track 0.5); tracks read resolved_domain
   attempt_number?: number; // H1 — this execution's investigation attempt (1 = first run; re-runs increment). Orchestration plumbing, not a research input.
+  // H7 (OQ-D, founder-ruled) — REPLAY: judge the frozen record again. When set, tracks load attempt
+  // N's stored packs instead of live acquisition, and the pipeline reuses the case's frozen
+  // supplier_identity instead of live resolution. The result is a genuine NEW attempt (ledger
+  // event + audit marker; delivered rows untouched per H1) — never a silent shadow operation.
+  replay_from_attempt?: number;
   brands_submitted: string[];
   marketplace: string;
   plan_type: PlanType;

@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { gather, runModel, persistEvidencePack, persistAcquisitionMetrics } = vi.hoisted(() => ({
+const { gather, runModel, persistEvidencePack, persistAcquisitionMetrics, getEvidencePack } = vi.hoisted(() => ({
   gather: vi.fn(), runModel: vi.fn(),
   persistEvidencePack: vi.fn().mockResolvedValue({ error: null }),
   persistAcquisitionMetrics: vi.fn().mockResolvedValue({ error: null }),
+  getEvidencePack: vi.fn(), // H7 (OQ-D) — replay pack loader
 }));
 vi.mock("@/lib/research/acquisition/orchestrator", () => ({ Orchestrator: class { gather = gather } }));
-vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack, persistAcquisitionMetrics }));
+vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack, persistAcquisitionMetrics, getEvidencePack }));
 vi.mock("@/lib/ai/runModel", () => ({ runModel }));
 
 import { runTrack2 } from "./track2";

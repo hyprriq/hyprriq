@@ -2,7 +2,7 @@ import type { TrackContext, TrackOutput, EvidenceItem } from "@/lib/research/con
 import { Orchestrator } from "@/lib/research/acquisition/orchestrator";
 import { serperPlugin } from "@/lib/research/acquisition/plugins/serper";
 import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/nativeWebSearch";
-import { persistEvidencePack, persistAcquisitionMetrics } from "@/lib/data/acquisition";
+import { persistEvidencePack, persistAcquisitionMetrics, getEvidencePack } from "@/lib/data/acquisition";
 import { runModel } from "@/lib/ai/runModel";
 import { buildTrack2Requests } from "@/lib/research/tracks/track2.queries";
 import { researchIdentityFor } from "@/lib/research/researchIdentity";
@@ -14,7 +14,7 @@ import { reconcileHardFailConsensus, type ConsensusOutcome } from "@/lib/researc
 import { weightFor } from "@/lib/research/weights";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
-import type { RawSource } from "@/lib/research/acquisition/types";
+import type { RawSource, EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition/types";
 import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
 import { TRACK2_OUTPUT_SCHEMA } from "@/lib/research/schemas/track2.schema";
 import { IDENTITY_SCOPE_NOTE, AUTHORIZATION_SCOPE_NOTE, MARKETPLACE_ELIGIBILITY_DISCLAIMER } from "@/lib/research/track2.disclaimers";
@@ -25,22 +25,34 @@ import { containsProcurementLanguage } from "@/lib/research/procurementLanguage"
 // brand-isolated. LOA is excluded (ADR-T2-001): not a proposable key, firewall-rejected if proposed,
 // and dropped here pre-scoring as a deterministic backstop.
 export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
-  const requests = buildTrack2Requests(ctx);
-  const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
-  // Official-domain metadata so the classifier tags the brand's own pages official_brand and the
-  // vendor's own pages official_company (instead of defaulting to "news"). Drives the provenance gate.
-  const classification = {
-    // Phase 5.1c.5 — prefer the Track 0.5 resolved domain (high-confidence identity); fall back to the
-    // raw website so behavior is unchanged when an identity wasn't resolved. (Track 1 still uses vendor_website.)
-    vendorHost: ctx.supplier_identity?.resolved_domain ?? ctx.vendor_website,
-    brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
-  };
-  const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification });
+  // H7 (OQ-D) — REPLAY: load attempt N's frozen pack instead of live acquisition (mirror of Track 1).
+  let pack: EvidencePack;
+  let metrics: AcquisitionMetric[] = [];
+  if (ctx.replay_from_attempt) {
+    const stored = await getEvidencePack(ctx.case_id, "supply_chain_relationship", ctx.replay_from_attempt);
+    if (stored.error || !stored.pack) throw new Error(`replay: stored track_2 pack missing for attempt ${ctx.replay_from_attempt}: ${stored.error ?? "no row"}`);
+    pack = stored.pack;
+  } else {
+    const requests = buildTrack2Requests(ctx);
+    const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
+    // Official-domain metadata so the classifier tags the brand's own pages official_brand and the
+    // vendor's own pages official_company (instead of defaulting to "news"). Drives the provenance gate.
+    const classification = {
+      // Phase 5.1c.5 — prefer the Track 0.5 resolved domain (high-confidence identity); fall back to the
+      // raw website so behavior is unchanged when an identity wasn't resolved. (Track 1 still uses vendor_website.)
+      vendorHost: ctx.supplier_identity?.resolved_domain ?? ctx.vendor_website,
+      brandTokens: (ctx.brands_submitted ?? []).map(normalizeBrandToken).filter(Boolean),
+    };
+    ({ pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supply_chain_relationship", requests, classification }));
+  }
   // H2 — pack = frozen input-of-record: persist failure throws (step retries); metrics non-fatal.
+  // (On replay this freezes the SAME evidence under the new attempt — identical evidence_hash.)
   const packRes = await persistEvidencePack(pack, ctx.attempt_number ?? 1);
   if (packRes.error) throw new Error(`evidence pack persist failed: ${packRes.error}`);
-  const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
-  if (metricsRes.error) console.error(`[track2] metrics persist failed (non-fatal): ${metricsRes.error}`);
+  if (metrics.length > 0) {
+    const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supply_chain_relationship", metrics);
+    if (metricsRes.error) console.error(`[track2] metrics persist failed (non-fatal): ${metricsRes.error}`);
+  }
 
   const provider_usage = metrics.map((m) => ({ plugin: m.plugin_id, latency_ms: m.latency_ms, api_cost_usd: m.api_cost_usd, evidence_items_returned: m.evidence_items_returned }));
 

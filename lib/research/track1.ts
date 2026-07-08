@@ -3,7 +3,7 @@ import { Orchestrator } from "@/lib/research/acquisition/orchestrator";
 import { whoisPlugin } from "@/lib/research/acquisition/plugins/whois";
 import { serperPlugin } from "@/lib/research/acquisition/plugins/serper";
 import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/nativeWebSearch";
-import { persistEvidencePack, persistAcquisitionMetrics } from "@/lib/data/acquisition";
+import { persistEvidencePack, persistAcquisitionMetrics, getEvidencePack } from "@/lib/data/acquisition";
 import { runModel } from "@/lib/ai/runModel";
 import { buildTrack1Requests } from "@/lib/research/tracks/track1.queries";
 import { researchIdentityFor } from "@/lib/research/researchIdentity";
@@ -16,21 +16,34 @@ import { weightFor } from "@/lib/research/weights";
 import { TRACK1_OUTPUT_SCHEMA } from "@/lib/research/schemas/track1.schema";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
-import type { RawSource } from "@/lib/research/acquisition/types";
+import type { RawSource, EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition/types";
 import type { SourceProfile } from "@/lib/research/source_profile";
 
 // Track 1 — Supplier Identity. The orchestrator acquires; the LLM proposes; the firewall decides;
 // deriveTrackSignal (unchanged) scores. Validated evidence_items carry the full provenance chain.
 export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
-  const requests = buildTrack1Requests(ctx);
-  const orchestrator = new Orchestrator([whoisPlugin, serperPlugin, nativeWebSearchPlugin]);
-  const { pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
+  // H7 (OQ-D) — REPLAY: load attempt N's frozen pack instead of live acquisition. Same evidence in;
+  // extraction → firewall → signals run fresh; the result lands as a genuine NEW attempt.
+  let pack: EvidencePack;
+  let metrics: AcquisitionMetric[] = [];
+  if (ctx.replay_from_attempt) {
+    const stored = await getEvidencePack(ctx.case_id, "supplier_identity", ctx.replay_from_attempt);
+    if (stored.error || !stored.pack) throw new Error(`replay: stored track_1 pack missing for attempt ${ctx.replay_from_attempt}: ${stored.error ?? "no row"}`);
+    pack = stored.pack;
+  } else {
+    const requests = buildTrack1Requests(ctx);
+    const orchestrator = new Orchestrator([whoisPlugin, serperPlugin, nativeWebSearchPlugin]);
+    ({ pack, metrics } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests }));
+  }
   // H2 — the pack is the frozen input-of-record (H1): if it cannot persist, the step must retry.
-  // Metrics are ops data: failure is logged, never fatal.
+  // (On replay this freezes the SAME evidence under the new attempt — identical evidence_hash.)
+  // Metrics are ops data: failure is logged, never fatal; a replay has no acquisition metrics.
   const packRes = await persistEvidencePack(pack, ctx.attempt_number ?? 1);
   if (packRes.error) throw new Error(`evidence pack persist failed: ${packRes.error}`);
-  const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
-  if (metricsRes.error) console.error(`[track1] metrics persist failed (non-fatal): ${metricsRes.error}`);
+  if (metrics.length > 0) {
+    const metricsRes = await persistAcquisitionMetrics(ctx.case_id, "supplier_identity", metrics);
+    if (metricsRes.error) console.error(`[track1] metrics persist failed (non-fatal): ${metricsRes.error}`);
+  }
 
   // ── Acquisition-failure guard: an EMPTY pack means we could not research (provider unavailable /
   // no results) — NOT "researched and found nothing". Do not call the model, do not score, flag for

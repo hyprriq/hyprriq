@@ -86,6 +86,15 @@ export async function stageTrack0(ctx: TrackContext): Promise<void> {
 // fan-out: resolves the supplier identity once so Track 2+ classify against resolved_domain instead of
 // the raw (optional) vendor_website. Pure compute + research; persistence happens in the orchestrators.
 export async function stageResolveIdentity(ctx: TrackContext): Promise<SupplierIdentity> {
+  // H7 (OQ-D) — REPLAY reuses the case's FROZEN identity: the identity is part of the record being
+  // re-judged, and live re-resolution would add exactly the variance replay exists to eliminate.
+  // Fail loud for pre-identity legacy cases (nothing frozen to replay against).
+  if (ctx.replay_from_attempt) {
+    const { data } = await supabaseAdmin.from("cases").select("supplier_identity").eq("id", ctx.case_id).maybeSingle();
+    const stored = (data?.supplier_identity ?? null) as SupplierIdentity | null;
+    if (!stored) throw new Error(`replay: case ${ctx.case_id} has no stored supplier_identity — replay requires a frozen identity`);
+    return stored;
+  }
   return resolveSupplierIdentity(ctx);
 }
 
