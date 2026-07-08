@@ -13,6 +13,7 @@ import { deriveTrackSignal } from "@/lib/research/signals";
 import { applySourceDiversityCap } from "@/lib/research/sourceDiversity";
 import { reconcileHardFailConsensus, type ConsensusOutcome } from "@/lib/research/hardFailConsensus";
 import { weightFor } from "@/lib/research/weights";
+import { TRACK1_OUTPUT_SCHEMA } from "@/lib/research/schemas/track1.schema";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
@@ -64,7 +65,8 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   let parsed: ReturnType<typeof parseTrack1Output>;
   let llmCost = 0;
   try {
-    const res = await runModel({ task: "track", system, user, temperature: 0 });
+    // H7 (OQ-C) — schema-constrained extraction; runAnthropic falls back schema-less if rejected.
+    const res = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK1_OUTPUT_SCHEMA });
     parsed = parseTrack1Output(res.json);
     llmCost = res.cost_usd;
   } catch {
@@ -91,7 +93,7 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
   if (validatedHardFails.length > 0 && !llmFailed) {
     let secondKeys: string[] | null = null;
     try {
-      const second = await runModel({ task: "track", system, user, temperature: 0 });
+      const second = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK1_OUTPUT_SCHEMA });
       const secondParsed = parseTrack1Output(second.json);
       secondKeys = secondParsed.parse_failed ? null : secondParsed.items.map((it) => it.proposed_weight_key);
       llmCost += second.cost_usd;

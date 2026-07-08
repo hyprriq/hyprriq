@@ -16,6 +16,9 @@ export interface RunModelResult {
   tokens: number;
   cost_usd: number;
   latency_ms: number;
+  // H7 (OQ-C) — true when a provided schema was rejected by the model and the call fell back to
+  // the schema-less request + tolerant parsing (observability; behavior is fail-open by ruling).
+  schema_fallback?: boolean;
 }
 
 // Config-driven routing. DEV/TEST: Sonnet 4.6 for ALL tasks (incl. synthesis). Synthesis

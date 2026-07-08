@@ -33,14 +33,34 @@ export async function runAnthropic(input: AnthropicInput): Promise<RunModelResul
     ? [{ type: "web_search_20250305", name: "web_search" } as unknown as Anthropic.Tool]
     : [];
   const started = Date.now();
-  const res = await client.messages.create({
+  const baseParams = {
     model: input.model,
     max_tokens: 8000, // rich Track-1 outputs (many sources) exceeded 4000 → truncated/unparseable JSON
     temperature: input.temperature ?? 0,
     system: input.system,
-    messages: [{ role: "user", content: input.user }],
+    messages: [{ role: "user" as const, content: input.user }],
     ...(tools.length ? { tools } : {}),
-  });
+  };
+  let res: Anthropic.Message;
+  let schemaFallback = false;
+  try {
+    res = await client.messages.create({
+      ...baseParams,
+      // H7 (OQ-C) — structured outputs: the model is CONSTRAINED to the parse target's schema, so
+      // truncation/prose/fence parse failures stop happening at the source. output_config is cast
+      // because the installed SDK's param types may predate the parameter — the wire accepts it.
+      ...(input.schema ? { output_config: { format: { type: "json_schema" as const, schema: input.schema } } } : {}),
+    } as Anthropic.MessageCreateParamsNonStreaming);
+  } catch (e) {
+    // OQ-C (founder-ruled) fail-open: if the model rejects output_config (capability), retry ONCE
+    // without the schema and fall back to the tolerant-parse path — parseModelJson stays forever
+    // (the H5 scanner-stays-forever pattern); the H2 llm_failed guard remains the backstop.
+    // Any OTHER error rethrows unchanged (H2 handles it upstream) — never a blind retry.
+    const msg = e instanceof Error ? e.message : "";
+    if (!input.schema || !/output_config|output_format|json_schema/i.test(msg)) throw e;
+    schemaFallback = true;
+    res = await client.messages.create(baseParams as Anthropic.MessageCreateParamsNonStreaming);
+  }
   const text = extractText(res.content as { type: string; text?: string }[]);
   const json = parseModelJson(text); // tolerant: handles ```json fences + prose around the object
   const tokensIn = res.usage?.input_tokens ?? 0;
@@ -52,5 +72,6 @@ export async function runAnthropic(input: AnthropicInput): Promise<RunModelResul
     tokens: tokensIn + tokensOut,
     cost_usd: tokensIn * PRICE_IN + tokensOut * PRICE_OUT,
     latency_ms: Date.now() - started,
+    ...(schemaFallback ? { schema_fallback: true } : {}),
   };
 }

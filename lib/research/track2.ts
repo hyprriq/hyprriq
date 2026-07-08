@@ -16,6 +16,7 @@ import { buildValidationReport, type ReportAccepted, type ReportRejected } from 
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
 import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
+import { TRACK2_OUTPUT_SCHEMA } from "@/lib/research/schemas/track2.schema";
 import { IDENTITY_SCOPE_NOTE, AUTHORIZATION_SCOPE_NOTE, MARKETPLACE_ELIGIBILITY_DISCLAIMER } from "@/lib/research/track2.disclaimers";
 import { containsProcurementLanguage } from "@/lib/research/procurementLanguage";
 
@@ -78,7 +79,8 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   let parsed: ReturnType<typeof parseTrack2Output>;
   let llmCost = 0;
   try {
-    const res = await runModel({ task: "track", system, user, temperature: 0 });
+    // H7 (OQ-C) — schema-constrained extraction; runAnthropic falls back schema-less if rejected.
+    const res = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK2_OUTPUT_SCHEMA });
     parsed = parseTrack2Output(res.json);
     llmCost = res.cost_usd;
   } catch {
@@ -103,7 +105,7 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   if (validatedHardFails.length > 0 && !llmFailed) {
     let secondKeys: string[] | null = null;
     try {
-      const second = await runModel({ task: "track", system, user, temperature: 0 });
+      const second = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK2_OUTPUT_SCHEMA });
       const secondParsed = parseTrack2Output(second.json);
       secondKeys = secondParsed.parse_failed ? null : secondParsed.items.map((it) => it.proposed_weight_key);
       llmCost += second.cost_usd;
