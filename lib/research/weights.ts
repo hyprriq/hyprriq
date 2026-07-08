@@ -146,3 +146,10 @@ export function weightKeyExistsInAnyTrack(evidenceType: string): boolean {
   const tables = WEIGHTS as Record<string, Record<string, WeightEntry>>;
   return Object.values(tables).some((t) => evidenceType in t);
 }
+
+// H7 — registry enumeration for the firewall-coverage lock (firewallRegistry.test.ts). Additive
+// read-only export; scoring untouched.
+export function weightKeysForTrack(track: TrackKey): string[] {
+  const table = (WEIGHTS as Record<string, Record<string, WeightEntry>>)[track];
+  return table ? Object.keys(table) : [];
+}

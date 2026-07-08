@@ -19,7 +19,9 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 export const VALIDATION_VERSION = "1.3.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
-const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
+// Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;
+// gate logic below is the single consumer that decides anything with these.
+export const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   government_registration: ["government_record", "registry"],
   domain_age_5_plus: ["whois"], domain_age_2_5: ["whois"], domain_age_under_2_established: ["whois"],
   address_verifiable: ["government_record", "registry", "official_company"],
@@ -50,7 +52,7 @@ const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   counterfeit_channel: ["government_record", "news", "forum", "marketplace"],
   conflicting_authorization: ["official_brand", "official_company", "registry", "news"],
 };
-const MIN_AUTHORITY: Record<string, AuthorityScore> = {
+export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   government_registration: "high", domain_age_5_plus: "high", domain_age_2_5: "high",
   domain_age_under_2_established: "high", address_verifiable: "medium", linkedin_company: "low",
   phone_verifiable: "low", website_quality: "low", bbb_or_trade_association: "low",
