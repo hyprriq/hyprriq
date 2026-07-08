@@ -58,6 +58,30 @@ describe("validateWeights firewall", () => {
     const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "social" }), proposals: [prop("e1", "negative_reputation", ["s1"])] });
     expect(r[0].validated_weight_key).toBe("negative_reputation");
   });
+
+  // ── H7 (SO-2, firewall 1.3.0) — corroboration breadth: EVERY irreversible-veto key with
+  // variable-trust profiles joins the ≥2-distinct-sources class. Two-sided per the standing rule:
+  // the false-positive kill AND the true-positive survival are both locked. ──
+  it("H7: single-source website_fraudulent is REJECTED at the corroboration gate", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "news" }), proposals: [prop("e1", "website_fraudulent", ["s1"])] });
+    expect(r[0]).toMatchObject({ validated_weight_key: null, gate: "corroboration", rejection_reason: "corroboration" });
+  });
+  it("H7: website_fraudulent with TWO distinct valid sources validates AND still hard-fails", () => {
+    const v = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "news", s2: "forum" }), proposals: [prop("e1", "website_fraudulent", ["s1", "s2"])] });
+    expect(v[0].validated_weight_key).toBe("website_fraudulent");
+    const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
+    expect(deriveTrackSignal("supplier_identity", found).signal).toBe("hard_fail");
+  });
+  it("H7: single-source address_fraudulent is REJECTED at the corroboration gate", () => {
+    const r = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record" }), proposals: [prop("e1", "address_fraudulent", ["s1"])] });
+    expect(r[0]).toMatchObject({ validated_weight_key: null, gate: "corroboration", rejection_reason: "corroboration" });
+  });
+  it("H7: address_fraudulent with TWO distinct valid sources validates AND still hard-fails", () => {
+    const v = validateWeights({ track: "supplier_identity", sourceProfileById: profiles({ s1: "government_record", s2: "registry" }), proposals: [prop("e1", "address_fraudulent", ["s1", "s2"])] });
+    expect(v[0].validated_weight_key).toBe("address_fraudulent");
+    const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
+    expect(deriveTrackSignal("supplier_identity", found).signal).toBe("hard_fail");
+  });
   // POSITIVE PATH — the conservative corroboration gate must NOT over-reject a GENUINE fraud vendor:
   // 2 corroborating sources → scam_reports_corroborated validates AND still drives a hard_fail verdict.
   it("genuine fraud (2 corroborating sources) validates scam_reports_corroborated AND still hard-fails", () => {

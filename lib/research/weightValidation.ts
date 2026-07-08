@@ -12,7 +12,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // PROFILES + MIN_AUTHORITY are identical to the mild negative_reputation) now requires ≥2 DISTINCT valid
 // cited sources. Prevents a single low-authority source (one Facebook post → MotoTec USA false hard_fail)
 // from triggering an irreversible veto. Strictly more conservative — cannot produce a false PASS.
-export const VALIDATION_VERSION = "1.2.0";
+// 1.3.0 (2026-07-07, H7 SO-2 founder-signed): corroboration BREADTH — website_fraudulent and
+// address_fraudulent join the ≥2-distinct-sources class (every irreversible-veto key; aligns with the
+// standing principle that a single unverified fraud-flag is never load-bearing). Post-SO-1 pack dedupe,
+// "distinct" finally means distinct real-world URLs. Strictly more conservative.
+export const VALIDATION_VERSION = "1.3.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
@@ -64,7 +68,13 @@ const MIN_AUTHORITY: Record<string, AuthorityScore> = {
 // not be able to trigger it. Value = minimum DISTINCT valid cited sources required. Default (unlisted) = 1.
 // See docs/adr-t1-001-scam-corroboration-gate.md (collision-class audit + KNOWN RESIDUAL SEAM: 2+
 // reseller-scoped scams mis-attributed to the vendor still pass — the prompt is then the only guard).
-const CORROBORATION_REQUIRED: Record<string, number> = { scam_reports_corroborated: 2 };
+const CORROBORATION_REQUIRED: Record<string, number> = {
+  scam_reports_corroborated: 2,
+  // H7 (SO-2, v1.3.0) — every irreversible-veto key whose profiles include variable-trust sources
+  // requires ≥2 DISTINCT valid sources. Post-SO-1 dedupe, distinct means distinct real-world URLs.
+  website_fraudulent: 2,
+  address_fraudulent: 2,
+};
 
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit
 // entry) because authority is already implied by provenance. 'inference' has no external source → skip.
