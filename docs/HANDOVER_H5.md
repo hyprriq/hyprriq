@@ -1,7 +1,7 @@
 # HyprrIQ — Session Handover (Hardening H1–H5 → next) · 2026-07-06
 
 **Working dir:** `D:\Projects\Hyprriq\portal` (lowercase "iq"). **Branch:** `staging` (pushed through `72a92d9`; `main` stale — promote before go-live). **Next-build model:** Fable.
-**Read this file first — resume from "IMMEDIATE NEXT". Do NOT re-derive.** The founder-maintained status tracker is **`docs/HyprrIQ_OPEN_ITEMS.md` IN THIS REPO** (version-locked single source of truth since 2026-07-09; the old `D:\Projects\Hyprriq\Docs\` copy is ARCHIVED — do not read it) — read it second (planning intent; CODE is ground truth for what exists).
+**Read this file first — resume from "IMMEDIATE NEXT". Do NOT re-derive.** The ONE authoritative tracker is **`docs/HyprrIQ_OPEN_ITEMS.md` in this repo — absolute path `D:\Projects\Hyprriq\portal\docs\HyprrIQ_OPEN_ITEMS.md`** (git-tracked single source of truth since 2026-07-09, commit 62e460d). ALL tracker reads AND writes use that path only. The out-of-repo `D:\Projects\Hyprriq\Docs\` location is ARCHIVE-ONLY — never read or write the tracker there. Read the tracker second (planning intent; CODE is ground truth for what exists).
 
 ## ⛔ IMMEDIATE NEXT — H5 FROZEN (2026-07-06, all ATs passed); H6 plan DRAFTED, awaiting founder review
 
