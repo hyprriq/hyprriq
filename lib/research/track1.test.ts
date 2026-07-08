@@ -77,6 +77,48 @@ describe("H2 — llm_failed (model failure is a state, never a soft_fail)", () =
   });
 });
 
+describe("H7 (SO-4) — hard-fail consensus: veto keys must survive two extraction passes", () => {
+  // registration_fabricated validates from ONE gov source (fixed-trust, no corroboration entry) —
+  // the cleanest deterministic path to a VALIDATED hard-fail in a unit test.
+  it("a hard-fail proposed in BOTH passes survives; consensus record rides on the output", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel
+      .mockResolvedValueOnce({ json: item("registration_fabricated"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 })
+      .mockResolvedValueOnce({ json: item("registration_fabricated"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1(ctx);
+    expect(runModel).toHaveBeenCalledTimes(2);
+    expect(out.evidence_items.map((e) => e.weight_key)).toEqual(["registration_fabricated"]);
+    expect(out.hard_fail_consensus).toEqual({ checked: ["registration_fabricated"], dropped: [], second_call_failed: false });
+  });
+  it("a pass-1-only hard-fail is DROPPED and audited with gate 'consensus'", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel
+      .mockResolvedValueOnce({ json: item("registration_fabricated"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 })
+      .mockResolvedValueOnce({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1(ctx);
+    expect(out.evidence_items).toHaveLength(0); // the veto never reaches the scorer
+    expect(out.weight_validation?.[0]).toMatchObject({ validated_weight_key: null, gate: "consensus", rejection_reason: "consensus" });
+    expect(out.hard_fail_consensus?.dropped).toEqual(["registration_fabricated"]);
+  });
+  it("OQ-A: a failed confirmation call KEEPS the veto and flags second_call_failed", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel
+      .mockResolvedValueOnce({ json: item("registration_fabricated"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 })
+      .mockRejectedValueOnce(new Error("429 rate limited"));
+    const out = await runTrack1(ctx);
+    expect(out.evidence_items.map((e) => e.weight_key)).toEqual(["registration_fabricated"]);
+    expect(out.hard_fail_consensus).toEqual({ checked: ["registration_fabricated"], dropped: [], second_call_failed: true });
+    expect(out.llm_failed).toBe(false); // the FIRST pass succeeded — this is a consensus escalation, not an llm failure
+  });
+  it("no validated hard-fail → exactly ONE model call (the gate costs nothing on clean runs)", async () => {
+    gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });
+    runModel.mockResolvedValue({ json: item("government_registration"), model_provider: "a", model_version: "m", tokens: 1, cost_usd: 0.01, latency_ms: 1 });
+    const out = await runTrack1(ctx);
+    expect(runModel).toHaveBeenCalledTimes(1);
+    expect(out.hard_fail_consensus).toBeUndefined();
+  });
+});
+
 describe("H4 — Track 1 investigates the resolved entity and records it", () => {
   it("output carries research_identity { name, alias } from the resolved identity", async () => {
     gather.mockResolvedValue({ pack: pack("government_record", "government_record", "high"), metrics: [] });

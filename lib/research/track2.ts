@@ -10,6 +10,8 @@ import { buildTrack2Prompt, parseTrack2Output } from "@/lib/research/track2.prom
 import { validateWeights, VALIDATION_VERSION } from "@/lib/research/weightValidation";
 import { deriveTrackSignal } from "@/lib/research/signals";
 import { applySourceDiversityCap } from "@/lib/research/sourceDiversity";
+import { reconcileHardFailConsensus, type ConsensusOutcome } from "@/lib/research/hardFailConsensus";
+import { weightFor } from "@/lib/research/weights";
 import { buildValidationReport, type ReportAccepted, type ReportRejected } from "@/lib/research/track1.report";
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource } from "@/lib/research/acquisition/types";
@@ -90,6 +92,37 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     sourceProfileById,
     proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
   });
+
+  // ── H7 (SO-4) — hard-fail consensus (mirror of Track 1; OQ-B scoped consensus to the two
+  // hard-fail-carrying tracks). A validated veto key must survive a second extraction pass over
+  // the same frozen pack; OQ-A: a failed second call keeps the veto and escalates. ──
+  const validatedHardFails = [...new Set(validations
+    .filter((v) => v.validated_weight_key && weightFor("supply_chain_relationship", v.validated_weight_key)?.hard_fail)
+    .map((v) => v.validated_weight_key as string))];
+  let consensus: ConsensusOutcome | undefined;
+  if (validatedHardFails.length > 0 && !llmFailed) {
+    let secondKeys: string[] | null = null;
+    try {
+      const second = await runModel({ task: "track", system, user, temperature: 0 });
+      const secondParsed = parseTrack2Output(second.json);
+      secondKeys = secondParsed.parse_failed ? null : secondParsed.items.map((it) => it.proposed_weight_key);
+      llmCost += second.cost_usd;
+    } catch {
+      secondKeys = null;
+    }
+    consensus = reconcileHardFailConsensus(validatedHardFails, secondKeys);
+    if (consensus.dropped.length > 0) {
+      const droppedSet = new Set(consensus.dropped);
+      for (const v of validations) {
+        if (v.validated_weight_key && droppedSet.has(v.validated_weight_key)) {
+          v.validated_weight_key = null;
+          v.gate = "consensus";
+          v.rejection_reason = "consensus";
+        }
+      }
+    }
+  }
+
   const itemById = new Map(parsed.items.map((it) => [it.evidence_id, it]));
 
   const evidence_items: EvidenceItem[] = [];
@@ -167,5 +200,6 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     authorization_scope_note: AUTHORIZATION_SCOPE_NOTE,
     marketplace_eligibility_disclaimer: MARKETPLACE_ELIGIBILITY_DISCLAIMER,
     research_identity: { name: rid.name, alias: rid.alias },
+    hard_fail_consensus: consensus ? { checked: validatedHardFails, dropped: consensus.dropped, second_call_failed: consensus.second_call_failed } : undefined,
   };
 }

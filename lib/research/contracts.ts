@@ -144,6 +144,10 @@ export interface TrackOutput {
   llm_failed?: boolean;                            // H2 — model call failed or unparseable: do NOT score / write memory; escalate (mirror of acquisition_failed)
   not_implemented?: boolean;                       // H3 — dimension not built yet: a deliberate ABSENCE — n_a + skipped, never scored, never escalated
   research_identity?: { name: string; alias: string | null }; // H4 — WHO this track actually investigated (Truth & Record: auditable per attempt)
+  // H7 (SO-4) — hard-fail consensus record: which veto keys were re-checked, which were dropped for
+  // lack of two-pass agreement, and whether the confirmation call itself failed (OQ-A: veto kept +
+  // human confirms). Rides into compiled_findings_json — part of the frozen per-attempt record.
+  hard_fail_consensus?: { checked: string[]; dropped: string[]; second_call_failed: boolean };
   // Phase 5.1c — Track 2 advisory metadata (STORED for the analyst, NEVER scored — the signal is
   // code-derived from validated weight_keys). auth_level mirrors the master-spec Auth Level the LLM read.
   auth_level?: "A" | "B" | "C" | "D" | "E";
@@ -165,9 +169,11 @@ export interface TrackOutput {
 // EvidenceItem.weight_key stays = the VALIDATED key only; proposed/rejected live here.
 export type RejectionReason =
   | "registry" | "track" | "no_valid_citation" | "provenance" | "authority"
-  | "corroboration" | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown";
+  | "corroboration" | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown"
+  | "consensus"; // H7 SO-4 — hard-fail dropped for lack of two-pass extraction consensus
 export type ValidationGate =
-  | "grounding" | "registry" | "track" | "provenance" | "authority" | "corroboration" | "contradiction";
+  | "grounding" | "registry" | "track" | "provenance" | "authority" | "corroboration" | "contradiction"
+  | "consensus"; // H7 SO-4
 export interface WeightValidation {
   evidence_id: string;
   proposed_weight_key: string;

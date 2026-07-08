@@ -176,6 +176,10 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   const cAccepted = wv.filter((v) => v.validated_weight_key !== null).length;
   const cRejected = cTotal - cAccepted - cUnknown;
 
+  // H7 (SO-4, OQ-A) — a failed consensus confirmation call keeps the veto but requires a human to
+  // confirm it: we could neither confirm nor deny the highest-stakes signal, so a person decides.
+  const consensusEscalate = out.hard_fail_consensus?.second_call_failed === true;
+
   const persisted = await upsertTrackResult({
     case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
     source_mode: "ai_generated",
@@ -187,6 +191,8 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       signal: div.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
       // H7 (SO-3) — the cap decision is part of the frozen record (SQL-checkable per attempt).
       source_diversity: { capped: div.capped, cap_reason: div.cap_reason, distinct_sources: div.distinct_sources },
+      // H7 (SO-4) — the consensus record is part of the frozen record (null when no veto proposed).
+      hard_fail_consensus: out.hard_fail_consensus ?? null,
       // H4 — WHO was researched is part of the frozen record (SQL-checkable per attempt).
       research_name: out.research_identity?.name ?? null,
       research_alias: out.research_identity?.alias ?? null,
@@ -199,7 +205,9 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       authorization_scope_note: out.authorization_scope_note ?? null,
       marketplace_eligibility_disclaimer: out.marketplace_eligibility_disclaimer ?? null,
     },
-    founder_review_status: "approved", manual_review_required: false,
+    founder_review_status: consensusEscalate ? "pending" : "approved",
+    manual_review_required: consensusEscalate,
+    ...(consensusEscalate ? { manual_review_reason: "hard-fail consensus call failed — veto kept, human confirms" } : {}),
     weight_validation: out.weight_validation ?? null,
     classifications_total: cTotal, classifications_accepted: cAccepted,
     classifications_rejected: cRejected, classifications_unknown: cUnknown,
