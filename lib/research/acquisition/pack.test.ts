@@ -41,3 +41,34 @@ describe("finalizePack", () => {
     expect(p1.evidence_hash).not.toBe(p2.evidence_hash);
   });
 });
+
+// H7 (SO-1) — canonical-URL dedupe: identical real-world sources collapse to ONE pack entry so
+// downstream "distinct sources" counts (corroboration gate, source-diversity cap) mean REAL sources.
+describe("finalizePack canonical-URL dedupe (H7 SO-1 — pack 1.1.0)", () => {
+  const nsrc = (url: string | null, title = "t"): RawSource => ({ ...src("serper", url ?? "", title), url });
+
+  it("identical canonical URLs collapse to ONE source before src_N numbering", () => {
+    const pack = finalizePack("c1", "supplier_identity", [
+      nsrc("https://www.example.com/x/"),
+      nsrc("http://example.com/x?utm_source=a"),
+    ], "2026-07-07T00:00:00.000Z");
+    expect(pack.sources).toHaveLength(1);
+    expect(pack.schema_version).toBe("1.1.0");
+  });
+  it("distinct real-world sources are all kept", () => {
+    const pack = finalizePack("c1", "supplier_identity", [
+      nsrc("https://example.com/a"), nsrc("https://example.com/b"), nsrc("https://other.com/a"),
+    ], "t");
+    expect(pack.sources).toHaveLength(3);
+  });
+  it("null-url sources are never deduped against each other", () => {
+    const pack = finalizePack("c1", "supplier_identity", [nsrc(null, "a"), nsrc(null, "b")], "t");
+    expect(pack.sources).toHaveLength(2);
+  });
+  it("dedupe is deterministic: same winner and hash regardless of input order", () => {
+    const p1 = finalizePack("c1", "supplier_identity", [nsrc("https://www.e.com/x/", "A"), nsrc("http://e.com/x", "B")], "t");
+    const p2 = finalizePack("c1", "supplier_identity", [nsrc("http://e.com/x", "B"), nsrc("https://www.e.com/x/", "A")], "t");
+    expect(p1.evidence_hash).toBe(p2.evidence_hash);
+    expect(p1.sources[0].url).toBe(p2.sources[0].url);
+  });
+});

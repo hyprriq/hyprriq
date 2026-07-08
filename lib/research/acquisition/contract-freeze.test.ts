@@ -9,9 +9,13 @@ import type { Provenance } from "./types";
 // ║ fails, you are changing a FROZEN contract — STOP. Make a deliberate, versioned decision   ║
 // ║ (bump EVIDENCE_PACK_SCHEMA_VERSION + migrate consumers) rather than editing in place.     ║
 // ╚══════════════════════════════════════════════════════════════════════════════════════╝
-describe("Evidence Pack contract freeze (1.0.0)", () => {
-  it("schema_version is frozen at 1.0.0", () => {
-    expect(EVIDENCE_PACK_SCHEMA_VERSION).toBe("1.0.0");
+describe("Evidence Pack contract freeze (1.1.0)", () => {
+  // 1.0.0 → 1.1.0 (H7 SO-1, founder-SIGNED 2026-07-07, plan 2026-07-07-h7-firewall-hardening.md):
+  // canonical-URL dedupe in finalizePack. This is the deliberate, versioned decision the guard
+  // above demands — shape unchanged (key tests below still lock it), content semantics versioned.
+  // Frozen 1.0.0 packs are history and are never migrated.
+  it("schema_version is frozen at 1.1.0", () => {
+    expect(EVIDENCE_PACK_SCHEMA_VERSION).toBe("1.1.0");
   });
 
   it("EvidencePack has exactly the frozen top-level keys", () => {
