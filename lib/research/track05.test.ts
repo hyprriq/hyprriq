@@ -194,6 +194,40 @@ describe("SB-1 (SO-1) — domain-research anchor match", () => {
     expect(gather).toHaveBeenCalledTimes(1); // website unresolved → name research skipped
   });
 
+  // SB-1 AT-1 correction (founder live check, 2026-07-09): globaldist.com actually belongs to a
+  // DIFFERENT company (openborder) — the wrong domain was entered weeks ago (real site:
+  // globalcloseouts.net). The resolver's escalation was CORRECT all along. This locks the
+  // wrong-domain behavior post-fix: anchor identity resolves the domain to ITS OWN entity — it can
+  // NEVER confer the entered name's identity on someone else's domain (resolved_name comes only
+  // from the LLM-discovered entity FOR that domain, and the client note names that entity).
+  it("wrong domain entered: anchor resolves to the domain's ACTUAL entity, never the entered supplier", async () => {
+    gather
+      .mockResolvedValueOnce(pack([onDomain("globaldist.com", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "globaldist.com", entity_name: "Openborder Inc", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [] })); // entered name resolves nothing this pass
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Global Distributors", vendor_website: "globaldist.com" }));
+    expect(r.resolved_name).toBe("Openborder Inc");                       // the domain's real entity
+    expect(r.resolved_name).not.toBe("Global Distributors");              // NEVER the entered name
+    expect(r.identity_discrepancy?.kind).toBe("name_website_mismatch");
+    expect(r.identity_discrepancy?.client_note).toContain("Openborder Inc"); // the client is TOLD whose site this is
+    expect(r.identity_discrepancy?.entered_name).toBe("Global Distributors");
+  });
+
+  it("wrong domain entered AND the entered name resolves its own entity elsewhere → multiple_entities escalate", async () => {
+    gather
+      .mockResolvedValueOnce(pack([onDomain("globaldist.com", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://opencorporates.com/gd", "registry"), onDomain("globalcloseouts.net", "official_company")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "globaldist.com", entity_name: "Openborder Inc", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "globalcloseouts.net", entity_name: "Global Distributors LLC", supporting_source_ids: ["src_0", "src_1"] }] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Global Distributors", vendor_website: "globaldist.com" }));
+    expect(r.identity_discrepancy?.kind).toBe("multiple_entities");
+    expect(r.identity_unconfirmed).toBe(true);                            // two real entities → human decides
+    expect(r.resolved_domain).toBeNull();
+  });
+
   it("a NON-anchor candidate earns no anchor bonus under domain research (no wrong-entity binding)", async () => {
     gather.mockResolvedValueOnce(pack([onDomain("othersite.com", "official_company")]));
     runModel.mockResolvedValueOnce(model({ candidates: [{ domain: "othersite.com", entity_name: "Other Site Inc", supporting_source_ids: ["src_0"] }] }));

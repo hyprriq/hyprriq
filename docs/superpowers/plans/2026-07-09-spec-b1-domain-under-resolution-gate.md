@@ -74,7 +74,8 @@ Untouched, byte-identical: **`identityResolver.ts` in its entirety** (weights, t
 
 ## ACCEPTANCE TESTS (founder runs all; fixtures by DB mechanism; stored vs live class verified SEPARATELY — the 4×-earned rule)
 
-**AT-1 — the false-negative dies (positive side), live on the real fixtures.**
+**AT-1 — the false-negative dies (positive side) — ⚠ CORRECTED 2026-07-09 (founder live fixture check): tdsynnex.com is the ONLY positive fixture.**
+**The correction (and the solved mystery):** founder's browser verification found tdsynnex.com loads the real TD SYNNEX (valid false-negative fixture) — but **globaldist.com loads "openborder", a completely different company**. The wrong domain was entered weeks ago; Global Distributors' actual site is **globalcloseouts.net**. So globaldist.com was NEVER a false negative — the resolver correctly refused to confirm a domain belonging to an unrelated entity (escalate-never-guess working as designed), and the long-running "globaldist website_dead mystery" is SOLVED as a data-entry error, not a bug. The fixture rule (verify stored vs LIVE class separately) caught this pre-AT — its 5th earn.
 Select by mechanism (never by label/observed verdict):
 ```sql
 SELECT id, case_number, vendor_name, vendor_website, status,
@@ -82,10 +83,13 @@ SELECT id, case_number, vendor_name, vendor_website, status,
        supplier_identity->'resolution_audit' AS audit
 FROM cases
 WHERE supplier_identity->'identity_discrepancy'->>'kind' = 'website_dead'
-  AND (vendor_website ILIKE '%tdsynnex.com%' OR vendor_website ILIKE '%globaldist.com%');
+  AND vendor_website ILIKE '%tdsynnex.com%';
 ```
-Verify LIVE class separately (both domains load in a browser today). Fixture must NOT be delivered/complete (re-running updates live status per OQ-D real-attempt semantics; these sit in the manual queue, so re-running is the normal path). Re-run via admin → Request Further Investigation. **PASS** = newest `supplier_identity`: `resolution_method = 'resolved_from_website'`, `resolved_domain` = the anchor domain, `identity_unconfirmed = false`, `resolved_name` = the discovered entity (e.g. "TD SYNNEX Corporation"), `input_consistency = 'low'`, discrepancy kind `name_website_mismatch` (or `name_is_brand` for the globaldist/Bosch case) naming the entity — and the prior attempt's identity record untouched (H1).
-**BONUS CLOSURE:** this is exactly H4's logged limitation (live resolved-to-DIFFERENT-entity demo, never demonstrated because both fixtures hit this bug) — record its closure in the tracker's H4 line.
+Verify LIVE class separately (tdsynnex.com loads the real company today). Fixture must NOT be delivered/complete (re-running updates live status per OQ-D real-attempt semantics; these sit in the manual queue, so re-running is the normal path). Re-run via admin → Request Further Investigation. **PASS** = newest `supplier_identity`: `resolution_method = 'resolved_from_website'`, `resolved_domain = 'tdsynnex.com'`, `identity_unconfirmed = false`, `resolved_name` = the discovered entity (e.g. "TD SYNNEX Corporation"), `input_consistency = 'low'`, discrepancy kind `name_website_mismatch` naming the entity — and the prior attempt's identity record untouched (H1).
+**BONUS CLOSURE:** this is H4's logged limitation (live resolved-to-different-entity demo) — record its closure in the tracker's H4 line.
+
+**AT-1b — wrong-domain behavior check (globaldist.com, live) — the fix must NOT falsely resolve it.**
+Re-run the globaldist fixture (same mechanism SQL with `%globaldist.com%`). Post-SB-1, ANY of these outcomes is a PASS: (a) resolves to the domain's ACTUAL occupant (the openborder entity) with a `name_website_mismatch` note naming THAT entity — the client is told whose site this is; (b) `multiple_entities` escalation if the entered name also resolves its own entity; (c) `website_dead` escalation if the occupant doesn't earn dominance this pass. **FAIL = any outcome where `resolved_name` equals the entered supplier name** — identity conferred by someone else's domain would be the wrong-but-confirmed regression. Mechanically impossible by construction (`resolved_name` derives ONLY from the LLM-discovered entity FOR the domain; anchor identity is `canonicalDomain` equality, which carries no name semantics) and unit-locked both ways (`track05.test.ts` wrong-domain locks, added with this correction).
 
 **AT-2 — escalate-never-guess survives (negative side, two-sided mandatory).**
 *Unit:* an anchor candidate earning anchor identity but ZERO independent signals (no registry citation, no self-identifying cited source) scores 2 < 4 → not dominant → `website_dead` escalation preserved. An LLM-proposed `entity_name` with no qualifying citations changes nothing (entity_name is resolver-ignored for scoring — already true, regression-locked now).
