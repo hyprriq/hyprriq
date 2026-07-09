@@ -147,6 +147,62 @@ describe("resolveSupplierIdentity", () => {
   });
 });
 
+// ── SB-1 (SO-1) — domain-mode anchor match. In website-anchored research the SUBJECT IS a domain,
+// so "matches the subject" means anchor IDENTITY (canonicalDomain equality) — the fuzzy name↔label
+// match structurally fails there (TLD-included subject vs TLD-stripped label = 3 edits vs tolerance
+// 2: the confirmed root cause of the tdsynnex/globaldist website_dead false negatives). Two-sided:
+// the anchor still must EARN dominance via registry_hit or self_identifies (identity alone = 2 < 4).
+describe("SB-1 (SO-1) — domain-research anchor match", () => {
+  const onDomain = (domain: string, profile: string) => src(`https://${domain}/about`, profile);
+
+  it("live domain, anchor candidate + self-identification ONLY → resolves from website (the tdsynnex false negative dies)", async () => {
+    gather
+      .mockResolvedValueOnce(pack([onDomain("tdsynnex.com", "official_company")]))   // website research
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));         // name research (ambiguity check)
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [] }));                             // name resolves nothing → not ambiguous
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    expect(r.resolution_method).toBe("resolved_from_website");
+    expect(r.resolved_name).toBe("TD SYNNEX Corporation");
+    expect(r.resolved_domain).toBe("tdsynnex.com");
+    expect(r.identity_unconfirmed).toBe(false);
+    expect(r.identity_discrepancy?.kind).toBe("name_website_mismatch");
+  });
+
+  it("anchor candidate cited by a registry source ONLY (candidate spelled www.…) → resolves via canonicalDomain identity", async () => {
+    gather
+      .mockResolvedValueOnce(pack([src("https://opencorporates.com/globaldist", "registry")]))
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "www.globaldist.com", entity_name: "Global Distribution LLC", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Global Distribution", vendor_website: "globaldist.com" }));
+    expect(r.resolution_method).toBe("resolved_from_website");
+    expect(r.resolved_name).toBe("Global Distribution LLC");
+    expect(r.resolved_domain).toBe("globaldist.com");
+    expect(r.identity_unconfirmed).toBe(false);
+  });
+
+  it("anchor identity ALONE (no registry, no self-identification) still escalates website_dead — dominance must be EARNED", async () => {
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockResolvedValueOnce(model({ candidates: [{ domain: "parked-nothing.com", entity_name: "Some Name", supporting_source_ids: ["src_0"] }] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "parked-nothing.com" }));
+    expect(r.identity_discrepancy?.kind).toBe("website_dead");
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolved_domain).toBeNull();
+    expect(gather).toHaveBeenCalledTimes(1); // website unresolved → name research skipped
+  });
+
+  it("a NON-anchor candidate earns no anchor bonus under domain research (no wrong-entity binding)", async () => {
+    gather.mockResolvedValueOnce(pack([onDomain("othersite.com", "official_company")]));
+    runModel.mockResolvedValueOnce(model({ candidates: [{ domain: "othersite.com", entity_name: "Other Site Inc", supporting_source_ids: ["src_0"] }] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "parked-nothing.com" }));
+    expect(r.identity_discrepancy?.kind).toBe("website_dead"); // othersite self-identifies (2) but is NOT the anchor → never dominant here
+    expect(r.resolved_domain).toBeNull();
+  });
+});
+
 // H4 (SO-1) — the zero-research fast path is EXACT-only. A fuzzy near-miss (a typo — or a
 // different company one letter away: Medline vs medlink.com) must VERIFY via the existing
 // Spec-B website-anchored discovery instead of silently binding with high confidence.

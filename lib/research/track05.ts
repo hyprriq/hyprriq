@@ -23,8 +23,16 @@ const REGISTRY_PROFILES = new Set(["registry", "government_record"]);
 
 // Research one subject (a name or a domain) into candidates + a resolveIdentity outcome. Pure boundary
 // preserved: the LLM proposes candidates (+ entity_name); CODE derives the signal booleans + resolves.
+// SB-1 (SO-1) — `mode` selects the subject-match derivation: in NAME mode a candidate matches via the
+// fuzzy name↔label matcher; in DOMAIN mode the subject IS a domain, so "matches the subject" means
+// anchor IDENTITY (canonicalDomain equality). The fuzzy matcher structurally fails on a domain subject
+// (TLD-included subject vs TLD-stripped label = 3 edits vs tolerance 2 — the confirmed root cause of
+// the tdsynnex/globaldist website_dead false negatives). Dominance must still be EARNED: anchor
+// identity alone scores 2 < HIGH_THRESHOLD 4; registry_hit / self_identifies stay code-derived from
+// cited sources. resolveIdentity (weights/threshold/margin) is untouched — fix the signal, not the logic.
 async function researchEntity(
   ctx: TrackContext, requests: { question: ResearchQuestion; input: string }[], subject: string,
+  mode: "name" | "domain",
 ): Promise<{ identity: SupplierIdentity; entityByDomain: Map<string, string>; candidates: IdentityCandidate[]; exactByDomain: Map<string, boolean> }> {
   const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
   const { pack } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
@@ -45,12 +53,14 @@ async function researchEntity(
     proposed = parseIdentityOutput({ _parse_error: true });
   }
 
+  const anchor = mode === "domain" ? canonicalDomain(subject) : null;
   const entityByDomain = new Map<string, string>();
   const exactByDomain = new Map<string, boolean>();
   const candidates: IdentityCandidate[] = proposed.candidates.map((c) => {
     const cited = c.supporting_source_ids.map((id) => byId.get(id)).filter((s): s is RawSource => !!s);
-    const nm = nameMatch(subject, c.domain);
     const canonical = canonicalDomain(c.domain);
+    const isAnchor = !!anchor && !!canonical && canonical === anchor;
+    const nm = mode === "domain" ? { match: isAnchor, exact: isAnchor } : nameMatch(subject, c.domain);
     if (canonical) { exactByDomain.set(canonical, nm.exact); if (c.entity_name) entityByDomain.set(canonical, c.entity_name); }
     return {
       domain: c.domain,
@@ -95,7 +105,7 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
 
   // ── Spec-B — website present but does NOT match the name → website-anchored discovery. ──
   if (providedHost) {
-    const site = await researchEntity(ctx, buildDomainIdentityRequests(providedHost), providedHost);
+    const site = await researchEntity(ctx, buildDomainIdentityRequests(providedHost), providedHost, "domain");
     const website = toEntityResolution(site);
     const brands = ctx.brands_submitted ?? [];
     const nameIsBrand = brands.map(normalizeBrandToken).filter(Boolean).includes(normalizeBrandToken(vendor_name));
@@ -104,7 +114,7 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
     // the name is not a brand (rule 3: a brand in the name slot is a client-entry error, not ambiguity).
     let nameRes: EntityResolution | null = null;
     if (website.resolved && !nameIsBrand) {
-      nameRes = toEntityResolution(await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name));
+      nameRes = toEntityResolution(await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name, "name"));
     }
 
     const d = decideWebsiteAnchored({ entered_name: vendor_name, provided_host: providedHost, brands, website, name: nameRes });
@@ -126,7 +136,7 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
   }
 
   // ── No parseable website → existing NAME-discovery path (unchanged). ──
-  const r = await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name);
+  const r = await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name, "name");
   const identity = r.identity;
   // A dominant winner reached via a FUZZY (non-exact) name match is a silent normalization, not a clean
   // dominant match — relabel the method (point 5). Confidence + escalation unchanged.
