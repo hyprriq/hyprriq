@@ -85,6 +85,13 @@ describe("back-compat + Spec-B client_note templates", () => {
       expect(scanHard(clientNote(k, "Bosch", "Global Distribution LLC"))).toEqual([]);
     }
   });
+  // SB-1 (SO-3) — the OQ-B-ruled website_dead note is an OWN-VOICE (code-templated) string, so the
+  // ASSERTION tier is BLOCKING for it, not advisory: lock both tiers on the real template.
+  it("the SB-1 website_dead note passes BOTH tiers (explicit denial — the allowed class)", () => {
+    const note = clientNote("website_dead", "Acme Corp", "Acme Corp");
+    expect(scanHard(note)).toEqual([]);
+    expect(scanAssertion(note)).toEqual([]);
+  });
 });
 
 // H5 bug fix (found via AT-2 pre-check): H2 must be NEGATION-AWARE. The spec-MANDATED disclaimer

@@ -43,8 +43,12 @@ export function clientNote(kind: IdentityDiscrepancyKind, entered: string, resol
       return `Identity clarification: You entered "${entered}" as the supplier. Our investigation found that the website provided belongs to ${resolved}. This report's analysis is based on ${resolved}. If this was not your intended supplier, please contact us before relying on the findings.`;
     case "multiple_entities":
       return `Identity clarification: The supplier name "${entered}" and the website you provided appear to refer to different businesses. We could not confirm which is your intended supplier — please contact us to confirm before relying on the findings.`;
+    // SB-1 (SO-3, OQ-B founder-ruled exact copy 2026-07-09) — states OUR limitation, never a
+    // conclusion about the supplier or its website; the re-verify offer turns a limitation into a
+    // service action. The enum value stays `website_dead` (frozen records reference it) — only the
+    // client-facing presentation changed, for NEW attempts.
     case "website_dead":
-      return `Identity clarification: We could not confirm an operating business at the website provided for "${entered}". Please verify the supplier's website before relying on the findings.`;
+      return `Identity clarification: In this pass, we were unable to independently verify the website associated with "${entered}" from public sources. This reflects a limit of our verification in this investigation, not a finding about the supplier or its website. If you can confirm the supplier's official website, contact us and we will re-verify.`;
     default:
       return `Identity clarification: please confirm the intended supplier for "${entered}" before relying on the findings.`;
   }

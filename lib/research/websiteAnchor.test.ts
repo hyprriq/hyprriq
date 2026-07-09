@@ -62,6 +62,18 @@ describe("decideWebsiteAnchored (Spec-B branches 2a/2b/2c + name_is_brand)", () 
     expect(d.resolved_domain).toBeNull();
   });
 
+  // SB-1 (SO-3) — the OQ-B founder-ruled EXACT copy (2026-07-09). The bar, now standing: the note
+  // states OUR limitation, never a conclusion about the supplier or its website.
+  it("website_dead client note is the OQ-B-ruled copy — our limitation, never a supplier conclusion", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Acme Corp", provided_host: "parked-nothing.com", brands: [],
+      website: dom(null, false), name: null,
+    });
+    expect(d.identity_discrepancy.client_note).toBe(
+      "Identity clarification: In this pass, we were unable to independently verify the website associated with \"Acme Corp\" from public sources. This reflects a limit of our verification in this investigation, not a finding about the supplier or its website. If you can confirm the supplier's official website, contact us and we will re-verify.",
+    );
+  });
+
   it("never emits a fraud key — the decision only sets identity fields + a flag", () => {
     const d = decideWebsiteAnchored({ entered_name: "Bosch", provided_host: "globaldist.com", brands: ["Bosch"], website: dom("Global Distribution LLC"), name: null });
     // sanity: the decision object carries no weight_key / veto surface at all
