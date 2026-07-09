@@ -38,7 +38,9 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // 1.1.0 (2026-07-07, H7): source-diversity cap at the signal site (SO-3), hard-fail consensus
 // second-extraction pass (SO-4), replay mode (OQ-D: stored packs + frozen identity in place of
 // live acquisition/resolution). Companion versions this phase: pack 1.1.0 (SO-1), firewall 1.3.0 (SO-2).
-export const PIPELINE_VERSION = "1.1.0";
+// 1.2.0 (2026-07-09, SB-1, founder-approved): Track 0.5 domain-mode anchor match (SO-1) + llm_failed
+// research-failure routing (SO-2) — resolution behavior changes for NEW attempts; frozen attempts untouched.
+export const PIPELINE_VERSION = "1.2.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

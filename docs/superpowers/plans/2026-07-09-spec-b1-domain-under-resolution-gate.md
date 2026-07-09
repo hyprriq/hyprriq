@@ -112,22 +112,22 @@ Force an LLM failure during Track 0.5 (the H2 AT-1 forcing method) on a queued t
 
 ### Task 1 — domain-mode anchor match (SO-1)
 **Files:** `lib/research/track05.ts` · tests beside it (repo pattern)
-- [ ] Failing tests: (a) domain subject "tdsynnex.com" + candidate "tdsynnex.com" ⇒ `name_match: true` (the confirmed-mechanism case: label < 12 chars); (b) candidate "www.tdsynnex.com" / "https://tdsynnex.com/about" ⇒ true via `canonicalDomain`; (c) candidate "othersite.com" under a domain subject ⇒ false; (d) NAME-mode derivation byte-identical (existing tests untouched + an explicit lock); (e) anchor + no independent signals ⇒ resolver returns non-dominant (AT-2 unit).
-- [ ] Implement: subject-mode parameter at the two `researchEntity` call sites; derivation switch only. `identityResolver.ts` diff must be EMPTY.
-- [ ] Full verify; commit.
+- [x] Failing tests: (a) domain subject "tdsynnex.com" + candidate "tdsynnex.com" ⇒ `name_match: true` (the confirmed-mechanism case: label < 12 chars); (b) candidate "www.tdsynnex.com" / "https://tdsynnex.com/about" ⇒ true via `canonicalDomain`; (c) candidate "othersite.com" under a domain subject ⇒ false; (d) NAME-mode derivation byte-identical (existing tests untouched + an explicit lock); (e) anchor + no independent signals ⇒ resolver returns non-dominant (AT-2 unit).
+- [x] Implement: subject-mode parameter at the two `researchEntity` call sites; derivation switch only. `identityResolver.ts` diff must be EMPTY.
+- [x] Full verify; commit.
 
 ### Task 2 — `llm_failed` instrumentation + additive contract field (SO-2)
 **Files:** `lib/research/contracts.ts` (additive optional field only), `lib/research/track05.ts` · tests
-- [ ] Failing tests: thrown `runModel` ⇒ recorded `llm_failed: true` + Spec-B branch returns unresolved identity WITHOUT calling `decideWebsiteAnchored` (spy) + discrepancy per OQ-A; unparseable output ⇒ same; zero-source pack ⇒ same with "no sources" reason; successful run ⇒ `llm_failed: false` recorded on every call; name-call failure during ambiguity check ⇒ per OQ-C ruling; name-only discovery path failure ⇒ escalates as today WITH the failure now recorded truthfully.
-- [ ] Implement; full verify; commit.
+- [x] Failing tests: thrown `runModel` ⇒ recorded `llm_failed: true` + Spec-B branch returns unresolved identity WITHOUT calling `decideWebsiteAnchored` (spy) + discrepancy per OQ-A; unparseable output ⇒ same; zero-source pack ⇒ same with "no sources" reason; successful run ⇒ `llm_failed: false` recorded on every call; name-call failure during ambiguity check ⇒ per OQ-C ruling; name-only discovery path failure ⇒ escalates as today WITH the failure now recorded truthfully.
+- [x] Implement; full verify; commit.
 
 ### Task 3 — client note copy + reason strings (SO-3)
 **Files:** `lib/research/websiteAnchor.ts` (`clientNote` only) · scanner fixture test
-- [ ] Failing tests: new `website_dead` copy (exact OQ-B-ruled string); copy passes the banned-language scanner (HARD + ASSERTION tiers); all other kinds' copy byte-identical.
-- [ ] Implement; full verify; commit.
+- [x] Failing tests: new `website_dead` copy (exact OQ-B-ruled string); copy passes the banned-language scanner (HARD + ASSERTION tiers); all other kinds' copy byte-identical.
+- [x] Implement; full verify; commit.
 
 ### Task 4 — version bump + docs
-- [ ] `PIPELINE_VERSION` 1.1.0 → 1.2.0 (✅ founder-approved 2026-07-09); tracker updated (SB-1 line + H4 limitation-closure pointer readied for AT-1); full verify (tsc + eslint + vitest + build); push staging. **STOP — founder runs ATs 1–5 → SB-1 FROZEN.**
+- [x] `PIPELINE_VERSION` 1.1.0 → 1.2.0 (✅ founder-approved 2026-07-09); tracker updated (SB-1 line + H4 limitation-closure pointer readied for AT-1); full verify (tsc + eslint + vitest + build); push staging. **STOP — founder runs ATs 1–5 → SB-1 FROZEN.**
 
 ---
 
