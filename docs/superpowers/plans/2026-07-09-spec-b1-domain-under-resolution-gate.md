@@ -1,0 +1,133 @@
+# SB-1 — Spec-B Domain-Research Under-Resolution Gate (founder-review spec)
+
+> **For agentic workers:** REQUIRED SUB-SKILL after approval: superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
+
+**Status:** 🔴 **DRAFT — AWAITING FOUNDER REVIEW. NO CODE UNTIL: all three SIGN-OFFS signed + all four OQs ruled.** Gate rhythm unchanged: this spec → founder approves + rules → TDD build (commit per task, tsc+eslint+vitest+build) → push staging → founder personally runs ATs → SB-1 frozen.
+**Phase:** SB-1 ONLY. **NOT in this phase** (each its own gate): Track 3 (next gate after this), Phase H PDF, client confirmation loop, pre-launch security phase, analyst-prompt rewrite, any `identityResolver.ts` threshold/weight change (explicitly excluded — see Frozen-core guarantee).
+**Migration:** **NONE.** All record changes are additive optional fields inside the `supplier_identity` JSON column.
+
+---
+
+## PROBLEM — and the ROOT CAUSE, now CONFIRMED mechanically (upgrade from the tracker's hypothesis)
+
+Real, live domains (tdsynnex.com; globaldist.com twice) score `website_dead` in Spec-B domain research. Behavior is SAFE (escalate-never-guess) but LOSSY: obviously-real suppliers land in the manual queue under a note that reads as "your supplier's site is dead". Identity resolution keys the corpus, selects the research identity, and is what replay reuses — the weakest load-bearing layer, being fixed before Track 3 pushes more traffic through it.
+
+**The tracker's root-cause hypothesis ("dominance threshold tuned for NAME discovery, over-strict for DOMAIN research") is directionally right, but the concrete mechanism is sharper — traced in code, no live run needed:**
+
+1. Spec-B branch ([lib/research/track05.ts:97](../../lib/research/track05.ts)) researches the domain with `subject = providedHost` (e.g. `"tdsynnex.com"` — the raw canonical domain, **TLD included**).
+2. Signal derivation (track05.ts:52) computes `name_match: nameMatch(subject, c.domain).match`. Inside `nameMatch` ([lib/research/nameMatch.ts:28](../../lib/research/nameMatch.ts)):
+   - `name = normalizeBrandToken("tdsynnex.com")` → `"tdsynnexcom"` (11 chars — the dot is stripped, **the TLD letters stay**),
+   - `label = normalizeBrandToken(domainLabel("tdsynnex.com"))` → `"tdsynnex"` (8 chars — **TLD stripped**),
+   - not equal → fuzzy: tolerance = `max(1, floor(min(11,8) × 0.25))` = **2**, Levenshtein("tdsynnexcom","tdsynnex") = **3** → **`match: false`**.
+3. So **the anchor candidate structurally NEVER earns `name_match` (2 pts) for the very domain being researched** — for any domain label shorter than 12 characters. (Labels ≥ 12 chars *accidentally* match because the tolerance reaches 3 — arbitrary, which confirms this is a broken derivation, not tuning. `globaldist` = 10 chars → same failure, distance 3 > tolerance 2.)
+4. `address_consistent` is hardcoded `false` (track05.ts:60) — that weight (1 pt) is unreachable everywhere.
+5. Net: to clear `HIGH_THRESHOLD = 4` the anchor must earn **BOTH** `registry_hit` (2) **AND** `self_identifies` (2) from LLM-cited pack sources. One of the two missing → score 2 → not dominant → `toEntityResolution` → `resolved: false` → `decideWebsiteAnchored` branch 2c → **`website_dead`**.
+
+**Conclusion: the resolver (`identityResolver.ts`) is NOT wrong and is NOT touched.** The threshold/margin logic is doing exactly its job; the *input signal* fed to it in domain mode is structurally broken. Fix the derivation, route INTO the frozen logic unchanged — the H4 SO-1 precedent (smallest possible touch).
+
+**Two adjacent defects in the same surface (both in the tracker's folded scope):**
+
+- **A model failure masquerades as a dead website.** `researchEntity` (track05.ts:41-46) catches a thrown `runModel` / unparseable output and silently collapses to zero candidates → `unresolved` → `website.resolved=false` → **`website_dead` with a client-facing note** — an Anthropic 429 literally tells the client we couldn't confirm their supplier's business. H2 closed exactly this class for Tracks 1–2 (`llm_failed` → n_a + escalate, never a scored signal); Track 0.5 was out of H2's scope. This gate closes it.
+- **The client-facing `website_dead` note over-claims.** Current copy ("We could not confirm an operating business at the website provided… Please verify the supplier's website") reads as a finding about the *supplier's site* even when the truth is a *resolution failure on our side*. Copy revised (SO-3 + OQ-B); the stored enum value `website_dead` is NOT renamed (it lives in frozen delivered records).
+
+---
+
+## GOAL
+
+A live, real domain researched under Spec-B resolves to its operating entity when — and only when — the anchor candidate earns at least one **independent, code-derived** signal (registry citation or self-identification) on top of anchor identity; an infrastructure failure is recorded as `llm_failed` and escalates truthfully, never as a website finding; the client note for genuine non-confirmation stops implying the site is dead; and genuinely dead/fabricated domains (Zzqxwv / AWI-2606-003 class) still escalate exactly as today — proven two-sided.
+
+## ARCHITECTURE (smallest touch, all inside Track 0.5's own files)
+
+- **Domain-mode anchor matching** lives in `track05.ts` signal derivation only: when the research subject is a DOMAIN, a candidate's `name_match` boolean := `canonicalDomain(candidate.domain) === canonicalDomain(subject)` (anchor identity — the domain-mode analog of "domain label matches a vendor-name token"). NAME-mode derivation is byte-identical to today. `resolveIdentity`, `WEIGHTS`, `HIGH_THRESHOLD = 4`, `MARGIN = 2` — all untouched; the anchor still must EARN dominance via `registry_hit` OR `self_identifies` (both code-derived from cited pack sources, never LLM-settable), and the runner-up margin still applies. **Escalate-never-guess is preserved by construction**: anchor identity alone scores 2 < 4.
+- **`llm_failed` instrumentation** mirrors H2: `researchEntity` records (never swallows) model-call failure and empty-pack acquisition per research call; `resolveSupplierIdentity` threads an additive optional `resolution_research` array onto `SupplierIdentity` (SQL-checkable in the stored JSON). On website-research failure the Spec-B branch returns an unresolved, `identity_unconfirmed: true` identity with truthful notes and **never reaches `decideWebsiteAnchored`** — a failure cannot mint a `website_dead` intelligence signal. Existing escalation routing (`stageFinalize` → `manual_override_required`) is reused unchanged.
+- **Client note copy** changes in ONE place (`clientNote()` in `websiteAnchor.ts`); `decideWebsiteAnchored` decision logic byte-identical. New copy must pass the H5 banned-language scanner.
+- If the live ATs show the fix insufficient (anchor still under-resolves with the corrected signal), the build **STOPS and returns to the founder with the recorded near-miss data** (`resolution_audit` score/margin per attempt). Thresholds are never tuned mid-build.
+
+**Cost:** zero new LLM/Serper calls on any path (same research calls; instrumentation is free). **PIPELINE_VERSION:** bump 1.1.0 → 1.2.0 (resolution behavior changes for NEW attempts; frozen attempts untouched — same rationale as H7's bump). Founder may veto the bump in review if judged unwarranted.
+
+## FROZEN-CORE GUARANTEE
+
+Untouched, byte-identical: **`identityResolver.ts` in its entirety** (weights, threshold, margin, dominance logic), `deriveTrackSignal`, `computeVerdict`, `weights.ts`, all 6 firewall gates + config (1.3.0), `applyVerdictCeiling`, `researchIdentityFor`, Evidence Pack 1.1.0, `decideWebsiteAnchored` decision branches, publish-confirm, all H1–H7 semantics. Frozen delivered records never rewritten; every change affects NEW attempts only. The three frozen-surface touches are enumerated below as sign-offs — nothing outside them is modified.
+
+---
+
+## SIGN-OFFS — 🔴 ALL UNSIGNED (frozen Track 0.5 / Spec-B surface touches; explicit founder signature required on each)
+
+- **SO-1 — `track05.ts` signal-derivation touch (domain-mode anchor match).** `researchEntity` gains subject-mode awareness (the two call sites already know their mode: name-discovery vs website-anchored). In DOMAIN mode a candidate's `name_match` is anchor identity via the existing shared `canonicalDomain` (handles `www.`/scheme/case variants the LLM may emit); in NAME mode the derivation is byte-identical to today (existing name-path tests must pass with zero expectation changes — the regression lock). Routes INTO the frozen `resolveIdentity` unchanged — H4 SO-1 precedent. *Risk note (two-sided):* this can only ever ADD 2 points to candidates that literally ARE the anchor domain; it cannot help a non-anchor candidate, cannot reach the threshold alone, and cannot affect name-discovery cases.
+- **SO-2 — additive `SupplierIdentity` contract field + Track 0.5 `llm_failed` semantics.** `contracts.ts` gains an optional field on `SupplierIdentity` (additive-only; old stored records simply lack it — the H7 `ValidationGate` union-member precedent): `resolution_research?: { subject: string; role: "website" | "name"; sources: number; llm_failed: boolean }[]`. Behavior: website-research failure (model call threw / unparseable / zero-source pack) → identity returns `identity_unconfirmed: true`, `resolution_method: "unresolved"`, truthful `resolution_notes` ("identity research model call failed — resolution not attempted", or "…produced no sources"), `identity_discrepancy` per OQ-A ruling, and the failure recorded in `resolution_research`. Never a `website_dead`. Name-research failure during the ambiguity check: per OQ-C ruling.
+- **SO-3 — `clientNote()` copy revision for `website_dead` (frozen Spec-B surface; copy only).** Exact wording per OQ-B ruling; decision logic byte-identical; new copy added to the banned-language scanner's test fixtures (must pass HARD + ASSERTION tiers). The `IdentityDiscrepancyKind` enum value `website_dead` is NOT renamed — it exists in frozen delivered records; only the human-facing copy changes, for NEW attempts.
+
+## OPEN QUESTIONS — 🔴 ALL UNRULED (recommendations included)
+
+- **OQ-A — client-facing surface of an infrastructure failure.** When Track 0.5 research itself fails (llm_failed / empty pack), what does the CLIENT see? **Recommendation: `identity_discrepancy = null` — no client note at all.** An infra failure is ours, not a supplier signal; the case escalates to `manual_override_required` and a human resolves identity before anything is delivered, so a client note would describe a state that no delivered report should ever carry. The truthful record lives admin-side (`resolution_notes` + `resolution_research`). *Alternative:* a neutral "verification incomplete — manually reviewed" note; rejected because it publishes internal process noise into a client artifact.
+- **OQ-B — the replacement copy for the genuine `website_dead` note.** The case that remains after this fix: research SUCCEEDED and still could not confirm an operating business at the domain. **Recommended copy:** *"Identity clarification: We could not independently confirm the operating business behind the website provided for "{entered}". This case received manual identity review before delivery. If you can confirm the supplier's official website, contact us and we will re-verify."* — states what WE could not do, never asserts the site is dead, routes the client to us not to "go check the website", and contains no banned language. Founder to approve or amend exact wording (it ships into client reports).
+- **OQ-C — name-research failure during the `multiple_entities` ambiguity check.** The name is researched only AFTER the website resolved, purely to catch "name resolves to a DIFFERENT legit entity". If THAT call fails we can neither confirm nor rule out ambiguity. **Recommendation: escalate (`identity_unconfirmed: true`, truthful notes, no client note per OQ-A)** — failing open would silently skip a guard; H7's OQ-A set the precedent (a failed confirmation call fails toward caution + human). Cost: rare (requires website-resolved AND name-call-failed).
+- **OQ-D — live dead-domain fixture for AT-2's negative side.** The corpus may hold no case whose domain is CURRENTLY dead (AWI-2606-003 was OQ-1-excluded from the corpus; its case row may or may not still exist — and per the fixture rule its live class must be verified separately regardless). **Recommendation:** founder selects by mechanism (SQL below); if none verifies live-dead, founder creates ONE test submission with a known-dead/parked domain (it escalates to the manual queue and is never delivered — safe by construction). *Alternative:* defer the live negative half (unit lock only) to the deferred-live register — weaker; recommend against, since the negative side is the whole escalate-never-guess guarantee.
+
+---
+
+## ACCEPTANCE TESTS (founder runs all; fixtures by DB mechanism; stored vs live class verified SEPARATELY — the 4×-earned rule)
+
+**AT-1 — the false-negative dies (positive side), live on the real fixtures.**
+Select by mechanism (never by label/observed verdict):
+```sql
+SELECT id, case_number, vendor_name, vendor_website, status,
+       supplier_identity->'identity_discrepancy'->>'kind' AS stored_kind,
+       supplier_identity->'resolution_audit' AS audit
+FROM cases
+WHERE supplier_identity->'identity_discrepancy'->>'kind' = 'website_dead'
+  AND (vendor_website ILIKE '%tdsynnex.com%' OR vendor_website ILIKE '%globaldist.com%');
+```
+Verify LIVE class separately (both domains load in a browser today). Fixture must NOT be delivered/complete (re-running updates live status per OQ-D real-attempt semantics; these sit in the manual queue, so re-running is the normal path). Re-run via admin → Request Further Investigation. **PASS** = newest `supplier_identity`: `resolution_method = 'resolved_from_website'`, `resolved_domain` = the anchor domain, `identity_unconfirmed = false`, `resolved_name` = the discovered entity (e.g. "TD SYNNEX Corporation"), `input_consistency = 'low'`, discrepancy kind `name_website_mismatch` (or `name_is_brand` for the globaldist/Bosch case) naming the entity — and the prior attempt's identity record untouched (H1).
+**BONUS CLOSURE:** this is exactly H4's logged limitation (live resolved-to-DIFFERENT-entity demo, never demonstrated because both fixtures hit this bug) — record its closure in the tracker's H4 line.
+
+**AT-2 — escalate-never-guess survives (negative side, two-sided mandatory).**
+*Unit:* an anchor candidate earning anchor identity but ZERO independent signals (no registry citation, no self-identifying cited source) scores 2 < 4 → not dominant → `website_dead` escalation preserved. An LLM-proposed `entity_name` with no qualifying citations changes nothing (entity_name is resolver-ignored for scoring — already true, regression-locked now).
+*Live:* per OQ-D ruling — select a case whose domain is verified dead/parked TODAY:
+```sql
+SELECT id, case_number, vendor_name, vendor_website, status
+FROM cases WHERE vendor_website IS NOT NULL
+ORDER BY created_at;  -- founder verifies each candidate domain's LIVE deadness by hand, picks one
+```
+Re-run → **PASS** = still escalates: `identity_unconfirmed = true`, no resolution, kind `website_dead`, new note copy (OQ-B) present.
+
+**AT-3 — a model failure is a state, never a website finding.**
+Force an LLM failure during Track 0.5 (the H2 AT-1 forcing method) on a queued test case → **PASS** = stored `supplier_identity.resolution_research` shows `llm_failed: true` for the website subject; `identity_unconfirmed = true`; `resolution_notes` truthful ("model call failed — resolution not attempted"); `identity_discrepancy` per OQ-A (recommended: null — NO website_dead note anywhere); case status `manual_override_required`. *Two-sided:* any normal re-run records `llm_failed: false` on every research call.
+
+**AT-4 — regression locks on the untouched paths.**
+*Unit:* every existing name-discovery and exact-fast-path test passes with ZERO expectation changes (the SO-1 byte-identical guarantee, enforced by the suite). `decideWebsiteAnchored` unit expectations unchanged except the `website_dead` copy string.
+*Live determinism:* `npx tsx --env-file=.env.local scripts/rejudge-case.ts 2b359a6a-98f9-49c9-8f57-c19f4d8daaac` → PASS (frozen attempts re-judge identically; SB-1 changes NEW-attempt resolution only).
+
+**AT-5 — `multiple_entities` guard survival (unit).** Website resolves entity A, name research resolves a DIFFERENT entity B → still escalates `multiple_entities` — the fix must not let the anchor steamroll genuine two-entity ambiguity. (Also covers OQ-C's ruled behavior for a failed name call.)
+
+---
+
+## TASKS (TDD; commit per task; execute ONLY after all SOs signed + OQs ruled)
+
+### Task 1 — domain-mode anchor match (SO-1)
+**Files:** `lib/research/track05.ts` · tests beside it (repo pattern)
+- [ ] Failing tests: (a) domain subject "tdsynnex.com" + candidate "tdsynnex.com" ⇒ `name_match: true` (the confirmed-mechanism case: label < 12 chars); (b) candidate "www.tdsynnex.com" / "https://tdsynnex.com/about" ⇒ true via `canonicalDomain`; (c) candidate "othersite.com" under a domain subject ⇒ false; (d) NAME-mode derivation byte-identical (existing tests untouched + an explicit lock); (e) anchor + no independent signals ⇒ resolver returns non-dominant (AT-2 unit).
+- [ ] Implement: subject-mode parameter at the two `researchEntity` call sites; derivation switch only. `identityResolver.ts` diff must be EMPTY.
+- [ ] Full verify; commit.
+
+### Task 2 — `llm_failed` instrumentation + additive contract field (SO-2)
+**Files:** `lib/research/contracts.ts` (additive optional field only), `lib/research/track05.ts` · tests
+- [ ] Failing tests: thrown `runModel` ⇒ recorded `llm_failed: true` + Spec-B branch returns unresolved identity WITHOUT calling `decideWebsiteAnchored` (spy) + discrepancy per OQ-A; unparseable output ⇒ same; zero-source pack ⇒ same with "no sources" reason; successful run ⇒ `llm_failed: false` recorded on every call; name-call failure during ambiguity check ⇒ per OQ-C ruling; name-only discovery path failure ⇒ escalates as today WITH the failure now recorded truthfully.
+- [ ] Implement; full verify; commit.
+
+### Task 3 — client note copy + reason strings (SO-3)
+**Files:** `lib/research/websiteAnchor.ts` (`clientNote` only) · scanner fixture test
+- [ ] Failing tests: new `website_dead` copy (exact OQ-B-ruled string); copy passes the banned-language scanner (HARD + ASSERTION tiers); all other kinds' copy byte-identical.
+- [ ] Implement; full verify; commit.
+
+### Task 4 — version bump + docs
+- [ ] `PIPELINE_VERSION` 1.1.0 → 1.2.0 (if founder confirms); tracker updated (SB-1 line + H4 limitation-closure pointer readied for AT-1); full verify (tsc + eslint + vitest + build); push staging. **STOP — founder runs ATs 1–5 → SB-1 FROZEN.**
+
+---
+
+## BUGS FOUND WHILE PLANNING (standing rule: flag, don't silently fix)
+
+1. **ROOT CAUSE (fixed by this gate):** domain-mode `name_match` compares TLD-included subject vs TLD-stripped label — anchor structurally scores 0 on its own domain (labels < 12 chars); accidental matches at ≥ 12 chars. Traced above.
+2. **`address_consistent` is hardcoded `false`** (track05.ts:60) — its weight (1 pt) is unreachable on every path, silently capping the real max score at 6/7. Benign (conservative direction) — **logged, NOT fixed this phase** (deriving it = new signal semantics = its own review).
+3. **LLM failure → `website_dead` masquerade** — fixed by this gate (Task 2).
+4. **Residual class, unchanged by this gate (honest scope note):** wrong-but-confirmed identity (e.g. a lapsed domain re-registered by someone else, with stale index self-citations) has no structural guard before OR after SB-1 — the tracker already carries it. SB-1 does not widen it: the threshold, margin, and independent-signal requirements are untouched.
