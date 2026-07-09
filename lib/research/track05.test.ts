@@ -203,6 +203,87 @@ describe("SB-1 (SO-1) — domain-research anchor match", () => {
   });
 });
 
+// ── SB-1 (SO-2, OQ-A/OQ-C) — llm_failed instrumentation: a model failure is a STATE, never a
+// website finding. Infra failures carry NO client-facing discrepancy (OQ-A ruling: "our API failure
+// is never a claim about their business"); a failed ambiguity check escalates rather than failing
+// open (OQ-C ruling, the H7 OQ-A precedent). Every research call is recorded in resolution_research.
+describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
+  it("website research call THROWS → escalates truthfully with NO website_dead client note (OQ-A)", async () => {
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockRejectedValueOnce(new Error("429"));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "tdsynnex.com" }));
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolution_method).toBe("unresolved");
+    expect(r.identity_discrepancy).toBeNull();                     // OQ-A: our failure — no client note
+    expect(r.resolution_research).toEqual([{ subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: true }]);
+    expect(r.resolution_notes).toContain("model call failed");
+    expect(gather).toHaveBeenCalledTimes(1);                       // name research never runs
+  });
+
+  it("website research returns unparseable output → same state (H2: BOTH failure classes are llm_failed)", async () => {
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockResolvedValueOnce(model({ totally: "unrelated" }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "tdsynnex.com" }));
+    expect(r.identity_discrepancy).toBeNull();
+    expect(r.resolution_research?.[0]?.llm_failed).toBe(true);
+    expect(r.identity_unconfirmed).toBe(true);
+  });
+
+  it("website research pack has ZERO sources → could-not-research state; the model is never asked", async () => {
+    gather.mockResolvedValueOnce(pack([]));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "tdsynnex.com" }));
+    expect(runModel).not.toHaveBeenCalled();
+    expect(r.identity_discrepancy).toBeNull();
+    expect(r.resolution_research).toEqual([{ subject: "tdsynnex.com", role: "website", sources: 0, llm_failed: false }]);
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolution_notes).toContain("no sources");
+  });
+
+  it("OQ-C: website RESOLVES but the name ambiguity-check call fails → escalate, never fail open", async () => {
+    gather
+      .mockResolvedValueOnce(pack([src("https://tdsynnex.com/about", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
+      .mockRejectedValueOnce(new Error("boom"));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolved_domain).toBeNull();
+    expect(r.identity_discrepancy).toBeNull();                     // OQ-A applies here too
+    expect(r.resolution_research).toEqual([
+      { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
+      { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: true },
+    ]);
+    expect(r.resolution_notes).toContain("ambiguity check");
+  });
+
+  it("name-only discovery: model call fails → unresolved as today, now with the failure RECORDED truthfully", async () => {
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockRejectedValueOnce(new Error("500"));
+    const r = await resolveSupplierIdentity(ctx()); // no website
+    expect(r.identity_unconfirmed).toBe(true);
+    expect(r.resolution_method).toBe("unresolved");
+    expect(r.resolution_research).toEqual([{ subject: "Acme Distributing", role: "name", sources: 1, llm_failed: true }]);
+    expect(r.resolution_notes).toContain("model call failed");
+  });
+
+  it("successful runs record llm_failed:false per call; the zero-research fast path records []", async () => {
+    const fast = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex", vendor_website: "https://tdsynnex.com" }));
+    expect(fast.resolution_research).toEqual([]);
+    gather
+      .mockResolvedValueOnce(pack([src("https://tdsynnex.com/about", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    expect(r.resolution_research).toEqual([
+      { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
+      { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: false },
+    ]);
+  });
+});
+
 // H4 (SO-1) — the zero-research fast path is EXACT-only. A fuzzy near-miss (a typo — or a
 // different company one letter away: Medline vs medlink.com) must VERIFY via the existing
 // Spec-B website-anchored discovery instead of silently binding with high confidence.

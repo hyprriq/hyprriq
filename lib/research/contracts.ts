@@ -46,6 +46,17 @@ export interface IdentityDiscrepancy {
   client_note: string;                    // plain client-facing copy — NO track/internal jargon
 }
 
+// SB-1 (SO-2) — Track 0.5 research-call instrumentation: H2's llm_failed discipline for the resolver.
+// A model failure / empty pack is a recorded STATE that escalates truthfully — never a website_dead
+// intelligence signal (OQ-A: infra failures carry no client-facing discrepancy). Additive + optional:
+// identity records stored before SB-1 simply lack it.
+export interface ResolutionResearchRecord {
+  subject: string;            // what was researched (the anchor domain, or the vendor name)
+  role: "website" | "name";  // which Spec-B research slot this call filled
+  sources: number;            // pack size the model reasoned over (0 = could not research at all)
+  llm_failed: boolean;        // model call threw or returned unparseable output (H2 semantics)
+}
+
 export interface SupplierIdentity {
   original_input: { name: string; website: string | null }; // RAW client input — ALWAYS preserved/logged (point 4)
   resolved_name: string;                  // canonical; tracks use THIS, not original_input (point 3)
@@ -63,6 +74,7 @@ export interface SupplierIdentity {
   resolution_confidence?: "high" | "medium" | "low";
   input_consistency?: "high" | "medium" | "low";
   identity_discrepancy?: IdentityDiscrepancy | null; // informational flag; surfaced client+admin+memory; zero verdict effect
+  resolution_research?: ResolutionResearchRecord[];  // SB-1 (SO-2) — per-call research instrumentation ([] = zero-research fast path)
 }
 
 // What a track receives (Layer 1 input).

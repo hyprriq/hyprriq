@@ -1,4 +1,4 @@
-import type { TrackContext, SupplierIdentity } from "@/lib/research/contracts";
+import type { TrackContext, SupplierIdentity, ResolutionResearchRecord } from "@/lib/research/contracts";
 import { Orchestrator } from "@/lib/research/acquisition/orchestrator";
 import { serperPlugin } from "@/lib/research/acquisition/plugins/serper";
 import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/nativeWebSearch";
@@ -33,7 +33,7 @@ const REGISTRY_PROFILES = new Set(["registry", "government_record"]);
 async function researchEntity(
   ctx: TrackContext, requests: { question: ResearchQuestion; input: string }[], subject: string,
   mode: "name" | "domain",
-): Promise<{ identity: SupplierIdentity; entityByDomain: Map<string, string>; candidates: IdentityCandidate[]; exactByDomain: Map<string, boolean> }> {
+): Promise<{ identity: SupplierIdentity; entityByDomain: Map<string, string>; candidates: IdentityCandidate[]; exactByDomain: Map<string, boolean>; research: { subject: string; sources: number; llm_failed: boolean } }> {
   const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
   const { pack } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
 
@@ -44,13 +44,24 @@ async function researchEntity(
     return { source_id: id, url: s.url, title: s.title, snippet: s.snippet };
   });
 
-  const { system, user } = buildIdentityPrompt(subject, promptSources);
+  // SB-1 (SO-2) — H2's llm_failed discipline for the resolver: a thrown model call OR unparseable
+  // output is a recorded STATE, never silently "no candidates"; an empty pack means we could not
+  // research at all, so the model is never asked to reason over nothing (sources: 0 records it).
+  let llmFailed = false;
   let proposed: ReturnType<typeof parseIdentityOutput>;
-  try {
-    const res = await runModel({ task: "track", system, user, temperature: 0 });
-    proposed = parseIdentityOutput(res.json);
-  } catch {
-    proposed = parseIdentityOutput({ _parse_error: true });
+  if (pack.sources.length === 0) {
+    proposed = parseIdentityOutput({ candidates: [] });
+  } else {
+    const { system, user } = buildIdentityPrompt(subject, promptSources);
+    try {
+      const res = await runModel({ task: "track", system, user, temperature: 0 });
+      const o = res.json as { candidates?: unknown; _parse_error?: boolean } | null;
+      llmFailed = !o || typeof o !== "object" || o._parse_error === true || !Array.isArray(o.candidates);
+      proposed = parseIdentityOutput(res.json);
+    } catch {
+      llmFailed = true;
+      proposed = parseIdentityOutput({ _parse_error: true });
+    }
   }
 
   const anchor = mode === "domain" ? canonicalDomain(subject) : null;
@@ -73,8 +84,32 @@ async function researchEntity(
   });
 
   const identity = resolveIdentity({ vendor_name: subject, vendor_website: null, candidates });
-  return { identity, entityByDomain, candidates, exactByDomain };
+  return { identity, entityByDomain, candidates, exactByDomain, research: { subject, sources: pack.sources.length, llm_failed: llmFailed } };
 }
+
+// SB-1 (SO-2, OQ-A ruling) — the research-failure identity: unresolved + escalated with a truthful
+// internal reason and NO identity_discrepancy. An infra failure is OURS — it never becomes a
+// client-facing claim about the supplier or its website (never a website_dead); the truth lives
+// admin-side in resolution_notes + resolution_research, and manual review resolves before delivery.
+const researchFailureIdentity = (
+  vendor_name: string, vendor_website: string | null,
+  resolution_research: ResolutionResearchRecord[], notes: string,
+): SupplierIdentity => ({
+  original_input: { name: vendor_name, website: vendor_website },
+  resolved_name: vendor_name,
+  resolved_domain: null,
+  candidate_domains: [],
+  registration_signals: [],
+  identity_confidence: "low",
+  identity_unconfirmed: true, // existing conservative escalation routing (manual_override_required)
+  resolution_method: "unresolved",
+  resolution_notes: notes,
+  resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
+  resolution_confidence: "low",
+  input_consistency: "low",
+  identity_discrepancy: null, // OQ-A: no client note — our failure, not a supplier signal
+  resolution_research,
+});
 
 // Map a resolveIdentity outcome → EntityResolution (did research find a dominant real established entity?).
 function toEntityResolution(r: { identity: SupplierIdentity; entityByDomain: Map<string, string> }): EntityResolution {
@@ -100,12 +135,20 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
   // records the input-consistency signal (never fraud, never a verdict penalty).
   if (providedHost && nameMatch(vendor_name, providedHost).exact) {
     const identity = resolveIdentity({ vendor_name, vendor_website: ctx.vendor_website, candidates: [] });
-    return withConsistency(identity, identity.identity_confidence, "high");
+    return { ...withConsistency(identity, identity.identity_confidence, "high"), resolution_research: [] };
   }
 
   // ── Spec-B — website present but does NOT match the name → website-anchored discovery. ──
   if (providedHost) {
     const site = await researchEntity(ctx, buildDomainIdentityRequests(providedHost), providedHost, "domain");
+    const research: ResolutionResearchRecord[] = [{ role: "website", ...site.research }];
+    // SB-1 (SO-2, OQ-A) — research failure is OUR state, never a website finding: no website_dead,
+    // no client note; escalate for a human with the truthful reason recorded.
+    if (site.research.llm_failed || site.research.sources === 0) {
+      return researchFailureIdentity(vendor_name, ctx.vendor_website, research, site.research.llm_failed
+        ? `Identity research model call failed for the provided website ${providedHost} — resolution not attempted; escalated (never a website finding).`
+        : `Identity research produced no sources for the provided website ${providedHost} — could not research; escalated (never a website finding).`);
+    }
     const website = toEntityResolution(site);
     const brands = ctx.brands_submitted ?? [];
     const nameIsBrand = brands.map(normalizeBrandToken).filter(Boolean).includes(normalizeBrandToken(vendor_name));
@@ -114,7 +157,15 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
     // the name is not a brand (rule 3: a brand in the name slot is a client-entry error, not ambiguity).
     let nameRes: EntityResolution | null = null;
     if (website.resolved && !nameIsBrand) {
-      nameRes = toEntityResolution(await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name, "name"));
+      const nr = await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name, "name");
+      research.push({ role: "name", ...nr.research });
+      // SB-1 (OQ-C) — the ambiguity check could not run → we can neither confirm nor rule out
+      // multiple_entities: escalate, never fail open past a guard (the H7 OQ-A precedent).
+      if (nr.research.llm_failed || nr.research.sources === 0) {
+        return researchFailureIdentity(vendor_name, ctx.vendor_website, research,
+          `Website ${providedHost} resolved, but the name ambiguity check could not run (${nr.research.llm_failed ? "identity research model call failed" : "no sources"}) — escalated; never auto-pick.`);
+      }
+      nameRes = toEntityResolution(nr);
     }
 
     const d = decideWebsiteAnchored({ entered_name: vendor_name, provided_host: providedHost, brands, website, name: nameRes });
@@ -132,12 +183,20 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
       resolution_confidence: d.resolution_confidence,
       input_consistency: d.input_consistency,
       identity_discrepancy: d.identity_discrepancy,
+      resolution_research: research,
     };
   }
 
-  // ── No parseable website → existing NAME-discovery path (unchanged). ──
+  // ── No parseable website → existing NAME-discovery path (unchanged decision; failures recorded). ──
   const r = await researchEntity(ctx, buildIdentityRequests(ctx), vendor_name, "name");
   const identity = r.identity;
+  // SB-1 (SO-2) — the path already escalates as "unresolved" on failure; the NOTES must now be
+  // truthful ("we could not research" ≠ "we researched and found nothing").
+  if (r.research.llm_failed) {
+    identity.resolution_notes = "Identity research model call failed — resolution not attempted; proceeding degraded (unresolved).";
+  } else if (r.research.sources === 0) {
+    identity.resolution_notes = "Identity research produced no sources — could not research; proceeding degraded (unresolved).";
+  }
   // A dominant winner reached via a FUZZY (non-exact) name match is a silent normalization, not a clean
   // dominant match — relabel the method (point 5). Confidence + escalation unchanged.
   if (identity.resolution_method === "resolved_dominant" && identity.resolved_domain) {
@@ -146,5 +205,5 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
     const entity = r.entityByDomain.get(identity.resolved_domain);
     if (entity) identity.resolved_name = entity;
   }
-  return withConsistency(identity, identity.identity_confidence, "high");
+  return { ...withConsistency(identity, identity.identity_confidence, "high"), resolution_research: [{ role: "name", ...r.research }] };
 }
