@@ -7,7 +7,9 @@ export type ResearchQuestion =
   | "bbb_listing" | "marketplace_signals" | "dealer_page" | "trade_directory"
   | "scam_reports" | "address_verification" | "contact_consistency"
   // Track 2 (supply_chain_relationship) — Serper search questions
-  | "brand_authorization" | "reseller_certificate" | "b2b_archetype";
+  | "brand_authorization" | "reseller_certificate" | "b2b_archetype"
+  // Track 3 (brand_risk_assessment) — Serper search questions (additive, the Track 2 pattern)
+  | "brand_enforcement" | "ip_complaints" | "brand_gating" | "map_policy";
 
 export type AcquisitionMethod = "serper" | "whois" | "native_web_search" | "manual" | "inference";
 

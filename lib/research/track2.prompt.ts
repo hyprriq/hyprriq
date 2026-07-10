@@ -128,7 +128,9 @@ const CONFIDENCES = new Set(["high", "medium", "low"]);
 const LEVELS = new Set(["A", "B", "C", "D", "E"]);
 
 const PRIORITIES = new Set(["high", "medium", "low"]);
-function parseQuestions(raw: unknown): QuestionToAsk[] {
+// Exported for Track 3 (one tolerant question-parser, every track — the shape-drift fix from
+// b659acd must never be re-implemented divergently).
+export function parseQuestions(raw: unknown): QuestionToAsk[] {
   if (!Array.isArray(raw)) return [];
   const out: QuestionToAsk[] = [];
   for (const item of raw) {
