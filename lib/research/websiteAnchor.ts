@@ -41,13 +41,20 @@ export interface WebsiteAnchorDecision {
 }
 
 // Plain client-facing copy — NO track/internal jargon (Spec-B Decision 6).
-export function clientNote(kind: IdentityDiscrepancyKind, entered: string, resolved: string): string {
+// SB-2 (SO-3) — `nameEntity` (the name-side resolution) is threaded for multiple_entities only,
+// where the ruled copy names BOTH entities (founder signature-extension approval, 2026-07-10).
+export function clientNote(kind: IdentityDiscrepancyKind, entered: string, resolved: string, nameEntity?: string): string {
   switch (kind) {
     case "name_is_brand":
     case "name_website_mismatch":
       return `Identity clarification: You entered "${entered}" as the supplier. Our investigation found that the website provided belongs to ${resolved}. This report's analysis is based on ${resolved}. If this was not your intended supplier, please contact us before relying on the findings.`;
+    // SB-2 (SO-3, OQ-B founder-ruled exact copy 2026-07-10) — an EARNED finding stated unhedged
+    // (post-SB-2 this fires only on two dominant resolutions across two distinct domains), about
+    // the INPUTS, with the precise denial: a finding ABOUT them (they differ), never AGAINST anyone.
     case "multiple_entities":
-      return `Identity clarification: The supplier name "${entered}" and the website you provided appear to refer to different businesses. We could not confirm which is your intended supplier — please contact us to confirm before relying on the findings.`;
+      return nameEntity
+        ? `Identity clarification: The supplier name "${entered}" resolves to ${nameEntity} in public sources, while the website you provided belongs to ${resolved}. Our research found these to be two different businesses, and we could not determine which is your intended supplier. This reflects what we found about the two inputs you provided — it is not a finding against either business. Please contact us to confirm your intended supplier before relying on the findings.`
+        : `Identity clarification: The supplier name "${entered}" and the website you provided each resolve to a different business in public sources, and we could not determine which is your intended supplier. This reflects what we found about the two inputs you provided — it is not a finding against either business. Please contact us to confirm your intended supplier before relying on the findings.`;
     // SB-1 (SO-3, OQ-B founder-ruled exact copy 2026-07-09) — states OUR limitation, never a
     // conclusion about the supplier or its website; the re-verify offer turns a limitation into a
     // service action. The enum value stays `website_dead` (frozen records reference it) — only the
@@ -84,7 +91,7 @@ export function decideWebsiteAnchored(input: WebsiteAnchorInput): WebsiteAnchorD
   const { entered_name, provided_host, brands, website, name } = input;
   const nameIsBrand = brands.map(norm).filter(Boolean).includes(norm(entered_name));
 
-  const escalate = (kind: IdentityDiscrepancyKind, resolved_name: string): WebsiteAnchorDecision => ({
+  const escalate = (kind: IdentityDiscrepancyKind, resolved_name: string, nameEntity?: string): WebsiteAnchorDecision => ({
     outcome: "escalate",
     resolved_name,
     resolved_domain: null,
@@ -92,7 +99,7 @@ export function decideWebsiteAnchored(input: WebsiteAnchorInput): WebsiteAnchorD
     resolution_confidence: "low",
     input_consistency: "low",
     identity_unconfirmed: true, // existing conservative escalation path — NOT fraud
-    identity_discrepancy: { kind, entered_name, resolved_name, resolved_domain: null, client_note: clientNote(kind, entered_name, resolved_name) },
+    identity_discrepancy: { kind, entered_name, resolved_name, resolved_domain: null, client_note: clientNote(kind, entered_name, resolved_name, nameEntity) },
     resolution_notes: `Name/website mismatch (${kind}) → escalated to manual review. Never a fraud flag.`,
   });
 
@@ -112,7 +119,7 @@ export function decideWebsiteAnchored(input: WebsiteAnchorInput): WebsiteAnchorD
     const sameEntity = nameDomain !== null
       ? nameDomain === canonicalDomain(provided_host)
       : entityNameMatch(name.entity_name, website.entity_name);
-    if (!sameEntity) return escalate("multiple_entities", website.entity_name);
+    if (!sameEntity) return escalate("multiple_entities", website.entity_name, name.entity_name);
   }
 
   // 2a / rule 3 — the website is the dominant real entity → RESOLVE FROM THE WEBSITE.

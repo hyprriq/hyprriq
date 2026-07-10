@@ -42,6 +42,19 @@ describe("SB-2 (SO-2) — domain-first ambiguity comparator", () => {
     expect(d.identity_unconfirmed).toBe(true);
   });
 
+  // SB-2 (SO-3) — the OQ-B founder-ruled EXACT copy (2026-07-10): an EARNED finding stated
+  // unhedged, about the INPUTS, with the precise denial ("not a finding AGAINST either business").
+  it("multiple_entities client note is the OQ-B-ruled copy, naming both entities", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Medline", provided_host: "medlink.com", brands: [],
+      website: dom("Medlink Inc", true, "high", "medlink.com"),
+      name: dom("Medline Industries", true, "high", "medline.com"),
+    });
+    expect(d.identity_discrepancy.client_note).toBe(
+      "Identity clarification: The supplier name \"Medline\" resolves to Medline Industries in public sources, while the website you provided belongs to Medlink Inc. Our research found these to be two different businesses, and we could not determine which is your intended supplier. This reflects what we found about the two inputs you provided — it is not a finding against either business. Please contact us to confirm your intended supplier before relying on the findings.",
+    );
+  });
+
   it("OQ-A: a name-string match does NOT override a domain conflict — domains differ ⇒ escalate", () => {
     const d = decideWebsiteAnchored({
       entered_name: "Acme Corp", provided_host: "acme-supply.com", brands: [],

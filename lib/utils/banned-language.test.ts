@@ -92,6 +92,16 @@ describe("back-compat + Spec-B client_note templates", () => {
     expect(scanHard(note)).toEqual([]);
     expect(scanAssertion(note)).toEqual([]);
   });
+  // SB-2 (SO-3) — the ruled multiple_entities note (both the named template and the defensive
+  // names-less fallback) passes BOTH tiers, blocking (own-voice string).
+  it("the SB-2 multiple_entities note passes BOTH tiers, named and fallback variants", () => {
+    const named = clientNote("multiple_entities", "Medline", "Medlink Inc", "Medline Industries");
+    expect(scanHard(named)).toEqual([]);
+    expect(scanAssertion(named)).toEqual([]);
+    const fallback = clientNote("multiple_entities", "Medline", "Medlink Inc");
+    expect(scanHard(fallback)).toEqual([]);
+    expect(scanAssertion(fallback)).toEqual([]);
+  });
 });
 
 // H5 bug fix (found via AT-2 pre-check): H2 must be NEGATION-AWARE. The spec-MANDATED disclaimer
