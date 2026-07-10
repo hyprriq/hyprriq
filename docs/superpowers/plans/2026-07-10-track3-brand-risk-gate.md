@@ -1,0 +1,91 @@
+# Track 3 — Brand Risk Assessment Gate (founder-review spec)
+
+> **For agentic workers:** REQUIRED SUB-SKILL after approval: superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
+
+**Status:** 🔴 **DRAFT — AWAITING FOUNDER REVIEW. NO CODE UNTIL: all five SIGN-OFFS signed + all six OQs ruled.** Gate rhythm: spec → founder rules → TDD build (commit per task, tsc+eslint+vitest+build) → push staging → founder personally runs ATs → Track 3 frozen.
+**Phase:** Track 3 ONLY. **NOT in this phase:** Tracks 4/5, Synthesis Engine, the Keepa plugin build if OQ-A defers it, SB-3 (suffix-blind fast path — separate mini-gate, founder sequencing), the supplier_identity RSC-leak fix (security phase or earlier, founder's call), Tracks 1–2 analyst-prompt RETROFIT (Track 3 writes analyst-style natively; rewriting 1–2 is its own later phase), PDF/client-surface work.
+**Foundation:** the approved design spec `docs/superpowers/specs/2026-07-03-track3-brand-risk-assessment-design.md` — its architecture (mirror Track 2), locked weight table, and decision separation CARRY FORWARD. **But it predates the entire hardening arc** (pack 1.0.0-era, no consensus gate, no structured outputs, no replay seam, no analyst prompts, no SB-1/SB-2). This gate spec is the reconciliation: everything H1–H7 + SB-1/SB-2 froze that Track 3 must now honor is enumerated below as obligations, sign-offs, or OQs.
+**Migration:** **NONE.** `track_3_status` columns, `case_track_results` attempt-keying, jsonb findings, and the ledger `signals` map already carry Track 3.
+
+---
+
+## WHY NOW (one paragraph)
+
+Track 3 answers the question the other tracks can't: does the BRAND make third-party resale risky, independent of how legitimate the supplier is? It is the highest-weighted dimension (0.30), it is why every case today is capped at Usable With Conditions — **no supplier can reach Source Clear until this ships** — and its entry conditions have been enforced by a failing test since H7 (`firewallRegistry.test.ts`: registry entries + ADR-T1-001 collision audit, or the build cannot proceed). The identity layer beneath it is now hardened end-to-end (SB-1/SB-2), and the pre-Track-3 sweep returned READY with no HIGH defect.
+
+## WHAT CARRIES FORWARD UNCHANGED (from the 2026-07-03 design — re-approved by reference, not re-litigated)
+
+- **The locked `brand_risk_assessment` weight table** (weights.ts — 12 keys; the one exception is SO-4's ruled normalization of `b2b_only_confirmed`). LLM proposes evidence to THESE keys; code validates and scores.
+- **Architecture mirror of Track 2:** `track3.queries.ts` (capability matrix), `track3.prompt.ts` (brand-isolated proposals + tolerant parser), `track3.ts` (gather → firewall → deriveTrackSignal → TrackOutput). `TRACK_FNS[3]` already routes; parallel fan-out group already includes it. No orchestration change.
+- **Decision separation (ADR-T2-002 pattern):** brand posture toward resellers ONLY; per-brand isolation (every evidence item names exactly one submitted brand); unknown ≠ negative (no enforcement *found* is never scored as risk); no purchase implication ever; boundary note for account-specific marketplace eligibility.
+- **Design-spec OQ answers being confirmed rather than reopened:** OQ-2 (full ADR-T2-002 treatment: three-part finding, brand-tagged questions, procurement guard) = YES, build it; OQ-5 (slot: parallel group 1–4, Track 5 last) = confirmed by the existing registry.
+
+## THE HARDENING-ARC OBLIGATIONS (everything frozen since 2026-07-03 that Track 3 must honor — build requirements, all testable)
+
+1. **H2 — `llm_failed` + `acquisition_failed`:** mirror Tracks 1–2 exactly (thrown/unparseable ⇒ recorded state, n_a + hold, never a scored signal; empty pack ⇒ acquisition guard). `stageFindingTrack` already routes these generically.
+2. **H4 — research identity:** Track 3 researches the submitted BRANDS, but the vendor context comes from `researchIdentityFor` like Tracks 1–2, and `research_name`/`research_alias` are recorded in `compiled_findings_json` (SQL-checkable per attempt).
+3. **H5 — banned-language native compliance:** prompts produce observable-signal language natively (PREVENT not REWRITE); scanner stays the net. Brand-risk narrative is ASSERTION-tier scanned like all LLM fields.
+4. **H7 SO-3 — source-diversity cap:** free at `stageFindingTrack`; Track 3's own validation report signal must use the SAME shared `applySourceDiversityCap` (the one-fn-every-site rule).
+5. **H7 — structured outputs:** `TRACK3_OUTPUT_SCHEMA` through `runModel`'s schema param, capability-guarded fail-open, tolerant parser kept.
+6. **H7 OQ-D — replay seam:** `replay_from_attempt` loads Track 3's stored packs instead of live acquisition, same as Tracks 1–2.
+7. **SB-1/SB-2 — identity inputs:** Track 3 consumes `resolved_domain`/resolved identity via the hardened Track 0.5; nothing new to build, but AT-1 verifies the flow end-to-end on a resolved case.
+8. **Analyst-style prompts from day one (founder-endorsed sequence item 3):** every Track 3 finding carries the analyst quartet — *most likely interpretation / alternative interpretation / confidence / what would change my mind* — reasoned via *strongest explanation → what contradicts it → can both be true*. Stored per OQ-D's ruling; advisory narrative, never scored (the LLM↔code boundary is untouched).
+
+## SIGN-OFFS — 🔴 ALL UNSIGNED (frozen-surface touches; explicit founder signature each)
+
+- **SO-1 — Firewall registry goes live for Track 3 (THE enforced entry condition).** `ALLOWED_PROFILES` + `MIN_AUTHORITY` entries for all 12 `brand_risk_assessment` keys; `brand_risk_assessment` moves into `LIVE_FIREWALL_TRACKS`; the stub assertion in `firewallRegistry.test.ts` moves with it (the test's own banner procedure — never weakened, followed). **The ADR-T1-001 collision audit is PART OF THIS SIGN-OFF** — draft below (§ Collision audit), founder rules each veto key's affirmative-only definition before build.
+- **SO-2 — Corroboration config + `VALIDATION_VERSION` 1.3.0 → 1.4.0.** Per OQ-B's ruling, Track 3's irreversible-veto keys enter `CORROBORATION_REQUIRED` (recommendation: `active_ip_complaints: 2` and `cease_and_desist_distributed: 2`; `confirmed_amazon_restrictions` stays single-source-capable ONLY because its definition under OQ-E requires concrete high-authority evidence — founder rules). Includes the `rerun-batch.ts` pin update in the same commit (the H7 lesson: forget it and the founder harness stops).
+- **SO-3 — Hard-fail consensus extends to Track 3.** H7 OQ-B scoped the two-pass consensus to Tracks 1–2 as "the hard-fail-carrying tracks — complete coverage." Track 3 carries FOUR hard-fail keys; going live without the extraction-stability gate would leave the newest, highest-weighted veto surface less protected than the old ones. Same shared helper, third call site; OQ-A/OQ-B semantics identical (failed second call = veto kept + escalate).
+- **SO-4 — `b2b_only_confirmed` normalized to a pure veto (frozen `weights.ts` touch; the ruling you pre-committed to at the audit).** It is the ONLY hard-fail key with non-zero points (−5 + hard_fail = veto AND score-drag double-count). Recommendation: `{ points: 0, hard_fail: true }` like every other veto, with `RUBRIC_VERSION` g003-1.0.0 → **g003-1.1.0** (the versioning mechanism built for exactly this; stored rubric_version keeps historical results reproducible). *Alternative:* keep −5 documented-as-intentional — rejected because the drag only ever affects the confidence score of an already-vetoed track (double-counting with no decision value).
+- **SO-5 — Verdict-ceiling fate (frozen H3 surface; see OQ-C).** H3's design said "delete the call-sites when Track 3 ships." Recommendation: **DO NOT delete — the ceiling is self-retiring.** It caps only when `brand_risk_assessment` is n_a/absent; once Track 3 runs, assessed cases pass through untouched, while plan-excluded and llm_failed cases KEEP the protection (deleting would reopen the N2 hole for exactly those). Signature here covers *whichever* OQ-C ruling lands (keep = zero code change; delete = three call-site removals).
+
+## OPEN QUESTIONS — 🔴 ALL UNRULED (recommendations included)
+
+- **OQ-A — Keepa: now or fast-follow?** (Design-spec OQ-1, still open.) **Recommendation: ship Track 3 core NOW on serper/native enforcement/IP/restriction/MAP signals; Keepa plugin as a scoped fast-follow gate.** The three Keepa-dependent keys (`keepa_stable_no_cliff`, `keepa_enforcement_cliff`, `low_seller_count_stable`) get firewall entries NOW (SO-1 covers all 12) but the capability is declared `available: false` — the LLM can never earn them without pack sources, so they are inert until the plugin ships. Keepa is a distinct integration (API key, cost model, retry semantics, Scale-plan gating) deserving its own small gate. *Note: a Keepa MCP exists for MY analysis; the engine needs its own server-side plugin — not the same thing.*
+- **OQ-B — corroboration breadth for Track 3 vetoes.** Which of the four hard-fail keys require ≥2 distinct sources? **Recommendation:** `active_ip_complaints: 2` + `cease_and_desist_distributed: 2` (both are "the brand did X against resellers" claims that third-party noise can fabricate); `confirmed_amazon_restrictions` single-source-capable but ONLY under OQ-E's concrete-evidence definition (a brand-gated listing IS the restriction — self-evidencing); `b2b_only_confirmed` requires 2 (channel-exclusivity claims are exactly where homonym/stale noise lies).
+- **OQ-C — the ceiling's fate** (pairs with SO-5). **Recommendation: KEEP** (self-retiring; protects plan-excluded/failed n_a cases forever). Ruling records the fate of H3's "designed to DIE" note either way.
+- **OQ-D — where the analyst quartet lives.** **Recommendation:** additive fields on the Track 3 finding stored in `compiled_findings_json.analyst_reading` (`most_likely`, `alternative`, `confidence`, `what_would_change_my_mind`), rendered ADMIN-side this gate; client rendering waits for the client-surface/PDF phase (every client-visible string is scanner-gated; no need to open that surface now). Advisory only — never touches scoring.
+- **OQ-E — marketplace-restriction depth** (design-spec OQ-4, confirmed sharper): `confirmed_amazon_restrictions` (hard_fail) ONLY on concrete evidence (brand-gated ASIN/listing, published restriction policy); softer public signals (direct-only posture, anecdotal gating reports) → `brand_restricts_amazon` (−4); thin/ambiguous → honest UNKNOWN, never inferred. **Recommendation: confirm.**
+- **OQ-F — the B2B two-lens confirmation** (design-spec OQ-3): Track 2's advisory `b2b_only_detected` (B2B-only is EXPECTED there, not negative for authorization) vs Track 3's `b2b_only_confirmed` veto (B2B-only IS a disqualifying resale risk). **Recommendation: confirm the two lenses as intentionally different; cross-track reconciliation belongs to the Synthesis Engine, not Track 3.**
+
+## COLLISION AUDIT (ADR-T1-001, draft for founder ruling — SO-1's second half)
+
+Every veto key: affirmative-only positive definition + collision check against existing keys and each other:
+
+| veto key | affirmative-only definition (proposed) | collision risk checked |
+|---|---|---|
+| `active_ip_complaints` | Documented, current IP complaints/actions BY the brand AGAINST third-party resellers (filings, takedown records, brand statements). NOT "the brand is litigious/protective" (that's `brand_enforcement_signals` −3), NOT complaints against counterfeiters only (that's normal enforcement — UNKNOWN unless reseller-directed). | vs `brand_enforcement_signals` (severity split: documented current actions vs public posture); vs Track 2's `counterfeit_channel` (different subject: vendor's channel vs brand's enforcement) |
+| `cease_and_desist_distributed` | Concrete evidence the brand HAS ISSUED C&Ds to third-party resellers (published C&D, credible first-party reports naming the brand). NOT boilerplate T&Cs reserving the right. | vs `active_ip_complaints` (C&D = pre-litigation instrument; both may co-cite the same event — the H7 cite-all-sources-on-ONE-item rule prevents double-count) |
+| `confirmed_amazon_restrictions` | The marketplace restriction OBSERVABLY exists for this brand (gated listing/ASIN, published brand-gating). NOT seller anecdotes alone (→ `brand_restricts_amazon` −4 per OQ-E). | vs `brand_restricts_amazon` (evidence-strength split, OQ-E) |
+| `b2b_only_confirmed` | The brand's OWN channel policy confirms B2B/enterprise-only distribution for this product channel. NOT absence of retail presence (absence ≠ policy — UNKNOWN). | vs Track 2's advisory `b2b_only_detected` (OQ-F two-lens); vs `brand_restricts_amazon` (channel-wide vs marketplace-specific) |
+
+Absence-of-evidence rule holds everywhere: none of the four may ever be proposed from "we found nothing" (the Zzqxwv attempt-1 lesson, now prompt law).
+
+## ACCEPTANCE TESTS (founder runs all; fixtures by DB mechanism; stored vs live verified separately)
+
+**AT-1 — the headline: Source Clear becomes REACHABLE.** Re-run the flagship confirmed fixture (select by mechanism: confirmed identity, multi-brand, currently `usable_with_conditions` with `ceiling_applied: true` — the TD SYNNEX class). **PASS** = Track 3 rows exist per submitted brand (brand-isolated), real signals (not n_a), `compiled_findings_json` carries `research_name`, `source_diversity`, `analyst_reading` (per OQ-D), and the verdict is now score-derived with **`ceiling_applied: false`** — if the score qualifies, the system's FIRST-EVER Source Clear. (If the score doesn't qualify, PASS = ceiling no longer the binding constraint; record honestly.)
+**AT-2 — two-sided veto flows (unit-locked; live half deferred by the H7 rule).** Each of the four vetoes: proposed with qualifying evidence → validated → consensus-checked → locked verdict floor; proposed from absence/thin evidence → firewall-rejected or UNKNOWN (never scored). No live fraud fixture exists BY DESIGN (affirmative brand enforcement is unmanufacturable on demand) — deferred-live register, same as H7 AT-2.
+**AT-3 — unknown ≠ negative, live.** A submitted brand with no findable enforcement posture → `no_enforcement_found` (+2) or honest UNKNOWN — NEVER a risk score. Verify on AT-1's run (pick one brand and read its items).
+**AT-4 — registry lock green the RIGHT way.** `firewallRegistry.test.ts` passes with `brand_risk_assessment` in `LIVE_FIREWALL_TRACKS` (entries authored, audit ruled) and Tracks 4/5 still asserted stubs.
+**AT-5 — determinism + replay.** `rejudge-case.ts` on the frozen delivered fixture (PASS = unchanged); `replay-attempt.ts` on the new Track-3-bearing attempt (PASS = packs load from store, hash-identity, delivered rows untouched).
+**AT-6 — consensus wiring (unit + record).** A Track 3 veto proposed in pass 1 only → dropped with `gate: "consensus"`; second-call failure → veto kept + escalated; `hard_fail_consensus` present in `compiled_findings_json` on veto-proposing runs.
+**AT-7 — cost visibility.** Record AT-1's per-case cost delta (acquisition + LLM) in the tracker against the unit-economics rider — Track 3 is the first post-audit cost addition; the number feeds the caching-gate decision.
+
+## TASKS (TDD; commit per task; execute ONLY after all SOs signed + OQs ruled)
+
+### Task 1 — registry + collision audit (SO-1) & corroboration config (SO-2)
+- [ ] Failing test first: the firewallRegistry stub assertion for Track 3 flips (move to LIVE_FIREWALL_TRACKS) → RED until entries exist. Author `ALLOWED_PROFILES`/`MIN_AUTHORITY` for all 12 keys per the ruled collision audit; add ruled `CORROBORATION_REQUIRED` entries; `VALIDATION_VERSION` 1.4.0 (pin test RED-first) + `rerun-batch.ts` pin. Two-sided corroboration units per key.
+### Task 2 — `b2b_only_confirmed` normalization (SO-4)
+- [ ] RUBRIC_VERSION pin test RED → g003-1.1.0; the key becomes `{ points: 0, hard_fail: true }`; regression: veto still fires, score no longer double-drags.
+### Task 3 — queries + prompt (analyst-native) + parser
+- [ ] `track3.queries.ts` capability matrix (Keepa `available:false` per OQ-A); `track3.prompt.ts`: brand-isolated proposals to the locked keys, affirmative-only veto rules (per the audit table), fraud-vs-reputation split, cite-all-corroborating-on-ONE-item, attribution guard, H5-native language, honest UNKNOWN, the analyst quartet, brand-tagged questions; tolerant parser + `TRACK3_OUTPUT_SCHEMA`.
+### Task 4 — `runTrack3` live (replaces the stub)
+- [ ] Full Track-2 mirror: gather (replay-aware) → firewall → consensus (SO-3, third call site of the shared helper) → diversity-capped signal → three-part `brand_risk_finding` + advisories + `analyst_reading`; `llm_failed`/`acquisition_failed` H2 semantics; per-brand isolation tests; unknown≠negative tests.
+### Task 5 — ceiling per OQ-C ruling + version + docs
+- [ ] Implement OQ-C's ruling (keep = add the plan-excluded/failed regression test proving the ceiling still guards n_a cases; delete = remove three call sites + update H3 records); `PIPELINE_VERSION` 1.3.0 → **1.4.0** (pin RED-first); tracker + spec records; full verify; push staging. **STOP — founder runs ATs 1–7 → Track 3 FROZEN.**
+
+## NOTES FOR THE RECORD
+
+- **Cost honesty:** Track 3 adds ~1–2 LLM calls + per-brand serper queries per case, onto a cost base already 3–8× the plan's assumption with caching unbuilt. AT-7 makes the delta visible; the caching gate (ADR-008/G6) is the standing answer and moves up the queue the moment Track 3 freezes, per the audit rider.
+- **The sweep's two MED findings are NOT folded in** (gate discipline): the suffix-blind fast path is proposed as mini-gate SB-3 (founder sequences it); the supplier_identity RSC leak belongs to the security phase unless pulled earlier. Both are logged in the tracker.
+- Tracks 4/5 remain stubs behind the same registry lock; nothing here weakens their gate.
