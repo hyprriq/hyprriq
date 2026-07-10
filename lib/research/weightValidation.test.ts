@@ -82,6 +82,37 @@ describe("validateWeights firewall", () => {
     const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
     expect(deriveTrackSignal("supplier_identity", found).signal).toBe("hard_fail");
   });
+  // ── Track 3 (SO-2, firewall 1.4.0, founder-corrected): ALL FOUR brand-risk vetoes require ≥2
+  // distinct valid sources — including confirmed_amazon_restrictions (the single-source exception
+  // was REVERSED: without Keepa, Track 3 cannot OBSERVE a gated listing, only read claims about
+  // one; one confident listicle must never fire a do_not_rely-class veto). Two-sided per key. ──
+  const T3_VETOES: [string, SourceProfile, SourceProfile][] = [
+    ["active_ip_complaints", "news", "government_record"],
+    ["cease_and_desist_distributed", "news", "forum"],
+    ["confirmed_amazon_restrictions", "marketplace", "news"],
+    ["b2b_only_confirmed", "official_brand", "official_brand"],
+  ];
+  for (const [key, p1, p2] of T3_VETOES) {
+    it(`Track 3: single-source ${key} is REJECTED at the corroboration gate`, () => {
+      const r = validateWeights({ track: "brand_risk_assessment", sourceProfileById: profiles({ s1: p1 }), proposals: [prop("e1", key, ["s1"])] });
+      expect(r[0]).toMatchObject({ validated_weight_key: null, gate: "corroboration", rejection_reason: "corroboration" });
+    });
+    it(`Track 3: ${key} with TWO distinct valid sources validates AND hard-fails`, () => {
+      const v = validateWeights({ track: "brand_risk_assessment", sourceProfileById: profiles({ s1: p1, s2: p2 }), proposals: [prop("e1", key, ["s1", "s2"])] });
+      expect(v[0].validated_weight_key).toBe(key);
+      const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
+      expect(deriveTrackSignal("brand_risk_assessment", found).signal).toBe("hard_fail");
+    });
+  }
+  it("Track 3: positive/soft keys validate single-source (corroboration scoped to the vetoes)", () => {
+    const r = validateWeights({ track: "brand_risk_assessment", sourceProfileById: profiles({ s1: "official_brand", s2: "news" }), proposals: [
+      prop("e1", "reseller_friendly", ["s1"]),
+      prop("e2", "brand_enforcement_signals", ["s2"]),
+    ] });
+    expect(r[0].validated_weight_key).toBe("reseller_friendly");
+    expect(r[1].validated_weight_key).toBe("brand_enforcement_signals");
+  });
+
   // POSITIVE PATH — the conservative corroboration gate must NOT over-reject a GENUINE fraud vendor:
   // 2 corroborating sources → scam_reports_corroborated validates AND still drives a hard_fail verdict.
   it("genuine fraud (2 corroborating sources) validates scam_reports_corroborated AND still hard-fails", () => {

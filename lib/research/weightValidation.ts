@@ -16,7 +16,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // address_fraudulent join the ≥2-distinct-sources class (every irreversible-veto key; aligns with the
 // standing principle that a single unverified fraud-flag is never load-bearing). Post-SO-1 pack dedupe,
 // "distinct" finally means distinct real-world URLs. Strictly more conservative.
-export const VALIDATION_VERSION = "1.3.0";
+// 1.4.0 (2026-07-10, Track 3 SO-1+SO-2 founder-signed): brand_risk_assessment goes live — provenance +
+// authority entries for all 12 keys (per the ruled ADR-T1-001 collision audit) and ALL FOUR brand-risk
+// vetoes join the ≥2-distinct-sources class (the confirmed_amazon_restrictions single-source exception
+// REVERSED — no marketplace-observation capability until Keepa). Strictly more conservative.
+export const VALIDATION_VERSION = "1.4.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 // Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;
@@ -51,6 +55,24 @@ export const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   grey_market_signals: ["forum", "social", "news", "marketplace"],
   counterfeit_channel: ["government_record", "news", "forum", "marketplace"],
   conflicting_authorization: ["official_brand", "official_company", "registry", "news"],
+  // Track 3 — brand_risk_assessment (gate spec 2026-07-10; provenance per the founder-ruled
+  // ADR-T1-001 collision audit — the recency windows + carve-outs are PROMPT law; provenance/
+  // authority/corroboration are enforced here). Keepa keys carry entries NOW (registry lock stays
+  // honest) but are inert until the Keepa plugin ships (OQ-A: no pack source can earn them).
+  reseller_friendly: ["official_brand", "news"],
+  keepa_stable_no_cliff: ["marketplace"],
+  low_seller_count_stable: ["marketplace"],
+  // An ABSENCE finding cites the pages it examined (the no_connection_found pattern).
+  no_enforcement_found: ["official_brand", "news", "forum", "marketplace", "inference"],
+  map_policy_present: ["official_brand", "news"],
+  keepa_enforcement_cliff: ["marketplace"],
+  brand_enforcement_signals: ["news", "forum", "social", "marketplace"],
+  brand_restricts_amazon: ["news", "forum", "marketplace", "official_brand"],
+  // The brand's OWN channel policy — nothing softer qualifies (ruled definition).
+  b2b_only_confirmed: ["official_brand"],
+  active_ip_complaints: ["government_record", "news", "official_brand"],
+  confirmed_amazon_restrictions: ["marketplace", "official_brand", "news"],
+  cease_and_desist_distributed: ["news", "forum", "official_brand", "government_record"],
 };
 export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   government_registration: "high", domain_age_5_plus: "high", domain_age_2_5: "high",
@@ -63,6 +85,12 @@ export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   purchases_from_mega_distributor: "low", trade_press_connection: "low",
   claims_authorization_unverified: "low", no_connection_found: "low", grey_market_signals: "low",
   counterfeit_channel: "medium", conflicting_authorization: "medium",
+  // Track 3 (brand_risk_assessment)
+  reseller_friendly: "medium", keepa_stable_no_cliff: "medium", low_seller_count_stable: "medium",
+  no_enforcement_found: "low", map_policy_present: "low", keepa_enforcement_cliff: "medium",
+  brand_enforcement_signals: "low", brand_restricts_amazon: "low",
+  b2b_only_confirmed: "high", active_ip_complaints: "medium",
+  confirmed_amazon_restrictions: "medium", cease_and_desist_distributed: "low",
 };
 // Corroboration gate — keys whose meaning REQUIRES multiple independent sources. scam_reports_corroborated
 // is a hard_fail (irreversible veto) that the profile/authority gates cannot distinguish from the mild
@@ -76,6 +104,15 @@ const CORROBORATION_REQUIRED: Record<string, number> = {
   // requires ≥2 DISTINCT valid sources. Post-SO-1 dedupe, distinct means distinct real-world URLs.
   website_fraudulent: 2,
   address_fraudulent: 2,
+  // Track 3 (SO-2, v1.4.0, founder-corrected 2026-07-10) — ALL FOUR brand-risk vetoes, including
+  // confirmed_amazon_restrictions: the single-source "self-evidencing artifact" exception was
+  // REVERSED because without Keepa the engine cannot OBSERVE a gated listing, only read claims
+  // about one (different epistemic objects). RIDER (Keepa-gate entry condition): revisit
+  // single-source for confirmed_amazon_restrictions when direct marketplace observation ships.
+  active_ip_complaints: 2,
+  cease_and_desist_distributed: 2,
+  confirmed_amazon_restrictions: 2,
+  b2b_only_confirmed: 2,
 };
 
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit

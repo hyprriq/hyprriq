@@ -18,7 +18,9 @@ import { runTrack5 } from "./track5";
 // ║ That is the ruled gate — never weaken this test to silence it.                               ║
 // ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 
-const LIVE_FIREWALL_TRACKS = ["supplier_identity", "supply_chain_relationship"] as const;
+// Track 3 (2026-07-10, gate spec): brand_risk_assessment goes LIVE — entries authored per the
+// founder-ruled ADR-T1-001 collision audit (recency windows + cross-track rows in the gate spec).
+const LIVE_FIREWALL_TRACKS = ["supplier_identity", "supply_chain_relationship", "brand_risk_assessment"] as const;
 
 // Documented exclusions — keys deliberately OUTSIDE the firewall config, with the ruling that put
 // them there. Anything else uncovered is a build error.
