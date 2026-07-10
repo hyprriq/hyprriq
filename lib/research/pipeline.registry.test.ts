@@ -8,7 +8,9 @@ describe("pipeline registry", () => {
     // 1.0.0 → 1.1.0 (H7, 2026-07-07): deliberate bump — diversity cap, consensus pass, replay mode.
     // 1.1.0 → 1.2.0 (SB-1, 2026-07-09, founder-approved): domain-mode anchor match + Track 0.5
     // llm_failed research-failure routing change resolution behavior for NEW attempts.
-    expect(PIPELINE_VERSION).toBe("1.2.0");
+    // 1.2.0 → 1.3.0 (SB-2, 2026-07-10, founder-approved): domain-first ambiguity comparator +
+    // OQ-B copy + carried audits change resolution decisions for NEW attempts.
+    expect(PIPELINE_VERSION).toBe("1.3.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {

@@ -86,19 +86,19 @@ Untouched: `identityResolver.ts` entirely, `deriveTrackSignal`, `computeVerdict`
 ## TASKS (TDD; commit per task; execute ONLY after all SOs signed + OQs ruled)
 
 ### Task 1 — thread the domain (SO-1)
-- [ ] Failing tests: `toEntityResolution` output carries `resolved_domain`; existing callers unaffected. Implement; verify; commit.
+- [x] Failing tests: `toEntityResolution` output carries `resolved_domain`; existing callers unaffected. Implement; verify; commit.
 
 ### Task 2 — domain-first comparator (SO-2, OQ-A)
-- [ ] Failing tests: same-domain ⇒ 2a with reference output; different-domain ⇒ `multiple_entities` (incl. name-match + domain-conflict per OQ-A); domain-absent fallback via shared `entityNameMatch` (suffix strip cases: "TD SYNNEX" ≡ "TD SYNNEX Corporation"; "Medline Industries" ≢ "Medlink Inc"). Implement (pure fns only); verify; commit.
+- [x] Failing tests: same-domain ⇒ 2a with reference output; different-domain ⇒ `multiple_entities` (incl. name-match + domain-conflict per OQ-A); domain-absent fallback via shared `entityNameMatch` (suffix strip cases: "TD SYNNEX" ≡ "TD SYNNEX Corporation"; "Medline Industries" ≢ "Medlink Inc"). Implement (pure fns only); verify; commit.
 
 ### Task 3 — copy (SO-3, OQ-B)
-- [ ] Failing tests: exact ruled string + both scanner tiers. Implement; verify; commit.
+- [x] Failing tests: exact ruled string + both scanner tiers. Implement; verify; commit.
 
 ### Task 4 — carried audits (SO-4) + OQ-C reading-layer fix
-- [ ] Failing tests: anchored branch populates `resolution_research[].audit` with the inner resolver audits; unresolved notes carry the OQ-C clarifier sentence (if ruled). Implement; verify; commit.
+- [x] Failing tests: anchored branch populates `resolution_research[].audit` with the inner resolver audits; unresolved notes carry the OQ-C clarifier sentence (if ruled). Implement; verify; commit.
 
 ### Task 5 — version + docs
-- [ ] PIPELINE_VERSION 1.2.0 → 1.3.0 (pin test RED-first, founder-approval noted); tracker + spec records; full verify (tsc+eslint+vitest+build); push staging. **STOP — founder runs ATs → SB-2 FROZEN.**
+- [x] PIPELINE_VERSION 1.2.0 → 1.3.0 (pin test RED-first, founder-approval noted); tracker + spec records; full verify (tsc+eslint+vitest+build); push staging. **STOP — founder runs ATs → SB-2 FROZEN.**
 
 ---
 

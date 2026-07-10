@@ -40,7 +40,9 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // live acquisition/resolution). Companion versions this phase: pack 1.1.0 (SO-1), firewall 1.3.0 (SO-2).
 // 1.2.0 (2026-07-09, SB-1, founder-approved): Track 0.5 domain-mode anchor match (SO-1) + llm_failed
 // research-failure routing (SO-2) — resolution behavior changes for NEW attempts; frozen attempts untouched.
-export const PIPELINE_VERSION = "1.2.0";
+// 1.3.0 (2026-07-10, SB-2, founder-approved): domain-first ambiguity comparator (same domain ⇒ same
+// entity; conflict ⇒ escalate, no name override) + ruled multiple_entities copy + carried inner audits.
+export const PIPELINE_VERSION = "1.3.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {
