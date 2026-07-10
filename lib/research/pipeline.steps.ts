@@ -213,6 +213,10 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       identity_scope_note: out.identity_scope_note ?? null,
       authorization_scope_note: out.authorization_scope_note ?? null,
       marketplace_eligibility_disclaimer: out.marketplace_eligibility_disclaimer ?? null,
+      // Track 3 (OQ-D) — brand-risk narrative + the analyst quartet: part of the frozen record,
+      // rendered ADMIN-side only this gate; advisory, never scored. null on other tracks.
+      brand_risk_finding: out.brand_risk_finding ?? null,
+      analyst_reading: out.analyst_reading ?? null,
     },
     founder_review_status: consensusEscalate ? "pending" : "approved",
     manual_review_required: consensusEscalate,

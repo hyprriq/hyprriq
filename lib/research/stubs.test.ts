@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { runTrack3 } from "./track3";
 import { runTrack4 } from "./track4";
 import { runTrack5 } from "./track5";
 
@@ -7,10 +6,11 @@ import { runTrack5 } from "./track5";
 // pipeline maps them to n_a + skipped (never soft_fail, never escalation). Pre-H3 they returned
 // bare empty evidence, which deriveTrackSignal scored as soft_fail — Track 3's floor then pinned
 // EVERY case at verify_before_purchase (audit N2).
+// Track 3 went LIVE 2026-07-10 (gate: registry entries + founder-ruled ADR-T1-001 audit) — its
+// stub assertion moved out here exactly as in firewallRegistry.test.ts; track3.test.ts owns it now.
 describe("H3 — unbuilt tracks declare not_implemented", () => {
-  it("tracks 3/4/5 return not_implemented with no evidence and honest notes", async () => {
+  it("tracks 4/5 return not_implemented with no evidence and honest notes", async () => {
     const cases = [
-      [runTrack3, "brand_risk_assessment"],
       [runTrack4, "documentation_review"],
       [runTrack5, "sourcing_logic"],
     ] as const;

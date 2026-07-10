@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ALLOWED_PROFILES, MIN_AUTHORITY } from "./weightValidation";
 import { weightKeysForTrack } from "./weights";
-import { runTrack3 } from "./track3";
 import { runTrack4 } from "./track4";
 import { runTrack5 } from "./track5";
 
@@ -43,10 +42,11 @@ describe("firewall registry coverage lock (H7 — Track 3/4 pre-freeze gate as a
     });
   }
 
-  it("Tracks 3/4/5 are still declared stubs — going live REQUIRES firewall registry entries + the ADR-T1-001 collision audit FIRST", async () => {
+  it("Tracks 4/5 are still declared stubs — going live REQUIRES firewall registry entries + the ADR-T1-001 collision audit FIRST", async () => {
     // When any of these fails: do NOT edit this assertion — author the firewall entries, run the
     // collision audit, then move the track into LIVE_FIREWALL_TRACKS (see the banner above).
-    expect((await runTrack3()).not_implemented, "Track 3 went live without passing the firewall pre-freeze gate").toBe(true);
+    // Track 3 went LIVE 2026-07-10 via exactly this procedure (entries + founder-ruled audit) —
+    // its assertion moved out per the banner; runTrack3 is imported no longer as a stub.
     expect((await runTrack4()).not_implemented, "Track 4 went live without passing the firewall pre-freeze gate").toBe(true);
     expect((await runTrack5()).not_implemented, "Track 5 went live without passing the firewall pre-freeze gate").toBe(true);
   });

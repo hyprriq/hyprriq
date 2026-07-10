@@ -180,6 +180,10 @@ export interface TrackOutput {
   identity_scope_note?: string;
   authorization_scope_note?: string;
   marketplace_eligibility_disclaimer?: string;
+  // Track 3 (2026-07-10 gate) — brand-risk scoped narrative + the analyst quartet (OQ-D: STORED and
+  // rendered admin-side only this gate; advisory reasoning, NEVER scored — the LLM↔code boundary holds).
+  brand_risk_finding?: string;
+  analyst_reading?: { most_likely: string; alternative: string; confidence: "high" | "medium" | "low"; what_would_change_my_mind: string };
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that
