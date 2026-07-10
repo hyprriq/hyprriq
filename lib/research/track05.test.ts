@@ -266,7 +266,7 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     expect(r.identity_unconfirmed).toBe(true);
     expect(r.resolution_method).toBe("unresolved");
     expect(r.identity_discrepancy).toBeNull();                     // OQ-A: our failure — no client note
-    expect(r.resolution_research).toEqual([{ subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: true }]);
+    expect(r.resolution_research).toMatchObject([{ subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: true }]);
     expect(r.resolution_notes).toContain("model call failed");
     expect(gather).toHaveBeenCalledTimes(1);                       // name research never runs
   });
@@ -285,7 +285,7 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "tdsynnex.com" }));
     expect(runModel).not.toHaveBeenCalled();
     expect(r.identity_discrepancy).toBeNull();
-    expect(r.resolution_research).toEqual([{ subject: "tdsynnex.com", role: "website", sources: 0, llm_failed: false }]);
+    expect(r.resolution_research).toMatchObject([{ subject: "tdsynnex.com", role: "website", sources: 0, llm_failed: false }]);
     expect(r.identity_unconfirmed).toBe(true);
     expect(r.resolution_notes).toContain("no sources");
   });
@@ -301,7 +301,7 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     expect(r.identity_unconfirmed).toBe(true);
     expect(r.resolved_domain).toBeNull();
     expect(r.identity_discrepancy).toBeNull();                     // OQ-A applies here too
-    expect(r.resolution_research).toEqual([
+    expect(r.resolution_research).toMatchObject([
       { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
       { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: true },
     ]);
@@ -314,7 +314,7 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     const r = await resolveSupplierIdentity(ctx()); // no website
     expect(r.identity_unconfirmed).toBe(true);
     expect(r.resolution_method).toBe("unresolved");
-    expect(r.resolution_research).toEqual([{ subject: "Acme Distributing", role: "name", sources: 1, llm_failed: true }]);
+    expect(r.resolution_research).toMatchObject([{ subject: "Acme Distributing", role: "name", sources: 1, llm_failed: true }]);
     expect(r.resolution_notes).toContain("model call failed");
   });
 
@@ -328,10 +328,52 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
       .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
       .mockResolvedValueOnce(model({ candidates: [] }));
     const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
-    expect(r.resolution_research).toEqual([
+    expect(r.resolution_research).toMatchObject([
       { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
       { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: false },
     ]);
+  });
+});
+
+// ── SB-2 (SO-4 + OQ-C) — the inner resolver audits ride the research records (the score/margin
+// data SB-1's stop-rule asked for but the anchored path never persisted), and unresolved notes
+// self-describe resolved_name (OQ-C ruling: fix the READING experience, don't null the field).
+describe("SB-2 (SO-4/OQ-C) — carried audits + unresolved-notes clarifier", () => {
+  const onDomain = (domain: string, profile: string) => src(`https://${domain}/about`, profile);
+
+  it("the anchored branch persists the INNER resolver audits — earned dominance finally on the record", async () => {
+    gather
+      .mockResolvedValueOnce(pack([onDomain("tdsynnex.com", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [] }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Bulk Electronics Wholesale Vendor", vendor_website: "tdsynnex.com" }));
+    const website = r.resolution_research?.find((x) => x.role === "website");
+    expect(website?.audit?.winner).toBe("tdsynnex.com");
+    expect(website?.audit?.score).toBeGreaterThanOrEqual(4);
+    const name = r.resolution_research?.find((x) => x.role === "name");
+    expect(name?.audit?.winner).toBeNull(); // honest: the name resolved nothing this pass
+  });
+
+  it("unresolved identities carry the OQ-C clarifier on every unconfirmed path", async () => {
+    // anchored research FAILURE (llm_failed; no client note per OQ-A)
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockRejectedValueOnce(new Error("429"));
+    const fail = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "tdsynnex.com" }));
+    expect(fail.resolution_notes).toContain("research subject, not a confirmed resolution");
+    // anchored website_dead escalation
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockResolvedValueOnce(model({ candidates: [] }));
+    const dead = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Corp", vendor_website: "parked-nothing.com" }));
+    expect(dead.identity_unconfirmed).toBe(true);
+    expect(dead.resolution_notes).toContain("research subject, not a confirmed resolution");
+    // name-only unresolved
+    gather.mockResolvedValueOnce(pack([src("https://news.example/x", "news")]));
+    runModel.mockResolvedValueOnce(model({ candidates: [] }));
+    const un = await resolveSupplierIdentity(ctx({ vendor_name: "Zzqxwv Nonexistent Trading Co" }));
+    expect(un.identity_unconfirmed).toBe(true);
+    expect(un.resolution_notes).toContain("research subject, not a confirmed resolution");
   });
 });
 

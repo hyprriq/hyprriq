@@ -33,7 +33,7 @@ const REGISTRY_PROFILES = new Set(["registry", "government_record"]);
 async function researchEntity(
   ctx: TrackContext, requests: { question: ResearchQuestion; input: string }[], subject: string,
   mode: "name" | "domain",
-): Promise<{ identity: SupplierIdentity; entityByDomain: Map<string, string>; candidates: IdentityCandidate[]; exactByDomain: Map<string, boolean>; research: { subject: string; sources: number; llm_failed: boolean } }> {
+): Promise<{ identity: SupplierIdentity; entityByDomain: Map<string, string>; candidates: IdentityCandidate[]; exactByDomain: Map<string, boolean>; research: Omit<ResolutionResearchRecord, "role"> }> {
   const orchestrator = new Orchestrator([serperPlugin, nativeWebSearchPlugin]);
   const { pack } = await orchestrator.gather({ case_id: ctx.case_id, track_key: "supplier_identity", requests });
 
@@ -84,8 +84,15 @@ async function researchEntity(
   });
 
   const identity = resolveIdentity({ vendor_name: subject, vendor_website: null, candidates });
-  return { identity, entityByDomain, candidates, exactByDomain, research: { subject, sources: pack.sources.length, llm_failed: llmFailed } };
+  // SB-2 (SO-4) — the inner resolver audit rides the research record: the anchored path used to
+  // discard the very score/margin data SB-1's stop-rule asked to present.
+  return { identity, entityByDomain, candidates, exactByDomain, research: { subject, sources: pack.sources.length, llm_failed: llmFailed, audit: identity.resolution_audit } };
 }
+
+// SB-2 (OQ-C, founder-ruled) — unresolved records keep resolved_name (NOT NULL rollup join key;
+// the ledger records what was researched; frozen researchIdentityFor consumes it) and the NOTES
+// self-describe it instead. Appended on every identity_unconfirmed return path.
+const UNRESOLVED_CLARIFIER = " (resolved_name records the research subject, not a confirmed resolution.)";
 
 // SB-1 (SO-2, OQ-A ruling) — the research-failure identity: unresolved + escalated with a truthful
 // internal reason and NO identity_discrepancy. An infra failure is OURS — it never becomes a
@@ -103,7 +110,7 @@ const researchFailureIdentity = (
   identity_confidence: "low",
   identity_unconfirmed: true, // existing conservative escalation routing (manual_override_required)
   resolution_method: "unresolved",
-  resolution_notes: notes,
+  resolution_notes: notes + UNRESOLVED_CLARIFIER,
   resolution_audit: { winner: null, score: 0, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] },
   resolution_confidence: "low",
   input_consistency: "low",
@@ -179,7 +186,7 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
       identity_confidence: d.resolution_confidence, // legacy axis mirrors resolution_confidence
       identity_unconfirmed: d.identity_unconfirmed,
       resolution_method: d.resolution_method,
-      resolution_notes: d.resolution_notes,
+      resolution_notes: d.identity_unconfirmed ? d.resolution_notes + UNRESOLVED_CLARIFIER : d.resolution_notes,
       resolution_audit: { winner: d.resolved_domain, score: 0, runner_up: null, runner_up_score: 0, matched_by: ["website_anchored"], warnings: [] },
       resolution_confidence: d.resolution_confidence,
       input_consistency: d.input_consistency,
@@ -206,5 +213,6 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
     const entity = r.entityByDomain.get(identity.resolved_domain);
     if (entity) identity.resolved_name = entity;
   }
+  if (identity.identity_unconfirmed) identity.resolution_notes += UNRESOLVED_CLARIFIER;
   return { ...withConsistency(identity, identity.identity_confidence, "high"), resolution_research: [{ role: "name", ...r.research }] };
 }

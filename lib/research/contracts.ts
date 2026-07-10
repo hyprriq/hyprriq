@@ -55,6 +55,7 @@ export interface ResolutionResearchRecord {
   role: "website" | "name";  // which Spec-B research slot this call filled
   sources: number;            // pack size the model reasoned over (0 = could not research at all)
   llm_failed: boolean;        // model call threw or returned unparseable output (H2 semantics)
+  audit?: ResolutionAudit;    // SB-2 (SO-4) — the INNER resolver audit for this call (score/margin/winner); pre-SB-2 records lack it
 }
 
 export interface SupplierIdentity {
