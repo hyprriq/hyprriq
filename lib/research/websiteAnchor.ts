@@ -1,5 +1,6 @@
 import type { IdentityDiscrepancy, IdentityDiscrepancyKind } from "@/lib/research/contracts";
 import { normalizeBrandToken } from "@/lib/research/source_profile";
+import { canonicalDomain } from "@/lib/research/host";
 
 // Spec-B — website-anchored identity DECISION (pure + deterministic; no I/O). track05.ts researches the
 // website (and, when needed, the name) into EntityResolution results and calls this to pick the branch.
@@ -60,6 +61,25 @@ export function clientNote(kind: IdentityDiscrepancyKind, entered: string, resol
 
 const norm = (s: string) => normalizeBrandToken(s);
 
+// SB-2 (SO-2) — corporate-suffix-normalized entity-name comparison. FALLBACK TIER ONLY: it decides
+// sameness solely when a resolved entity carries no domain (defensive — toEntityResolution always
+// supplies one). Per OQ-A, when domains are PRESENT they decide alone: "domain evidence beats name
+// evidence, always; names speak only when domains are silent." Trailing suffixes strip repeatedly
+// ("Acme Co Ltd" → "Acme"); never strips a name to nothing (a company literally named "Limited").
+const CORPORATE_SUFFIXES = new Set([
+  "corporation", "corp", "incorporated", "inc", "llc", "ltd", "limited", "company", "co",
+  "gmbh", "plc", "llp", "lp", "sa", "srl", "bv", "pty", "pvt",
+]);
+export function entityNameMatch(a: string, b: string): boolean {
+  const strip = (s: string) => {
+    const tokens = s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    while (tokens.length > 1 && CORPORATE_SUFFIXES.has(tokens[tokens.length - 1])) tokens.pop();
+    return tokens.join("");
+  };
+  const sa = strip(a), sb = strip(b);
+  return !!sa && !!sb && sa === sb;
+}
+
 export function decideWebsiteAnchored(input: WebsiteAnchorInput): WebsiteAnchorDecision {
   const { entered_name, provided_host, brands, website, name } = input;
   const nameIsBrand = brands.map(norm).filter(Boolean).includes(norm(entered_name));
@@ -79,10 +99,20 @@ export function decideWebsiteAnchored(input: WebsiteAnchorInput): WebsiteAnchorD
   // 2c — the website did not resolve to a real established entity (dead/parked/no dominant entity).
   if (!website.resolved || !website.entity_name) return escalate("website_dead", entered_name);
 
-  // 2b — the NAME also resolves to a DIFFERENT legitimate entity → genuinely ambiguous → escalate,
-  //      never auto-pick. SKIPPED when the name is a brand (rule 3: that's a client-entry error).
-  if (!nameIsBrand && name?.resolved && name.entity_name && norm(name.entity_name) !== norm(website.entity_name)) {
-    return escalate("multiple_entities", website.entity_name);
+  // 2b — the NAME also resolved its own entity: SB-2 domain-first comparator (SO-2, OQ-A).
+  // Same domain ⇒ same entity (kills the TD Synexx same-entity false ambiguity — the variant name
+  // string is irrelevant when both sides resolved the anchor itself). Different domains ⇒ escalate,
+  // and a name-string match does NOT override the conflict (two dominant domains = two candidate
+  // identities = the lookalike/impersonation shape — a human decides). Suffix-normalized name
+  // equality decides ONLY in the defensive domain-absent case. SKIPPED when the name is a brand
+  // (rule 3: that's a client-entry error). One-directional narrowing (SO-2 condition 1): every case
+  // leaving this escalation falls through to 2a, which ALWAYS carries the mismatch disclosure note.
+  if (!nameIsBrand && name?.resolved && name.entity_name) {
+    const nameDomain = name.resolved_domain ? canonicalDomain(name.resolved_domain) : null;
+    const sameEntity = nameDomain !== null
+      ? nameDomain === canonicalDomain(provided_host)
+      : entityNameMatch(name.entity_name, website.entity_name);
+    if (!sameEntity) return escalate("multiple_entities", website.entity_name);
   }
 
   // 2a / rule 3 — the website is the dominant real entity → RESOLVE FROM THE WEBSITE.

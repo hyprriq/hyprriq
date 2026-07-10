@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decideWebsiteAnchored, type EntityResolution } from "./websiteAnchor";
+import { decideWebsiteAnchored, entityNameMatch, type EntityResolution } from "./websiteAnchor";
 
 // SB-2 (SO-1) — EntityResolution carries the resolved domain (the comparator's identity anchor);
 // null = unresolved or (defensively) domain-less. Helper default null keeps pre-SB-2 tests meaningful.
@@ -12,6 +12,76 @@ describe("SB-2 (SO-1) — EntityResolution carries resolved_domain", () => {
   it("resolved_domain rides the resolution", () => {
     expect(dom("TD SYNNEX Corporation", true, "high", "tdsynnex.com").resolved_domain).toBe("tdsynnex.com");
     expect(dom(null, false).resolved_domain).toBeNull();
+  });
+});
+
+// ── SB-2 (SO-2, OQ-A) — domain-first comparator. Domains carry identity; name strings speak only
+// when domains are silent. SO-2's two founder-locked conditions are the first two tests below.
+describe("SB-2 (SO-2) — domain-first ambiguity comparator", () => {
+  it("CONDITION 1 (one-directional narrowing): same domain, different name strings → resolves WITH the mismatch note — never silently (the TD Synexx false ambiguity dies)", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "TD Synexx", provided_host: "tdsynnex.com", brands: [],
+      website: dom("TD SYNNEX Corporation", true, "high", "tdsynnex.com"),
+      name: dom("TD SYNNEX", true, "high", "tdsynnex.com"), // same company, variant string, SAME domain
+    });
+    expect(d.outcome).toBe("resolve_from_website");
+    expect(d.resolved_name).toBe("TD SYNNEX Corporation");
+    expect(d.identity_discrepancy).not.toBeNull();                          // never silent —
+    expect(d.identity_discrepancy.kind).toBe("name_website_mismatch");      // the disclosure note
+    expect(d.identity_discrepancy.client_note).toContain("TD SYNNEX Corporation");
+  });
+
+  it("CONDITION 2 (conscience lock): genuinely different companies on different domains still escalate (Medline/medlink)", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Medline", provided_host: "medlink.com", brands: [],
+      website: dom("Medlink Inc", true, "high", "medlink.com"),
+      name: dom("Medline Industries", true, "high", "medline.com"),
+    });
+    expect(d.outcome).toBe("escalate");
+    expect(d.identity_discrepancy.kind).toBe("multiple_entities");
+    expect(d.identity_unconfirmed).toBe(true);
+  });
+
+  it("OQ-A: a name-string match does NOT override a domain conflict — domains differ ⇒ escalate", () => {
+    const d = decideWebsiteAnchored({
+      entered_name: "Acme Corp", provided_host: "acme-supply.com", brands: [],
+      website: dom("Acme Corporation", true, "high", "acme-supply.com"),
+      name: dom("Acme Corporation", true, "high", "acme.com"), // identical entity string, different domain
+    });
+    expect(d.outcome).toBe("escalate");
+    expect(d.identity_discrepancy.kind).toBe("multiple_entities"); // the lookalike/impersonation shape — a human looks
+  });
+
+  it("defensive domain-absent fallback: suffix-normalized name equality decides sameness", () => {
+    const same = decideWebsiteAnchored({
+      entered_name: "TD Synexx", provided_host: "tdsynnex.com", brands: [],
+      website: dom("TD SYNNEX Corporation", true, "high", "tdsynnex.com"),
+      name: dom("TD SYNNEX", true, "high", null), // resolved but domain-less (defensive shape)
+    });
+    expect(same.outcome).toBe("resolve_from_website");
+    const diff = decideWebsiteAnchored({
+      entered_name: "Medline", provided_host: "medlink.com", brands: [],
+      website: dom("Medlink Inc", true, "high", "medlink.com"),
+      name: dom("Medline Industries", true, "high", null),
+    });
+    expect(diff.outcome).toBe("escalate");
+    expect(diff.identity_discrepancy.kind).toBe("multiple_entities");
+  });
+});
+
+describe("SB-2 — entityNameMatch (corporate-suffix-normalized comparison, fallback tier only)", () => {
+  it("strips trailing corporate suffixes before comparing", () => {
+    expect(entityNameMatch("TD SYNNEX", "TD SYNNEX Corporation")).toBe(true);
+    expect(entityNameMatch("Acme Co Ltd", "Acme")).toBe(true);            // multi-suffix
+    expect(entityNameMatch("Global Distribution LLC", "Global Distribution")).toBe(true);
+  });
+  it("genuinely different names stay different", () => {
+    expect(entityNameMatch("Medline Industries", "Medlink Inc")).toBe(false);
+    expect(entityNameMatch("Openborder Inc", "Global Distributors LLC")).toBe(false);
+  });
+  it("never strips a name to nothing (a company literally named a suffix word)", () => {
+    expect(entityNameMatch("Limited", "Limited")).toBe(true);
+    expect(entityNameMatch("Limited", "Acme Limited")).toBe(false);
   });
 });
 

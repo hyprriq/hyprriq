@@ -215,6 +215,23 @@ describe("SB-1 (SO-1) — domain-research anchor match", () => {
     expect(r.identity_discrepancy?.entered_name).toBe("Global Distributors");
   });
 
+  // SB-2 — the TD Synexx class end-to-end: name research resolves the SAME domain under a variant
+  // entity string → domain-first comparator routes to resolve_from_website (was: false multiple_entities).
+  it("SB-2: typo name resolving the anchor's own domain → resolved_from_website, not false ambiguity", async () => {
+    gather
+      .mockResolvedValueOnce(pack([onDomain("tdsynnex.com", "official_company")]))
+      .mockResolvedValueOnce(pack([src("https://opencorporates.com/td", "registry"), onDomain("tdsynnex.com", "official_company")]));
+    runModel
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
+      .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX", supporting_source_ids: ["src_0", "src_1"] }] })); // same domain, variant string
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synexx", vendor_website: "tdsynnex.com" }));
+    expect(r.resolution_method).toBe("resolved_from_website");
+    expect(r.resolved_name).toBe("TD SYNNEX Corporation");
+    expect(r.resolved_domain).toBe("tdsynnex.com");
+    expect(r.identity_unconfirmed).toBe(false);
+    expect(r.identity_discrepancy?.kind).toBe("name_website_mismatch");   // disclosed, never silent
+  });
+
   it("wrong domain entered AND the entered name resolves its own entity elsewhere → multiple_entities escalate", async () => {
     gather
       .mockResolvedValueOnce(pack([onDomain("globaldist.com", "official_company")]))
