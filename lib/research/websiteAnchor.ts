@@ -13,6 +13,10 @@ export interface EntityResolution {
   resolved: boolean;             // did research find a DOMINANT, real, established entity?
   entity_name: string | null;   // the discovered entity name (null when unresolved)
   confidence: "high" | "medium" | "low";
+  // SB-2 (SO-1) — the resolved entity's domain, the comparator's identity anchor. Pre-SB-2 this was
+  // dropped by toEntityResolution, so the ambiguity check could not see that the name and website
+  // resolved the SAME domain (the TD Synexx false-ambiguity root cause). null = unresolved.
+  resolved_domain: string | null;
 }
 
 export interface WebsiteAnchorInput {

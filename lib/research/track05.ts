@@ -116,9 +116,10 @@ function toEntityResolution(r: { identity: SupplierIdentity; entityByDomain: Map
   const { identity, entityByDomain } = r;
   if (identity.resolved_domain && !identity.identity_unconfirmed && identity.identity_confidence !== "low") {
     const entity = entityByDomain.get(identity.resolved_domain);
-    if (entity) return { resolved: true, entity_name: entity, confidence: identity.identity_confidence };
+    // SB-2 (SO-1) — carry the resolved domain: the comparator's identity anchor.
+    if (entity) return { resolved: true, entity_name: entity, confidence: identity.identity_confidence, resolved_domain: identity.resolved_domain };
   }
-  return { resolved: false, entity_name: null, confidence: "low" };
+  return { resolved: false, entity_name: null, confidence: "low", resolved_domain: null };
 }
 
 const withConsistency = (identity: SupplierIdentity, resolution_confidence: SupplierIdentity["identity_confidence"], input_consistency: SupplierIdentity["input_consistency"]): SupplierIdentity =>

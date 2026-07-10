@@ -1,8 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { decideWebsiteAnchored, type EntityResolution } from "./websiteAnchor";
 
-const dom = (entity_name: string | null, resolved = true, confidence: "high" | "medium" | "low" = "high"): EntityResolution =>
-  ({ resolved, entity_name, confidence });
+// SB-2 (SO-1) — EntityResolution carries the resolved domain (the comparator's identity anchor);
+// null = unresolved or (defensively) domain-less. Helper default null keeps pre-SB-2 tests meaningful.
+const dom = (entity_name: string | null, resolved = true, confidence: "high" | "medium" | "low" = "high", resolved_domain: string | null = null): EntityResolution =>
+  ({ resolved, entity_name, confidence, resolved_domain });
+
+// SB-2 (SO-1) — the type carries the domain; threading from the resolver is proven end-to-end by
+// the track05 routing tests (Task 2).
+describe("SB-2 (SO-1) — EntityResolution carries resolved_domain", () => {
+  it("resolved_domain rides the resolution", () => {
+    expect(dom("TD SYNNEX Corporation", true, "high", "tdsynnex.com").resolved_domain).toBe("tdsynnex.com");
+    expect(dom(null, false).resolved_domain).toBeNull();
+  });
+});
 
 describe("decideWebsiteAnchored (Spec-B branches 2a/2b/2c + name_is_brand)", () => {
   it("globaldist / name_is_brand: client typed a brand → resolve from website, identity HOLDS, no penalty", () => {
