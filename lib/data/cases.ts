@@ -80,8 +80,24 @@ export type CaseDetail = CaseRow & {
   track_3_status: TrackStatus;
   track_4_status: TrackStatus;
   track_5_status: TrackStatus;
-  supplier_identity: import("@/lib/research/contracts").SupplierIdentity | null; // Spec-B — Track 0.5 resolved identity + discrepancy
+  supplier_identity: ClientSupplierIdentity; // PG-1 — PROJECTED client shape, never the full engine record
 };
+
+// PG-1 — the CLIENT-facing identity shape (the H5 findings pattern applied to supplier_identity).
+// The full SupplierIdentity (resolution_research + inner audits, resolution_notes, candidate
+// scoring) is METHOD data — show outputs, never method — and a Server→Client prop serializes into
+// the RSC payload, so the strip must happen server-side, not at render. Admin path (lib/data/
+// admin.ts) deliberately unprojected: the review surface sees everything.
+export type ClientSupplierIdentity = {
+  identity_discrepancy: { kind: string; client_note: string };
+} | null;
+
+export function projectSupplierIdentityForClient(
+  si: import("@/lib/research/contracts").SupplierIdentity | null,
+): ClientSupplierIdentity {
+  const d = si?.identity_discrepancy;
+  return d ? { identity_discrepancy: { kind: d.kind, client_note: d.client_note } } : null;
+}
 
 // A single case, scoped to the current client. Returns null if not found or not
 // owned by the caller.
@@ -98,7 +114,10 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
     .eq("client_id", userId)
     .is("deleted_at", null)
     .maybeSingle();
-  return (data as CaseDetail) ?? null;
+  if (!data) return null;
+  // PG-1 — project the identity BEFORE it can cross the RSC boundary (see ClientSupplierIdentity).
+  const raw = data as Omit<CaseDetail, "supplier_identity"> & { supplier_identity: import("@/lib/research/contracts").SupplierIdentity | null };
+  return { ...raw, supplier_identity: projectSupplierIdentityForClient(raw.supplier_identity) };
 }
 
 // H5 — the CLIENT-facing finding shape. Deliberately excludes ai_output_json (raw model output —

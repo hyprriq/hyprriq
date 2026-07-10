@@ -25,12 +25,54 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { getCaseFindings } from "./cases";
+import { getCaseFindings, getCaseById, projectSupplierIdentityForClient } from "./cases";
+import type { SupplierIdentity } from "@/lib/research/contracts";
 
 beforeEach(() => {
   maybeSingle.mockReset();
   rowsResult.mockReset().mockResolvedValue({ data: [] });
   selectCalls.length = 0;
+});
+
+// ── PG-1 — the client-facing identity projection (the N4 class, closed for supplier_identity).
+// The full SupplierIdentity (resolution_research + inner audits, resolution_notes, candidates,
+// audit scores) is method data — it must never cross the RSC boundary to a client browser.
+describe("PG-1 — supplier_identity is projected server-side for the client surface", () => {
+  const fullIdentity = {
+    original_input: { name: "TD Synexx", website: "tdsynnex.com" },
+    resolved_name: "TD SYNNEX Corporation",
+    resolved_domain: "tdsynnex.com",
+    candidate_domains: ["tdsynnex.com"],
+    registration_signals: [],
+    identity_confidence: "high",
+    identity_unconfirmed: false,
+    resolution_method: "resolved_from_website",
+    resolution_notes: "INTERNAL: comparator detail the client must never see",
+    resolution_audit: { winner: "tdsynnex.com", score: 4, runner_up: null, runner_up_score: 0, matched_by: ["name_match"], warnings: [] },
+    resolution_research: [{ subject: "tdsynnex.com", role: "website", sources: 14, llm_failed: false, audit: { winner: "tdsynnex.com", score: 4, runner_up: null, runner_up_score: 0, matched_by: [], warnings: [] } }],
+    identity_discrepancy: { kind: "name_website_mismatch", entered_name: "TD Synexx", resolved_name: "TD SYNNEX Corporation", resolved_domain: "tdsynnex.com", client_note: "Identity clarification: the client-facing note." },
+  } as SupplierIdentity;
+
+  it("keeps ONLY the discrepancy kind + client_note — nothing else survives", () => {
+    const p = projectSupplierIdentityForClient(fullIdentity);
+    expect(p).toEqual({ identity_discrepancy: { kind: "name_website_mismatch", client_note: "Identity clarification: the client-facing note." } });
+    expect(Object.keys(p as object)).toEqual(["identity_discrepancy"]);
+    expect(Object.keys((p as { identity_discrepancy: object }).identity_discrepancy)).toEqual(["kind", "client_note"]);
+  });
+
+  it("null identity / null discrepancy → null (no empty husk crosses the boundary)", () => {
+    expect(projectSupplierIdentityForClient(null)).toBeNull();
+    expect(projectSupplierIdentityForClient({ ...fullIdentity, identity_discrepancy: null })).toBeNull();
+  });
+
+  it("getCaseById returns the PROJECTED identity — the full object never reaches the caller", async () => {
+    maybeSingle.mockResolvedValue({ data: { id: "c1", status: "awaiting_review", supplier_identity: fullIdentity } });
+    const c = await getCaseById("c1");
+    expect(c?.supplier_identity).toEqual({ identity_discrepancy: { kind: "name_website_mismatch", client_note: "Identity clarification: the client-facing note." } });
+    expect(JSON.stringify(c)).not.toContain("resolution_research");
+    expect(JSON.stringify(c)).not.toContain("INTERNAL");
+    expect(JSON.stringify(c)).not.toContain("resolution_audit");
+  });
 });
 
 describe("H5 — getCaseFindings is server-gated by status (the N4 payload leak)", () => {
