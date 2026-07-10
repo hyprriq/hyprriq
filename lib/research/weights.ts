@@ -4,7 +4,10 @@ import type { TrackKey } from "@/lib/constants/tracks";
 // which evidence_types it found; this table assigns the points. Deterministic + versioned.
 // `hard_fail: true` = affirmative fraud/deception → forces hard_fail regardless of score.
 // rubric_version is stored on results so historical reports stay reproducible when tuned.
-export const RUBRIC_VERSION = "g003-1.0.0";
+// g003-1.1.0 (2026-07-10, Track 3 SO-4 founder-signed): b2b_only_confirmed −5+hard_fail → 0-point
+// pure veto — the only hard-fail key that double-counted (veto + score drag); the drag only ever
+// affected the confidence score of an already-vetoed track. Convention: every hard_fail is 0-point.
+export const RUBRIC_VERSION = "g003-1.1.0";
 
 export interface WeightEntry { points: number; hard_fail?: boolean }
 
@@ -50,7 +53,7 @@ const WEIGHTS: Record<Exclude<TrackKey, "intake_scope_guard" | "sourcing_logic">
     keepa_enforcement_cliff: { points: -3 },
     brand_enforcement_signals: { points: -3 },
     brand_restricts_amazon: { points: -4 },
-    b2b_only_confirmed: { points: -5, hard_fail: true },
+    b2b_only_confirmed: { points: 0, hard_fail: true }, // SO-4 (g003-1.1.0): pure veto, no double-count
     // hard fails
     active_ip_complaints: { points: 0, hard_fail: true },
     confirmed_amazon_restrictions: { points: 0, hard_fail: true },
