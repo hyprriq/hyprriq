@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Delivered Report View (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --accent-data:#2F6F6A; --accent-data-tint:#E9F2F1;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC; --cond-ink:#846412;
+    --verify-bg:#FAEEDF; --verify-ink:#9A551F;
+    --deny-bg:#F8E9E6; --deny-ink:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --shadow-1:0 1px 2px rgba(26,25,23,.04),0 12px 32px -12px rgba(26,25,23,.16);
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 24px 80px}
+
+  .crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:18px}
+  .crumb a:hover{color:var(--ink)}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}.btn-sm{padding:6px 12px;font-size:13px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+
+  /* ─── The Decision Snapshot — the delivered artifact, not a status card ─── */
+  .snapshot{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);
+    box-shadow:var(--shadow-1);overflow:hidden}
+  .snap-head{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line)}
+  .snap-head .l{display:flex;align-items:center;gap:10px}
+  .doc-label{font-family:var(--display);font-weight:600;font-size:13px}
+  .spectrum{display:flex;gap:4px;width:88px}
+  .spectrum i{height:5px;flex:1;border-radius:99px}
+  .snap-body{padding:24px}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .vendor-name{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.02em;margin-top:2px}
+  .snap-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:6px;align-items:center}
+  .snap-meta .dot{width:3px;height:3px;border-radius:99px;background:var(--line-strong)}
+
+  /* the verdict moment — the loudest element, with a one-time settle */
+  .verdict-block{margin-top:20px;border:1px solid rgba(132,100,18,.3);background:var(--cond-bg);
+    border-radius:12px;padding:18px 20px;animation:settle .5s var(--ease) .15s both}
+  @keyframes settle{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+  .verdict-line{display:flex;align-items:center;gap:10px;color:var(--cond-ink)}
+  .verdict-line svg{width:26px;height:26px}
+  .verdict-name{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.01em}
+  .verdict-statement{margin-top:8px;font-size:15px;line-height:1.55;color:var(--ink2);max-width:62ch}
+
+  .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+  @media (max-width:680px){.snap-grid{grid-template-columns:1fr}.wrap{padding:16px 14px 60px}}
+  .snap-col h4{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .dim-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .dim-row:last-child{border-bottom:0}
+  .dim-ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center}
+  .dim-ic svg{width:14px;height:14px}
+  .dim-state{margin-left:auto;font-size:13px;font-weight:600}
+  .ask-item{display:flex;gap:10px;padding:7px 0;font-size:14px;color:var(--ink2)}
+  .ask-n{width:18px;height:18px;flex:none;margin-top:2px;border-radius:99px;border:1px solid var(--line-strong);
+    display:grid;place-items:center;font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .snap-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+    border-top:1px solid var(--line);background:var(--subtle);padding:14px 24px}
+  .snap-foot .note{font-size:12px;color:var(--muted);max-width:52ch}
+
+  /* ─── Tabs ─── */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:30px 0 20px}
+  .tab{padding:10px 14px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;
+    transition:color .15s var(--ease)}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--brand);border-color:var(--brand)}
+
+  /* ─── Evidence, grouped by dimension ─── */
+  .dim-section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);margin-bottom:14px;overflow:hidden}
+  .dim-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .dim-head h3{font-family:var(--display);font-weight:700;font-size:15px;flex:1}
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+  .p-clear{background:var(--clear-bg);color:var(--clear-ink)} .p-cond{background:var(--cond-bg);color:var(--cond-ink)}
+  .p-neutral{background:var(--subtle);color:var(--ink2)}
+  .ev{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .ev:last-child{border-bottom:0}
+  .ev p{font-size:14px;color:var(--ink2);flex:1;line-height:1.55}
+  .ev p b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="#">My Cases</a>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    <span class="mono">AWI-2607-024</span>
+  </nav>
+
+  <!-- ════ THE DECISION SNAPSHOT — the artifact the client paid for ════ -->
+  <article class="snapshot" aria-label="Decision Snapshot">
+    <div class="snap-head">
+      <div class="l">
+        <span class="spectrum" aria-hidden="true">
+          <i style="background:var(--clear-ink)"></i><i style="background:var(--cond-ink)"></i>
+          <i style="background:var(--verify-ink)"></i><i style="background:var(--deny-ink)"></i>
+        </span>
+        <span class="doc-label">Decision Snapshot</span>
+      </div>
+      <span class="mono" style="font-size:12px;color:var(--muted)">AWI-2607-024 · delivered Jul 3, 2026</span>
+    </div>
+
+    <div class="snap-body">
+      <div class="eyebrow">Supplier under review</div>
+      <h1 class="vendor-name">Northgate Wholesale Co.</h1>
+      <div class="snap-meta">
+        <span>northgatewholesale.com</span><span class="dot"></span>
+        <span>Brands reviewed: <b style="color:var(--ink2);font-weight:600">Anker, Soundcore</b></span><span class="dot"></span>
+        <span>Amazon US</span>
+      </div>
+
+      <div class="verdict-block">
+        <div class="verdict-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>
+          <span class="verdict-name">Usable With Conditions</span>
+        </div>
+        <p class="verdict-statement">
+          The source appears credible: the supplier is a real, operating wholesale business with observable
+          distribution activity in these categories. Two items remain open — collect them from your vendor
+          before committing significant capital.
+        </p>
+      </div>
+
+      <div class="snap-grid">
+        <div class="snap-col">
+          <h4>What we looked at</h4>
+          <div class="dim-row">
+            <span class="dim-ic" style="background:var(--brand-tint);color:var(--brand)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 9h5a1 1 0 0 1 1 1v11"/><path d="M8 8h1M8 12h1M8 16h1"/></svg></span>
+            Supplier Identity
+            <span class="dim-state" style="color:var(--clear-ink)">Verified</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-ic" style="background:var(--accent-data-tint);color:var(--accent-data)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8.2 7.3 15.7 11M8.2 16.7 15.7 13"/></svg></span>
+            Supply Chain Relationship
+            <span class="dim-state" style="color:var(--cond-ink)">Inferred</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-ic" style="background:var(--verify-bg);color:var(--verify-ink)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3 8-9V5.5L12 2 4 5.5V13c0 6 8 9 8 9Z"/><path d="M12 8v4M12 15.5h.01"/></svg></span>
+            Brand Risk
+            <span class="dim-state" style="color:var(--clear-ink)">Verified</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-ic" style="background:var(--cond-bg);color:var(--cond-ink)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><circle cx="11" cy="14" r="2.2"/><path d="m14.5 17.5-1.8-1.8"/></svg></span>
+            Documentation Review
+            <span class="dim-state" style="color:var(--clear-ink)">Verified</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-ic" style="background:var(--subtle);color:var(--ink2)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg></span>
+            Sourcing Logic
+            <span class="dim-state" style="color:var(--clear-ink)">Holds together</span>
+          </div>
+        </div>
+
+        <div class="snap-col">
+          <h4>Ask your vendor before you buy</h4>
+          <div class="ask-item"><span class="ask-n">1</span><span>Request the distribution agreement covering Anker for the US market.</span></div>
+          <div class="ask-item"><span class="ask-n">2</span><span>Confirm the invoice ships from the warehouse address on file, not a forwarding address.</span></div>
+          <div class="ask-item"><span class="ask-n">3</span><span>Ask which authorized distributor they source Soundcore through, and since when.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="snap-foot">
+      <p class="note">This report describes observable signals. It does not confirm vendor authorization —
+        the questions above are how you verify before you buy.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><path d="M12 4v11m0 0-4-4m4 4 4-4"/></svg>
+          Download PDF</button>
+        <button class="btn btn-sm btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></svg>
+          Share</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ════ Tabs: full depth below the snapshot ════ -->
+  <div class="tabs" role="tablist">
+    <button class="tab on" role="tab" aria-selected="true">Evidence</button>
+    <button class="tab" role="tab" aria-selected="false">Questions to Ask</button>
+    <button class="tab" role="tab" aria-selected="false">Timeline</button>
+  </div>
+
+  <!-- Evidence grouped by dimension (was: one flat list) -->
+  <section class="dim-section">
+    <div class="dim-head">
+      <span class="dim-ic" style="background:var(--brand-tint);color:var(--brand)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 9h5a1 1 0 0 1 1 1v11"/><path d="M8 8h1M8 12h1M8 16h1"/></svg></span>
+      <h3>Supplier Identity</h3>
+      <span class="pill p-clear">Verified</span>
+    </div>
+    <div class="ev">
+      <p><b>Registered business confirmed.</b> Northgate Wholesale Co. matches an active state registration
+        with a filing history going back 9 years; the registered address matches the warehouse on the invoice.</p>
+      <span class="pill p-clear">Verified</span>
+    </div>
+    <div class="ev">
+      <p><b>Operating wholesale presence.</b> Trade-directory listings, freight activity, and a staffed
+        sales operation are all observable and consistent with an active distributor.</p>
+      <span class="pill p-clear">Verified</span>
+    </div>
+  </section>
+
+  <section class="dim-section">
+    <div class="dim-head">
+      <span class="dim-ic" style="background:var(--accent-data-tint);color:var(--accent-data)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8.2 7.3 15.7 11M8.2 16.7 15.7 13"/></svg></span>
+      <h3>Supply Chain Relationship</h3>
+      <span class="pill p-cond">Inferred</span>
+    </div>
+    <div class="ev">
+      <p><b>No direct brand link observable.</b> We found no public evidence of a direct relationship between
+        Northgate and Anker. Distribution through an intermediary is plausible and common in this category —
+        which is why question 3 asks the vendor to name their upstream distributor.</p>
+      <span class="pill p-cond">Inferred</span>
+    </div>
+    <div class="ev">
+      <p><b>Category history consistent.</b> The supplier has carried consumer-electronics accessories
+        continuously for at least 4 years, consistent with an established (rather than opportunistic) line.</p>
+      <span class="pill p-clear">Verified</span>
+    </div>
+  </section>
+
+  <section class="dim-section">
+    <div class="dim-head">
+      <span class="dim-ic" style="background:var(--verify-bg);color:var(--verify-ink)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3 8-9V5.5L12 2 4 5.5V13c0 6 8 9 8 9Z"/><path d="M12 8v4M12 15.5h.01"/></svg></span>
+      <h3>Brand Risk</h3>
+      <span class="pill p-clear">Verified</span>
+    </div>
+    <div class="ev">
+      <p><b>Enforcement posture: moderate.</b> Anker enforces primarily against counterfeit product rather than
+        against sourcing channels; third-party sellers with credible sourcing operate broadly on the listing set
+        you're targeting. Soundcore follows the same posture.</p>
+      <span class="pill p-clear">Verified</span>
+    </div>
+  </section>
+
+  <p style="font-size:13px;color:var(--muted);margin-top:18px">
+    This report did not assess: none — all five dimensions were completed for this case.
+  </p>
+</div>
+</body>
+</html>

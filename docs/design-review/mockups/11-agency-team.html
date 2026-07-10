@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ Teams — Team & Roles (mockup, net-new)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --accent-data:#2F6F6A; --accent-data-tint:#E9F2F1;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC; --cond-ink:#846412;
+    --radius-card:14px; --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button,input,select):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+  .page{max-width:880px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em}
+  .sub{color:var(--ink2);margin-top:4px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}.btn-sm{padding:6px 12px;font-size:13px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden;margin-top:18px}
+  .card-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .card-h h2{font-family:var(--display);font-weight:700;font-size:15px}
+
+  .seat{display:grid;grid-template-columns:auto 1fr 130px 200px 90px;gap:14px;align-items:center;
+    padding:14px 18px;border-bottom:1px solid var(--line)}
+  .seat:last-child{border-bottom:0}
+  .av{width:38px;height:38px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:14px}
+  .name{font-weight:600;font-size:14px}
+  .email{font-size:12px;color:var(--muted)}
+  .role{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 11px;font-size:12px;font-weight:700}
+  .role-owner{background:var(--brand-ink);color:#fff}
+  .role-analyst{background:var(--subtle);color:var(--ink2)}
+  .assign{display:flex;gap:5px;flex-wrap:wrap}
+  .a-chip{width:24px;height:24px;border-radius:99px;display:grid;place-items:center;font-size:10px;font-weight:700}
+  .a-all{font-size:12px;color:var(--muted);font-weight:600}
+  .manage{font-size:13px;font-weight:600;color:var(--brand)}
+  .manage:hover{color:var(--brand-hover)}
+  .pend{opacity:.65}
+  .pill{display:inline-flex;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;background:var(--cond-bg);color:var(--cond-ink)}
+
+  .perm{display:grid;grid-template-columns:1fr auto auto;gap:10px 24px;padding:16px 18px;font-size:13px}
+  .perm .h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .perm .y{color:var(--clear-ink);font-weight:700;text-align:center}
+  .perm .n{color:var(--muted-decor);text-align:center}
+  .perm .r{color:var(--ink2)}
+
+  .act{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);align-items:flex-start}
+  .act:last-child{border-bottom:0}
+  .act .t{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+  .act .who{width:26px;height:26px;flex:none;border-radius:99px;background:var(--subtle);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--ink2)}
+  @media (max-width:720px){.seat{grid-template-columns:auto 1fr;row-gap:8px}.seat>:nth-child(n+3){grid-column:2}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div>
+      <h1>Team</h1>
+      <p class="sub">3 of 5 seats used · roles keep billing and client management with the owner.</p>
+    </div>
+    <button class="btn btn-md btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+      Invite teammate</button>
+  </div>
+
+  <!-- Seats -->
+  <div class="card">
+    <div class="card-h"><h2>Seats</h2><span style="font-size:12px;color:var(--muted)">Client assignment limits what an analyst can see and submit</span></div>
+
+    <div class="seat">
+      <span class="av" style="background:var(--brand-tint);color:var(--brand-ink)">P</span>
+      <span><span class="name" style="display:block">Priya Raman</span><span class="email">priya@apexcommerce.co</span></span>
+      <span><span class="role role-owner">Owner</span></span>
+      <span class="a-all">All clients</span>
+      <span></span>
+    </div>
+
+    <div class="seat">
+      <span class="av" style="background:var(--accent-data-tint);color:var(--accent-data)">D</span>
+      <span><span class="name" style="display:block">Dana Okafor</span><span class="email">dana@apexcommerce.co</span></span>
+      <span><span class="role role-analyst">Analyst</span></span>
+      <span class="assign" aria-label="Assigned clients: Lakeshore Goods, Voltbay Electronics">
+        <span class="a-chip" style="background:var(--brand-tint);color:var(--brand-ink)" title="Lakeshore Goods">L</span>
+        <span class="a-chip" style="background:var(--cond-bg);color:var(--cond-ink)" title="Voltbay Electronics">V</span>
+      </span>
+      <a class="manage" href="#">Manage</a>
+    </div>
+
+    <div class="seat">
+      <span class="av" style="background:var(--subtle);color:var(--ink2)">J</span>
+      <span><span class="name" style="display:block">Jonah Fields</span><span class="email">jonah@apexcommerce.co</span></span>
+      <span><span class="role role-analyst">Analyst</span></span>
+      <span class="assign" aria-label="Assigned clients: Lakeshore Goods, Fern and Field">
+        <span class="a-chip" style="background:var(--brand-tint);color:var(--brand-ink)" title="Lakeshore Goods">L</span>
+        <span class="a-chip" style="background:var(--accent-data-tint);color:var(--accent-data)" title="Fern & Field">F</span>
+      </span>
+      <a class="manage" href="#">Manage</a>
+    </div>
+
+    <div class="seat pend">
+      <span class="av" style="background:var(--subtle);color:var(--muted)">?</span>
+      <span><span class="name" style="display:block">sam@apexcommerce.co</span><span class="email">Invited Jul 3 · not yet accepted</span></span>
+      <span><span class="pill">Invite pending</span></span>
+      <span></span>
+      <a class="manage" href="#">Resend</a>
+    </div>
+  </div>
+
+  <!-- Permission model: two roles, no RBAC theater -->
+  <div class="card">
+    <div class="card-h"><h2>What each role can do</h2></div>
+    <div class="perm">
+      <span class="h">Permission</span><span class="h">Owner</span><span class="h">Analyst</span>
+      <span class="r">Submit cases &amp; read reports (assigned clients)</span><span class="y">✓</span><span class="y">✓</span>
+      <span class="r">Export &amp; hand off reports</span><span class="y">✓</span><span class="y">✓</span>
+      <span class="r">Add / edit clients</span><span class="y">✓</span><span class="n">—</span>
+      <span class="r">See all clients &amp; the usage ledger</span><span class="y">✓</span><span class="n">—</span>
+      <span class="r">Billing, credits, plan</span><span class="y">✓</span><span class="n">—</span>
+      <span class="r">Invite &amp; manage the team</span><span class="y">✓</span><span class="n">—</span>
+    </div>
+  </div>
+
+  <!-- Activity log -->
+  <div class="card">
+    <div class="card-h"><h2>Activity</h2><a href="#" style="font-size:13px;font-weight:600;color:var(--brand)">Export CSV</a></div>
+    <div class="act"><span class="who">D</span><span><b>Dana</b> submitted <span class="mono" style="font-weight:600">AWI-2607-033</span> · Harbor Lane Distribution, for Lakeshore Goods</span><span class="t">Today 9:14</span></div>
+    <div class="act"><span class="who">P</span><span><b>Priya</b> downloaded the Kestrel Supply handoff PDF for Voltbay Electronics</span><span class="t">Today 8:02</span></div>
+    <div class="act"><span class="who">P</span><span><b>Priya</b> invited <b>sam@apexcommerce.co</b> as Analyst</span><span class="t">Jul 3</span></div>
+    <div class="act"><span class="who">J</span><span><b>Jonah</b> submitted <span class="mono" style="font-weight:600">AWI-2607-032</span> · Summit Trade Partners, for Fern &amp; Field</span><span class="t">Jul 3</span></div>
+    <div class="act"><span class="who">P</span><span><b>Priya</b> assigned <b>Voltbay Electronics</b> to Dana</span><span class="t">Jun 30</span></div>
+  </div>
+</div>
+</body>
+</html>

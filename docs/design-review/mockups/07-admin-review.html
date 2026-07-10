@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Admin Review + Publish Confirm (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC; --cond-ink:#846412;
+    --verify-bg:#FAEEDF; --verify-ink:#9A551F;
+    --deny-bg:#F8E9E6; --deny-ink:#9A332C;
+    --danger:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button,input):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .wrap{max-width:880px;margin:0 auto;padding:24px 24px 140px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}.btn-sm{padding:6px 12px;font-size:13px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+  .btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{opacity:.92}
+
+  .crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:14px}
+
+  /* ── Sticky decision bar: verdict + actions always in view ── */
+  .decision-bar{position:sticky;top:0;z-index:30;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius-card);box-shadow:0 6px 24px -12px rgba(26,25,23,.18);
+    display:flex;align-items:center;gap:14px;padding:12px 18px;margin-bottom:20px}
+  .db-verdict{display:flex;align-items:center;gap:8px;background:var(--cond-bg);color:var(--cond-ink);
+    border-radius:99px;padding:6px 14px;font-weight:700;font-size:14px}
+  .db-meta{font-size:12px;color:var(--muted)}
+  .db-case{font-family:var(--mono);font-size:12px;color:var(--ink2)}
+
+  .section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:20px;margin-bottom:14px}
+  .section .eyebrow{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .section h3{font-family:var(--display);font-weight:700;font-size:15px;margin-top:2px}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+  .kv .k{font-size:12px;font-weight:600;color:var(--muted)}
+  .kv .v{font-size:14px;color:var(--ink2);margin-top:2px}
+  .inset{border:1px solid var(--line);background:var(--base);border-radius:10px;padding:12px 14px;margin-top:12px}
+  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 9px;font-size:12px;font-weight:600}
+  .p-clear{background:var(--clear-bg);color:var(--clear-ink)} .p-cond{background:var(--cond-bg);color:var(--cond-ink)}
+
+  /* ── Publish confirm modal (shown open) ── */
+  .backdrop{position:fixed;inset:0;background:rgba(26,25,23,.45);z-index:40;display:grid;place-items:center;padding:20px}
+  .modal{background:var(--surface);border-radius:var(--radius-card);max-width:480px;width:100%;
+    box-shadow:0 24px 80px -20px rgba(26,25,23,.4);animation:pop .2s var(--ease) both}
+  @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+  .modal-h{padding:20px 24px 0}
+  .modal-h h2{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .modal-h p{font-size:14px;color:var(--ink2);margin-top:6px}
+  .identity{margin:16px 24px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .id-row{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  .id-row:last-child{border-bottom:0}
+  .id-row .k{color:var(--muted);font-size:13px}
+  .id-row .v{font-weight:600;text-align:right}
+  .consequence{margin:14px 24px 0;display:flex;gap:10px;background:var(--verify-bg);border:1px solid rgba(154,85,31,.3);
+    border-radius:10px;padding:12px 14px;font-size:13px;color:var(--verify-ink)}
+  .confirm-check{margin:16px 24px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink2)}
+  .confirm-check input{width:16px;height:16px;margin-top:2px;accent-color:var(--brand)}
+  .modal-f{display:flex;justify-content:flex-end;gap:10px;padding:20px 24px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="crumb"><a href="#">Quality Review</a> <span>/</span> <span class="mono">AWI-2607-014</span></nav>
+
+  <!-- Sticky decision bar: the operator never scrolls to find publish -->
+  <div class="decision-bar">
+    <span class="db-verdict">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>
+      Usable With Conditions
+    </span>
+    <div>
+      <div style="font-weight:600;font-size:14px">Northgate Wholesale Co. <span class="db-case">AWI-2607-014</span></div>
+      <div class="db-meta">Marcus Chen · Scale · score 2.64/4 · confidence 11/15 (High)</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-sm btn-secondary">Request investigation</button>
+      <button class="btn btn-sm btn-secondary">Override verdict</button>
+      <button class="btn btn-sm btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        Publish report</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="eyebrow">Module 9 · Decision Snapshot</div>
+    <h3>Executive Intelligence Summary</h3>
+    <p style="font-size:16px;font-weight:600;margin-top:10px;line-height:1.45">
+      Real distributor, plausible but unverified brand chain — buy small until the upstream is named.</p>
+    <div class="kv">
+      <div><div class="k">Leading Interpretation</div><div class="v">Northgate is an operating regional distributor sourcing Anker through an intermediary; the pattern matches legitimate second-tier distribution.</div></div>
+      <div><div class="k">The Real Risk</div><div class="v">If the intermediary is outside Anker's channel, an inauthentic complaint would land on the client despite a genuine invoice.</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">Layer 4 · Deterministic Judgment</div>
+    <h3>Verdict</h3>
+    <div class="inset" style="background:var(--cond-bg);border-color:rgba(132,100,18,.3)">
+      <div style="font-size:17px;font-weight:700;color:var(--cond-ink)">Usable With Conditions</div>
+      <div style="display:flex;gap:18px;font-size:13px;color:var(--cond-ink);margin-top:4px">
+        <span>Weighted score <b>2.64</b> / 4</span><span>Confidence <b>11</b> / 15</span><span>Decision confidence <b>High</b></span>
+      </div>
+    </div>
+    <div class="inset">
+      <div style="font-size:12px;font-weight:600;color:var(--muted)">Why this confidence</div>
+      <p style="font-size:13px;color:var(--ink2);margin-top:4px">Decision confidence is High — the weighted score 2.64 sits 0.44 from the Source Clear threshold (3.2); well clear of the boundary — stable.</p>
+    </div>
+    <div class="inset">
+      <div style="font-size:12px;font-weight:600;color:var(--muted)">Why not the other verdicts?</div>
+      <p style="font-size:13px;color:var(--ink2);margin-top:4px"><b>Source Clear:</b> supply-chain link is inferred, not verified — Clear requires a verified or strongly corroborated chain.<br>
+      <b>Verify Before Purchase:</b> no missing load-bearing evidence; open items are collectible from the vendor.<br>
+      <b>Do Not Rely:</b> no contradictions or negative signals surfaced.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">Layer 1 · Evidence</div>
+    <h3>Track Intelligence</h3>
+    <div class="inset">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:600">Supplier Identity</span>
+        <span style="display:flex;gap:8px;align-items:center"><span style="font-size:12px;color:var(--muted)">13/15 · strong</span><span class="pill p-clear">Pass</span></span>
+      </div>
+      <p style="font-size:13px;color:var(--ink2);margin-top:6px">[verified] Active state registration, 9-year filing history, address matches invoice.<br>[verified] Staffed sales operation and freight activity consistent with an operating distributor.</p>
+    </div>
+    <div class="inset">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:600">Supply Chain Relationship</span>
+        <span style="display:flex;gap:8px;align-items:center"><span style="font-size:12px;color:var(--muted)">8/15 · moderate</span><span class="pill p-cond">Infer</span></span>
+      </div>
+      <p style="font-size:13px;color:var(--ink2);margin-top:6px">[inferred] No direct Anker link observable; second-tier distribution plausible. Unknown: upstream distributor identity.</p>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">… Brand Risk, Documentation, Sourcing Logic, Cross-Track Intelligence, Coverage &amp; Gaps, and the Engine Trace follow — structure unchanged from the current build.</p>
+  </section>
+</div>
+
+<!-- ════ Publish confirmation — replaces window.confirm() ════ -->
+<div class="backdrop" role="dialog" aria-modal="true" aria-labelledby="pub-title">
+  <div class="modal">
+    <div class="modal-h">
+      <h2 id="pub-title">Publish this report?</h2>
+      <p>Publishing delivers the report to the client immediately. This cannot be undone.</p>
+    </div>
+    <div class="identity">
+      <div class="id-row"><span class="k">Case</span><span class="v mono">AWI-2607-014</span></div>
+      <div class="id-row"><span class="k">Supplier</span><span class="v">Northgate Wholesale Co.</span></div>
+      <div class="id-row"><span class="k">Client</span><span class="v">Marcus Chen · Sellwell LLC</span></div>
+      <div class="id-row"><span class="k">Verdict being delivered</span>
+        <span class="v" style="color:var(--cond-ink)">Usable With Conditions</span></div>
+    </div>
+    <div class="consequence">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M12 9v4M12 16.5h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <span>Check the case identity above. A wrong-case publish delivers another client's report permanently.</span>
+    </div>
+    <label class="confirm-check">
+      <input type="checkbox">
+      <span>I've confirmed this is the right case, client, and verdict.</span>
+    </label>
+    <div class="modal-f">
+      <button class="btn btn-md btn-secondary">Cancel</button>
+      <button class="btn btn-md btn-primary" disabled style="opacity:.5;cursor:not-allowed">Publish report</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

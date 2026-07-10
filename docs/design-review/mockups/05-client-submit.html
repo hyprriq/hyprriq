@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Submit a Case, Step 2 (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --deny-ink:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(button,input,textarea):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  svg{flex:none}
+  .page{max-width:640px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em}
+  .sub{color:var(--ink2);margin-top:4px}
+
+  .stepper{display:flex;align-items:center;gap:8px;margin:24px 0}
+  .step{display:flex;align-items:center;gap:8px}
+  .step-n{width:28px;height:28px;flex:none;border-radius:99px;display:grid;place-items:center;font-size:13px;font-weight:700;
+    background:var(--subtle);color:var(--muted);transition:background .2s var(--ease)}
+  .step.done .step-n,.step.on .step-n{background:var(--brand);color:#fff}
+  .step-label{font-size:13px;font-weight:600;color:var(--muted)}
+  .step.on .step-label,.step.done .step-label{color:var(--ink)}
+  .step-line{height:1px;flex:1;background:var(--line)}
+  .step-line.done{background:var(--brand)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:22px}
+  .lbl{font-size:14px;font-weight:500;display:block;margin-bottom:5px}
+  .opt{color:var(--muted);font-weight:400}
+  .req{color:var(--deny-ink)}
+  .hint{font-size:13px;color:var(--ink2);margin-top:6px}
+  .field{margin-bottom:20px}
+  input[type=text],textarea{width:100%;background:var(--base);border:1px solid var(--line);border-radius:var(--radius-ctl);
+    padding:10px 12px;font:inherit;color:var(--ink);outline:none;transition:border-color .15s var(--ease)}
+  input:focus,textarea:focus{border-color:var(--brand)}
+  input::placeholder,textarea::placeholder{color:var(--muted)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;background:var(--base);border:1px solid var(--line);border-radius:var(--radius-ctl);padding:8px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--brand-tint);color:var(--brand-ink);
+    border-radius:8px;padding:4px 9px;font-size:13px;font-weight:500}
+  .chip button{color:rgba(15,42,78,.55);display:grid;place-items:center}
+  .chip button:hover{color:var(--brand-ink)}
+  .chips input{border:0;background:none;flex:1;min-width:120px;padding:4px;color:var(--ink)}
+  .chips input:focus{outline:none}
+
+  .upload{border:1.5px dashed var(--line-strong);background:var(--base);border-radius:var(--radius-ctl);
+    padding:22px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+    transition:border-color .15s var(--ease),background .15s var(--ease)}
+  .upload:hover{border-color:var(--brand);background:var(--brand-tint)}
+  .upload-ic{width:38px;height:38px;border-radius:99px;background:var(--brand-tint);color:var(--brand);display:grid;place-items:center}
+  .upload b{font-size:14px}
+  .upload span{font-size:12px;color:var(--muted)}
+  .browse{color:var(--brand);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+  .credit-panel{border:1px solid rgba(27,75,138,.3);background:var(--brand-tint);border-radius:var(--radius-ctl);padding:14px 16px}
+  .nav-row{display:flex;justify-content:space-between;margin-top:22px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;padding:9px 16px;font-size:14px;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>New Research Request</h1>
+  <p class="sub">Tell us about the supplier and the brands you're evaluating.</p>
+
+  <div class="stepper" aria-label="Progress: step 2 of 3">
+    <span class="step done"><span class="step-n">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+    </span><span class="step-label">Supplier</span></span>
+    <span class="step-line done"></span>
+    <span class="step on"><span class="step-n">2</span><span class="step-label">Brands &amp; Documents</span></span>
+    <span class="step-line"></span>
+    <span class="step"><span class="step-n">3</span><span class="step-label">Review &amp; Confirm</span></span>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <span class="lbl">Brand names <span class="req">*</span></span>
+      <div class="chips">
+        <span class="chip">Anker <button aria-label="Remove Anker">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+        <span class="chip">Soundcore <button aria-label="Remove Soundcore">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+        <input type="text" placeholder="Add brand…" aria-label="Add brand">
+      </div>
+      <p class="hint">2 of 5 brands added — one credit covers up to 5 brands from this supplier.
+        We research each brand's relationship to the supplier separately.</p>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Supplier invoice or LOA <span class="opt">(optional, strongly recommended)</span></span>
+      <div class="upload" role="button" tabindex="0" aria-label="Upload invoice or LOA">
+        <span class="upload-ic">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><path d="M12 15V4m0 0-4 4m4-4 4 4"/></svg>
+        </span>
+        <b>Drop your document here, or <span class="browse">browse</span></b>
+        <span>PDF, JPG, or PNG · up to 10MB · reviewed against 14 documentation standards</span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0">
+      <span class="lbl">Additional notes <span class="opt">(optional)</span></span>
+      <textarea rows="3" placeholder="Anything you already know about this supplier or the brand relationship…"></textarea>
+      <p class="hint">If you skip the document, notes become required — they'd be the only evidence we can work from.</p>
+    </div>
+  </div>
+
+  <div class="credit-panel" style="margin-top:16px">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-ink)">Research cost</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
+      <span style="color:var(--ink2)">1 supplier · 2 brands → 1 credit</span>
+      <span style="font-family:var(--display);font-weight:800;font-size:18px;color:var(--brand-ink)">1 credit</span>
+    </div>
+    <div style="font-size:13px;color:var(--ink2);margin-top:2px">6 credits remaining after submission · expected delivery <b>Mon, Jul 13</b> (3 business days on Scale)</div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn btn-secondary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m6 6-6-6 6-6"/></svg>
+      Back</button>
+    <button class="btn btn-primary">Review &amp; confirm
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+  </div>
+</div>
+</body>
+</html>

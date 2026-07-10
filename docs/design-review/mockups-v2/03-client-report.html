@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — The Dossier direction · Delivered Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Besley:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --chrome:#16130E; --chrome-2:#242019; --chrome-text:#F4F1EA; --chrome-dim:#A69F8F;
+    --desk:#EDEAE2; --paper:#FFFFFF;
+    --ink:#1B1812; --ink2:#544F45; --muted:#6E695E;
+    --line:#DBD6CA; --line-strong:#C4BEAF;
+    --petrol:#0F5E66; --petrol-hover:#147A84; --petrol-tint:#E1EFEF; --petrol-bright:#58B8BD;
+    --brass:#B08D3E; --brass-dim:#8C6F2E;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC;  --cond-ink:#846412;
+    --verify-bg:#FAEEDF;--verify-ink:#9A551F;
+    --deny-bg:#F8E9E6;  --deny-ink:#9A332C;
+    --r-doc:6px; --r-ctl:8px;
+    --doc-shadow:0 1px 0 rgba(22,19,14,.06),0 2px 6px rgba(22,19,14,.07),0 24px 48px -20px rgba(22,19,14,.28);
+    --ease:cubic-bezier(.22,1,.36,1);
+    --serif:"Besley",Georgia,serif; --sans:"Public Sans",system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--desk);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button):focus-visible{outline:2px solid var(--petrol);outline-offset:3px;border-radius:3px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+  h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
+
+  /* dark portal topbar (Dossier chrome) */
+  .topbar{position:sticky;top:0;z-index:40;background:var(--chrome);color:var(--chrome-text);
+    display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 26px;
+    border-bottom:1px solid rgba(244,241,234,.12)}
+  .wordmark{font-family:var(--serif);font-weight:700;font-size:18px}
+  .wordmark b{color:var(--petrol-bright)}
+  .tb-nav{display:flex;gap:24px;font-size:14px;color:var(--chrome-dim);font-weight:500}
+  .tb-nav a:hover{color:var(--chrome-text)}
+  .tb-nav a.on{color:var(--chrome-text);position:relative}
+  .tb-nav a.on::after{content:"";position:absolute;inset:auto 0 -21px 0;height:2px;background:var(--brass)}
+  .avatar{width:32px;height:32px;border-radius:99px;background:var(--petrol);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12.5px}
+  @media (max-width:760px){.tb-nav{display:none}}
+
+  .wrap{max-width:900px;margin:0 auto;padding:30px 22px 90px}
+  .crumb{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-bottom:18px}
+  .crumb a:hover{color:var(--ink)}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--r-ctl);font-weight:600;
+    transition:background .18s var(--ease),transform .12s var(--ease),border-color .18s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}.btn-sm{padding:7px 13px;font-size:13px}
+  .btn-petrol{background:var(--petrol);color:#fff}.btn-petrol:hover{background:var(--petrol-hover)}
+  .btn-paper{background:var(--paper);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-paper:hover{border-color:var(--ink2)}
+
+  /* ═══ THE DOSSIER DOCUMENT ═══ */
+  .doc{background:var(--paper);border-radius:var(--r-doc);box-shadow:var(--doc-shadow);position:relative}
+  .doc::before{content:"";position:absolute;top:-13px;left:28px;width:132px;height:13px;background:var(--paper);
+    border-radius:6px 6px 0 0;opacity:.94}
+  /* letterhead */
+  .letterhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    padding:26px 34px 18px;border-bottom:2.5px solid var(--ink)}
+  .lh-firm{font-family:var(--serif);font-weight:800;font-size:17px;letter-spacing:.01em}
+  .lh-firm b{color:var(--petrol)}
+  .lh-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .lh-meta{text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.8}
+  .lh-meta b{color:var(--ink);font-weight:600}
+
+  .doc-body{padding:30px 34px}
+  .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .vendor{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.15;margin-top:5px}
+  .meta-line{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--ink2);margin-top:8px;align-items:center}
+  .meta-line .sep{width:3px;height:3px;border-radius:99px;background:var(--line-strong)}
+
+  /* verdict stamp block */
+  .verdict-row{display:flex;gap:26px;align-items:flex-start;margin-top:26px;flex-wrap:wrap}
+  .stamp{flex:none;padding:13px 22px;border:3px solid var(--cond-ink);border-radius:5px;
+    box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 4px var(--cond-ink);
+    font-family:var(--serif);font-weight:800;font-size:19px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--cond-ink);transform:rotate(-2deg);
+    opacity:0;animation:stamp-in .5s cubic-bezier(.34,1.35,.5,1) .35s forwards}
+  @keyframes stamp-in{from{opacity:0;transform:rotate(-2deg) scale(1.35)}to{opacity:1;transform:rotate(-2deg) scale(1)}}
+  .verdict-copy{flex:1;min-width:260px}
+  .verdict-copy p{font-size:15.5px;line-height:1.65;color:var(--ink2);max-width:58ch}
+  .verdict-copy p b{color:var(--ink)}
+
+  /* dimensions ledger + ask list */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:32px}
+  @media (max-width:720px){.two-col{grid-template-columns:1fr}}
+  .ledger-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid var(--ink);padding-bottom:7px}
+  .led-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .led-row:last-child{border-bottom:0}
+  .led-row .state{margin-left:auto;font-weight:600;font-size:13px}
+  .dot{width:8px;height:8px;border-radius:2px;flex:none}
+  .ask-row{display:flex;gap:12px;padding:9px 0;font-size:14px;color:var(--ink2);border-bottom:1px solid var(--line)}
+  .ask-row:last-child{border-bottom:0}
+  .ask-row .n{font-family:var(--mono);font-size:11px;color:var(--petrol);font-weight:600;flex:none;margin-top:2px}
+
+  /* doc footer */
+  .doc-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+    border-top:1px solid var(--line);background:linear-gradient(0deg,rgba(176,141,62,.05),rgba(176,141,62,.05)),var(--paper);
+    border-radius:0 0 var(--r-doc) var(--r-doc);padding:16px 34px}
+  .doc-foot .note{font-size:12.5px;color:var(--muted);max-width:54ch;font-style:italic}
+
+  /* ═══ Evidence: dimension dossiers below ═══ */
+  .below{margin-top:40px}
+  .below-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .below-h h2{font-size:21px}
+  .dim{background:var(--paper);border-radius:var(--r-doc);box-shadow:0 1px 3px rgba(22,19,14,.08);margin-bottom:14px;overflow:hidden}
+  .dim-head{display:flex;align-items:center;gap:13px;padding:15px 22px;border-bottom:1px solid var(--line)}
+  .dim-head h3{font-size:16.5px;font-weight:700;flex:1}
+  .dim-ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center}
+  .badge{display:inline-flex;align-items:center;gap:6px;border-radius:4px;padding:4px 10px;font-size:12px;font-weight:600}
+  .ev{display:flex;gap:14px;padding:15px 22px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .ev:last-child{border-bottom:0}
+  .ev p{font-size:14px;color:var(--ink2);flex:1;line-height:1.65}
+  .ev p b{color:var(--ink);font-weight:600}
+  .cert{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:4px;padding:4px 8px;white-space:nowrap}
+
+  @media (prefers-reduced-motion:reduce){
+    .stamp{animation:none;opacity:1;transform:rotate(-2deg)}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:34px">
+    <a class="wordmark" href="#">Hyprr<b>IQ</b></a>
+    <nav class="tb-nav" aria-label="Portal">
+      <a href="#">Overview</a>
+      <a href="#" class="on">Cases</a>
+      <a href="#">New Case</a>
+      <a href="#">Billing</a>
+      <a href="#">Help</a>
+    </nav>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span style="font-family:var(--mono);font-size:12px;color:var(--chrome-dim)">7 credits</span>
+    <span class="avatar">M</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="#">Cases</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    <span class="mono">AWI-2607-024</span>
+  </nav>
+
+  <!-- ═══════ THE DELIVERED DOSSIER ═══════ -->
+  <article class="doc" aria-label="Decision Snapshot">
+    <div class="letterhead">
+      <div>
+        <div class="lh-firm">Hyprr<b>IQ</b> · Source Intelligence</div>
+        <div class="lh-sub">Decision Snapshot — prepared for Sellwell LLC</div>
+      </div>
+      <div class="lh-meta">
+        CASE <b>AWI-2607-024</b><br>
+        DELIVERED <b>JUL 3, 2026</b>
+      </div>
+    </div>
+
+    <div class="doc-body">
+      <div class="k">Supplier under review</div>
+      <h1 class="vendor">Northgate Wholesale Co.</h1>
+      <div class="meta-line">
+        <span>northgatewholesale.com</span><span class="sep"></span>
+        <span>Brands: <b style="font-weight:600;color:var(--ink)">Anker, Soundcore</b></span><span class="sep"></span>
+        <span>Amazon US</span>
+      </div>
+
+      <div class="verdict-row">
+        <span class="stamp">Usable · With · Conditions</span>
+        <div class="verdict-copy">
+          <p><b>The source appears credible.</b> The supplier is a real, operating wholesale business with
+            observable distribution activity in these categories. Two items remain open — collect them
+            from your vendor before committing significant capital.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="ledger-h">Findings across five dimensions</div>
+          <div class="led-row"><span class="dot" style="background:var(--petrol)"></span>Supplier Identity
+            <span class="state" style="color:var(--clear-ink)">Verified</span></div>
+          <div class="led-row"><span class="dot" style="background:var(--brass)"></span>Supply Chain Relationship
+            <span class="state" style="color:var(--cond-ink)">Inferred</span></div>
+          <div class="led-row"><span class="dot" style="background:var(--verify-ink)"></span>Brand Risk
+            <span class="state" style="color:var(--clear-ink)">Verified</span></div>
+          <div class="led-row"><span class="dot" style="background:var(--cond-ink)"></span>Documentation Review
+            <span class="state" style="color:var(--clear-ink)">Verified</span></div>
+          <div class="led-row"><span class="dot" style="background:var(--ink2)"></span>Sourcing Logic
+            <span class="state" style="color:var(--clear-ink)">Holds together</span></div>
+        </div>
+        <div>
+          <div class="ledger-h">Ask your vendor before you buy</div>
+          <div class="ask-row"><span class="n">01</span><span>Request the distribution agreement covering Anker for the US market.</span></div>
+          <div class="ask-row"><span class="n">02</span><span>Confirm the invoice ships from the warehouse address on file, not a forwarding address.</span></div>
+          <div class="ask-row"><span class="n">03</span><span>Ask which authorized distributor they source Soundcore through, and since when.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-foot">
+      <p class="note">This report describes observable signals. It does not confirm vendor authorization —
+        the questions above are how you verify before you buy.</p>
+      <div style="display:flex;gap:9px">
+        <button class="btn btn-sm btn-paper">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><path d="M12 4v11m0 0-4-4m4 4 4-4"/></svg>
+          Download PDF</button>
+        <button class="btn btn-sm btn-paper">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></svg>
+          Share</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════ Full evidence, dimension by dimension ═══════ -->
+  <div class="below">
+    <div class="below-h">
+      <h2>The evidence behind the stamp</h2>
+      <span style="font-size:13px;color:var(--muted)">Every finding labeled: Verified · Inferred · Unconfirmed</span>
+    </div>
+
+    <section class="dim">
+      <div class="dim-head">
+        <span class="dim-ic" style="background:var(--petrol-tint);color:var(--petrol)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 9h5a1 1 0 0 1 1 1v11"/><path d="M8 8h1M8 12h1M8 16h1"/></svg></span>
+        <h3>Supplier Identity</h3>
+        <span class="badge" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+      <div class="ev">
+        <p><b>Registered business confirmed.</b> Northgate Wholesale Co. matches an active state registration
+          with a filing history going back 9 years; the registered address matches the warehouse on the invoice.</p>
+        <span class="cert" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+      <div class="ev">
+        <p><b>Operating wholesale presence.</b> Trade-directory listings, freight activity, and a staffed
+          sales operation are all observable and consistent with an active distributor.</p>
+        <span class="cert" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+    </section>
+
+    <section class="dim">
+      <div class="dim-head">
+        <span class="dim-ic" style="background:rgba(176,141,62,.14);color:var(--brass-dim)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8.2 7.3 15.7 11M8.2 16.7 15.7 13"/></svg></span>
+        <h3>Supply Chain Relationship</h3>
+        <span class="badge" style="background:var(--cond-bg);color:var(--cond-ink)">Inferred</span>
+      </div>
+      <div class="ev">
+        <p><b>No direct brand link observable.</b> We found no public evidence of a direct relationship between
+          Northgate and Anker. Distribution through an intermediary is plausible and common in this category —
+          which is why question 03 asks the vendor to name their upstream distributor.</p>
+        <span class="cert" style="background:var(--cond-bg);color:var(--cond-ink)">Inferred</span>
+      </div>
+      <div class="ev">
+        <p><b>Category history consistent.</b> The supplier has carried consumer-electronics accessories
+          continuously for at least 4 years — an established line, not an opportunistic one.</p>
+        <span class="cert" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+    </section>
+
+    <section class="dim">
+      <div class="dim-head">
+        <span class="dim-ic" style="background:var(--verify-bg);color:var(--verify-ink)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3 8-9V5.5L12 2 4 5.5V13c0 6 8 9 8 9Z"/><path d="M12 8v4M12 15.5h.01"/></svg></span>
+        <h3>Brand Risk</h3>
+        <span class="badge" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+      <div class="ev">
+        <p><b>Enforcement posture: moderate.</b> Anker enforces primarily against counterfeit product rather than
+          against sourcing channels; third-party sellers with credible sourcing operate broadly on the listing set
+          you're targeting. Soundcore follows the same posture.</p>
+        <span class="cert" style="background:var(--clear-bg);color:var(--clear-ink)">Verified</span>
+      </div>
+    </section>
+
+    <p style="font-size:13px;color:var(--muted);margin-top:18px;font-style:italic">
+      All five dimensions were completed for this case. Nothing was excluded from assessment.
+    </p>
+  </div>
+</div>
+</body>
+</html>

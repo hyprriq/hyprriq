@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — The Dossier direction · Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Besley:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --chrome:#16130E; --chrome-2:#242019; --chrome-text:#F4F1EA; --chrome-dim:#A69F8F;
+    --desk:#EDEAE2; --paper:#FFFFFF;
+    --ink:#1B1812; --ink2:#544F45; --muted:#6E695E;
+    --line:#DBD6CA; --line-strong:#C4BEAF;
+    --petrol:#0F5E66; --petrol-hover:#147A84; --petrol-bright:#58B8BD;
+    --brass:#B08D3E;
+    --clear-b:#3E9C68; --cond-b:#C9A22E; --verify-b:#D07B36; --deny-b:#C25048;
+    --r-doc:6px; --r-ctl:8px;
+    --doc-shadow:0 2px 6px rgba(22,19,14,.08),0 28px 56px -22px rgba(22,19,14,.35);
+    --ease:cubic-bezier(.22,1,.36,1);
+    --serif:"Besley",Georgia,serif; --sans:"Public Sans",system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    background:var(--chrome);min-height:100vh;display:grid;place-items:center;padding:32px 18px;position:relative;overflow-x:hidden}
+  /* the desk under lamplight */
+  body::before{content:"";position:fixed;inset:0;
+    background:radial-gradient(ellipse 90% 70% at 50% 8%,rgba(176,141,62,.10),transparent 55%)}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0}
+  :where(a,button,input):focus-visible{outline:2px solid var(--petrol-bright);outline-offset:3px;border-radius:3px}
+
+  .scene{position:relative;width:100%;max-width:900px;display:grid;grid-template-columns:1fr 1fr;gap:0;
+    align-items:stretch}
+  @media (max-width:800px){.scene{grid-template-columns:1fr;max-width:420px}}
+
+  /* left — the firm's plate */
+  .plate{color:var(--chrome-text);padding:56px 52px;display:flex;flex-direction:column;justify-content:center;position:relative}
+  @media (max-width:800px){.plate{padding:8px 6px 34px;text-align:center;align-items:center}}
+  .wordmark{font-family:var(--serif);font-weight:700;font-size:26px;letter-spacing:-.01em}
+  .wordmark b{color:var(--petrol-bright)}
+  .plate .sub{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--chrome-dim);margin-top:6px}
+  .plate .rule{width:52px;height:2px;background:var(--brass);margin:28px 0}
+  @media (max-width:800px){.plate .rule{margin:22px auto}}
+  .plate .tag{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.35}
+  .plate .tag em{font-style:italic;color:var(--petrol-bright)}
+  .verdict-list{margin-top:34px;display:flex;flex-direction:column;gap:13px;list-style:none}
+  @media (max-width:800px){.verdict-list{display:none}}
+  .verdict-list li{display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(8px);
+    animation:rise .5s var(--ease) forwards}
+  .verdict-list li:nth-child(1){animation-delay:.15s}.verdict-list li:nth-child(2){animation-delay:.25s}
+  .verdict-list li:nth-child(3){animation-delay:.35s}.verdict-list li:nth-child(4){animation-delay:.45s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .vdot{width:9px;height:9px;border-radius:2px;flex:none}
+  .vname{font-size:14px;font-weight:500}
+  .vdesc{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(244,241,234,.45)}
+  .plate .foot{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:rgba(244,241,234,.35);margin-top:44px}
+
+  /* right — the sign-in card as a document */
+  .doc{position:relative;background:var(--paper);border-radius:var(--r-doc);box-shadow:var(--doc-shadow);
+    padding:44px 44px 38px;display:flex;flex-direction:column;justify-content:center}
+  .doc::before{content:"";position:absolute;top:-12px;left:26px;width:110px;height:12px;background:var(--paper);
+    border-radius:6px 6px 0 0;opacity:.94}
+  @media (max-width:800px){.doc{padding:34px 26px 30px}}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    display:flex;align-items:center;gap:8px}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--brass)}
+  h1{font-family:var(--serif);font-weight:700;font-size:29px;letter-spacing:-.01em;margin-top:12px}
+  .sub2{color:var(--ink2);margin-top:6px;font-size:15px}
+  form{margin-top:28px;display:flex;flex-direction:column;gap:17px}
+  label span{display:block;font-size:13.5px;font-weight:600;margin-bottom:6px}
+  input{width:100%;background:var(--desk);border:1px solid var(--line);border-radius:var(--r-ctl);
+    padding:12px 14px;font:inherit;color:var(--ink);outline:none;transition:border-color .15s var(--ease),background .15s var(--ease)}
+  input:focus{border-color:var(--petrol);background:var(--paper)}
+  input::placeholder{color:var(--muted)}
+  .row{display:flex;justify-content:flex-end;font-size:13px;margin-top:-6px}
+  .row a{font-weight:600;color:var(--petrol)}
+  .row a:hover{color:var(--petrol-hover)}
+  .submit{background:var(--petrol);color:#fff;font-weight:600;font-size:15px;border-radius:var(--r-ctl);
+    padding:13px;transition:background .18s var(--ease),transform .12s var(--ease)}
+  .submit:hover{background:var(--petrol-hover)}
+  .submit:active{transform:scale(.985)}
+  .switch{margin-top:26px;font-size:14px;color:var(--ink2);border-top:1px solid var(--line);padding-top:20px}
+  .switch a{font-weight:600;color:var(--petrol)}
+  .switch a:hover{color:var(--petrol-hover)}
+  @media (prefers-reduced-motion:reduce){.verdict-list li{animation:none;opacity:1;transform:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="scene">
+  <aside class="plate" aria-hidden="true">
+    <div>
+      <div class="wordmark">Hyprr<b>IQ</b></div>
+      <div class="sub">Source Intelligence</div>
+      <div class="rule"></div>
+      <p class="tag">The check that comes<br><em>before</em> the wire.</p>
+      <ul class="verdict-list">
+        <li><span class="vdot" style="background:var(--clear-b)"></span>
+          <span class="vname">Source Clear</span><span class="vdesc">Proceed</span></li>
+        <li><span class="vdot" style="background:var(--cond-b)"></span>
+          <span class="vname">Usable With Conditions</span><span class="vdesc">With caveats</span></li>
+        <li><span class="vdot" style="background:var(--verify-b)"></span>
+          <span class="vname">Verify Before Purchase</span><span class="vdesc">Due diligence</span></li>
+        <li><span class="vdot" style="background:var(--deny-b)"></span>
+          <span class="vname">Do Not Rely</span><span class="vdesc">High risk</span></li>
+      </ul>
+      <p class="foot">HYPRRIQ.COM — BY HYPRRX</p>
+    </div>
+  </aside>
+
+  <main class="doc">
+    <span class="eyebrow">Client portal</span>
+    <h1>Welcome back</h1>
+    <p class="sub2">Sign in to your research portal.</p>
+    <form>
+      <label><span>Email</span>
+        <input type="email" autocomplete="email" placeholder="you@company.com"></label>
+      <label><span>Password</span>
+        <input type="password" autocomplete="current-password" placeholder="••••••••••"></label>
+      <div class="row"><a href="#">Forgot password?</a></div>
+      <button class="submit" type="button">Sign in</button>
+    </form>
+    <p class="switch">New to HyprrIQ? <a href="#">Create your account</a></p>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ Teams — Submit for a Client (mockup, net-new)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --accent-data:#2F6F6A; --accent-data-tint:#E9F2F1;
+    --verify-bg:#FAEEDF; --verify-ink:#9A551F;
+    --deny-ink:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button,input,select,textarea):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+  .page{max-width:680px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em}
+  .sub{color:var(--ink2);margin-top:4px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;gap:8px;margin:24px 0}
+  .step{display:flex;align-items:center;gap:8px;flex:1}
+  .step-n{width:28px;height:28px;flex:none;border-radius:99px;display:grid;place-items:center;font-size:13px;font-weight:700;
+    background:var(--subtle);color:var(--muted)}
+  .step.done .step-n,.step.on .step-n{background:var(--brand);color:#fff}
+  .step-label{font-size:13px;font-weight:600;color:var(--muted)}
+  .step.on .step-label,.step.done .step-label{color:var(--ink)}
+  .step-line{height:1px;flex:1;background:var(--line)}
+  .step.done + * .step-line{background:var(--brand)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:22px}
+  label{display:block}
+  .lbl{font-size:14px;font-weight:500;display:block;margin-bottom:5px}
+  .req{color:var(--deny-ink)}
+  .hint{font-size:13px;color:var(--ink2);margin-top:6px}
+  input[type=text],select,textarea{width:100%;background:var(--base);border:1px solid var(--line);border-radius:var(--radius-ctl);
+    padding:10px 12px;font:inherit;color:var(--ink);outline:none;transition:border-color .15s var(--ease)}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  .field{margin-bottom:18px}
+
+  /* the client selector — first field, unmissable */
+  .client-select{border:1px solid rgba(27,75,138,.3);background:var(--brand-tint);border-radius:var(--radius-card);
+    padding:16px 18px;margin-bottom:20px}
+  .client-select .lbl{color:var(--brand-ink)}
+  .client-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .client-opt{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--line);
+    border-radius:99px;padding:7px 14px 7px 7px;font-weight:600;font-size:13px;transition:border-color .15s var(--ease)}
+  .client-opt:hover{border-color:var(--line-strong)}
+  .client-opt.on{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 1px var(--brand)}
+  .client-opt i{width:24px;height:24px;border-radius:99px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;background:var(--base);border:1px solid var(--line);border-radius:var(--radius-ctl);padding:8px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--brand-tint);color:var(--brand-ink);
+    border-radius:8px;padding:4px 9px;font-size:13px;font-weight:500}
+  .chip button{color:rgba(15,42,78,.55);display:grid;place-items:center}
+  .chip button:hover{color:var(--brand-ink)}
+  .chips input{border:0;background:none;flex:1;min-width:120px;padding:4px}
+
+  .upload{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line-strong);background:var(--base);
+    border-radius:var(--radius-ctl);padding:16px}
+
+  .credit-panel{border:1px solid rgba(27,75,138,.3);background:var(--brand-tint);border-radius:var(--radius-ctl);padding:14px 16px;margin-top:20px}
+  .queue-note{display:flex;gap:10px;align-items:flex-start;margin-top:20px;background:var(--accent-data-tint);
+    border:1px solid rgba(47,111,106,.3);border-radius:var(--radius-ctl);padding:12px 14px;font-size:13px;color:var(--accent-data)}
+  .nav-row{display:flex;justify-content:space-between;margin-top:22px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>New Research Request</h1>
+  <p class="sub">Every case is attributed to one of your clients — pick the client first.</p>
+
+  <div class="stepper" aria-label="Progress">
+    <span class="step done"><span class="step-n">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+    </span><span class="step-label">Client</span></span>
+    <span class="step-line" style="background:var(--brand)"></span>
+    <span class="step on"><span class="step-n">2</span><span class="step-label">Supplier &amp; Brands</span></span>
+    <span class="step-line"></span>
+    <span class="step"><span class="step-n">3</span><span class="step-label">Review &amp; Confirm</span></span>
+  </div>
+
+  <!-- client attribution — locked in, changeable -->
+  <div class="client-select">
+    <span class="lbl">Researching on behalf of <span class="req">*</span></span>
+    <div class="client-row" role="radiogroup" aria-label="Client">
+      <button class="client-opt on" role="radio" aria-checked="true">
+        <i style="background:var(--brand-tint);color:var(--brand-ink)">L</i> Lakeshore Goods
+      </button>
+      <button class="client-opt" role="radio" aria-checked="false">
+        <i style="background:var(--accent-data-tint);color:var(--accent-data)">F</i> Fern &amp; Field
+      </button>
+      <button class="client-opt" role="radio" aria-checked="false">
+        <i style="background:#F7F1DC;color:#846412">V</i> Voltbay Electronics
+      </button>
+      <button class="client-opt" role="radio" aria-checked="false" style="color:var(--brand)">
+        <i style="background:var(--surface);border:1px dashed var(--line-strong);color:var(--muted)">+</i> New client
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;font-size:14px;margin-bottom:16px">Step 2 — Supplier &amp; Brands</div>
+
+    <div class="field">
+      <label><span class="lbl">Supplier / vendor name <span class="req">*</span></span>
+        <input type="text" value="Harbor Lane Distribution"></label>
+    </div>
+    <div class="field">
+      <label><span class="lbl">Supplier website <span style="color:var(--muted);font-weight:400">(optional)</span></span>
+        <input type="text" placeholder="https://"></label>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Brand names <span class="req">*</span></span>
+      <div class="chips">
+        <span class="chip">Cuisinart <button aria-label="Remove Cuisinart">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+        <input type="text" placeholder="Add brand…" aria-label="Add brand">
+      </div>
+      <p class="hint">1 of 5 brands added — one credit covers up to 5 brands for this supplier.</p>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Invoice or LOA <span style="color:var(--muted);font-weight:400">(optional, recommended)</span></span>
+      <div class="upload">
+        <button class="btn btn-md btn-primary" style="padding:7px 14px;font-size:13px">Choose file</button>
+        <span style="font-size:13px;color:var(--ink2)">or drag &amp; drop — PDF, JPG, PNG · max 10MB</span>
+      </div>
+      <p class="hint">Use the document your client received from the supplier — our review checks it against 14 documentation standards.</p>
+    </div>
+
+    <div class="field" style="margin-bottom:0">
+      <label><span class="lbl">Notes for the research team <span style="color:var(--muted);font-weight:400">(optional)</span></span>
+        <textarea rows="3" placeholder="Anything your client knows about this supplier relationship…"></textarea></label>
+    </div>
+
+    <div class="credit-panel">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-ink)">Research cost</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
+        <span style="font-size:14px;color:var(--ink2)">1 supplier · 1 brand → 1 credit <span style="color:var(--muted)">(pooled)</span></span>
+        <span style="font-family:var(--display);font-weight:800;font-size:18px;color:var(--brand-ink)">1 credit</span>
+      </div>
+      <div style="font-size:13px;color:var(--ink2);margin-top:2px">19 pooled credits remaining after submission · this case bills to <b>Lakeshore Goods</b> in your usage ledger</div>
+    </div>
+
+    <div class="queue-note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin-top:1px"><path d="M12 5v14M5 12h14"/></svg>
+      <span><b>Vetting several suppliers for Lakeshore?</b> After you confirm, choose "Queue another for this client" — the client and notes carry over, and you confirm the whole batch with one credit total at the end.</span>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn btn-md btn-secondary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m6 6-6-6 6-6"/></svg>
+      Back</button>
+    <button class="btn btn-md btn-primary">Review &amp; confirm
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+  </div>
+</div>
+</body>
+</html>

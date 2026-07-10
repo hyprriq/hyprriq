@@ -42,7 +42,10 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // research-failure routing (SO-2) — resolution behavior changes for NEW attempts; frozen attempts untouched.
 // 1.3.0 (2026-07-10, SB-2, founder-approved): domain-first ambiguity comparator (same domain ⇒ same
 // entity; conflict ⇒ escalate, no name override) + ruled multiple_entities copy + carried inner audits.
-export const PIPELINE_VERSION = "1.3.0";
+// 1.4.0 (2026-07-10, Track 3, founder-approved): brand_risk_assessment LIVE for every plan —
+// registry entries + ruled collision audit (firewall 1.4.0), consensus third site, rubric g003-1.1.0,
+// analyst quartet stored; the H3 ceiling KEPT per SO-5 (self-retiring, guards n_a cases forever).
+export const PIPELINE_VERSION = "1.4.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

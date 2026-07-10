@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Sign in (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E;
+    --clear-bright:#6EE7B7; --cond-bright:#FCD34D; --verify-bright:#FDBA74; --deny-bright:#FCA5A5;
+    --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0}
+  :where(a,button,input):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
+  @media (max-width:820px){.split{grid-template-columns:1fr}.panel{display:none}}
+
+  /* ── Brand panel ── */
+  .panel{position:relative;overflow:hidden;color:#fff;display:flex;flex-direction:column;justify-content:space-between;
+    padding:48px;background:linear-gradient(155deg,var(--brand) 0%,var(--brand-ink) 100%)}
+  .panel::after{content:"";position:absolute;top:-96px;right:-96px;width:320px;height:320px;border-radius:99em;
+    background:radial-gradient(circle,rgba(255,255,255,.06) 0%,transparent 70%)}
+  .panel-inner{position:relative;margin:auto;max-width:360px;width:100%}
+  .p-wordmark{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em}
+  .p-wordmark span{color:rgba(255,255,255,.7)}
+  .p-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+  .p-rule{width:48px;height:1px;background:rgba(255,255,255,.25);margin:24px 0}
+  .p-tagline{font-size:22px;font-weight:600;line-height:1.35}
+  .p-tagline span{color:rgba(255,255,255,.8)}
+  .pills{margin-top:32px;display:flex;flex-direction:column;gap:12px}
+  .pill-row{display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(8px);
+    animation:rise .5s var(--ease) forwards}
+  .pill-row:nth-child(1){animation-delay:.15s}.pill-row:nth-child(2){animation-delay:.24s}
+  .pill-row:nth-child(3){animation-delay:.33s}.pill-row:nth-child(4){animation-delay:.42s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .dot{width:10px;height:10px;border-radius:99px;flex:none}
+  .pill-name{font-weight:500;font-size:14px}
+  .pill-desc{margin-left:auto;font-size:12px;color:rgba(255,255,255,.5)}
+  .p-foot{position:relative;font-size:12px;color:rgba(255,255,255,.4)}
+
+  /* ── Form side ── */
+  .form-side{background:var(--base);display:flex;flex-direction:column;justify-content:center;padding:48px 40px}
+  .form-inner{width:100%;max-width:360px;margin:0 auto}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--brand-ink)}
+  h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.02em;margin-top:8px}
+  .sub{color:var(--ink2);margin-top:6px;font-size:15px}
+  form{margin-top:28px;display:flex;flex-direction:column;gap:16px}
+  label span{display:block;font-size:14px;font-weight:500;margin-bottom:5px}
+  input{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-ctl);
+    padding:11px 13px;font:inherit;color:var(--ink);outline:none;transition:border-color .15s var(--ease)}
+  input:focus{border-color:var(--brand)}
+  input::placeholder{color:var(--muted)}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .row a{font-weight:600;color:var(--brand)}
+  .row a:hover{color:var(--brand-hover)}
+  .submit{background:var(--brand);color:#fff;font-weight:600;font-size:15px;border-radius:var(--radius-ctl);
+    padding:12px;transition:background .15s var(--ease),transform .12s var(--ease)}
+  .submit:hover{background:var(--brand-hover)}
+  .submit:active{transform:scale(.985)}
+  .switch{margin-top:24px;font-size:14px;color:var(--ink2)}
+  .switch a{font-weight:600;color:var(--brand)}
+  .switch a:hover{color:var(--brand-hover)}
+  @media (prefers-reduced-motion:reduce){.pill-row{animation:none;opacity:1;transform:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="split">
+  <!-- Brand panel: the verdict system as the trust signal, tokenized brights, staggered settle -->
+  <aside class="panel" aria-hidden="true">
+    <div class="panel-inner">
+      <div class="p-wordmark">Hyprr<span>IQ</span></div>
+      <div class="p-sub">Source Intelligence</div>
+      <div class="p-rule"></div>
+      <p class="p-tagline">The check that comes<br><span>before the wire.</span></p>
+      <div class="pills">
+        <div class="pill-row"><span class="dot" style="background:var(--clear-bright)"></span>
+          <span class="pill-name">Source Clear</span><span class="pill-desc">Proceed</span></div>
+        <div class="pill-row"><span class="dot" style="background:var(--cond-bright)"></span>
+          <span class="pill-name">Usable With Conditions</span><span class="pill-desc">With caveats</span></div>
+        <div class="pill-row"><span class="dot" style="background:var(--verify-bright)"></span>
+          <span class="pill-name">Verify Before Purchase</span><span class="pill-desc">Due diligence</span></div>
+        <div class="pill-row"><span class="dot" style="background:var(--deny-bright)"></span>
+          <span class="pill-name">Do Not Rely</span><span class="pill-desc">High risk</span></div>
+      </div>
+    </div>
+    <p class="p-foot">hyprriq.com — by HyprrX</p>
+  </aside>
+
+  <main class="form-side">
+    <div class="form-inner">
+      <span class="eyebrow">Client portal</span>
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to your research portal.</p>
+      <form>
+        <label><span>Email</span>
+          <input type="email" autocomplete="email" placeholder="you@company.com"></label>
+        <label><span>Password</span>
+          <input type="password" autocomplete="current-password" placeholder="••••••••••"></label>
+        <div class="row">
+          <span></span>
+          <a href="#">Forgot password?</a>
+        </div>
+        <button class="submit" type="button">Sign in</button>
+      </form>
+      <p class="switch">New to HyprrIQ? <a href="#">Create your account</a></p>
+    </div>
+  </main>
+</div>
+</body>
+</html>

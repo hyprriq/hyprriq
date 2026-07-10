@@ -10,7 +10,9 @@ describe("pipeline registry", () => {
     // llm_failed research-failure routing change resolution behavior for NEW attempts.
     // 1.2.0 → 1.3.0 (SB-2, 2026-07-10, founder-approved): domain-first ambiguity comparator +
     // OQ-B copy + carried audits change resolution decisions for NEW attempts.
-    expect(PIPELINE_VERSION).toBe("1.3.0");
+    // 1.3.0 → 1.4.0 (Track 3, 2026-07-10, founder-approved): brand_risk_assessment goes LIVE —
+    // a scoring dimension is added to every plan's pipeline for NEW attempts.
+    expect(PIPELINE_VERSION).toBe("1.4.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {

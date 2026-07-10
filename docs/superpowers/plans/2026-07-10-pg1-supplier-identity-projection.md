@@ -32,4 +32,4 @@ Server-side projection in the CLIENT data path (`lib/data/cases.ts`, `getCaseByI
 
 ## TASK (one; TDD; single commit)
 
-- [ ] Failing tests: projection unit two-sided + a type-level lock that the portal view-model no longer carries the full `SupplierIdentity`. Implement the projection; full verify; push staging. **STOP — founder runs AT-1..3 → PG-1 frozen → Track 3 build unblocks (once its SOs/OQs are ruled).**
+- [x] Failing tests: projection unit two-sided + a type-level lock that the portal view-model no longer carries the full `SupplierIdentity`. Implement the projection; full verify; push staging. **STOP — founder runs AT-1..3 → PG-1 frozen → Track 3 build unblocks (once its SOs/OQs are ruled).**

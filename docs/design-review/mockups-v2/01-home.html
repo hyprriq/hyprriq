@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — The Dossier direction · Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Besley:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ══════════ DIRECTION B — "THE DOSSIER" ══════════
+     Scene: a senior analyst's desk at a private intelligence firm.
+     Dark ink chrome · white document artifacts · petrol accent · brass thread ·
+     Besley serif authority · file-tab section system · stamped verdicts. */
+  :root{
+    --chrome:#16130E;          /* warm near-black — the desk's shadow, hero drench */
+    --chrome-2:#242019;        /* raised dark surfaces */
+    --chrome-text:#F4F1EA;     /* off-white on dark */
+    --chrome-dim:#A69F8F;      /* secondary on dark (≥4.5 on chrome) */
+    --desk:#EDEAE2;            /* the workspace */
+    --paper:#FFFFFF;           /* documents */
+    --ink:#1B1812; --ink2:#544F45; --muted:#6E695E;
+    --line:#DBD6CA; --line-strong:#C4BEAF;
+    --petrol:#0F5E66; --petrol-hover:#147A84; --petrol-tint:#E1EFEF; --petrol-bright:#58B8BD;
+    --brass:#B08D3E; --brass-dim:#8C6F2E;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC;  --cond-ink:#846412;
+    --verify-bg:#FAEEDF;--verify-ink:#9A551F;
+    --deny-bg:#F8E9E6;  --deny-ink:#9A332C;
+    --r-doc:6px; --r-ctl:8px;
+    --doc-shadow:0 1px 0 rgba(22,19,14,.06),0 2px 6px rgba(22,19,14,.07),0 24px 48px -20px rgba(22,19,14,.28);
+    --ease:cubic-bezier(.22,1,.36,1);
+    --serif:"Besley",Georgia,serif;
+    --sans:"Public Sans",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--desk);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  :where(a,button):focus-visible{outline:2px solid var(--petrol);outline-offset:3px;border-radius:3px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+  .container{max-width:1140px;margin:0 auto;padding:0 24px}
+  h1,h2,h3{font-family:var(--serif);letter-spacing:-.015em;text-wrap:balance;font-weight:700}
+  p{text-wrap:pretty}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:var(--r-ctl);
+    font-weight:600;font-family:var(--sans);cursor:pointer;border:0;
+    transition:background .18s var(--ease),transform .12s var(--ease),color .18s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-lg{padding:14px 26px;font-size:16px}.btn-md{padding:11px 20px;font-size:15px}
+  .btn-petrol{background:var(--petrol);color:#fff}.btn-petrol:hover{background:var(--petrol-hover)}
+  .btn-paper{background:var(--paper);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-paper:hover{border-color:var(--ink2)}
+  .btn-outline-light{background:transparent;color:var(--chrome-text);box-shadow:inset 0 0 0 1px rgba(244,241,234,.35)}
+  .btn-outline-light:hover{box-shadow:inset 0 0 0 1px rgba(244,241,234,.7)}
+
+  /* ── file-tab: the section-header system (replaces generic eyebrows) ── */
+  .filetab{display:inline-flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);
+    border-bottom:0;border-radius:8px 8px 0 0;padding:8px 18px 7px;font-family:var(--mono);font-size:12px;
+    font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);position:relative;top:1px}
+  .filetab::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--brass)}
+  .tabrule{border-top:1px solid var(--line);margin-top:-1px}
+  .filetab.on-dark{background:var(--chrome-2);border-color:rgba(244,241,234,.18);color:var(--chrome-dim)}
+
+  /* ── scroll reveal (JS arms; static without JS / reduced-motion) ── */
+  [data-reveal]{opacity:1;transform:none}
+  .js [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  .js [data-reveal].in{opacity:1;transform:none}
+
+  /* ═════ Header ═════ */
+  header.site{position:sticky;top:0;z-index:50;background:rgba(22,19,14,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(244,241,234,.12)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .wordmark{font-family:var(--serif);font-weight:700;font-size:21px;color:var(--chrome-text);letter-spacing:-.01em}
+  .wordmark b{color:var(--petrol-bright);font-weight:700}
+  .nav-links{display:flex;gap:30px;font-size:15px;font-weight:500;color:var(--chrome-dim)}
+  .nav-links a:hover{color:var(--chrome-text)}
+  @media (max-width:820px){.nav-links{display:none}}
+
+  /* ═════ Hero — full ink drench ═════ */
+  .hero{background:var(--chrome);color:var(--chrome-text);position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;inset:auto 0 0 0;height:1px;background:linear-gradient(90deg,transparent,var(--brass) 30%,var(--brass) 70%,transparent)}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center;padding:84px 0 96px}
+  @media (max-width:960px){.hero-grid{grid-template-columns:1fr;padding:56px 0 64px}}
+  .hero-tag{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--chrome-dim);border:1px solid rgba(244,241,234,.2);border-radius:4px;padding:7px 13px}
+  .hero-tag::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--brass)}
+  .hero h1{font-size:clamp(2.6rem,5.4vw,4.2rem);line-height:1.06;font-weight:700;margin-top:28px;max-width:14ch;color:var(--chrome-text)}
+  .hero h1 em{font-style:italic;color:var(--petrol-bright)}
+  .hero .lede{font-size:18px;line-height:1.65;color:var(--chrome-dim);margin-top:24px;max-width:50ch}
+  .hero .lede b{color:var(--chrome-text);font-weight:600}
+  .hero-ctas{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap}
+  .hero-verdicts{display:flex;align-items:center;gap:14px;margin-top:44px}
+  .hv-bar{display:flex;gap:5px;width:150px}
+  .hv-bar i{height:5px;flex:1;border-radius:99px}
+  .hero-verdicts span{font-size:13px;color:var(--chrome-dim)}
+
+  /* the dossier artifact */
+  .dossier{position:relative;background:var(--paper);border-radius:var(--r-doc);box-shadow:var(--doc-shadow);
+    width:100%;max-width:430px;justify-self:end;color:var(--ink)}
+  @media (max-width:960px){.dossier{justify-self:center}}
+  .js .dossier{opacity:0;transform:translateY(20px);animation:doc-in .8s var(--ease) .2s forwards}
+  @keyframes doc-in{to{opacity:1;transform:none}}
+  .dossier::before{content:"";position:absolute;inset:-14px auto auto 26px;width:120px;height:14px;
+    background:var(--paper);border-radius:6px 6px 0 0;opacity:.92}
+  .d-head{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:2px solid var(--ink)}
+  .d-head .t{font-family:var(--serif);font-weight:700;font-size:14px}
+  .d-head .id{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .d-body{padding:20px 22px}
+  .d-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .d-vendor{font-family:var(--serif);font-weight:700;font-size:21px;margin-top:3px}
+  .d-brands{font-size:13.5px;color:var(--ink2);margin-top:2px}
+  /* the stamp */
+  .stamp{display:inline-block;margin-top:18px;padding:9px 16px;border:2.5px solid var(--cond-ink);border-radius:4px;
+    box-shadow:inset 0 0 0 1.5px var(--paper),inset 0 0 0 3px var(--cond-ink);
+    font-family:var(--serif);font-weight:800;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--cond-ink);transform:rotate(-2deg)}
+  .js .stamp.animate{opacity:0;transform:rotate(-2deg) scale(1.3);animation:stamp-in .45s cubic-bezier(.34,1.3,.5,1) .9s forwards}
+  @keyframes stamp-in{to{opacity:1;transform:rotate(-2deg) scale(1)}}
+  .d-note{font-size:13.5px;color:var(--ink2);line-height:1.55;margin-top:14px}
+  .d-dims{border-top:1px solid var(--line);padding:14px 22px}
+  .d-dims .row{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0}
+  .d-dims .row span:first-child{color:var(--ink2)}
+  .d-dims .row b{font-weight:600;font-size:13px}
+  .d-ask{background:linear-gradient(0deg,rgba(15,94,102,.06),rgba(15,94,102,.06)),var(--paper);
+    border-top:1px solid var(--line);border-radius:0 0 var(--r-doc) var(--r-doc);padding:14px 22px}
+  .d-ask .row{display:flex;gap:10px;font-size:13.5px;color:var(--ink2);padding:3.5px 0}
+  .d-ask .n{font-family:var(--mono);font-size:11px;color:var(--petrol);font-weight:600;flex:none;margin-top:1px}
+
+  /* ═════ fact ribbon ═════ */
+  .facts{background:var(--chrome-2);color:var(--chrome-text);border-bottom:1px solid rgba(244,241,234,.1)}
+  .facts-inner{display:flex;flex-wrap:wrap;justify-content:space-between;gap:18px 32px;padding:22px 0}
+  .fact{display:flex;align-items:baseline;gap:10px}
+  .fact b{font-family:var(--serif);font-weight:800;font-size:26px;color:var(--petrol-bright)}
+  .fact span{font-size:13.5px;color:var(--chrome-dim)}
+
+  section{padding:76px 0}
+  .sec-head h2{font-size:clamp(1.8rem,3.2vw,2.5rem);line-height:1.15;max-width:24ch}
+  .sec-head .sub{font-size:17.5px;color:var(--ink2);margin-top:14px;max-width:56ch}
+
+  /* ═════ Losses ═════ */
+  .loss-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px;align-items:start}
+  @media (max-width:880px){.loss-grid{grid-template-columns:1fr}}
+  .amz{background:var(--paper);border-radius:var(--r-doc);box-shadow:var(--doc-shadow);overflow:hidden}
+  .amz-h{background:#232F3E;color:#fff;display:flex;align-items:center;gap:10px;padding:12px 18px;font-size:14px;font-weight:600}
+  .amz-h .tag{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:2px 7px;font-weight:400}
+  .amz-b{padding:24px}
+  .amz-b .t{color:var(--deny-ink);font-weight:700;font-size:15.5px}
+  .amz-b .d{color:var(--ink2);font-size:14.5px;margin-top:10px;line-height:1.65}
+  .amz-b .f{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:13.5px;color:var(--muted);font-style:italic}
+  .loss-item{display:flex;gap:18px;padding:22px 0;border-bottom:1px solid var(--line)}
+  .loss-item:last-child{border-bottom:0}
+  .loss-n{font-family:var(--mono);font-size:12px;color:var(--brass-dim);flex:none;margin-top:5px}
+  .loss-item h3{font-size:19px;font-weight:700}
+  .loss-item p{font-size:15px;color:var(--ink2);margin-top:6px}
+  .candor{display:flex;gap:14px;background:var(--petrol-tint);border-left:none;border:1px solid rgba(15,94,102,.25);
+    border-radius:var(--r-doc);padding:20px 24px;margin-top:40px;font-size:15px;color:var(--petrol);line-height:1.6}
+
+  /* ═════ Sticky case-assembly (the scroll-stop sequence) ═════ */
+  .assembly{background:var(--paper);border-block:1px solid var(--line)}
+  .asm-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:72px;margin-top:44px}
+  @media (max-width:920px){.asm-grid{grid-template-columns:1fr;gap:32px}}
+  .asm-sticky{position:sticky;top:100px;align-self:start}
+  @media (max-width:920px){.asm-sticky{position:static}}
+  .asm-doc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-doc);
+    box-shadow:var(--doc-shadow);min-height:430px;position:relative;overflow:hidden}
+  .asm-state{position:absolute;inset:0;padding:24px;opacity:0;transition:opacity .45s var(--ease)}
+  .asm-state.on{opacity:1}
+  .asm-progress{position:absolute;inset:auto 0 0 0;height:3px;background:var(--line)}
+  .asm-progress i{display:block;height:100%;background:var(--petrol);width:33%;transition:width .5s var(--ease)}
+  .asm-steps{display:flex;flex-direction:column}
+  .asm-step{min-height:62vh;display:flex;flex-direction:column;justify-content:center;padding:24px 0;
+    opacity:.35;transition:opacity .4s var(--ease)}
+  @media (max-width:920px){.asm-step{min-height:0;opacity:1}}
+  .asm-step.on{opacity:1}
+  .asm-step .k{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--brass-dim)}
+  .asm-step h3{font-size:26px;margin-top:10px}
+  .asm-step p{font-size:16px;color:var(--ink2);margin-top:12px;max-width:44ch}
+  .asm-step ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:10px}
+  .asm-step li{display:flex;gap:11px;font-size:15px;color:var(--ink2)}
+  .asm-step li svg{color:var(--petrol);margin-top:4px}
+  .fld{margin-top:14px}
+  .fld .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .fld .v{border:1px solid var(--line);border-radius:6px;background:var(--desk);padding:9px 12px;font-size:14px;margin-top:5px}
+  .track-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .track-row:last-child{border-bottom:0}
+  .tick{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--clear-ink)}
+  .working{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+  .spin{width:13px;height:13px;border:2px solid var(--line-strong);border-top-color:var(--petrol);border-radius:99px;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ═════ Verdicts — the stamp wall ═════ */
+  .verdict-sec{background:var(--desk)}
+  .stamp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:44px}
+  .v-doc{background:var(--paper);border-radius:var(--r-doc);box-shadow:var(--doc-shadow);padding:26px;
+    display:flex;flex-direction:column;gap:14px}
+  .v-stamp{align-self:flex-start;padding:8px 14px;border:2.5px solid;border-radius:4px;font-family:var(--serif);
+    font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;transform:rotate(-1.5deg)}
+  .js .v-stamp{opacity:0;transform:rotate(-1.5deg) scale(1.25)}
+  .js .v-stamp.in{animation:stamp-in2 .4s cubic-bezier(.34,1.3,.5,1) forwards}
+  @keyframes stamp-in2{to{opacity:1;transform:rotate(-1.5deg) scale(1)}}
+  .v-doc p{font-size:14.5px;color:var(--ink2);line-height:1.6}
+  .v-doc .act{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+    border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
+
+  /* ═════ Manifesto ═════ */
+  .manifesto{background:var(--chrome);color:var(--chrome-text);text-align:center;padding:110px 0;position:relative}
+  .manifesto::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:64px;height:3px;background:var(--brass)}
+  .manifesto h2{font-size:clamp(2rem,4.2vw,3.4rem);line-height:1.12;max-width:20ch;margin:0 auto;color:var(--chrome-text)}
+  .manifesto h2 em{font-style:italic;color:var(--petrol-bright)}
+  .manifesto p{font-size:18px;color:var(--chrome-dim);max-width:52ch;margin:26px auto 0;line-height:1.7}
+  .manifesto .small{font-size:14px;color:rgba(244,241,234,.45);margin-top:18px}
+
+  /* ═════ Pricing — engagement letters ═════ */
+  .pricing{background:var(--paper);border-block:1px solid var(--line)}
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+  @media (max-width:920px){.plans{grid-template-columns:1fr;max-width:440px;margin-inline:auto}}
+  .plan{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-doc);padding:30px;display:flex;flex-direction:column;position:relative}
+  .plan.lead{border-color:var(--petrol);box-shadow:0 0 0 1px var(--petrol),var(--doc-shadow)}
+  .plan .tier{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass-dim)}
+  .plan h3{font-size:24px;margin-top:8px}
+  .plan .price{margin-top:18px;display:flex;align-items:baseline;gap:6px}
+  .plan .price b{font-family:var(--serif);font-weight:800;font-size:40px}
+  .plan .price span{color:var(--ink2);font-size:15px}
+  .plan .meta{font-size:14.5px;color:var(--ink2);margin-top:4px}
+  .plan ul{list-style:none;margin-top:24px;display:flex;flex-direction:column;gap:12px;flex:1}
+  .plan li{display:flex;gap:11px;font-size:15px;color:var(--ink2)}
+  .plan li svg{color:var(--petrol);margin-top:4px}
+  .plan .btn{margin-top:28px}
+  .lead-tag{position:absolute;top:-11px;right:22px;background:var(--petrol);color:#fff;font-size:11px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:4px 10px}
+
+  /* footer */
+  footer.site{background:var(--chrome);color:var(--chrome-dim);padding:56px 0 28px}
+  .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;padding-bottom:44px;border-bottom:1px solid rgba(244,241,234,.12)}
+  @media (max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+  .foot-h{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:rgba(244,241,234,.45)}
+  .foot-grid ul{list-style:none;margin-top:14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+  .foot-grid a:hover{color:var(--chrome-text)}
+  .foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:24px;font-size:12.5px;color:rgba(244,241,234,.4)}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .js [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}
+    .js .stamp,.js .stamp.animate,.js .v-stamp,.js .v-stamp.in{opacity:1!important;animation:none!important;transform:rotate(-1.5deg)!important}
+    .js .dossier{opacity:1;animation:none;transform:none}
+    .asm-state,.asm-step,.asm-progress i{transition:none!important}
+    .spin{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container nav-inner">
+    <a class="wordmark" href="#">Hyprr<b>IQ</b></a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#method">How it works</a>
+      <a href="#verdicts">The verdicts</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#">Sample report</a>
+    </nav>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a href="#" style="color:var(--chrome-dim);font-size:15px;font-weight:500">Sign in</a>
+      <a class="btn btn-md btn-petrol" href="#">Vet a supplier</a>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════ HERO — ink drench, the dossier as the artifact ═══════ -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="hero-tag">Pre-purchase source intelligence</span>
+      <h1>The check that comes <em>before</em> the wire.</h1>
+      <p class="lede">You're about to send real money to a supplier you found three weeks ago.
+        We investigate the supplier and the brand behind the buy — then hand you a one-page verdict
+        and the exact questions to ask. <b>We don't promise "safe." We make sure you decide with open eyes.</b></p>
+      <div class="hero-ctas">
+        <a class="btn btn-lg btn-petrol" href="#">Vet a supplier
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        <a class="btn btn-lg btn-outline-light" href="#">Read a sample dossier</a>
+      </div>
+      <div class="hero-verdicts">
+        <span class="hv-bar" aria-hidden="true">
+          <i style="background:#3E9C68"></i><i style="background:#C9A22E"></i>
+          <i style="background:#D07B36"></i><i style="background:#C25048"></i>
+        </span>
+        <span>Four plain-English verdicts — Source Clear to Do Not Rely.</span>
+      </div>
+    </div>
+
+    <article class="dossier" role="img" aria-label="Example Decision Snapshot dossier, anonymized">
+      <div class="d-head">
+        <span class="t">Decision Snapshot</span>
+        <span class="id">CASE AWI-2606-014</span>
+      </div>
+      <div class="d-body">
+        <div class="d-k">Supplier under review</div>
+        <div class="d-vendor">Northgate Wholesale Co.</div>
+        <div class="d-brands">Brands: Anker, Soundcore · Amazon US</div>
+        <span class="stamp animate">Usable · With · Conditions</span>
+        <p class="d-note">Source appears credible. Collect the items below before committing significant capital.</p>
+      </div>
+      <div class="d-dims">
+        <div class="d-k" style="margin-bottom:6px">Findings across five dimensions</div>
+        <div class="row"><span>Supplier Identity</span><b style="color:var(--clear-ink)">Verified</b></div>
+        <div class="row"><span>Supply Chain Relationship</span><b style="color:var(--cond-ink)">Inferred</b></div>
+        <div class="row"><span>Brand Risk</span><b style="color:var(--clear-ink)">Verified</b></div>
+        <div class="row"><span>Sourcing Logic</span><b style="color:var(--clear-ink)">Holds together</b></div>
+      </div>
+      <div class="d-ask">
+        <div class="d-k" style="color:var(--petrol);margin-bottom:6px">Before you buy, ask the vendor</div>
+        <div class="row"><span class="n">01</span><span>Request the distribution agreement covering this brand.</span></div>
+        <div class="row"><span class="n">02</span><span>Confirm the invoice ships from the address on file.</span></div>
+        <div class="row"><span class="n">03</span><span>Ask which authorized distributor they source through.</span></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ═══════ Fact ribbon with count-ups ═══════ -->
+<div class="facts">
+  <div class="container facts-inner">
+    <div class="fact"><b data-count="60" data-suffix="+">0</b><span>public data points per case</span></div>
+    <div class="fact"><b data-count="5">0</b><span>research dimensions</span></div>
+    <div class="fact"><b data-count="14">0</b><span>documentation standards checked</span></div>
+    <div class="fact"><b>Every case</b><span>reviewed by a human expert before delivery</span></div>
+  </div>
+</div>
+
+<!-- ═══════ The losses ═══════ -->
+<section>
+  <div class="container">
+    <div data-reveal>
+      <span class="filetab">File — Where the money goes</span>
+      <div class="tabrule"></div>
+      <div class="sec-head" style="margin-top:28px">
+        <h2>Wholesale sellers rarely lose on price. They lose on what they couldn't see.</h2>
+      </div>
+    </div>
+    <div class="loss-grid">
+      <div data-reveal>
+        <figure class="amz">
+          <figcaption class="amz-h">
+            <span style="width:8px;height:8px;border-radius:99px;background:#C25048"></span>
+            Account Health <span class="tag">Illustrative example</span>
+          </figcaption>
+          <div class="amz-b">
+            <p class="t">Your account has been deactivated</p>
+            <p class="d">We received a report that a product you listed may be inauthentic.
+              Funds may be withheld for up to 90 days while your account is under review.</p>
+            <p class="f">By the time this email arrives, the inventory is already yours.</p>
+          </div>
+        </figure>
+      </div>
+      <div>
+        <div class="loss-item" data-reveal>
+          <span class="loss-n">a.</span>
+          <div><h3>IP &amp; counterfeit complaints</h3>
+            <p>A brand reports your listing as inauthentic. The strike lands on your account — not the supplier's.</p></div>
+        </div>
+        <div class="loss-item" data-reveal>
+          <span class="loss-n">b.</span>
+          <div><h3>The "authorized" distributor who wasn't</h3>
+            <p>A confident invoice is not proof the brand will stand behind the sale. Plenty don't.</p></div>
+        </div>
+        <div class="loss-item" data-reveal>
+          <span class="loss-n">c.</span>
+          <div><h3>Capital stranded in dead stock</h3>
+            <p>Gated brand, frozen payout, inventory you can't sell — money already spent before you knew.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="candor" data-reveal>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><path d="M12 22s8-3 8-9V5.5L12 2 4 5.5V13c0 6 8 9 8 9Z"/><path d="M12 8v4M12 15.5h.01"/></svg>
+      <p><b>HyprrIQ can't undo any of this.</b> What it can do is surface the signals before you buy —
+        so you decide with your eyes open, not after the email arrives.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Sticky case-assembly: the scroll-stop sequence ═══════ -->
+<section class="assembly" id="method">
+  <div class="container">
+    <div data-reveal>
+      <span class="filetab">File — How a case is built</span>
+      <div class="tabrule"></div>
+      <div class="sec-head" style="margin-top:28px">
+        <h2>Watch a case go from a vendor name to a stamped verdict.</h2>
+        <p class="sub">Three steps, five business days. The dossier on the left assembles as you scroll.</p>
+      </div>
+    </div>
+
+    <div class="asm-grid">
+      <!-- sticky document, three states -->
+      <div class="asm-sticky">
+        <div class="asm-doc" id="asmDoc" aria-hidden="true">
+          <!-- state 0: intake -->
+          <div class="asm-state on" data-state="0">
+            <div class="d-k">New research request</div>
+            <div class="fld"><div class="l">Vendor</div><div class="v">Northgate Wholesale Co.</div></div>
+            <div class="fld"><div class="l">Brands</div><div class="v">Anker, Soundcore</div></div>
+            <div class="fld"><div class="l">Invoice / LOA</div>
+              <div class="v" style="display:flex;align-items:center;gap:9px;border-style:dashed">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><path d="M12 15V4m0 0-4 4m4-4 4 4"/></svg>
+                northgate-invoice.pdf</div></div>
+            <div style="margin-top:22px"><span class="btn btn-md btn-petrol" style="pointer-events:none">Submit for research</span></div>
+          </div>
+          <!-- state 1: research -->
+          <div class="asm-state" data-state="1">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div class="d-k">Research underway</div>
+              <span class="mono" style="font-size:11px;color:var(--muted)">AWI-2606-014</span>
+            </div>
+            <div style="margin-top:14px">
+              <div class="track-row"><span>Supplier Identity</span><span class="tick">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Done</span></div>
+              <div class="track-row"><span>Supply Chain Relationship</span><span class="tick">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Done</span></div>
+              <div class="track-row"><span>Brand Risk</span><span class="tick">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Done</span></div>
+              <div class="track-row"><span>Documentation Review</span><span class="working"><span class="spin"></span>Working</span></div>
+              <div class="track-row"><span>Sourcing Logic</span><span class="working" style="opacity:.6">Queued</span></div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:10px;align-items:center;background:var(--petrol-tint);border-radius:6px;padding:11px 14px;font-size:13.5px;color:var(--petrol)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg>
+              Expert review before anything ships
+            </div>
+          </div>
+          <!-- state 2: verdict -->
+          <div class="asm-state" data-state="2">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div class="d-k">Decision Snapshot</div>
+              <span class="mono" style="font-size:11px;color:var(--muted)">AWI-2606-014</span>
+            </div>
+            <div class="d-vendor" style="margin-top:12px">Northgate Wholesale Co.</div>
+            <span class="stamp" style="margin-top:14px">Usable · With · Conditions</span>
+            <p class="d-note" style="margin-top:16px">Source appears credible. Collect the listed items before you commit significant capital.</p>
+            <div style="margin-top:16px;border:1px solid var(--line);border-radius:6px;background:var(--desk);padding:12px 14px">
+              <div class="d-k" style="color:var(--petrol)">Ask before you buy</div>
+              <p style="font-size:13.5px;color:var(--ink2);margin-top:5px">Request the distribution agreement covering this brand.</p>
+            </div>
+          </div>
+          <div class="asm-progress"><i id="asmBar"></i></div>
+        </div>
+      </div>
+
+      <!-- scrolling steps -->
+      <div class="asm-steps" id="asmSteps">
+        <div class="asm-step on" data-idx="0">
+          <span class="k">Step one</span>
+          <h3>Submit the vendor</h3>
+          <p>About two minutes. You give us what you already have:</p>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Vendor name and website</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>The brands you're evaluating</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>An invoice or LOA, if you have one</li>
+          </ul>
+        </div>
+        <div class="asm-step" data-idx="1">
+          <span class="k">Step two</span>
+          <h3>We research. A human reviews.</h3>
+          <p>Sixty-plus public data points across five dimensions — then an expert reviews and approves
+            every finding before anything ships. You never read raw output.</p>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Is the supplier a real, operating wholesale business?</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Any observable link between supplier and brand?</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>How does the brand actually enforce on the marketplace?</li>
+          </ul>
+        </div>
+        <div class="asm-step" data-idx="2">
+          <span class="k">Step three</span>
+          <h3>You get the stamped verdict</h3>
+          <p>A one-page answer you can act on the same day it lands:</p>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>One of four plain-English verdicts</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>The evidence, dimension by dimension</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Exactly what to ask your vendor before you buy</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ The stamp wall ═══════ -->
+<section class="verdict-sec" id="verdicts">
+  <div class="container">
+    <div data-reveal>
+      <span class="filetab">File — The four verdicts</span>
+      <div class="tabrule"></div>
+      <div class="sec-head" style="margin-top:28px">
+        <h2>Every report ends with one stamp. No scores to decode, no false certainty.</h2>
+      </div>
+    </div>
+    <div class="stamp-grid">
+      <div class="v-doc" data-reveal>
+        <span class="v-stamp" style="color:var(--clear-ink);border-color:var(--clear-ink)">Source Clear</span>
+        <p>All observable indicators are consistent with credible wholesale sourcing.</p>
+        <span class="act">Proceed with standard due diligence</span>
+      </div>
+      <div class="v-doc" data-reveal>
+        <span class="v-stamp" style="color:var(--cond-ink);border-color:var(--cond-ink)">Usable With Conditions</span>
+        <p>The source appears credible. Collect the listed items before you commit significant capital.</p>
+        <span class="act">Buy after the conditions are met</span>
+      </div>
+      <div class="v-doc" data-reveal>
+        <span class="v-stamp" style="color:var(--verify-ink);border-color:var(--verify-ink)">Verify Before Purchase</span>
+        <p>Important evidence is missing or unclear. Don't go past a test order until it's resolved.</p>
+        <span class="act">Test order only, then re-verify</span>
+      </div>
+      <div class="v-doc" data-reveal>
+        <span class="v-stamp" style="color:var(--deny-ink);border-color:var(--deny-ink)">Do Not Rely</span>
+        <p>Serious gaps or contradictions surfaced. Seek alternatives until the specific issues are resolved.</p>
+        <span class="act">Walk away, or resolve first</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Manifesto ═══════ -->
+<section class="manifesto">
+  <div class="container" data-reveal>
+    <h2>We will never tell you a source is <em>safe.</em></h2>
+    <p>We'll tell you what we found, what we couldn't verify, and what questions remain.
+      That's the entire product.</p>
+    <div style="margin-top:36px">
+      <a class="btn btn-lg btn-petrol" href="#">Vet a supplier
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+    </div>
+    <p class="small">Takes about 2 minutes. Read the sample dossier first if you like.</p>
+  </div>
+</section>
+
+<!-- ═══════ Pricing ═══════ -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div data-reveal>
+      <span class="filetab">File — Engagement terms</span>
+      <div class="tabrule"></div>
+      <div class="sec-head" style="margin-top:28px">
+        <h2>Costs less than one bad buy.</h2>
+        <p class="sub">Try a single report for $99, or subscribe for regular sourcing. Either way,
+          you pay for clarity before the capital moves.</p>
+      </div>
+    </div>
+    <div class="plans">
+      <div class="plan" data-reveal>
+        <span class="tier">For steady sourcing</span>
+        <h3>Growth</h3>
+        <div class="price"><b>$279</b><span>/mo</span></div>
+        <div class="meta">5 reports a month</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Up to 5 brands per report</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Full five-dimension review</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Full portal + case history</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Credit rollover (up to 2)</li>
+        </ul>
+        <a class="btn btn-md btn-paper" href="#">Start with Growth</a>
+      </div>
+      <div class="plan lead" data-reveal>
+        <span class="lead-tag">Most chosen</span>
+        <span class="tier">For scaling catalogs</span>
+        <h3>Scale</h3>
+        <div class="price"><b>$499</b><span>/mo</span></div>
+        <div class="meta">12 reports a month</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Everything in Growth</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Deep analysis + contradiction checks</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Keepa seller-trend data</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>3-business-day priority delivery</li>
+        </ul>
+        <a class="btn btn-md btn-petrol" href="#">Start with Scale</a>
+      </div>
+      <div class="plan" data-reveal>
+        <span class="tier">For firms with clients</span>
+        <h3>Teams</h3>
+        <div class="price"><b>$999</b><span>/mo</span></div>
+        <div class="meta">30 pooled reports · client workspaces</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Client workspaces + usage ledger</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Staff seats &amp; roles</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Report handoff PDFs</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>Bulk submission</li>
+        </ul>
+        <a class="btn btn-md btn-paper" href="#">Talk to us</a>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:34px;font-size:15px;color:var(--ink2)">
+      Not ready to subscribe? <a href="#" style="color:var(--petrol);font-weight:600;border-bottom:1px solid var(--petrol)">Try a single report — $99</a>
+    </p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="wordmark" href="#" style="font-size:19px">Hyprr<b>IQ</b></a>
+        <p style="font-size:14px;margin-top:14px;max-width:32ch;line-height:1.65">
+          Source intelligence for Amazon wholesale. We surface what's observable — and the questions
+          worth asking — so you buy with your eyes open.</p>
+      </div>
+      <div><p class="foot-h">Product</p>
+        <ul><li><a href="#">How it works</a></li><li><a href="#">Pricing</a></li>
+          <li><a href="#">Sample report</a></li><li><a href="#">How credits work</a></li></ul></div>
+      <div><p class="foot-h">Resources</p>
+        <ul><li><a href="#">Guides</a></li><li><a href="#">Glossary</a></li>
+          <li><a href="#">The 12 supplier questions</a></li></ul></div>
+      <div><p class="foot-h">Company</p>
+        <ul><li><a href="#">About</a></li><li><a href="#">Contact</a></li>
+          <li><a href="#">Terms</a></li><li><a href="#">Privacy</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2026 Hyprr Retail LLC. All rights reserved.</p>
+      <p>HyprrIQ reports observable signals. We never confirm vendor authorization — we help you verify it.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  document.body.classList.add('js');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* scroll reveals */
+  var ro = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px'});
+  document.querySelectorAll('[data-reveal]').forEach(function(el){ ro.observe(el); });
+
+  /* stamp reveals */
+  var so = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); so.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -18% 0px'});
+  document.querySelectorAll('.v-stamp').forEach(function(el){ so.observe(el); });
+
+  /* count-ups (real product facts only) */
+  var co = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var el = e.target, target = +el.dataset.count, suf = el.dataset.suffix||'';
+      co.unobserve(el);
+      if(reduced){ el.textContent = target + suf; return; }
+      var t0 = performance.now(), dur = 900;
+      (function tick(t){
+        var p = Math.min(1,(t-t0)/dur), eased = 1-Math.pow(1-p,4);
+        el.textContent = Math.round(target*eased) + suf;
+        if(p<1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  },{threshold:.6});
+  document.querySelectorAll('[data-count]').forEach(function(el){ co.observe(el); });
+
+  /* sticky case-assembly */
+  var steps = document.querySelectorAll('#asmSteps .asm-step');
+  var states = document.querySelectorAll('#asmDoc .asm-state');
+  var bar = document.getElementById('asmBar');
+  function setState(i){
+    states.forEach(function(s){ s.classList.toggle('on', +s.dataset.state===i); });
+    steps.forEach(function(s){ s.classList.toggle('on', +s.dataset.idx===i); });
+    if(bar) bar.style.width = ((i+1)/3*100)+'%';
+  }
+  var ao = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting) setState(+e.target.dataset.idx); });
+  },{rootMargin:'-42% 0px -42% 0px'});
+  steps.forEach(function(s){ ao.observe(s); });
+})();
+</script>
+</body>
+</html>

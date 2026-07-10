@@ -57,6 +57,24 @@ describe("applyVerdictCeiling", () => {
     expect(c.unassessed).toHaveLength(0);
   });
 
+  // ── Track 3 gate, SO-5 (founder-signed 2026-07-10): the ceiling is KEPT, not deleted. Founder's
+  // ruling, verbatim: "a cap that fires only on absence-of-assessment should be removed when
+  // assessment becomes UNIVERSAL, not when it becomes available. It isn't universal. Keep it; it
+  // retires itself." This test is the LOCK on that self-retirement claim — and the thing that tells
+  // a future session why the ceiling is still here after Track 3 shipped. ──
+  it("SO-5 lock: post-Track-3, an llm_failed brand-risk case (n_a) is STILL capped — the ceiling self-retires only where assessment ran", () => {
+    // Track 3 is live, but THIS case's track-3 model call failed → n_a (H2). A source_clear built
+    // without brand risk remains indefensible; deleting the ceiling would have reopened N2 here.
+    const failedShape = sig({ supplier_identity: "pass", supply_chain_relationship: "pass", brand_risk_assessment: "n_a", documentation_review: "pass" });
+    const v = computeVerdict(failedShape, synth);
+    const c = applyVerdictCeiling(v, failedShape);
+    if (v.verdict === "source_clear") {
+      expect(c.verdict).toBe("usable_with_conditions");
+      expect(c.ceiling_applied).toBe(true);
+    }
+    expect(c.unassessed).toContain("brand_risk_assessment");
+  });
+
   it("reachability after H3: a strong two-track case lands usable_with_conditions, not the old VBP floor", () => {
     // Pre-H3, stub Track 3 scored soft_fail and FLOORED this exact shape at verify_before_purchase.
     const signals = sig({ supplier_identity: "pass", supply_chain_relationship: "infer", brand_risk_assessment: "n_a", documentation_review: "n_a", sourcing_logic: "n_a" });

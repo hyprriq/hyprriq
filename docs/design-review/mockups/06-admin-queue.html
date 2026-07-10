@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Admin Queue (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --accent-data:#2F6F6A; --accent-data-tint:#E9F2F1;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC; --cond-ink:#846412;
+    --verify-bg:#FAEEDF; --verify-ink:#9A551F;
+    --deny-bg:#F8E9E6; --deny-ink:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button,input):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+
+  .shell{display:flex;min-height:100vh}
+  /* dark admin sidebar — distinct context */
+  .sidebar{width:248px;flex:none;background:var(--ink);padding:20px 16px;display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;color:#fff}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:-.02em;display:flex;align-items:center;justify-content:space-between}
+  .wordmark span{color:rgba(255,255,255,.5);font-weight:700}
+  .role-chip{background:rgba(255,255,255,.1);border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+  .nav{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+  .nav-section{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:0 10px;margin:14px 0 4px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-weight:500;
+    color:rgba(255,255,255,.72);transition:background .15s var(--ease),color .15s var(--ease)}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-item.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+  .nav-badge{margin-left:auto;background:var(--verify-ink);color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:700}
+
+  .main{flex:1;min-width:0}
+  .topbar{height:64px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;
+    justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .topbar h1{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}
+  .avatar{width:34px;height:34px;border-radius:99px;background:var(--brand-tint);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+  .content{padding:24px 28px}
+
+  /* triage strip */
+  .triage{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .tri{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:12px 14px;
+    display:flex;align-items:center;gap:12px;transition:border-color .15s var(--ease)}
+  .tri:hover{border-color:var(--line-strong)}
+  .tri-num{font-family:var(--display);font-weight:800;font-size:24px;line-height:1}
+  .tri-label{font-size:12px;color:var(--muted);line-height:1.3}
+  .tri.hot{border-color:rgba(154,51,44,.35);background:var(--deny-bg)}
+  .tri.hot .tri-num{color:var(--deny-ink)}
+
+  /* toolbar: search + sort */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-ctl);padding:3px}
+  .tabbtn{padding:6px 13px;border-radius:7px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:6px}
+  .tabbtn:hover{background:var(--subtle)}
+  .tabbtn.on{background:var(--brand);color:#fff}
+  .tabbtn .n{background:var(--deny-bg);color:var(--deny-ink);border-radius:99px;padding:0 6px;font-size:11px;font-weight:700}
+  .tabbtn.on .n{background:rgba(255,255,255,.25);color:#fff}
+  .search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius-ctl);padding:7px 12px;flex:1;max-width:320px;color:var(--muted)}
+  .search input{border:0;outline:0;background:none;font:inherit;color:var(--ink);width:100%}
+  .sort{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink2);
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-ctl);padding:7px 12px;margin-left:auto}
+
+  /* queue table */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden}
+  .thead,.trow{display:grid;grid-template-columns:26px 100px 1fr 160px 90px 120px 96px 88px;gap:12px;align-items:center;padding:10px 16px}
+  .thead{background:var(--subtle);border-bottom:1px solid var(--line);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .trow{border-bottom:1px solid var(--line);transition:background .12s var(--ease)}
+  .trow:hover{background:var(--subtle)}
+  .trow:last-child{border-bottom:0}
+  .case-id{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--brand)}
+  .vendor{font-weight:600;font-size:14px}
+  .vendor-sub{font-size:12px;color:var(--muted)}
+  .client{display:flex;align-items:center;gap:8px;min-width:0}
+  .client-av{width:24px;height:24px;flex:none;border-radius:99px;background:var(--brand-tint);color:var(--brand-ink);
+    display:grid;place-items:center;font-size:11px;font-weight:700}
+  .client-name{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .p-info{background:var(--brand-tint);color:var(--brand-ink)} .p-neutral{background:var(--subtle);color:var(--ink2)}
+  .p-verify{background:var(--verify-bg);color:var(--verify-ink)} .p-deny{background:var(--deny-bg);color:var(--deny-ink)}
+  /* SLA aging scale: ok → amber → overdue */
+  .sla{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .sla i{width:8px;height:8px;border-radius:99px}
+  .sla-ok{color:var(--ink2)} .sla-ok i{background:var(--clear-ink)}
+  .sla-due{color:var(--verify-ink)} .sla-due i{background:var(--verify-ink)}
+  .sla-over{color:var(--deny-ink)} .sla-over i{background:var(--deny-ink)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-row{padding:5px 12px;font-size:12px;background:var(--brand);color:#fff}
+  .btn-row:hover{background:var(--brand-hover)}
+  .check{width:15px;height:15px;border:1.5px solid var(--line-strong);border-radius:4px;background:var(--surface)}
+  .kbd-hint{margin-top:12px;font-size:12px;color:var(--muted);display:flex;gap:14px}
+  .kbd-hint kbd{font-family:var(--mono);font-size:11px;background:var(--surface);border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="wordmark">HyprrIQ <span>Admin</span> <span class="role-chip">Founder</span></div>
+    <nav class="nav" aria-label="Admin">
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard</a>
+      <div class="nav-section">Cases</div>
+      <a class="nav-item active" href="#" aria-current="page">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        Quality Review <span class="nav-badge">6</span></a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+        Delivered</a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        All Cases</a>
+      <div class="nav-section">Management</div>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Clients</a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        Support Queue <span class="nav-badge" style="background:rgba(255,255,255,.18)">2</span></a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+        Outcomes</a>
+      <div class="nav-section">System</div>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        Revenue</a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        Prompts</a>
+      <a class="nav-item" href="#">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+        Settings</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1>Quality Review</h1>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:13px;color:var(--muted)">6 awaiting review · oldest 2.1 days</span>
+        <div class="avatar">G</div>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- triage strip: what needs attention, most urgent first -->
+      <div class="triage">
+        <a class="tri hot" href="#">
+          <span class="tri-num">1</span>
+          <span class="tri-label"><b style="color:var(--deny-ink)">Overdue</b><br>past SLA deadline</span>
+        </a>
+        <a class="tri" href="#">
+          <span class="tri-num" style="color:var(--verify-ink)">3</span>
+          <span class="tri-label"><b>Due today</b><br>publish before EOD</span>
+        </a>
+        <a class="tri" href="#">
+          <span class="tri-num">2</span>
+          <span class="tri-label"><b>Awaiting client</b><br>scope confirmation, SLA paused</span>
+        </a>
+        <a class="tri" href="#">
+          <span class="tri-num">0</span>
+          <span class="tri-label"><b>Failed / flagged</b><br>needs manual attention</span>
+        </a>
+      </div>
+
+      <div class="toolbar">
+        <div class="tabs" role="tablist">
+          <button class="tabbtn on" role="tab" aria-selected="true">In Queue <span class="n">6</span></button>
+          <button class="tabbtn" role="tab">Action Required</button>
+          <button class="tabbtn" role="tab">Delivered</button>
+          <button class="tabbtn" role="tab">All</button>
+        </div>
+        <label class="search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Search case, supplier, client…" aria-label="Search cases">
+        </label>
+        <button class="sort">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/></svg>
+          Sort: SLA deadline</button>
+      </div>
+
+      <div class="card">
+        <div class="thead">
+          <span><span class="check" role="checkbox" aria-checked="false" aria-label="Select all"></span></span>
+          <span>Case</span><span>Supplier / Brands</span><span>Client</span><span>Plan</span>
+          <span>Stage</span><span>SLA</span><span></span>
+        </div>
+
+        <div class="trow" style="background:rgba(248,233,230,.45)">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-011</span>
+          <span><span class="vendor">Vantage Global Sourcing</span><br><span class="vendor-sub">Bose · JBL</span></span>
+          <span class="client"><span class="client-av">R</span><span class="client-name">Reyes Retail Group</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Scale</span>
+          <span><span class="pill p-neutral">In Review</span></span>
+          <span class="sla sla-over"><i></i>Overdue 0.4d</span>
+          <a class="btn btn-row" href="#">Review</a>
+        </div>
+
+        <div class="trow">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-014</span>
+          <span><span class="vendor">Northgate Wholesale Co.</span><br><span class="vendor-sub">Anker · Soundcore</span></span>
+          <span class="client"><span class="client-av">M</span><span class="client-name">Marcus Chen</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Scale</span>
+          <span><span class="pill p-neutral">In Review</span></span>
+          <span class="sla sla-due"><i></i>Due today</span>
+          <a class="btn btn-row" href="#">Review</a>
+        </div>
+
+        <div class="trow">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-013</span>
+          <span><span class="vendor">Meridian Supply LLC</span><br><span class="vendor-sub">OXO · KitchenAid</span></span>
+          <span class="client"><span class="client-av">S</span><span class="client-name">Sellwell LLC</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Growth</span>
+          <span><span class="pill p-verify">Awaiting Client</span></span>
+          <span class="sla sla-ok"><i style="background:var(--muted-decor)"></i>Paused</span>
+          <a class="btn btn-row" href="#" style="background:var(--surface);color:var(--ink2);border:1px solid var(--line-strong)">Open</a>
+        </div>
+
+        <div class="trow">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-012</span>
+          <span><span class="vendor">Brightline Distribution</span><br><span class="vendor-sub">Logitech</span></span>
+          <span class="client"><span class="client-av">M</span><span class="client-name">Marcus Chen</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Scale</span>
+          <span><span class="pill p-info">In Research</span></span>
+          <span class="sla sla-due"><i></i>1.2 days</span>
+          <a class="btn btn-row" href="#" style="background:var(--surface);color:var(--ink2);border:1px solid var(--line-strong)">Open</a>
+        </div>
+
+        <div class="trow">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-010</span>
+          <span><span class="vendor">Pacific Rim Traders</span><br><span class="vendor-sub">Rubbermaid · Sterilite</span></span>
+          <span class="client"><span class="client-av">A</span><span class="client-name">Anaya Imports</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Growth</span>
+          <span><span class="pill p-neutral">In Review</span></span>
+          <span class="sla sla-ok"><i></i>2.8 days</span>
+          <a class="btn btn-row" href="#">Review</a>
+        </div>
+
+        <div class="trow">
+          <span><span class="check"></span></span>
+          <span class="case-id">AWI-2607-009</span>
+          <span><span class="vendor">Corestock Supply</span><br><span class="vendor-sub">Melissa &amp; Doug</span></span>
+          <span class="client"><span class="client-av">R</span><span class="client-name">Reyes Retail Group</span></span>
+          <span style="font-size:13px;color:var(--ink2)">Single</span>
+          <span><span class="pill p-neutral">In Review</span></span>
+          <span class="sla sla-ok"><i></i>3.5 days</span>
+          <a class="btn btn-row" href="#">Review</a>
+        </div>
+      </div>
+
+      <div class="kbd-hint" aria-hidden="true">
+        <span><kbd>J</kbd>/<kbd>K</kbd> move</span>
+        <span><kbd>Enter</kbd> review</span>
+        <span><kbd>/</kbd> search</span>
+        <span><kbd>1–4</kbd> switch tab</span>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

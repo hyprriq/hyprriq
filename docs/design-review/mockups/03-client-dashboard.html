@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyprrIQ — Client Dashboard (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── HyprrIQ design tokens (v3) ─────────────────────────────── */
+  :root{
+    --base:#FAF9F7; --surface:#FFFFFF; --subtle:#F2F1ED;
+    --ink:#1A1917; --ink2:#56544E; --muted:#75736B; --muted-decor:#8A887F;
+    --line:#E6E4DE; --line-strong:#D6D3CB;
+    --brand:#1B4B8A; --brand-hover:#2A6ACC; --brand-ink:#0F2A4E; --brand-tint:#E8F0FB;
+    --accent-data:#2F6F6A; --accent-data-tint:#E9F2F1; --accent-warm:#B8731A;
+    --clear-bg:#EAF6EF; --clear-ink:#1A6B3A;
+    --cond-bg:#F7F1DC; --cond-ink:#846412;
+    --verify-bg:#FAEEDF; --verify-ink:#9A551F;
+    --deny-bg:#F8E9E6; --deny-ink:#9A332C;
+    --radius-card:14px; --radius-ctl:10px;
+    --shadow-1:0 1px 2px rgba(26,25,23,.04),0 12px 32px -12px rgba(26,25,23,.16);
+    --ease:cubic-bezier(.22,1,.36,1);
+    --display:"Schibsted Grotesk",system-ui,sans-serif;
+    --sans:"Hanken Grotesk",system-ui,sans-serif;
+    --mono:"Geist Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:var(--base);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none}
+  :where(a,button,input,select):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg{flex:none}
+
+  /* ── App shell ─────────────────────────────── */
+  .shell{display:flex;min-height:100vh}
+  .sidebar{width:248px;flex:none;background:var(--surface);border-right:1px solid var(--line);
+    padding:20px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.02em}
+  .wordmark b{color:var(--brand);font-weight:800}
+  .plan-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
+  .nav{margin-top:18px;display:flex;flex-direction:column;gap:2px}
+  .nav-section{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+    padding:0 10px;margin:14px 0 4px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-weight:500;
+    color:var(--ink2);transition:background .15s var(--ease),color .15s var(--ease)}
+  .nav-item svg{color:var(--muted-decor)}
+  .nav-item:hover{background:var(--subtle);color:var(--ink)}
+  .nav-item.active{background:var(--brand-tint);color:var(--brand-ink);font-weight:600}
+  .nav-item.active svg{color:var(--brand)}
+  .credits{margin-top:auto;border:1px solid var(--line);border-radius:var(--radius-card);background:var(--base);padding:14px}
+  .credits-top{display:flex;justify-content:space-between;align-items:center}
+  .credits-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .credits-add{font-size:12px;font-weight:600;color:var(--brand)}
+  .credits-add:hover{color:var(--brand-hover)}
+  .credits-num{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;margin-top:4px}
+  .credits-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .bar{height:6px;border-radius:99px;background:var(--subtle);overflow:hidden;margin-top:8px}
+  .bar i{display:block;height:100%;border-radius:99px;background:var(--brand)}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:64px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;
+    align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .topbar h1{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}
+  .topbar-right{display:flex;align-items:center;gap:12px}
+  .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--ink2);position:relative}
+  .icon-btn:hover{background:var(--subtle);color:var(--ink)}
+  .icon-btn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:99px;background:var(--verify-ink);border:1.5px solid var(--surface)}
+  .avatar{width:34px;height:34px;border-radius:99px;background:var(--brand-tint);color:var(--brand-ink);
+    display:grid;place-items:center;font-weight:700;font-size:13px}
+  .content{padding:24px 28px;max-width:1200px;width:100%}
+
+  /* ── Buttons ─────────────────────────────── */
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-ctl);font-weight:600;
+    transition:background .15s var(--ease),transform .12s var(--ease),border-color .15s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn-md{padding:9px 16px;font-size:14px}.btn-sm{padding:6px 12px;font-size:13px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-hover)}
+  .btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-secondary:hover{background:var(--subtle)}
+  .btn-ghost{color:var(--ink2)}.btn-ghost:hover{background:var(--subtle);color:var(--ink)}
+
+  /* ── Cards / pills / table ─────────────────────────────── */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card)}
+  .card-h{padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--display);font-weight:700;font-size:14px;
+    display:flex;align-items:center;justify-content:space-between}
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+  .pill svg{width:13px;height:13px}
+  .p-clear{background:var(--clear-bg);color:var(--clear-ink)} .p-cond{background:var(--cond-bg);color:var(--cond-ink)}
+  .p-verify{background:var(--verify-bg);color:var(--verify-ink)} .p-deny{background:var(--deny-bg);color:var(--deny-ink)}
+  .p-info{background:var(--brand-tint);color:var(--brand-ink)} .p-neutral{background:var(--subtle);color:var(--ink2)}
+  .p-muted{background:var(--subtle);color:var(--muted)}
+
+  .thead,.trow{display:grid;grid-template-columns:110px 1fr 150px 170px 110px;gap:12px;align-items:center;padding:11px 16px}
+  .thead{background:var(--subtle);border-bottom:1px solid var(--line);font-size:12px;font-weight:600;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-radius:var(--radius-card) var(--radius-card) 0 0}
+  .trow{border-bottom:1px solid var(--line);transition:background .15s var(--ease)}
+  .trow:hover{background:var(--subtle)}
+  .trow:last-child{border-bottom:0}
+  .case-id{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--brand)}
+  .vendor{font-weight:600;font-size:14px}
+  .vendor-sub{font-size:12px;color:var(--muted);margin-top:1px}
+
+  /* ── KPI row ─────────────────────────────── */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0 24px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:16px}
+  .kpi-top{display:flex;justify-content:space-between;align-items:center}
+  .kpi-label{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .kpi-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
+  .kpi-num{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;margin-top:10px}
+  .kpi-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+  .cols{display:grid;grid-template-columns:1fr 300px;gap:24px}
+  .sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 10px}
+  .sec-h h3{font-family:var(--display);font-weight:700;font-size:16px}
+  .see-all{font-size:13px;font-weight:600;color:var(--brand);display:inline-flex;align-items:center;gap:4px}
+  .see-all:hover{color:var(--brand-hover)}
+
+  .deliv-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .deliv-row:last-child{border-bottom:0}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+  .quick a{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--base);
+    border-radius:var(--radius-ctl);padding:10px 12px;font-size:13px;font-weight:600;color:var(--ink2);
+    transition:background .15s var(--ease),color .15s var(--ease)}
+  .quick a:hover{background:var(--subtle);color:var(--ink)}
+  .quick a svg{color:var(--muted-decor)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  /* ── Responsive: off-canvas sidebar & stacked rows ── */
+  .menu-btn{display:none}
+  @media (max-width:1023px){
+    .sidebar{display:none}
+    .menu-btn{display:grid}
+    .cols{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:720px){
+    .thead{display:none}
+    .trow{grid-template-columns:1fr auto;grid-template-areas:"a c" "b d";row-gap:6px}
+    .trow>:nth-child(1){grid-area:a}.trow>:nth-child(2){grid-area:b}
+    .trow>:nth-child(3){grid-area:c;justify-self:end}.trow>:nth-child(4){grid-area:d;justify-self:end}
+    .trow>:nth-child(5){display:none}
+    .content{padding:16px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ───────── Sidebar ───────── -->
+  <aside class="sidebar">
+    <div>
+      <div class="wordmark">Hyprr<b>IQ</b></div>
+      <div class="plan-sub">Scale Plan</div>
+    </div>
+    <nav class="nav" aria-label="Portal">
+      <a class="nav-item active" href="#" aria-current="page">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard</a>
+      <div class="nav-section">Research</div>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New Case</a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8l-2-3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1Z"/><circle cx="12" cy="13" r="2.5"/><path d="m15.5 16.5-1.7-1.7"/></svg>
+        Active Cases</a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+        Completed Reports</a>
+      <div class="nav-section">Account</div>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        Billing &amp; Credits</a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+        Settings</a>
+      <div class="nav-section">Support</div>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>
+        Help Centre</a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        Contact Support</a>
+    </nav>
+    <div class="credits">
+      <div class="credits-top"><span class="credits-label">Credits</span><a class="credits-add" href="#">Add more</a></div>
+      <div class="credits-num">7</div>
+      <div class="credits-sub">of 12 remaining · renews in 9 days</div>
+      <div class="bar"><i style="width:58%"></i></div>
+    </div>
+  </aside>
+
+  <!-- ───────── Main ───────── -->
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="icon-btn menu-btn" aria-label="Open menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1>Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <a class="btn btn-md btn-primary" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          New Research</a>
+        <button class="icon-btn" aria-label="Notifications — 1 unread">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+          <span class="dot" aria-hidden="true"></span>
+        </button>
+        <div class="avatar" aria-label="Account: marcus@sellwell.io">M</div>
+      </div>
+    </header>
+
+    <main class="content">
+      <h2 style="font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em">Good morning, Marcus.</h2>
+      <p style="color:var(--ink2);margin-top:4px">Two reports are arriving this week. Here's where everything stands.</p>
+
+      <!-- KPI row — client language, no ops jargon -->
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Credits Left</span>
+            <span class="kpi-icon" style="background:var(--brand-tint);color:var(--brand)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5h6M9 13.5h6" stroke-linecap="round"/></svg></span></div>
+          <div class="kpi-num" style="color:var(--brand)">7</div>
+          <div class="kpi-sub">renews in 9 days</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">In Research</span>
+            <span class="kpi-icon" style="background:var(--accent-data-tint);color:var(--accent-data)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span></div>
+          <div class="kpi-num">3</div>
+          <div class="kpi-sub">cases in progress</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Ready to Read</span>
+            <span class="kpi-icon" style="background:var(--clear-bg);color:var(--clear-ink)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></span></div>
+          <div class="kpi-num" style="color:var(--clear-ink)">1</div>
+          <div class="kpi-sub">delivered report</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Arriving Soon</span>
+            <span class="kpi-icon" style="background:var(--verify-bg);color:var(--verify-ink)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span></div>
+          <div class="kpi-num" style="color:var(--verify-ink)">2</div>
+          <div class="kpi-sub">expected within 2 days</div>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div>
+          <!-- Action-needed strip: the one thing that needs the client -->
+          <div class="card" style="border-color:rgba(154,85,31,.35);background:var(--verify-bg);margin-bottom:20px">
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--verify-ink)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin-top:1px"><path d="M12 9v4M12 16.5h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+              <div style="flex:1">
+                <div style="font-weight:700;color:var(--verify-ink);font-size:14px">One case needs your confirmation</div>
+                <div style="font-size:13px;color:var(--ink2);margin-top:2px">
+                  <span class="mono" style="font-weight:600">AWI-2607-021</span> · Meridian Supply — the brands on your invoice differ from the brands you entered. Research is paused until you confirm.
+                </div>
+              </div>
+              <a class="btn btn-sm btn-primary" href="#" style="background:var(--verify-ink)">Review &amp; confirm</a>
+            </div>
+          </div>
+
+          <div class="sec-h"><h3>Recent Cases</h3>
+            <a class="see-all" href="#">View all
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
+          <div class="card">
+            <div class="thead"><span>Case</span><span>Supplier / Brands</span><span>Status</span><span>Verdict</span><span>Delivery</span></div>
+            <a class="trow" href="#">
+              <span class="case-id">AWI-2607-024</span>
+              <span><span class="vendor">Northgate Wholesale Co.</span><span class="vendor-sub" style="display:block">Anker · Soundcore</span></span>
+              <span><span class="pill p-clear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5.5"/></svg>
+                Ready</span></span>
+              <span><span class="pill p-cond">Usable With Conditions</span></span>
+              <span style="font-size:13px;color:var(--muted)">Delivered Jul 3</span>
+            </a>
+            <a class="trow" href="#" style="background:rgba(250,238,223,.5)">
+              <span class="case-id">AWI-2607-021</span>
+              <span><span class="vendor">Meridian Supply LLC</span><span class="vendor-sub" style="display:block">OXO · KitchenAid</span></span>
+              <span><span class="pill p-verify">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 9v4M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                Action Needed</span></span>
+              <span><span class="pill p-muted">Pending</span></span>
+              <span style="font-size:13px;font-weight:600;color:var(--verify-ink)">Paused</span>
+            </a>
+            <a class="trow" href="#">
+              <span class="case-id">AWI-2607-019</span>
+              <span><span class="vendor">Brightline Distribution</span><span class="vendor-sub" style="display:block">Logitech</span></span>
+              <span><span class="pill p-info">In Research</span></span>
+              <span><span class="pill p-muted">Pending</span></span>
+              <span style="font-size:13px;color:var(--ink2)">Expected Thu</span>
+            </a>
+            <a class="trow" href="#">
+              <span class="case-id">AWI-2607-016</span>
+              <span><span class="vendor">Pacific Rim Traders</span><span class="vendor-sub" style="display:block">Rubbermaid · Sterilite</span></span>
+              <span><span class="pill p-info">In Research</span></span>
+              <span><span class="pill p-muted">Pending</span></span>
+              <span style="font-size:13px;color:var(--ink2)">Expected Fri</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right rail -->
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div class="card">
+            <div class="card-h">Expected Deliveries</div>
+            <div class="deliv-row">
+              <div style="min-width:0;flex:1">
+                <div class="case-id">AWI-2607-019</div>
+                <div style="font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brightline Distribution</div>
+              </div>
+              <span style="font-size:13px;font-weight:600;color:var(--verify-ink)">Thu, Jul 9</span>
+            </div>
+            <div class="deliv-row">
+              <div style="min-width:0;flex:1">
+                <div class="case-id">AWI-2607-016</div>
+                <div style="font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Pacific Rim Traders</div>
+              </div>
+              <span style="font-size:13px;font-weight:600;color:var(--ink2)">Fri, Jul 10</span>
+            </div>
+            <div style="padding:10px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)">
+              We'll email you the moment each report is ready.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Quick Actions</div>
+            <div class="quick">
+              <a href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Research</a>
+              <a href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Buy Credits</a>
+              <a href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>View Reports</a>
+              <a href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>Get Help</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Current Plan</div>
+            <div style="padding:16px">
+              <div style="font-family:var(--display);font-weight:800;font-size:16px;color:var(--brand)">Scale Plan</div>
+              <div style="font-size:13px;color:var(--muted);margin-top:2px">$499/mo · 12 credits/month · up to 5 brands</div>
+              <div class="bar" style="margin-top:12px"><i style="width:58%"></i></div>
+              <div style="font-size:13px;color:var(--muted);margin-top:6px">7 of 12 credits remaining</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
