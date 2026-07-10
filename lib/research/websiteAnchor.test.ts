@@ -1,10 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { decideWebsiteAnchored, entityNameMatch, type EntityResolution } from "./websiteAnchor";
+import { decideWebsiteAnchored, entityNameMatch, clientNote, type EntityResolution } from "./websiteAnchor";
 
 // SB-2 (SO-1) — EntityResolution carries the resolved domain (the comparator's identity anchor);
 // null = unresolved or (defensively) domain-less. Helper default null keeps pre-SB-2 tests meaningful.
 const dom = (entity_name: string | null, resolved = true, confidence: "high" | "medium" | "low" = "high", resolved_domain: string | null = null): EntityResolution =>
   ({ resolved, entity_name, confidence, resolved_domain });
+
+// ── PG-1 timing OQ, RULED (founder, 2026-07-11): KEEP the pre-delivery render — the identity note
+// is a data-correction prompt, not a finding; its value is being EARLY (the globaldist-class catch),
+// and the retractability worry dissolved with SB-2's comparator fix. THE CONDITION, locked here:
+// every identity client_note must carry an explicit confirm/correct INVITATION, so a future copy
+// edit can never turn a provisional prompt into a bare assertion.
+describe("PG-1 condition — every identity client_note invites confirm/correct", () => {
+  const kinds = ["name_is_brand", "name_website_mismatch", "multiple_entities", "website_dead", "dba"] as const;
+  it("all kinds (including the default template) carry the invitation", () => {
+    for (const k of kinds) {
+      const note = clientNote(k, "Acme Corp", "Other Entity Inc", "Name Entity LLC");
+      expect(note, `${k} must invite confirm/correct`).toMatch(/contact us|please confirm/i);
+    }
+  });
+});
 
 // SB-2 (SO-1) — the type carries the domain; threading from the resolver is proven end-to-end by
 // the track05 routing tests (Task 2).

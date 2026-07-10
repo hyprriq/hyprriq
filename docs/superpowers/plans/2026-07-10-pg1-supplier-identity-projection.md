@@ -22,7 +22,7 @@ Server-side projection in the CLIENT data path (`lib/data/cases.ts`, `getCaseByI
 
 ## OPEN QUESTION — 🔴 UNRULED
 
-- **OQ-A — should the projected note ALSO be status-gated (H5 delivered-only pattern), or keep current render timing?** **Recommendation: keep current timing (projection only, minimal change).** The client_note is the intended client-visible surface, H5's delivery gate already scans it at publish, and changing render timing is a product-behavior change this micro-gate shouldn't smuggle. If the founder wants delivered-only gating, it's one extra condition — rule it explicitly either way.
+- **OQ-A — ✅ RULED (founder, 2026-07-11): KEEP the pre-delivery render — no delivered-only gating.** The note is "a data-correction prompt, not a finding — its value is being early, and gating it to delivered-only defeats the globaldist-class catch"; the retractability worry (AWI-2606-012's once-false note) dissolved because "the churn WAS the SB-2 defect, now fixed." **CONDITION, implemented as a lock:** every identity client_note must carry an explicit confirm/correct invitation (websiteAnchor.test.ts "PG-1 condition" block, all five kinds) — a future copy edit can never turn a provisional prompt into a bare assertion. Note the ruling honored the ORIGINAL Spec-B design intent surfaced during the build (the documented "shows as early as identity resolves" comment).
 
 ## ACCEPTANCE TESTS (founder-run)
 

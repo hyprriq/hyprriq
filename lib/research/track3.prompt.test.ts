@@ -28,6 +28,42 @@ describe("Track 3 prompt (analyst-native, ruled veto definitions)", () => {
     for (const f of ["most_likely", "alternative", "what_would_change_my_mind"]) expect(system).toContain(f);
   });
 
+  // ── RULING 1 (founder, 2026-07-11) — the fidelity pass, each line locked: ──
+  it("A1: recency is an OPERATION — date check, ongoing exception, NAMED downgrade target on BOTH enforcement vetoes, undated = outside", () => {
+    expect(system).toMatch(/check each cited source'?s date/i);
+    expect(system).toContain("not documented as ongoing");
+    const demotions = system.match(/brand_enforcement_signals at most/g) ?? [];
+    expect(demotions.length).toBeGreaterThanOrEqual(2); // both veto rows name the target (was loose: "downgrade")
+    expect(system).toMatch(/undated/i);
+  });
+  it("A2/H5: own-voice vocabulary ban — guarantee/risk-free/brand-approved/safe never in our voice", () => {
+    expect(system).toContain("'guarantee', 'risk-free', 'brand-approved'");
+  });
+  it("A3: authorization framing stripped — Track 3 never confirms or denies authorization", () => {
+    expect(system).toMatch(/never (confirm|frame|deny)[\s\S]*authoriz/i);
+    expect(system).toContain("AUTHORIZATION IS NOT YOUR QUESTION");
+  });
+  it("A4: every proposal echoes its subject — brand + facet in mapping_justification", () => {
+    expect(system).toContain("brand-posture facet");
+    expect(system).toMatch(/mapping_justification[\s\S]{0,40}NAME the brand/i);
+  });
+  it("A5: worked near-miss examples land in UNKNOWN (or the named downgrade)", () => {
+    expect(system).toContain("WORKED EXAMPLES");
+    expect(system).toMatch(/counterfeit/i);
+    expect(system).toContain("reserve the right");
+    expect(system).toMatch(/no retail or marketplace presence/i);
+  });
+  it("fresh-eyes: homonym discipline — a name match alone is not the brand", () => {
+    expect(system).toContain("HOMONYM DISCIPLINE");
+    expect(system).toContain("a name match alone is not the brand");
+  });
+  it("fresh-eyes: Keepa keys require marketplace-history DATA — commentary about history is not it", () => {
+    expect(system).toMatch(/commentary about price or seller history is not that data/i);
+  });
+  it("clarity: confirmed_amazon_restrictions is present-tense — the artifact exists NOW", () => {
+    expect(system).toMatch(/OBSERVABLY exists now/i);
+  });
+
   it("user block names the brands and the vendor as context", () => {
     expect(user).toContain("Bosch");
     expect(user).toContain("Acme Corp");
