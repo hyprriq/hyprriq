@@ -61,6 +61,20 @@ describe("runTrack2", () => {
     expect(out.evidence_items).toHaveLength(0);
   });
 
+  // Track 4 gate (2026-07-11) — loa_legitimate gained an ALLOWED_PROFILES entry (["user_upload"])
+  // for documentation_review, which REOPENS the provenance gate for Track 2 whenever a user_upload
+  // source is cited (the key IS in Track 2's weight table, so the track gate passes). ADR-T2-001
+  // now rests on the code backstop ALONE — load-bearing for the first time. This lock proves it holds.
+  it("LOA backstop is LOAD-BEARING: a user_upload-cited loa_legitimate passes the firewall but STILL never scores in Track 2", async () => {
+    const uploadSrc = { ...brandSrc(0), provenance: { ...brandSrc(0).provenance, source_profile: "user_upload", authority_score: "low" } };
+    gather.mockResolvedValue(pack([uploadSrc]));
+    runModel.mockResolvedValue(model({ evidence_items: [
+      { evidence_id: "t2_e1", brand: "Lenovo", statement: "LOA uploaded", proposed_weight_key: "loa_legitimate", supporting_source_ids: ["src_0"], mapping_justification: "j", counter_evidence: "None", certainty: "verified", confidence: "high" },
+    ], reasoning_notes: "", unknowns: [] }));
+    const out = await runTrack2(ctx);
+    expect(out.evidence_items.some((e) => e.weight_key === "loa_legitimate")).toBe(false);
+  });
+
   it("empty pack → acquisition_failed, no model call", async () => {
     gather.mockResolvedValue(pack([]));
     const out = await runTrack2(ctx);

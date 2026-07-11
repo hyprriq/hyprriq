@@ -19,7 +19,9 @@ import { runTrack5 } from "./track5";
 
 // Track 3 (2026-07-10, gate spec): brand_risk_assessment goes LIVE — entries authored per the
 // founder-ruled ADR-T1-001 collision audit (recency windows + cross-track rows in the gate spec).
-const LIVE_FIREWALL_TRACKS = ["supplier_identity", "supply_chain_relationship", "brand_risk_assessment"] as const;
+// Track 4 (2026-07-11, gate spec sub-gate A): documentation_review goes LIVE — entries authored per
+// the founder-ruled collision audit (single-source vetoes on OBSERVED artifacts, OQ-A4).
+const LIVE_FIREWALL_TRACKS = ["supplier_identity", "supply_chain_relationship", "brand_risk_assessment", "documentation_review"] as const;
 
 // Documented exclusions — keys deliberately OUTSIDE the firewall config, with the ruling that put
 // them there. Anything else uncovered is a build error.

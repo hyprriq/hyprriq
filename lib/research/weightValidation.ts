@@ -24,7 +24,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // RULED_EXCLUSIONS + track3 code drop) — the ["marketplace"] profiles met MIN via amazon/ebay
 // classification, so a sellercentral snippet could earn +3 prompt-gated-only (the website_fraudulent
 // anti-pattern, positive-key flavor). Strictly more conservative; the Keepa gate ships real entries.
-export const VALIDATION_VERSION = "1.5.0";
+// 1.6.0 (2026-07-11, Track 4 sub-gate A, founder-signed): documentation_review goes live — entries
+// for all 10 keys (user_upload-only; loa_legitimate's first entry, Track-4-proposable per
+// ADR-T2-001 with Track 2's code backstop now load-bearing); both vetoes single-source per the
+// OQ-A4 observed-artifact ruling (NO corroboration rows — the deliberate opposite of Keepa).
+export const VALIDATION_VERSION = "1.6.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 // Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;
@@ -79,6 +83,23 @@ export const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   active_ip_complaints: ["government_record", "news", "official_brand"],
   confirmed_amazon_restrictions: ["marketplace", "official_brand", "news"],
   cease_and_desist_distributed: ["news", "forum", "official_brand", "government_record"],
+  // Track 4 — documentation_review (sub-gate A, founder-signed 2026-07-11). Documents are the ONLY
+  // source: every key is user_upload. loa_legitimate's FIRST entry — proposable in Track 4 only per
+  // ADR-T2-001; NOTE this reopens the provenance gate for Track 2 citations, so ADR-T2-001 now
+  // rests on Track 2's code backstop (load-bearing, locked in track2.test.ts). Both vetoes are
+  // single-source-capable per the OQ-A4 ruling: the artifact is OBSERVED (we hold the document) —
+  // the deliberate opposite of the Keepa ruling by the same standard. The guardrail is PROMPT law:
+  // single-source covers what the document SAYS; what it is claimed to PROVE is an inference.
+  invoice_full: ["user_upload"],
+  loa_legitimate: ["user_upload"],
+  po_on_letterhead: ["user_upload"],
+  catalog_or_pricelist: ["user_upload"],
+  email_correspondence: ["user_upload"],
+  screenshot_only: ["user_upload"],
+  no_documents: ["user_upload", "inference"], // registered for coverage; unreachable by design (OQ-A3: zero uploads = n_a, never scored)
+  document_missing_fields: ["user_upload"],
+  document_alteration: ["user_upload"],
+  retail_receipt_as_wholesale: ["user_upload"],
 };
 export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   government_registration: "high", domain_age_5_plus: "high", domain_age_2_5: "high",
@@ -97,6 +118,11 @@ export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   brand_enforcement_signals: "low", brand_restricts_amazon: "low",
   b2b_only_confirmed: "high", active_ip_complaints: "medium",
   confirmed_amazon_restrictions: "medium", cease_and_desist_distributed: "low",
+  // Track 4 (documentation_review) — user_upload authority is "low" by profile, so "low" everywhere
+  // (the trust decision for documents lives in the review itself + the consensus gate, not authority).
+  invoice_full: "low", loa_legitimate: "low", po_on_letterhead: "low", catalog_or_pricelist: "low",
+  email_correspondence: "low", screenshot_only: "low", no_documents: "low",
+  document_missing_fields: "low", document_alteration: "low", retail_receipt_as_wholesale: "low",
 };
 // Corroboration gate — keys whose meaning REQUIRES multiple independent sources. scam_reports_corroborated
 // is a hard_fail (irreversible veto) that the profile/authority gates cannot distinguish from the mild

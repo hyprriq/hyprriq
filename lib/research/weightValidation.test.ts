@@ -126,6 +126,29 @@ describe("validateWeights firewall", () => {
     expect(r[1].validated_weight_key).toBe("brand_enforcement_signals");
   });
 
+  // ── Track 4 (OQ-A4, founder-ruled): SINGLE-SOURCE vetoes on OBSERVED artifacts — the deliberate
+  // OPPOSITE of the Keepa ruling by the SAME standard ("can we observe the artifact": here we hold
+  // the document). Both vetoes validate from ONE user_upload source and hard-fail. ──
+  for (const key of ["document_alteration", "retail_receipt_as_wholesale"]) {
+    it(`Track 4: ${key} validates SINGLE-SOURCE from a user_upload (the artifact is the proof) and hard-fails`, () => {
+      const v = validateWeights({ track: "documentation_review", sourceProfileById: profiles({ s1: "user_upload" }), proposals: [prop("e1", key, ["s1"])] });
+      expect(v[0].validated_weight_key).toBe(key);
+      const found = v.filter((x) => x.validated_weight_key).map((x) => x.validated_weight_key as string);
+      expect(deriveTrackSignal("documentation_review", found).signal).toBe("hard_fail");
+    });
+  }
+  it("Track 4: loa_legitimate is finally proposable — in documentation_review, from a user_upload", () => {
+    const v = validateWeights({ track: "documentation_review", sourceProfileById: profiles({ s1: "user_upload" }), proposals: [prop("e1", "loa_legitimate", ["s1"])] });
+    expect(v[0].validated_weight_key).toBe("loa_legitimate");
+  });
+  it("Track 4: positive keys validate from user_upload (invoice_full, po_on_letterhead)", () => {
+    const v = validateWeights({ track: "documentation_review", sourceProfileById: profiles({ s1: "user_upload" }), proposals: [
+      prop("e1", "invoice_full", ["s1"]), prop("e2", "po_on_letterhead", ["s1"]),
+    ] });
+    expect(v[0].validated_weight_key).toBe("invoice_full");
+    expect(v[1].validated_weight_key).toBe("po_on_letterhead");
+  });
+
   // POSITIVE PATH — the conservative corroboration gate must NOT over-reject a GENUINE fraud vendor:
   // 2 corroborating sources → scam_reports_corroborated validates AND still drives a hard_fail verdict.
   it("genuine fraud (2 corroborating sources) validates scam_reports_corroborated AND still hard-fails", () => {
