@@ -48,7 +48,10 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // 1.5.0 (2026-07-11, SB-3, founder-approved): the zero-research fast path widened to
 // suffix-normalized-identical (entityNameMatch, zero edit-distance) — a legal name over its own
 // domain no longer pays two research calls or draws a mismatch note. Companion: firewall 1.5.0.
-export const PIPELINE_VERSION = "1.5.0";
+// 1.6.0 (2026-07-11, Track 4 sub-gate A, founder-approved): documentation_review LIVE — the
+// document-pack acquisition mode (frozen packs carry extracted content), the nothing_to_review
+// absence branch (OQ-A3), consensus fourth call site. Companion: firewall 1.6.0.
+export const PIPELINE_VERSION = "1.6.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

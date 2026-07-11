@@ -14,7 +14,9 @@ describe("pipeline registry", () => {
     // a scoring dimension is added to every plan's pipeline for NEW attempts.
     // 1.4.0 → 1.5.0 (SB-3, 2026-07-11, founder-approved): the zero-research fast path widened to
     // suffix-normalized-identical — resolution behavior changes for NEW attempts.
-    expect(PIPELINE_VERSION).toBe("1.5.0");
+    // 1.5.0 → 1.6.0 (Track 4 sub-gate A, 2026-07-11, founder-approved): documentation_review goes
+    // LIVE (document-pack acquisition mode + the nothing_to_review absence branch).
+    expect(PIPELINE_VERSION).toBe("1.6.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {

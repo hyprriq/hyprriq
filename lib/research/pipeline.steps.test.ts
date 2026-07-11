@@ -249,6 +249,20 @@ describe("H2 stageFindingTrack failure mapping", () => {
     expect(r.failed).toBe(false);
   });
 
+  // Track 4 (OQ-A3, founder-ruled): zero uploads is an ABSENCE — n_a + skipped-shape + approved,
+  // NEVER escalated and NEVER a failure ("paperwork comes after commitment"; the N2 lesson).
+  it("nothing_to_review → n_a + approved + NOT escalated + NOT failed (an absence, not a finding)", async () => {
+    runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "no documents were provided for review", unknowns: [], nothing_to_review: true });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("n_a");
+    expect(r.failed).toBe(false);
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect(row.track_verdict_signal).toBe("n_a");
+    expect(row.manual_review_required).toBe(false);
+    expect(row.founder_review_status).toBe("approved");
+    expect(row.compiled_findings_json.nothing_to_review).toBe(true);
+  });
+
   it("H2: a failed track-row persist THROWS so the Inngest step retries", async () => {
     upsertTrackResult.mockResolvedValueOnce({ error: "boom" });
     runTrack1.mockResolvedValue({ track_key: "supplier_identity", evidence_items: [], reasoning_notes: "n", unknowns: [], weight_validation: [], acquisition_failed: true });
