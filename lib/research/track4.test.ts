@@ -1,0 +1,115 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const { loadDocumentPack, runModel, persistEvidencePack, persistAcquisitionMetrics, getEvidencePack } = vi.hoisted(() => ({
+  loadDocumentPack: vi.fn(), runModel: vi.fn(),
+  persistEvidencePack: vi.fn().mockResolvedValue({ error: null }),
+  persistAcquisitionMetrics: vi.fn().mockResolvedValue({ error: null }),
+  getEvidencePack: vi.fn(),
+}));
+vi.mock("@/lib/research/acquisition/documentPack", () => ({ loadDocumentPack }));
+vi.mock("@/lib/data/acquisition", () => ({ persistEvidencePack, persistAcquisitionMetrics, getEvidencePack }));
+vi.mock("@/lib/ai/runModel", () => ({ runModel }));
+
+import { runTrack4 } from "./track4";
+import type { TrackContext } from "@/lib/research/contracts";
+
+const ctx: TrackContext = { case_id: "c1", vendor_name: "TD Synnex", vendor_website: null, brands_submitted: ["Lenovo"], marketplace: "amazon_us", plan_type: "growth_279", attempt_number: 1 };
+
+const docSrc = (path: string) => ({
+  url: path, title: `${path.split("/").pop()} (invoice_pdf)`, snippet: "INVOICE #123 extracted text", raw: {},
+  provenance: { provider: "ClientUpload", provider_version: "v1", plugin: "manual", acquisition_method: "manual", source_profile: "user_upload", source_type: "vendor_self_assertion", authority_score: "low", freshness_days: null, collected_at: "t", expires_at: "t", refresh_required: false },
+});
+const packOf = (sources: unknown[], unreadable: { file_name: string; reason: string }[] = []) => ({
+  pack: { schema_version: "1.1.0", case_id: "c1", track_key: "documentation_review", sources, evidence_hash: "h", collected_at: "t" },
+  metrics: [], unreadable,
+});
+const model = (json: unknown) => ({ json, model_provider: "anthropic", model_version: "claude-sonnet-4-6", tokens: 10, cost_usd: 0, latency_ms: 1 });
+const item = (over: Record<string, unknown> = {}) => ({
+  evidence_id: "t4_e1", brand: "", statement: "s", proposed_weight_key: "invoice_full",
+  supporting_source_ids: ["src_0"], mapping_justification: "j", counter_evidence: "None found",
+  certainty: "verified", confidence: "high", ...over,
+});
+const payload = (items: unknown[]) => ({
+  evidence_items: items, documentation_finding: "part1. part2. part3.",
+  analyst_reading: { most_likely: "ml", alternative: "alt", confidence: "medium", what_would_change_my_mind: "w" },
+  questions_to_ask: [], reasoning_notes: "ok", unknowns: [],
+});
+
+beforeEach(() => { loadDocumentPack.mockReset(); runModel.mockReset(); getEvidencePack.mockReset(); });
+
+describe("runTrack4 (LIVE — replaces the H3 stub)", () => {
+  it("reviews an uploaded invoice: validated key, finding + quartet on the output", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel.mockResolvedValue(model(payload([item()])));
+    const out = await runTrack4(ctx);
+    expect(out.not_implemented).toBeUndefined();
+    expect(out.track_key).toBe("documentation_review");
+    expect(out.evidence_items[0]).toMatchObject({ weight_key: "invoice_full", supports: "documentation_review" });
+    expect(out.documentation_finding).toBe("part1. part2. part3.");
+    expect(out.analyst_reading?.most_likely).toBe("ml");
+    expect(out.research_identity?.name).toBe("TD Synnex");
+  });
+
+  it("OQ-A4: a SINGLE-document veto survives the firewall AND two-pass consensus", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    const veto = item({ proposed_weight_key: "document_alteration" });
+    runModel.mockResolvedValueOnce(model(payload([veto]))).mockResolvedValueOnce(model(payload([veto])));
+    const out = await runTrack4(ctx);
+    expect(out.evidence_items.some((e) => e.weight_key === "document_alteration")).toBe(true);
+    expect(out.hard_fail_consensus).toMatchObject({ checked: ["document_alteration"], dropped: [], second_call_failed: false });
+  });
+
+  it("a pass-1-only veto drops at consensus; a failed second call keeps it and escalates (OQ-A semantics)", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel
+      .mockResolvedValueOnce(model(payload([item({ proposed_weight_key: "retail_receipt_as_wholesale" })])))
+      .mockResolvedValueOnce(model(payload([item()])));
+    const dropped = await runTrack4(ctx);
+    expect(dropped.evidence_items.some((e) => e.weight_key === "retail_receipt_as_wholesale")).toBe(false);
+    expect(dropped.weight_validation?.some((v) => v.gate === "consensus")).toBe(true);
+
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel
+      .mockResolvedValueOnce(model(payload([item({ proposed_weight_key: "retail_receipt_as_wholesale" })])))
+      .mockRejectedValueOnce(new Error("boom"));
+    const kept = await runTrack4(ctx);
+    expect(kept.evidence_items.some((e) => e.weight_key === "retail_receipt_as_wholesale")).toBe(true);
+    expect(kept.hard_fail_consensus?.second_call_failed).toBe(true);
+  });
+
+  it("OQ-A3: ZERO uploads → nothing_to_review (an absence, never a failure) — no model call", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([]));
+    const out = await runTrack4(ctx);
+    expect(out.nothing_to_review).toBe(true);
+    expect(out.acquisition_failed).toBeUndefined();
+    expect(out.reasoning_notes).toMatch(/no documents were provided/i);
+    expect(runModel).not.toHaveBeenCalled();
+  });
+
+  it("uploaded-but-ALL-unreadable → acquisition_failed (a human can read what v1 cannot) — distinct from absence", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([], [{ file_name: "scan.jpg", reason: "image-only" }]));
+    const out = await runTrack4(ctx);
+    expect(out.acquisition_failed).toBe(true);
+    expect(out.nothing_to_review).toBeUndefined();
+    expect(out.reasoning_notes).toContain("scan.jpg");
+    expect(runModel).not.toHaveBeenCalled();
+  });
+
+  it("H2: thrown model call and unparseable output both set llm_failed", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel.mockRejectedValueOnce(new Error("429"));
+    expect((await runTrack4(ctx)).llm_failed).toBe(true);
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel.mockResolvedValueOnce(model({ garbage: true }));
+    expect((await runTrack4(ctx)).llm_failed).toBe(true);
+  });
+
+  it("H7 replay: loads the stored pack; the document pack builder is never called", async () => {
+    getEvidencePack.mockResolvedValue({ pack: packOf([docSrc("cases/c1/invoice.pdf")]).pack, error: null });
+    runModel.mockResolvedValue(model(payload([item()])));
+    const out = await runTrack4({ ...ctx, replay_from_attempt: 2 });
+    expect(loadDocumentPack).not.toHaveBeenCalled();
+    expect(getEvidencePack).toHaveBeenCalledWith("c1", "documentation_review", 2);
+    expect(out.evidence_items).toHaveLength(1);
+  });
+});

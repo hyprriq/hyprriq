@@ -130,6 +130,23 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: true, track_number: n };
   }
 
+  // ── Track 4 (OQ-A3, founder-ruled) — nothing-to-review guard: the dimension IS built, but this
+  // case gave it nothing (zero uploads). An ABSENCE exactly like not_implemented in shape — n_a
+  // (excluded, weights redistribute), 'skipped', auto-approved, NEVER escalated and NEVER a
+  // soft_fail ("paperwork comes after commitment" — the N2 anti-pattern stays dead). ──
+  if (out.nothing_to_review) {
+    const res = await upsertTrackResult({
+      case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
+      source_mode: "ai_generated",
+      evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
+      track_verdict_signal: "n_a", finding_certainty: "unknown",
+      manual_review_required: false, founder_review_status: "approved",
+      compiled_findings_json: { signal: "n_a", nothing_to_review: true, summary: out.reasoning_notes },
+    });
+    if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
+    return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
+  }
+
   // ── Acquisition-failure guard — an EMPTY Evidence Pack means we COULD NOT research, not that we
   // researched and found nothing. Such a track must NOT score (→ n_a, excluded from the verdict),
   // must NOT write institutional memory, and must escalate to manual review. ──
@@ -217,6 +234,8 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       // rendered ADMIN-side only this gate; advisory, never scored. null on other tracks.
       brand_risk_finding: out.brand_risk_finding ?? null,
       analyst_reading: out.analyst_reading ?? null,
+      // Track 4 — the documentation narrative (ships like brand_relationship_finding; HARD-scanned).
+      documentation_finding: out.documentation_finding ?? null,
     },
     founder_review_status: consensusEscalate ? "pending" : "approved",
     manual_review_required: consensusEscalate,

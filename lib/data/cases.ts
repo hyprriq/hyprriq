@@ -171,7 +171,8 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r) => {
       if (r.compiled_findings_json && "analyst_reading" in r.compiled_findings_json) {
-        const { analyst_reading: _stripped, ...rest } = r.compiled_findings_json;
+        const rest: Record<string, unknown> = { ...r.compiled_findings_json };
+        delete rest.analyst_reading;
         return { ...r, compiled_findings_json: rest };
       }
       return r;

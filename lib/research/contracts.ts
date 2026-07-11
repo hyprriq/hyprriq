@@ -161,6 +161,7 @@ export interface TrackOutput {
   acquisition_failed?: boolean;                    // Phase 5.1b — pack had 0 sources: do NOT score / write memory; escalate
   llm_failed?: boolean;                            // H2 — model call failed or unparseable: do NOT score / write memory; escalate (mirror of acquisition_failed)
   not_implemented?: boolean;                       // H3 — dimension not built yet: a deliberate ABSENCE — n_a + skipped, never scored, never escalated
+  nothing_to_review?: boolean;                     // Track 4 (OQ-A3) — the dimension is BUILT but this case has nothing for it (zero uploads): an absence, n_a + skipped, never escalated, never soft_fail (the N2 lesson)
   research_identity?: { name: string; alias: string | null }; // H4 — WHO this track actually investigated (Truth & Record: auditable per attempt)
   // H7 (SO-4) — hard-fail consensus record: which veto keys were re-checked, which were dropped for
   // lack of two-pass agreement, and whether the confirmation call itself failed (OQ-A: veto kept +
@@ -184,6 +185,8 @@ export interface TrackOutput {
   // rendered admin-side only this gate; advisory reasoning, NEVER scored — the LLM↔code boundary holds).
   brand_risk_finding?: string;
   analyst_reading?: { most_likely: string; alternative: string; confidence: "high" | "medium" | "low"; what_would_change_my_mind: string };
+  // Track 4 (sub-gate A) — documentation narrative (ships like brand_relationship_finding, HARD-scanned at delivery).
+  documentation_finding?: string;
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that
