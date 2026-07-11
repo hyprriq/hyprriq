@@ -1,0 +1,69 @@
+// Track 4 (H7 OQ-C pattern) — the structured-output schema for documentation-review extraction.
+// Field-for-field mirror of parseTrack4Output; the tolerant parser remains the fallback.
+export const TRACK4_OUTPUT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["evidence_items", "documentation_finding", "analyst_reading", "questions_to_ask", "reasoning_notes", "unknowns"],
+  properties: {
+    evidence_items: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["evidence_id", "brand", "statement", "proposed_weight_key", "supporting_source_ids", "mapping_justification", "counter_evidence", "certainty", "confidence"],
+        properties: {
+          evidence_id: { type: "string" },
+          brand: { type: "string" },
+          statement: { type: "string" },
+          proposed_weight_key: { type: "string" },
+          supporting_source_ids: { type: "array", items: { type: "string" } },
+          mapping_justification: { type: "string" },
+          counter_evidence: { type: "string" },
+          certainty: { type: "string", enum: ["verified", "inferred", "unknown"] },
+          confidence: { type: "string", enum: ["high", "medium", "low"] },
+        },
+      },
+    },
+    documentation_finding: { type: "string" },
+    analyst_reading: {
+      type: "object",
+      additionalProperties: false,
+      required: ["most_likely", "alternative", "confidence", "what_would_change_my_mind"],
+      properties: {
+        most_likely: { type: "string" },
+        alternative: { type: "string" },
+        confidence: { type: "string", enum: ["high", "medium", "low"] },
+        what_would_change_my_mind: { type: "string" },
+      },
+    },
+    questions_to_ask: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["question", "reason", "blocking_weight_key", "priority", "brand"],
+        properties: {
+          question: { type: "string" },
+          reason: { type: "string" },
+          blocking_weight_key: { type: "string" },
+          priority: { type: "string", enum: ["high", "medium", "low"] },
+          brand: { type: "string" },
+        },
+      },
+    },
+    reasoning_notes: { type: "string" },
+    unknowns: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["unknown", "why_unresolvable", "resolvable_by_client"],
+        properties: {
+          unknown: { type: "string" },
+          why_unresolvable: { type: "string" },
+          resolvable_by_client: { type: "boolean" },
+        },
+      },
+    },
+  },
+} as const;
