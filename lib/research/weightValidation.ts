@@ -20,7 +20,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // authority entries for all 12 keys (per the ruled ADR-T1-001 collision audit) and ALL FOUR brand-risk
 // vetoes join the ≥2-distinct-sources class (the confirmed_amazon_restrictions single-source exception
 // REVERSED — no marketplace-observation capability until Keepa). Strictly more conservative.
-export const VALIDATION_VERSION = "1.4.0";
+// 1.5.0 (2026-07-11, founder-signed): the three Keepa keys made firewall-INERT (entries removed +
+// RULED_EXCLUSIONS + track3 code drop) — the ["marketplace"] profiles met MIN via amazon/ebay
+// classification, so a sellercentral snippet could earn +3 prompt-gated-only (the website_fraudulent
+// anti-pattern, positive-key flavor). Strictly more conservative; the Keepa gate ships real entries.
+export const VALIDATION_VERSION = "1.5.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 // Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;
@@ -60,12 +64,14 @@ export const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   // authority/corroboration are enforced here). Keepa keys carry entries NOW (registry lock stays
   // honest) but are inert until the Keepa plugin ships (OQ-A: no pack source can earn them).
   reseller_friendly: ["official_brand", "news"],
-  keepa_stable_no_cliff: ["marketplace"],
-  low_seller_count_stable: ["marketplace"],
+  // keepa_stable_no_cliff / keepa_enforcement_cliff / low_seller_count_stable are deliberately
+  // ABSENT (founder-signed 2026-07-11 — the loa_legitimate pattern): the ["marketplace"] profiles
+  // met MIN via amazon/ebay CLASSIFICATION, so a sellercentral snippet could earn +3 prompt-gated-
+  // only. "No marketplace-observation capability means no key asserting it, veto or positive."
+  // The Keepa plugin gate ships real entries + removes the RULED_EXCLUSIONS rows.
   // An ABSENCE finding cites the pages it examined (the no_connection_found pattern).
   no_enforcement_found: ["official_brand", "news", "forum", "marketplace", "inference"],
   map_policy_present: ["official_brand", "news"],
-  keepa_enforcement_cliff: ["marketplace"],
   brand_enforcement_signals: ["news", "forum", "social", "marketplace"],
   brand_restricts_amazon: ["news", "forum", "marketplace", "official_brand"],
   // The brand's OWN channel policy — nothing softer qualifies (ruled definition).
@@ -85,9 +91,9 @@ export const MIN_AUTHORITY: Record<string, AuthorityScore> = {
   purchases_from_mega_distributor: "low", trade_press_connection: "low",
   claims_authorization_unverified: "low", no_connection_found: "low", grey_market_signals: "low",
   counterfeit_channel: "medium", conflicting_authorization: "medium",
-  // Track 3 (brand_risk_assessment)
-  reseller_friendly: "medium", keepa_stable_no_cliff: "medium", low_seller_count_stable: "medium",
-  no_enforcement_found: "low", map_policy_present: "low", keepa_enforcement_cliff: "medium",
+  // Track 3 (brand_risk_assessment) — keepa keys deliberately absent (see ALLOWED_PROFILES note).
+  reseller_friendly: "medium",
+  no_enforcement_found: "low", map_policy_present: "low",
   brand_enforcement_signals: "low", brand_restricts_amazon: "low",
   b2b_only_confirmed: "high", active_ip_complaints: "medium",
   confirmed_amazon_restrictions: "medium", cease_and_desist_distributed: "low",

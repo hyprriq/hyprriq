@@ -1,6 +1,6 @@
 # SB-3 — Suffix-Aware Zero-Research Fast Path (mini-gate, founder-review spec)
 
-**Status:** 🔴 **DRAFT — AWAITING FOUNDER REVIEW (one SO, two OQs). NO CODE UNTIL RULED.** Sequenced after Track 3 per the ruled order (SB-3 → Tracks 4/5 → security phase → Synthesis).
+**Status:** 🟡 **PARTIAL FOUNDER REVIEW (2026-07-11): SO-1 SIGNED** (the ruled widening of H4 SO-1's "exact" via `entityNameMatch`) · **OQ-B CONFIRMED** (accept the frozen resolver's medium confidence + advisory warning — no second frozen-core signature for a cosmetic advisory) · **OQ-A AWAITING RULING (text delivered to founder). NO CODE until OQ-A is ruled.** The post-Track-3 sweep's findings 1+2+3 landed FIRST per the founder's order (micro-sitting, 2026-07-11) — SB-3 builds next once OQ-A lands.
 **Phase:** the fast-path condition ONLY. NOT in phase: `identityResolver.ts` (frozen — including its provided-path advisory, see OQ-B), the comparator (SB-2, frozen), any fuzzy-tolerance change, Tracks 4/5.
 **Migration:** NONE.
 

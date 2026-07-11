@@ -75,6 +75,27 @@ describe("PG-1 — supplier_identity is projected server-side for the client sur
   });
 });
 
+// ── PG-1 pattern, second field (founder-ruled 2026-07-11, HIGH — before any Track-3 publish):
+// the analyst_reading quartet is ADMIN-ONLY (OQ-D) and "leans harder than the veto-gated findings"
+// (Track 3 AT-1 rider) — it must be structurally absent from the DELIVERED findings payload, not
+// merely unrendered. brand_risk_finding stays (the Track-2-finding analog, HARD-scanned at delivery).
+describe("Track 3 — analyst_reading is stripped from the delivered client findings payload", () => {
+  it("delivered case: compiled_findings_json keeps brand_risk_finding, loses analyst_reading", async () => {
+    maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
+    rowsResult.mockResolvedValueOnce({ data: [
+      { id: "r1", track: "track_3", track_key: "brand_risk_assessment", attempt_number: 1,
+        compiled_findings_json: { signal: "flag", brand_risk_finding: "three-part finding",
+          analyst_reading: { most_likely: "INTERNAL working read", alternative: "a", confidence: "medium", what_would_change_my_mind: "w" } } },
+    ]});
+    const rows = await getCaseFindings("c1");
+    expect(rows).toHaveLength(1);
+    const json = rows[0].compiled_findings_json as Record<string, unknown>;
+    expect(json.brand_risk_finding).toBe("three-part finding");
+    expect(json).not.toHaveProperty("analyst_reading");
+    expect(JSON.stringify(rows)).not.toContain("INTERNAL working read");
+  });
+});
+
 describe("H5 — getCaseFindings is server-gated by status (the N4 payload leak)", () => {
   it("returns [] for a NON-delivered case without even querying the findings table", async () => {
     maybeSingle.mockResolvedValue({ data: { id: "c1", status: "awaiting_review", delivered_attempt: null } });

@@ -26,6 +26,9 @@ import { containsProcurementLanguage } from "@/lib/research/procurementLanguage"
 // Amendment 2); the LLM proposes to the locked brand_risk keys; the firewall validates
 // (all four vetoes corroboration-gated, SO-2 founder-corrected); consensus re-checks any validated
 // veto (SO-3 — the third call site of the shared helper); deriveTrackSignal (unchanged) scores.
+// Founder-signed 2026-07-11 — firewall-inert until the Keepa gate (see weightValidation ALLOWED_PROFILES note).
+const KEEPA_INERT = new Set(["keepa_stable_no_cliff", "keepa_enforcement_cliff", "low_seller_count_stable"]);
+
 export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
   // H7 (OQ-D) — REPLAY: load attempt N's frozen pack instead of live acquisition.
   let pack: EvidencePack;
@@ -138,6 +141,10 @@ export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
     const primaryId = it?.supporting_source_ids.find((id) => byId.has(id));
     const src = primaryId ? byId.get(primaryId) : undefined;
     const profile = src?.provenance.source_profile ?? null;
+    // Deterministic Keepa backstop (founder-signed 2026-07-11; the Track 2 loa_legitimate pattern):
+    // the three Keepa keys never score until the Keepa plugin ships direct marketplace observation,
+    // regardless of what the LLM proposed or the firewall returned. Registry stays honest; code decides.
+    if (v.validated_weight_key && KEEPA_INERT.has(v.validated_weight_key)) { v.validated_weight_key = null; v.gate = "registry"; v.rejection_reason = "registry"; }
     if (v.validated_weight_key) {
       evidence_items.push({
         evidence_id: v.evidence_id,

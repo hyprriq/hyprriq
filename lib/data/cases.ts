@@ -163,5 +163,17 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   if (rows.length === 0) return rows;
   // H1 — the client always sees the DELIVERED attempt once delivered; latest attempt before that.
   const chosen = delivered_attempt ?? Math.max(...rows.map((r) => r.attempt_number ?? 1));
-  return rows.filter((r) => (r.attempt_number ?? 1) === chosen);
+  // Track 3 (founder-ruled 2026-07-11, the PG-1 pattern on a second field) — the analyst_reading
+  // quartet is ADMIN-ONLY (OQ-D) and leans harder than the veto-gated findings (AT-1 rider): strip
+  // it server-side so it is structurally absent from the delivered payload, not merely unrendered.
+  // brand_risk_finding STAYS (the Track-2-finding analog; HARD-scanned at delivery).
+  return rows
+    .filter((r) => (r.attempt_number ?? 1) === chosen)
+    .map((r) => {
+      if (r.compiled_findings_json && "analyst_reading" in r.compiled_findings_json) {
+        const { analyst_reading: _stripped, ...rest } = r.compiled_findings_json;
+        return { ...r, compiled_findings_json: rest };
+      }
+      return r;
+    });
 }

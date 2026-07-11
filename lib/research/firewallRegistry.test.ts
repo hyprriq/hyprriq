@@ -28,6 +28,11 @@ const RULED_EXCLUSIONS: Record<string, string[]> = {
   // relationship, private, unverifiable; it routes to the Compliance Documentation layer). The
   // firewall rejects it by design, so it carries no provenance/authority entries.
   supply_chain_relationship: ["loa_legitimate"],
+  // Founder-signed 2026-07-11 — the Keepa keys are firewall-INERT until the Keepa plugin gate
+  // ships direct marketplace observation ("no marketplace-observation capability means no key
+  // asserting it, veto or positive" — the positive-key twin of the OQ-B ruling). The gate that
+  // builds the plugin authors real entries and REMOVES this exclusion row.
+  brand_risk_assessment: ["keepa_stable_no_cliff", "keepa_enforcement_cliff", "low_seller_count_stable"],
 };
 
 describe("firewall registry coverage lock (H7 — Track 3/4 pre-freeze gate as a failing test)", () => {

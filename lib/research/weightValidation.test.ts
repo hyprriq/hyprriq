@@ -104,6 +104,19 @@ describe("validateWeights firewall", () => {
       expect(deriveTrackSignal("brand_risk_assessment", found).signal).toBe("hard_fail");
     });
   }
+  // ── Keepa inertness (founder-signed 2026-07-11 — "the positive-key twin of the OQ-B ruling: no
+  // marketplace-observation capability means no key asserting it, veto or positive"). The
+  // ["marketplace"] profile met MIN via amazon/ebay classification, so a sellercentral snippet could
+  // earn keepa_stable_no_cliff +3 prompt-gated-only — the website_fraudulent anti-pattern. Entries
+  // removed (loa_legitimate pattern); the Keepa plugin gate ships real ones. ──
+  for (const key of ["keepa_stable_no_cliff", "keepa_enforcement_cliff", "low_seller_count_stable"]) {
+    it(`Keepa key ${key} is firewall-INERT — a marketplace source cannot earn it`, () => {
+      const r = validateWeights({ track: "brand_risk_assessment", sourceProfileById: profiles({ s1: "marketplace", s2: "marketplace" }), proposals: [prop("e1", key, ["s1", "s2"])] });
+      expect(r[0].validated_weight_key).toBeNull();
+      expect(r[0].gate).toBe("provenance");
+    });
+  }
+
   it("Track 3: positive/soft keys validate single-source (corroboration scoped to the vetoes)", () => {
     const r = validateWeights({ track: "brand_risk_assessment", sourceProfileById: profiles({ s1: "official_brand", s2: "news" }), proposals: [
       prop("e1", "reseller_friendly", ["s1"]),
