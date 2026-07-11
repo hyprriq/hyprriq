@@ -1,6 +1,6 @@
 # SB-3 — Suffix-Aware Zero-Research Fast Path (mini-gate, founder-review spec)
 
-**Status:** 🟡 **PARTIAL FOUNDER REVIEW (2026-07-11): SO-1 SIGNED** (the ruled widening of H4 SO-1's "exact" via `entityNameMatch`) · **OQ-B CONFIRMED** (accept the frozen resolver's medium confidence + advisory warning — no second frozen-core signature for a cosmetic advisory) · **OQ-A AWAITING RULING (text delivered to founder). NO CODE until OQ-A is ruled.** The post-Track-3 sweep's findings 1+2+3 landed FIRST per the founder's order (micro-sitting, 2026-07-11) — SB-3 builds next once OQ-A lands.
+**Status:** 🟢 **BUILD AUTHORIZED (founder, 2026-07-11) — SO-1 SIGNED, OQ-A CONFIRMED, OQ-B CONFIRMED (records inline).** One TDD sitting: fast-path condition (suffix-normalized-identical via `entityNameMatch`, ZERO edit-distance), H4 two-sided locks re-locked by test (TD Synexx typo + Medline/medlink still fall to discovery), the OQ-A note, PIPELINE 1.5.0 pin-first. Frozen core untouchable — `entityNameMatch` REUSED not modified, resolver thresholds byte-identical. **STOP before founder's three ATs.** AT-1 fixture reminder (earn #7): the fresh submission resolves CONFIRMED, so its mandatory brand writes to the corpus — pick a brand TD SYNNEX genuinely distributes (Lenovo, Microsoft) so it's TRUE data, no post-hoc strip like nike.
 **Phase:** the fast-path condition ONLY. NOT in phase: `identityResolver.ts` (frozen — including its provided-path advisory, see OQ-B), the comparator (SB-2, frozen), any fuzzy-tolerance change, Tracks 4/5.
 **Migration:** NONE.
 
@@ -30,7 +30,7 @@ after:   nameMatch(vendor_name, providedHost).exact
 
 ## OPEN QUESTIONS — 🔴 UNRULED (recommendations included)
 
-- **OQ-A — record the suffix match?** **Recommendation: yes, cheaply** — `resolution_method` stays `provided` (it IS a provided-website resolution), and `resolution_notes` appends "(name matches domain after corporate-suffix normalization)". Zero contract change, honest record, SQL-greppable for AT-1.
+- **OQ-A — ✅ CONFIRMED (founder, 2026-07-11) as recommended:** `resolution_method` stays `provided` ("it IS a provided-website resolution — the client's website was accepted as given, still true"); `resolution_notes` appends "(name matches domain after corporate-suffix normalization)". The `provided_normalized` enum alternative REJECTED on principle: "a contract change rippling into every stored-record reader for information nothing branches on — the same anti-pattern as SB-2's resolved_name-null rider. **Mechanism goes in notes, not the contract field.**"
 - **OQ-B — the frozen resolver's advisory warning (the honest wrinkle — decide with eyes open).** Branch-1 calls the FROZEN `resolveIdentity` provided path, whose own advisory `nameMatch` is NOT suffix-aware — so a suffix-matched case will carry `identity_confidence: "medium"` plus the advisory "does not appear to match" warning (reviewer-facing, never escalates, never blocks). **Recommendation: ACCEPT it — do not touch the resolver.** The trade vs today is still strictly better on every axis that matters: zero research cost (was 2 LLM calls + serper), NO client note (was a wrong-implying mismatch note), medium stored confidence + an internal advisory (was high confidence bought with two research calls). If the medium/warning noise ever grates, suffix-awareness inside the resolver's advisory is its own future frozen-surface ruling — not an SB-3 passenger. *Alternative (rejected): touch `identityResolver.ts` now — a second frozen-core signature for a cosmetic advisory.*
 
 ## ACCEPTANCE TESTS (founder-run; two-sided)
@@ -41,4 +41,4 @@ after:   nameMatch(vendor_name, providedHost).exact
 
 ## TASK (one; TDD; single commit + docs)
 
-- [ ] Failing tests first (fast-path suffix cases + the H4 two-sided locks + OQ-A note), implement the one condition + note, full verify, `PIPELINE_VERSION` 1.4.0 → 1.5.0 (resolution behavior changes for NEW attempts — pin test RED-first; founder may veto the bump), tracker/spec records, push staging. **STOP — founder runs AT-1..3 → SB-3 FROZEN.**
+- [x] Failing tests first (fast-path suffix cases + the H4 two-sided locks + OQ-A note), implement the one condition + note, full verify, `PIPELINE_VERSION` 1.4.0 → 1.5.0 (resolution behavior changes for NEW attempts — pin test RED-first; founder may veto the bump), tracker/spec records, push staging. **STOP — founder runs AT-1..3 → SB-3 FROZEN.**

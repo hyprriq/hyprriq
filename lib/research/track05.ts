@@ -6,10 +6,10 @@ import { runModel } from "@/lib/ai/runModel";
 import { buildIdentityRequests, buildDomainIdentityRequests } from "@/lib/research/tracks/track05.queries";
 import { buildIdentityPrompt, parseIdentityOutput } from "@/lib/research/identity.prompt";
 import { resolveIdentity, type IdentityCandidate } from "@/lib/research/identityResolver";
-import { canonicalDomain } from "@/lib/research/host";
+import { canonicalDomain, domainLabel } from "@/lib/research/host";
 import { nameMatch } from "@/lib/research/nameMatch";
 import { normalizeBrandToken } from "@/lib/research/source_profile";
-import { decideWebsiteAnchored, type EntityResolution } from "@/lib/research/websiteAnchor";
+import { decideWebsiteAnchored, entityNameMatch, type EntityResolution } from "@/lib/research/websiteAnchor";
 import type { ResearchQuestion } from "@/lib/research/acquisition/types";
 import type { RawSource } from "@/lib/research/acquisition/types";
 
@@ -136,14 +136,23 @@ export async function resolveSupplierIdentity(ctx: TrackContext): Promise<Suppli
   const vendor_name = ctx.vendor_name ?? "";
   const providedHost = ctx.vendor_website ? canonicalDomain(ctx.vendor_website) : null;
 
-  // ── Branch 1 — a parseable website that EXACTLY matches the name → zero-research fast-path. ──
-  // H4 (SO-1): exact match only. A FUZZY near-miss (a client typo — or a DIFFERENT company one
-  // letter away: Medline vs medlink.com) must not silently bind with high confidence; it falls
-  // through to the Spec-B website-anchored discovery below, which resolves the real entity and
-  // records the input-consistency signal (never fraud, never a verdict penalty).
-  if (providedHost && nameMatch(vendor_name, providedHost).exact) {
-    const identity = resolveIdentity({ vendor_name, vendor_website: ctx.vendor_website, candidates: [] });
-    return { ...withConsistency(identity, identity.identity_confidence, "high"), resolution_research: [] };
+  // ── Branch 1 — a parseable website whose name matches → zero-research fast-path. ──
+  // H4 (SO-1): no fuzzy tolerance. A near-miss (a client typo — or a DIFFERENT company one letter
+  // away: Medline vs medlink.com) must not silently bind; it falls through to Spec-B discovery.
+  // SB-3 (SO-1, founder-signed 2026-07-11): "exact" WIDENED from token-identical to
+  // suffix-normalized-identical via SB-2's entityNameMatch — ZERO edit-distance, legal-suffix noise
+  // stops counting as a difference ("TD SYNNEX Corporation" + tdsynnex.com no longer pays two
+  // research calls and no longer draws a mismatch client note for a CORRECT input). The H4
+  // anti-silent-bind guarantee holds: different stems still verify via discovery.
+  if (providedHost) {
+    const exact = nameMatch(vendor_name, providedHost).exact;
+    const suffixMatch = !exact && entityNameMatch(vendor_name, domainLabel(providedHost));
+    if (exact || suffixMatch) {
+      const identity = resolveIdentity({ vendor_name, vendor_website: ctx.vendor_website, candidates: [] });
+      // OQ-A (founder-confirmed) — mechanism goes in NOTES, not the contract field.
+      if (suffixMatch) identity.resolution_notes += " (name matches domain after corporate-suffix normalization)";
+      return { ...withConsistency(identity, identity.identity_confidence, "high"), resolution_research: [] };
+    }
   }
 
   // ── Spec-B — website present but does NOT match the name → website-anchored discovery. ──

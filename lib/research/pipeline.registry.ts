@@ -45,7 +45,10 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // 1.4.0 (2026-07-10, Track 3, founder-approved): brand_risk_assessment LIVE for every plan —
 // registry entries + ruled collision audit (firewall 1.4.0), consensus third site, rubric g003-1.1.0,
 // analyst quartet stored; the H3 ceiling KEPT per SO-5 (self-retiring, guards n_a cases forever).
-export const PIPELINE_VERSION = "1.4.0";
+// 1.5.0 (2026-07-11, SB-3, founder-approved): the zero-research fast path widened to
+// suffix-normalized-identical (entityNameMatch, zero edit-distance) — a legal name over its own
+// domain no longer pays two research calls or draws a mismatch note. Companion: firewall 1.5.0.
+export const PIPELINE_VERSION = "1.5.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

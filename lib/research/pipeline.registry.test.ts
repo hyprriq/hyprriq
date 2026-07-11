@@ -12,7 +12,9 @@ describe("pipeline registry", () => {
     // OQ-B copy + carried audits change resolution decisions for NEW attempts.
     // 1.3.0 → 1.4.0 (Track 3, 2026-07-10, founder-approved): brand_risk_assessment goes LIVE —
     // a scoring dimension is added to every plan's pipeline for NEW attempts.
-    expect(PIPELINE_VERSION).toBe("1.4.0");
+    // 1.4.0 → 1.5.0 (SB-3, 2026-07-11, founder-approved): the zero-research fast path widened to
+    // suffix-normalized-identical — resolution behavior changes for NEW attempts.
+    expect(PIPELINE_VERSION).toBe("1.5.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {

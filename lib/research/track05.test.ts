@@ -162,7 +162,7 @@ describe("SB-1 (SO-1) — domain-research anchor match", () => {
     runModel
       .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
       .mockResolvedValueOnce(model({ candidates: [] }));                             // name resolves nothing → not ambiguous
-    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Distribution", vendor_website: "tdsynnex.com" }));
     expect(r.resolution_method).toBe("resolved_from_website");
     expect(r.resolved_name).toBe("TD SYNNEX Corporation");
     expect(r.resolved_domain).toBe("tdsynnex.com");
@@ -297,13 +297,13 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     runModel
       .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
       .mockRejectedValueOnce(new Error("boom"));
-    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Distribution", vendor_website: "tdsynnex.com" }));
     expect(r.identity_unconfirmed).toBe(true);
     expect(r.resolved_domain).toBeNull();
     expect(r.identity_discrepancy).toBeNull();                     // OQ-A applies here too
     expect(r.resolution_research).toMatchObject([
       { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
-      { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: true },
+      { subject: "TD Synnex Distribution", role: "name", sources: 1, llm_failed: true },
     ]);
     expect(r.resolution_notes).toContain("ambiguity check");
   });
@@ -327,10 +327,10 @@ describe("SB-1 (SO-2) — Track 0.5 llm_failed instrumentation", () => {
     runModel
       .mockResolvedValueOnce(model({ candidates: [{ domain: "tdsynnex.com", entity_name: "TD SYNNEX Corporation", supporting_source_ids: ["src_0"] }] }))
       .mockResolvedValueOnce(model({ candidates: [] }));
-    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Corp", vendor_website: "tdsynnex.com" }));
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex Distribution", vendor_website: "tdsynnex.com" }));
     expect(r.resolution_research).toMatchObject([
       { subject: "tdsynnex.com", role: "website", sources: 1, llm_failed: false },
-      { subject: "TD Synnex Corp", role: "name", sources: 1, llm_failed: false },
+      { subject: "TD Synnex Distribution", role: "name", sources: 1, llm_failed: false },
     ]);
   });
 });
@@ -374,6 +374,47 @@ describe("SB-2 (SO-4/OQ-C) — carried audits + unresolved-notes clarifier", () 
     const un = await resolveSupplierIdentity(ctx({ vendor_name: "Zzqxwv Nonexistent Trading Co" }));
     expect(un.identity_unconfirmed).toBe(true);
     expect(un.resolution_notes).toContain("research subject, not a confirmed resolution");
+  });
+});
+
+// ── SB-3 (SO-1, founder-signed) — the fast path's "exact" widened to suffix-normalized-identical
+// via SB-2's entityNameMatch (ZERO edit-distance: legal-suffix noise stops counting as a difference;
+// the H4 anti-silent-bind guarantee holds — typos and different-stem companies still verify).
+describe("SB-3 — suffix-aware zero-research fast path", () => {
+  it("the recorded irony dies: 'TD SYNNEX Corporation' + tdsynnex.com takes the fast path, zero research", async () => {
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD SYNNEX Corporation", vendor_website: "https://www.tdsynnex.com" }));
+    expect(r.resolution_method).toBe("provided");
+    expect(r.resolution_research).toEqual([]);                 // the cost win, SQL-visible
+    expect(r.identity_discrepancy ?? null).toBeNull();          // no mismatch note for a CORRECT input
+    expect(r.resolution_notes).toContain("corporate-suffix normalization"); // OQ-A record
+    expect(gather).not.toHaveBeenCalled();
+    expect(runModel).not.toHaveBeenCalled();
+  });
+
+  it("multi-suffix names strip cleanly: 'Acme Co Ltd' + acme.com fast-paths", async () => {
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "Acme Co Ltd", vendor_website: "acme.com" }));
+    expect(r.resolution_method).toBe("provided");
+    expect(gather).not.toHaveBeenCalled();
+  });
+
+  it("a token-exact match records NO normalization note (OQ-A scopes the note to the suffix path)", async () => {
+    const r = await resolveSupplierIdentity(ctx({ vendor_name: "TD Synnex", vendor_website: "https://tdsynnex.com" }));
+    expect(r.resolution_method).toBe("provided");
+    expect(r.resolution_notes).not.toContain("corporate-suffix normalization");
+  });
+
+  it("H4 LOCK re-proven: the TD Synexx TYPO still verifies via discovery (zero edit tolerance)", async () => {
+    gather.mockResolvedValue(pack([]));
+    runModel.mockResolvedValue(model({ _parse_error: true }));
+    await resolveSupplierIdentity(ctx({ vendor_name: "TD Synexx", vendor_website: "tdsynnex.com" }));
+    expect(gather).toHaveBeenCalled(); // stem differs — no silent bind
+  });
+
+  it("H4 LOCK re-proven: Medline + medlink.com (different-stem company) still verifies via discovery", async () => {
+    gather.mockResolvedValue(pack([]));
+    runModel.mockResolvedValue(model({ _parse_error: true }));
+    await resolveSupplierIdentity(ctx({ vendor_name: "Medline Inc", vendor_website: "https://medlink.com" }));
+    expect(gather).toHaveBeenCalled(); // suffix strip does not rescue a different stem
   });
 });
 
