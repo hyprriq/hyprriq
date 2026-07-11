@@ -1,6 +1,6 @@
 # PG-1 — supplier_identity Client-Surface Projection (micro-gate, founder-review spec)
 
-**Status:** 🔴 **DRAFT — AWAITING FOUNDER REVIEW (one SO, one OQ). NO CODE UNTIL RULED.** Sequenced BEFORE Track 3 (founder-ruled 2026-07-10).
+**Status:** ✅ **PG-1 FROZEN (founder-declared, 2026-07-11) — ALL THREE ATs PASSED.** **AT-1 ✅** two-sided DevTools proof: `resolution_research` returns NO MATCHES on the client case page (61 requests / 2.4MB searched) and IS present on the admin page with full audits — the same field actively stripped client-side, retained admin-side. **The N4-class leak is closed for supplier_identity.** **AT-2 ✅** admin view unchanged. **AT-3 ✅** rejudge determinism clean ("projection touched transport, not judgment"). Ruling-2 condition (confirm/correct invitation lock, all five note kinds) in and green. Build record: commit 32fe228 (projection) + 652e959 (invitation lock); OQ-A ruled KEEP pre-delivery render (record below). Original draft header: Sequenced BEFORE Track 3 (founder-ruled 2026-07-10).
 **Phase:** the projection ONLY. NOT in phase: RLS suite, env separation, any other data-layer read (admin unaffected), rendering changes.
 **Migration:** NONE.
 
