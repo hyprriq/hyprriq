@@ -4,7 +4,7 @@
 **Read this first each session.** This is the single source of truth for where things stand and what's next. Save to `docs/`.
 
 **Legend:** 🔴 OPEN · 🟡 IN-PROGRESS · ⛔ BLOCKED · ✅ DONE · 🗄️ DEFERRED
-**Last updated: 2026-07-11. H1–H7 + SB-1 + SB-2 + PG-1 + TRACK 3 ALL FROZEN — brand risk is a live weighted signal; all four verdicts are evidence-reachable for the first time. This file, at `portal/docs/HyprrIQ_OPEN_ITEMS.md`, is the SINGLE SOURCE OF TRUTH — version-locked in git. The "CURRENT STATE + SEQUENCE" section at the BOTTOM governs sequencing (ruled order: → SB-3 → Tracks 4/5 → pre-launch security phase incl. ADR-008 caching REQUIREMENT → Synthesis). Next: SB-3 BUILT (2026-07-11, all rulings in; commit 8d76d4a) — founder runs AT-1..3 -> SB-3 frozen -> Tracks 4/5.**
+**Last updated: 2026-07-11. H1–H7 + SB-1 + SB-2 + PG-1 + TRACK 3 ALL FROZEN — brand risk is a live weighted signal; all four verdicts are evidence-reachable for the first time. This file, at `portal/docs/HyprrIQ_OPEN_ITEMS.md`, is the SINGLE SOURCE OF TRUTH — version-locked in git. The "CURRENT STATE + SEQUENCE" section at the BOTTOM governs sequencing (ruled order: → SB-3 → Tracks 4/5 → pre-launch security phase incl. ADR-008 caching REQUIREMENT → Synthesis). SB-3 FROZEN 2026-07-11 (all ATs; AWI-2607-028; identity foundation COMPLETE: SB-1+SB-2+SB-3 - every identity path coherent, honest, correctly-costed; OQ-B advisory rider logged with reading-layer revisit condition). Next: Tracks 4/5 spec DRAFTED, awaiting founder review - NO code.**
 
 ---
 
