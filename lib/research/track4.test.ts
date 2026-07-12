@@ -104,6 +104,78 @@ describe("runTrack4 (LIVE — replaces the H3 stub)", () => {
     expect((await runTrack4(ctx)).llm_failed).toBe(true);
   });
 
+  // ── Pre-freeze fix (founder-ruled 2026-07-12, from A1/Mazel — the first live case). Signal-level
+  // assertions close the test hole that let the A1 interaction ship untested. ──
+  const derived = (out: { track_validation_report?: Record<string, unknown> }) => out.track_validation_report?.derived_signal;
+
+  it("(a) single clean document → infer (invoice_full = 4; signal asserted, not just items)", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel.mockResolvedValue(model(payload([item()])));
+    const out = await runTrack4(ctx);
+    expect(derived(out)).toBe("infer");
+  });
+
+  it("(b) single document with a real, uncontested non-veto defect → flag", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    runModel.mockResolvedValue(model(payload([item({ proposed_weight_key: "document_missing_fields" })])));
+    const out = await runTrack4(ctx);
+    expect(derived(out)).toBe("flag");
+    expect(out.evidence_items).toHaveLength(1);
+  });
+
+  it("FIX 1 — the A1 path: a consensus-DROPPED veto must not leave its same-source suppression behind", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    const three = [
+      item({ evidence_id: "EV-001", proposed_weight_key: "invoice_full" }),
+      item({ evidence_id: "EV-002", proposed_weight_key: "document_missing_fields" }),
+      item({ evidence_id: "EV-004", proposed_weight_key: "document_alteration" }), // the corrupted-text-layer veto
+    ];
+    runModel
+      .mockResolvedValueOnce(model(payload(three)))
+      .mockResolvedValueOnce(model(payload(three.slice(0, 2)))); // pass 2: veto not re-proposed → consensus drops it
+    const out = await runTrack4(ctx);
+    // The suppressed evidence is RESTORED once the veto that killed it is revoked:
+    const keys = out.evidence_items.map((e) => e.weight_key).sort();
+    expect(keys).toEqual(["document_missing_fields", "invoice_full"]);
+    // The signal reflects the REAL evidence (4 − 2 = 2 → flag), never the empty-set soft_fail:
+    expect(derived(out)).toBe("flag");
+    expect(derived(out)).not.toBe("soft_fail");
+    // The audit trail keeps the truth: the veto's consensus rejection stays on the record.
+    expect(out.weight_validation?.some((v) => v.rejection_reason === "consensus" && v.proposed_weight_key === "document_alteration")).toBe(true);
+    expect(out.hard_fail_consensus).toMatchObject({ dropped: ["document_alteration"], second_call_failed: false });
+  });
+
+  it("a consensus-CONFIRMED veto still suppresses coexisting same-source findings (the rule is untouched)", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf")]));
+    const three = [
+      item({ evidence_id: "EV-001", proposed_weight_key: "invoice_full" }),
+      item({ evidence_id: "EV-004", proposed_weight_key: "document_alteration" }),
+    ];
+    runModel.mockResolvedValueOnce(model(payload(three))).mockResolvedValueOnce(model(payload([three[1]])));
+    const out = await runTrack4(ctx);
+    expect(out.evidence_items.map((e) => e.weight_key)).toEqual(["document_alteration"]); // veto real → suppression stands
+    expect(derived(out)).toBe("hard_fail");
+  });
+
+  it("(d) multi-document clean → infer; FIX 2 lock: distinct document sources count and lift the cap", async () => {
+    loadDocumentPack.mockResolvedValue(packOf([docSrc("cases/c1/invoice.pdf"), docSrc("cases/c1/po.pdf")]));
+    runModel.mockResolvedValue(model(payload([
+      item({ evidence_id: "EV-001", proposed_weight_key: "invoice_full", supporting_source_ids: ["src_0"] }),
+      item({ evidence_id: "EV-002", proposed_weight_key: "po_on_letterhead", supporting_source_ids: ["src_1"] }),
+    ])));
+    const out = await runTrack4(ctx);
+    expect(derived(out)).toBe("infer"); // 4 + 3 = 7
+    expect(out.evidence_items.map((e) => e.source_url).sort()).toEqual(["cases/c1/invoice.pdf", "cases/c1/po.pdf"]);
+  });
+
+  it("FIX 2 lock: a PASS shape caps on one document (distinct_sources 1) and stands on two (distinct_sources 2)", async () => {
+    const { applySourceDiversityCap } = await import("./sourceDiversity");
+    const one = applySourceDiversityCap("pass", [{ source_url: "user_a/c1/invoice.pdf" }, { source_url: "user_a/c1/invoice.pdf" }]);
+    expect(one).toMatchObject({ signal: "infer", capped: true, distinct_sources: 1 });
+    const two = applySourceDiversityCap("pass", [{ source_url: "user_a/c1/invoice.pdf" }, { source_url: "user_a/c1/loa.pdf" }]);
+    expect(two).toMatchObject({ signal: "pass", capped: false, distinct_sources: 2 });
+  });
+
   it("H7 replay: loads the stored pack; the document pack builder is never called", async () => {
     getEvidencePack.mockResolvedValue({ pack: packOf([docSrc("cases/c1/invoice.pdf")]).pack, error: null });
     runModel.mockResolvedValue(model(payload([item()])));

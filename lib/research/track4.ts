@@ -86,7 +86,7 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
   }
   const llmFailed = parsed.parse_failed === true;
 
-  const validations = validateWeights({
+  let validations = validateWeights({
     track: "documentation_review",
     sourceProfileById,
     proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
@@ -118,6 +118,27 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
           v.rejection_reason = "consensus";
         }
       }
+      // ── FIX 1 (founder-ruled pre-freeze, 2026-07-12 — from A1/Mazel, the first live case). In
+      // single-document mode the ONE document is the sole source of everything, so the firewall's
+      // same-source hard-fail-wins rule suppresses ALL coexisting findings whenever a veto
+      // validates. A veto that consensus then REVOKES must not leave that suppression behind:
+      // re-validate the SAME proposals WITHOUT the consensus-dropped items — the same frozen
+      // firewall, a pure function, judging the world as if the revoked veto had never validated —
+      // and adopt that result. The dropped vetoes keep their consensus rejection records (the
+      // audit trail stays truthful); a consensus-CONFIRMED veto is not re-run, so its suppression
+      // stands. Track-4-scoped: the shared firewall rule itself is untouched (correct for
+      // multi-source web tracks). The empty-set → soft_fail floor is untouched — the bug was the
+      // set being wrongly emptied, not the floor.
+      const droppedRecords = validations.filter((v) => v.rejection_reason === "consensus");
+      const droppedIds = new Set(droppedRecords.map((v) => v.evidence_id));
+      const rerun = validateWeights({
+        track: "documentation_review",
+        sourceProfileById,
+        proposals: parsed.items
+          .filter((it) => !droppedIds.has(it.evidence_id))
+          .map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
+      });
+      validations = [...rerun, ...droppedRecords];
     }
   }
 
