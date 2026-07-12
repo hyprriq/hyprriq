@@ -15,6 +15,7 @@ import { enrichWithGraph } from "@/lib/research/graph";
 import { runSynthesis } from "@/lib/research/synthesisEngine";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
+import { applyDocumentationNoOverride, type NoOverrideResult } from "@/lib/research/verdictNoOverride";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
@@ -271,11 +272,14 @@ export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutpu
 // and reason ride along for the admin explanation. confidence_0_15 stays evidence-derived.
 export function stageVerdict(
   signals: Partial<Record<TrackKey, TrackSignal>>, synthesis: Synthesis,
-): Verdict & Omit<CeilingResult, "verdict"> {
+): Verdict & Omit<CeilingResult, "verdict"> & Omit<NoOverrideResult, "verdict"> {
   const verdict = computeVerdict(signals, synthesis);
   buildReport(synthesis, verdict); // payload computed here; Phase H renders the PDF from it.
-  const ceiled = applyVerdictCeiling(verdict, signals);
-  return { ...verdict, ...ceiled };
+  // Documentation no-override (founder-ruled 2026-07-12; shared fn, all three verdict sites):
+  // documents can raise concern, never manufacture comfort — applied BEFORE the ceiling.
+  const noOverride = applyDocumentationNoOverride(verdict, signals, synthesis);
+  const ceiled = applyVerdictCeiling({ verdict: noOverride.verdict }, signals);
+  return { ...verdict, no_override_applied: noOverride.no_override_applied, research_only_verdict: noOverride.research_only_verdict, ...ceiled };
 }
 
 // Institutional memory (ADR-G006/G007, H6): EVERY completed attempt appends one intelligence_events

@@ -14,6 +14,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { deriveTrackSignal } from "@/lib/research/signals";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
+import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
 import type { TrackKey } from "@/lib/constants/tracks";
 import type { TrackSignal, SynthesisOutput, EvidenceItem } from "@/lib/research/contracts";
 
@@ -63,10 +64,13 @@ async function main() {
   const { data: synth } = await supabaseAdmin.from("case_synthesis").select("contradictions")
     .eq("case_id", caseId).eq("attempt_number", attempt).is("deleted_at", null).maybeSingle();
   const contradictions = (synth?.contradictions as SynthesisOutput["module_4_contradictions"] | null) ?? [];
-  const raw = computeVerdict(signals, { ...EMPTY_SYNTH, module_4_contradictions: contradictions });
-  // H3 — the ceiling is applied HERE exactly as in stageVerdict and the admin viewModel (one
-  // shared fn, three sites): the re-derived verdict must equal what the pipeline stored.
-  const ceiled = applyVerdictCeiling(raw, signals);
+  const synthUsed = { ...EMPTY_SYNTH, module_4_contradictions: contradictions };
+  const raw = computeVerdict(signals, synthUsed);
+  // H3 — the ceiling AND the documentation no-override (founder-ruled 2026-07-12) are applied
+  // HERE exactly as in stageVerdict and the admin viewModel (one shared fn each, three sites):
+  // the re-derived verdict must equal what the pipeline stored.
+  const noOverride = applyDocumentationNoOverride(raw, signals, synthUsed);
+  const ceiled = applyVerdictCeiling({ verdict: noOverride.verdict }, signals);
 
   const { data: c } = await supabaseAdmin.from("cases").select("verdict, status, delivered_attempt").eq("id", caseId).maybeSingle();
   const verdictComparable = c?.delivered_attempt != null ? c.delivered_attempt === attempt : true;

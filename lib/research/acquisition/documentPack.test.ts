@@ -75,6 +75,16 @@ describe("loadDocumentPack", () => {
     expect(unreadable[0].file_name).toBe("scan.jpg");
   });
 
+  it("FIVE documents → five distinct sources, each carrying its own content (the multi-doc front door)", async () => {
+    rows.mockResolvedValue({ data: [1, 2, 3, 4, 5].map((n) =>
+      file({ id: `f${n}`, file_name: `doc${n}.pdf`, storage_path: `cases/c1/doc${n}.pdf`, ocr_extracted_text: `DOC ${n} CONTENT`, ocr_status: "complete" })), error: null });
+    const { pack, unreadable } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(5);
+    expect(new Set(pack.sources.map((s) => s.url)).size).toBe(5); // distinct pseudo-URLs → distinct sources downstream
+    expect(pack.sources.map((s) => s.snippet)).toEqual(expect.arrayContaining(["DOC 1 CONTENT", "DOC 5 CONTENT"]));
+    expect(unreadable).toHaveLength(0);
+  });
+
   it("zero uploads → empty pack (the OQ-A3 absence shape starts here)", async () => {
     rows.mockResolvedValue({ data: [], error: null });
     const { pack, unreadable } = await loadDocumentPack("c1");

@@ -7,6 +7,7 @@ import type {
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
+import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
 import { assertionAdvisories } from "@/lib/utils/banned-language";
 import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
 import { brandFindingFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
@@ -114,10 +115,12 @@ export function buildVerdictViewModel(input: {
   }
 
   const engineComplete = synthesis !== null;
-  // H3 — the ceiling is applied HERE exactly as in the pipeline's stageVerdict and the rejudge
-  // script (one shared fn, three sites) so the displayed verdict always equals cases.verdict.
+  // H3 — the ceiling (and the documentation no-override, founder-ruled 2026-07-12) are applied
+  // HERE exactly as in the pipeline's stageVerdict and the rejudge script (one shared fn each,
+  // three sites) so the displayed verdict always equals cases.verdict.
   const rawVerdict = engineComplete ? computeVerdict(signals, synthesis) : null;
-  const ceiling = rawVerdict ? applyVerdictCeiling(rawVerdict, signals) : null;
+  const noOverride = rawVerdict && synthesis ? applyDocumentationNoOverride(rawVerdict, signals, synthesis) : null;
+  const ceiling = rawVerdict ? applyVerdictCeiling({ verdict: noOverride?.verdict ?? rawVerdict.verdict }, signals) : null;
   const verdict = rawVerdict && ceiling ? { ...rawVerdict, verdict: ceiling.verdict } : null;
 
   const tracks: TrackIntelView[] = findingRows.map((r) => ({

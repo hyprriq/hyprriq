@@ -9,6 +9,7 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 import { inngest } from "@/lib/inngest/client";
+import { fileCountError } from "@/lib/constants/uploads";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
 
@@ -37,9 +38,15 @@ export async function POST(req: Request) {
   } catch {
     /* invalid -> empty */
   }
-  const file = form.get("file");
+  // Multi-document intake (founder-ruled 2026-07-12): up to MAX_CASE_DOCUMENTS files, optional as
+  // ever. The cap is validated HERE, pre-charge — never a post-charge truncation.
+  const files = form.getAll("file").filter((f): f is File => f instanceof Blob && f.size > 0);
 
   // ---- validation ----
+  const countErr = fileCountError(files.length);
+  if (countErr) {
+    return NextResponse.json({ error: countErr }, { status: 400 });
+  }
   if (!vendorName) {
     return NextResponse.json({ error: "Supplier name is required." }, { status: 400 });
   }
@@ -121,15 +128,16 @@ export async function POST(req: Request) {
     );
   }
 
-  // ---- optional file upload (non-fatal) ----
-  if (file && file instanceof Blob && file.size > 0) {
+  // ---- optional file uploads (non-fatal, per file; count validated pre-charge above) ----
+  for (const [idx, f] of files.entries()) {
     try {
-      const name = "name" in file ? String((file as File).name) : "upload";
-      const path = `${userId}/${created.id}/${Date.now()}-${name}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
+      const name = "name" in f ? String((f as File).name) : "upload";
+      // idx in the path keeps same-millisecond uploads collision-free.
+      const path = `${userId}/${created.id}/${Date.now()}-${idx}-${name}`;
+      const buffer = Buffer.from(await f.arrayBuffer());
       const { error: upErr } = await supabaseAdmin.storage
         .from("case-documents")
-        .upload(path, buffer, { contentType: file.type || "application/octet-stream" });
+        .upload(path, buffer, { contentType: f.type || "application/octet-stream" });
       if (!upErr) {
         await supabaseAdmin.from("uploaded_files").insert({
           case_id: created.id,
@@ -137,11 +145,11 @@ export async function POST(req: Request) {
           file_name: name,
           file_type: fileType(name),
           storage_path: path,
-          file_size_bytes: file.size,
+          file_size_bytes: f.size,
         });
       }
     } catch {
-      // file upload is best-effort; the case is already created and charged.
+      // each file upload is best-effort; the case is already created and charged.
     }
   }
 

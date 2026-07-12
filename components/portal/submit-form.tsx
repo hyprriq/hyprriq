@@ -18,6 +18,8 @@ type Result = {
   remaining_balance: number;
 };
 
+import { fileCountError } from "@/lib/constants/uploads";
+
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Shared validation for both the button and drag-drop paths.
 function validateFile(f: File): string | null {
@@ -43,7 +45,7 @@ export function SubmitForm({
   const [brands, setBrands] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [notes, setNotes] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,23 +56,37 @@ export function SubmitForm({
   const remainingAfter = creditsAvailable - cost;
   // When no document is uploaded, the typed notes are the ONLY evidence we have,
   // so they become required (conditional requirement).
-  const notesRequired = !file;
-  const notesOk = file ? true : notes.trim().length > 0;
+  const notesRequired = files.length === 0;
+  const notesOk = files.length > 0 ? true : notes.trim().length > 0;
   const canSubmit = vendor.trim() !== "" && brands.length > 0 && notesOk && remainingAfter >= 0;
 
-  function handleFile(f: File | null) {
-    if (!f) {
-      setFile(null);
-      setFileError(null);
-      return;
+  // Multi-document intake (founder-ruled 2026-07-12): the framing stays optional with NO "up to N"
+  // hints — the limit is a silent guardrail that surfaces only when a sixth file is attempted,
+  // quietly (fileCountError: one shared constant + message with the submit route).
+  function addFiles(incoming: FileList | File[] | null) {
+    if (!incoming || incoming.length === 0) return;
+    const additions: File[] = [];
+    for (const f of Array.from(incoming)) {
+      const err = validateFile(f);
+      if (err) {
+        setFileError(err);
+        return;
+      }
+      additions.push(f);
     }
-    const err = validateFile(f);
-    if (err) {
-      setFileError(err);
+    const next = [...files, ...additions];
+    const countErr = fileCountError(next.length);
+    if (countErr) {
+      setFileError(countErr);
       return;
     }
     setFileError(null);
-    setFile(f);
+    setFiles(next);
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFileError(null);
   }
 
   function addBrand() {
@@ -100,7 +116,7 @@ export function SubmitForm({
       fd.set("marketplace", marketplace);
       fd.set("client_notes", notes.trim());
       fd.set("brands", JSON.stringify(brands));
-      if (file) fd.set("file", file);
+      for (const f of files) fd.append("file", f);
 
       const res = await fetch("/api/cases/submit", { method: "POST", body: fd });
       const data = await res.json();
@@ -128,7 +144,7 @@ export function SubmitForm({
     setBrands([]);
     setDraft("");
     setNotes("");
-    setFile(null);
+    setFiles([]);
     setFileError(null);
     setError(null);
   }
@@ -318,7 +334,7 @@ export function SubmitForm({
                 onDrop={(e) => {
                   e.preventDefault();
                   setDragOver(false);
-                  handleFile(e.dataTransfer.files?.[0] ?? null);
+                  addFiles(e.dataTransfer.files ?? null);
                 }}
                 className={`mt-1 flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-4 transition-colors ${
                   dragOver ? "border-brand bg-brand-tint" : "border-line-strong bg-base"
@@ -327,25 +343,33 @@ export function SubmitForm({
                 <input
                   id="case-file"
                   type="file"
+                  multiple
                   accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
                   className="sr-only"
                 />
                 <label
                   htmlFor="case-file"
                   className="cursor-pointer rounded-md bg-brand px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
                 >
-                  Choose file
+                  {files.length ? "Add file" : "Choose file"}
                 </label>
                 <span className="min-w-0 flex-1 truncate text-[13px] text-ink-2">
-                  {file ? file.name : "or drag & drop here — PDF, JPG, PNG · max 10MB"}
+                  {files.length === 0 && "or drag & drop here — PDF, JPG, PNG · max 10MB"}
                 </span>
-                {file && (
-                  <button type="button" onClick={() => handleFile(null)} className="text-[13px] font-semibold text-muted hover:text-ink">
-                    Remove
-                  </button>
-                )}
               </div>
+              {files.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {files.map((f, i) => (
+                    <li key={`${f.name}-${i}`} className="flex items-center gap-3 text-[13px] text-ink-2">
+                      <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                      <button type="button" onClick={() => removeFile(i)} className="font-semibold text-muted hover:text-ink">
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {fileError && <p className="mt-1 text-[13px] text-deny-ink">{fileError}</p>}
             </div>
 
@@ -386,7 +410,7 @@ export function SubmitForm({
               {website && <Row label="Website" value={website} />}
               <Row label="Marketplace" value={MARKETPLACES.find((m) => m.value === marketplace)?.label ?? marketplace} />
               <Row label="Brands" value={brands.join(", ") || "—"} />
-              {file && <Row label="Document" value={file.name} />}
+              {files.length > 0 && <Row label={files.length === 1 ? "Document" : "Documents"} value={files.map((f) => f.name).join(", ")} />}
               {notes && <Row label="Notes" value={notes} />}
             </dl>
             <CreditImpact brands={brands.length} cost={cost} remainingAfter={remainingAfter} />
