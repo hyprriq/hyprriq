@@ -51,7 +51,13 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // 1.6.0 (2026-07-11, Track 4 sub-gate A, founder-approved): documentation_review LIVE — the
 // document-pack acquisition mode (frozen packs carry extracted content), the nothing_to_review
 // absence branch (OQ-A3), consensus fourth call site. Companion: firewall 1.6.0.
-export const PIPELINE_VERSION = "1.6.0";
+// 1.7.0 (2026-07-14, Track 5 sub-gate B, founder-ruled SO-B1): sourcing_logic LIVE as the
+// NON-VOTING flag emitter — derived-only arbitration over this attempt's stored track outputs
+// (OQ-B3), m4c-1.0.0 contract-frozen contradiction records for Module 4 (OQ-B2), the structural
+// non_voting branch (signal n_a by construction). Verdicts byte-identical with Track 5 on vs off
+// (AT-B1) — the bump records a new pipeline SHAPE, not a judgment change. NO companion firewall
+// bump: Track 5 ships zero firewall config (no weight keys by design).
+export const PIPELINE_VERSION = "1.7.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

@@ -174,8 +174,9 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   return rows
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r) => {
-      if (r.compiled_findings_json && ADMIN_ONLY_FIELDS.some((f) => f in r.compiled_findings_json)) {
-        const rest: Record<string, unknown> = { ...r.compiled_findings_json };
+      const cf = r.compiled_findings_json;
+      if (cf && ADMIN_ONLY_FIELDS.some((f) => f in cf)) {
+        const rest: Record<string, unknown> = { ...cf };
         for (const f of ADMIN_ONLY_FIELDS) delete rest[f];
         return { ...r, compiled_findings_json: rest };
       }
