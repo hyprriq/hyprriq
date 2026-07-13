@@ -33,6 +33,26 @@ describe("Track 4 prompt (ruled law verbatim)", () => {
     expect(system).toMatch(/absence is neutral/i);
   });
 
+  it("carries the submitter-standpoint law: never question who the client is on their own document", () => {
+    expect(system).toContain("SUBMITTER STANDPOINT");
+    expect(system).toMatch(/buyer named on them is normally the client/i);
+    expect(system).toMatch(/NEVER emit an unknown, question, or concern about who the submitter is/i);
+    expect(system).toMatch(/Describe a buyer entity factually and nothing more/i);
+  });
+
+  it("carries scope + label neutrality: pre-payment labels carry no weight; deal completion is out of scope", () => {
+    expect(system).toContain("SCOPE AND LABEL NEUTRALITY");
+    expect(system).toMatch(/purchase order, quotation, or invoice/i);
+    expect(system).toMatch(/label carries no weight/i);
+    expect(system).toMatch(/completed, paid, or shipped is OUTSIDE the scope/i);
+    expect(system).toMatch(/client's purchase decision/i);
+  });
+
+  it("scope rule preserves legitimate unknowns (client-relevant, resolvable, assessment-changing)", () => {
+    expect(system).toMatch(/unit price is wholesale-consistent\) STILL belong in/i);
+    expect(system).toMatch(/removes only the two illegitimate classes/i);
+  });
+
   it("demands per-document isolation + the analyst quartet + three-part finding", () => {
     expect(system).toContain("PER-DOCUMENT ISOLATION");
     for (const f of ["most_likely", "alternative", "what_would_change_my_mind"]) expect(system).toContain(f);
