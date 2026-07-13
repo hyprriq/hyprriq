@@ -2,7 +2,7 @@ import type { TrackKey } from "@/lib/constants/tracks";
 import { trackByNumber } from "@/lib/constants/tracks";
 import type { ConfidenceBand } from "@/lib/research/confidence";
 import type {
-  EvidenceItem, IosVersion, QuestionToAsk, SynthesisOutput, TrackSignal, Unknown, VerdictResult,
+  EvidenceItem, IosVersion, QuestionToAsk, SourcingLogicOutput, SynthesisOutput, TrackSignal, Unknown, VerdictResult,
 } from "@/lib/research/contracts";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
@@ -50,6 +50,9 @@ export interface TrackIntelView {
   boundary_notes: { label: string; text: string }[];
   questions_to_ask: QuestionToAsk[]; // Gap A — system-generated questions, surfaced to admin review
   unknowns: Unknown[];
+  // Track 5 (sub-gate B, OQ-B1a) — the non-voting arbitration block, rendered ADMIN-side only
+  // (the client payload strips it in getCaseFindings per the OQ-D rule). null on other tracks.
+  sourcing_logic: SourcingLogicOutput | null;
 }
 
 export interface EngineTraceSignal {
@@ -137,6 +140,10 @@ export function buildVerdictViewModel(input: {
     boundary_notes: boundaryNotesFrom(r.compiled_findings_json),
     questions_to_ask: r.questions_to_ask ?? [],
     unknowns: r.unknowns ?? [],
+    // Track 5 (sub-gate B) — surface the stored arbitration block for the admin panel (OQ-B1a).
+    sourcing_logic: r.track_key === "sourcing_logic"
+      ? ((r.compiled_findings_json as Record<string, unknown> | null)?.sourcing_logic as SourcingLogicOutput | undefined) ?? null
+      : null,
   }));
 
   const snap = synthesis?.module_9_decision_snapshot;

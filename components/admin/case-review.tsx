@@ -357,6 +357,41 @@ export function CaseReview({
                     {t.reasoning_notes}
                   </p>
                 )}
+                {/* Track 5 (sub-gate B, OQ-B1a) — the non-voting arbitration block: ADMIN-ONLY
+                    (stripped from the delivered client payload per the OQ-D rule). */}
+                {t.sourcing_logic && (
+                  <div className="mt-2 rounded-md border border-line bg-raised p-2.5">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                      Sourcing Logic — arbitration (non-voting)
+                    </div>
+                    {t.sourcing_logic.flags.length > 0 ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {t.sourcing_logic.flags.map((f) => (
+                          <span key={f} className="rounded-full border border-line bg-base px-2 py-0.5 text-[11px] font-medium text-ink-2">
+                            {f.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-[12px] text-muted">No scenario flags.</p>
+                    )}
+                    <p className="mt-1.5 text-[12px] text-ink-2">
+                      <span className="font-semibold capitalize">{t.sourcing_logic.scenario_coherence.assessment.replace(/_/g, " ")}</span>
+                      <span className="text-muted"> — {t.sourcing_logic.scenario_coherence.basis}</span>
+                    </p>
+                    {t.sourcing_logic.contradictions.length > 0 && (
+                      <ul className="mt-1.5 space-y-1.5">
+                        {t.sourcing_logic.contradictions.map((c, i) => (
+                          <li key={i} className="text-[12px] text-ink-2">
+                            <span className="font-semibold">{c.contradiction_type.replace(/_/g, " ")}</span>
+                            <span className="text-muted"> · {c.risk_level}</span>
+                            <div className="text-muted">{c.assertion_a.track_key} vs {c.assertion_b.track_key} — {c.interpretation}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 {t.evidence_items.length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {t.evidence_items.map((e) => (

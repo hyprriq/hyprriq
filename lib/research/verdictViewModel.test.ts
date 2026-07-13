@@ -51,6 +51,43 @@ describe("buildVerdictViewModel — ADR-T2-002 fields", () => {
   });
 });
 
+// ── Track 5 (sub-gate B) — the admin surface renders the arbitration block; the THIRD verdict
+// site stays byte-identical with the track_5 row present (the AT-B1 property at this site). ──
+describe("buildVerdictViewModel — Track 5 sourcing_logic", () => {
+  const t5 = () => {
+    const r = trackRow(5, "sourcing_logic", "n_a");
+    r.compiled_findings_json = {
+      signal: "n_a", non_voting: true,
+      sourcing_logic: {
+        contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"], b2b_archetype_flag: true, b2b_brands: ["Petzl"],
+        scenario_coherence: { assessment: "tension", basis: "contradiction detected" },
+        contradiction_count: 1,
+        contradictions: [{ contradiction_type: "cross_track_signal_divergence",
+          assertion_a: { track_key: "supplier_identity", statement: "a", evidence_ids: [] },
+          assertion_b: { track_key: "brand_risk_assessment", statement: "b", evidence_ids: [] },
+          interpretation: "divergent", risk_level: "medium", is_load_bearing: false }],
+      },
+    };
+    return r;
+  };
+
+  it("surfaces the sourcing_logic block on the track_5 entry (admin renders the flags — OQ-B1a)", () => {
+    const vm = buildVerdictViewModel({ trackRows: [...rows, t5()], synthesis: synth(), ios: null });
+    const track5 = vm.tracks.find((t) => t.track_number === 5)!;
+    expect(track5.sourcing_logic?.flags).toContain("b2b_only_archetype");
+    expect(track5.sourcing_logic?.scenario_coherence.assessment).toBe("tension");
+    expect(track5.sourcing_logic?.contradictions).toHaveLength(1);
+    const track1 = vm.tracks.find((t) => t.track_number === 1)!;
+    expect(track1.sourcing_logic ?? null).toBeNull();
+  });
+
+  it("the recomputed admin verdict is BYTE-IDENTICAL with and without the track_5 row (never votes at the third site)", () => {
+    const without = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
+    const withT5 = buildVerdictViewModel({ trackRows: [...rows, t5()], synthesis: synth(), ios: null });
+    expect(JSON.stringify(withT5.verdict)).toBe(JSON.stringify(without.verdict));
+  });
+});
+
 describe("buildVerdictViewModel", () => {
   it("recomputed verdict matches computeVerdict on the same persisted signals (determinism)", () => {
     const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });

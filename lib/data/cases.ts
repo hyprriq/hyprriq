@@ -167,12 +167,16 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   // quartet is ADMIN-ONLY (OQ-D) and leans harder than the veto-gated findings (AT-1 rider): strip
   // it server-side so it is structurally absent from the delivered payload, not merely unrendered.
   // brand_risk_finding STAYS (the Track-2-finding analog; HARD-scanned at delivery).
+  // Track 5 (sub-gate B, the same rule on a third field) — the whole sourcing_logic block is
+  // internal arbitration reasoning for Module 4 (the analyst-quartet class): ADMIN-ONLY until the
+  // client-surface/PDF gate.
+  const ADMIN_ONLY_FIELDS = ["analyst_reading", "sourcing_logic"] as const;
   return rows
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r) => {
-      if (r.compiled_findings_json && "analyst_reading" in r.compiled_findings_json) {
+      if (r.compiled_findings_json && ADMIN_ONLY_FIELDS.some((f) => f in r.compiled_findings_json)) {
         const rest: Record<string, unknown> = { ...r.compiled_findings_json };
-        delete rest.analyst_reading;
+        for (const f of ADMIN_ONLY_FIELDS) delete rest[f];
         return { ...r, compiled_findings_json: rest };
       }
       return r;

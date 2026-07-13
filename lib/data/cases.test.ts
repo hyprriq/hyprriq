@@ -96,6 +96,29 @@ describe("Track 3 — analyst_reading is stripped from the delivered client find
   });
 });
 
+// ── PG-1 pattern, third field (Track 5 sub-gate B, OQ-D rule pre-extended by the founder GO):
+// the whole sourcing_logic block (contradiction narratives, coherence basis, flags) is internal
+// arbitration reasoning for Module 4 — the analyst-quartet class. ADMIN-ONLY until the
+// client-surface/PDF gate: structurally absent from the DELIVERED payload, not merely unrendered.
+describe("Track 5 — the sourcing_logic block is stripped from the delivered client findings payload", () => {
+  it("delivered case: track_5 row keeps its signal, loses the whole sourcing_logic block", async () => {
+    maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
+    rowsResult.mockResolvedValueOnce({ data: [
+      { id: "r5", track: "track_5", track_key: "sourcing_logic", attempt_number: 1,
+        compiled_findings_json: { signal: "n_a", non_voting: true,
+          sourcing_logic: { contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"],
+            contradictions: [{ interpretation: "INTERNAL arbitration reasoning" }] } } },
+    ]});
+    const rows = await getCaseFindings("c1");
+    expect(rows).toHaveLength(1);
+    const json = rows[0].compiled_findings_json as Record<string, unknown>;
+    expect(json.signal).toBe("n_a");
+    expect(json).not.toHaveProperty("sourcing_logic");
+    expect(JSON.stringify(rows)).not.toContain("INTERNAL arbitration reasoning");
+    expect(JSON.stringify(rows)).not.toContain("b2b_only_archetype");
+  });
+});
+
 describe("H5 — getCaseFindings is server-gated by status (the N4 payload leak)", () => {
   it("returns [] for a NON-delivered case without even querying the findings table", async () => {
     maybeSingle.mockResolvedValue({ data: { id: "c1", status: "awaiting_review", delivered_attempt: null } });
