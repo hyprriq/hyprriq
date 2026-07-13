@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ALLOWED_PROFILES, MIN_AUTHORITY } from "./weightValidation";
-import { weightKeysForTrack } from "./weights";
-import { runTrack5 } from "./track5";
+import { weightKeysForTrack, TRACK_WEIGHTS } from "./weights";
 
 // ╔══════════════════════════════════════════════════════════════════════════════════════════╗
 // ║ H7 (spec H7.5, founder-endorsed) — THE TRACK 3/4 PRE-FREEZE GATE, AS CODE.                   ║
@@ -48,11 +47,13 @@ describe("firewall registry coverage lock (H7 — Track 3/4 pre-freeze gate as a
     });
   }
 
-  it("Track 5 is still a declared stub — going live REQUIRES its ruled gate FIRST", async () => {
-    // When this fails: do NOT edit this assertion — follow the banner procedure. Tracks 3 (2026-07-10)
-    // and 4 (2026-07-11) went LIVE via exactly it; their assertions moved to track3/track4.test.ts.
-    // NOTE for Track 5's turn: it has NO weight keys BY DESIGN (non-voting arbitration) — its gate
-    // replaces this line with the n_a-locked non-voting assertion (sub-gate B, OQ-B1 ruling).
-    expect((await runTrack5()).not_implemented, "Track 5 went live without passing its gate").toBe(true);
+  it("Track 5 is LIVE as the NON-VOTING arbitrator — no weight keys BY DESIGN, nothing for the firewall to cover", () => {
+    // Sub-gate B (founder-ruled 2026-07-14) — the banner procedure fired for Track 5 exactly as
+    // written: it went live with NO weight keys (non-voting arbitration; OQ-B1). There is nothing
+    // to register — the lock here asserts that stays true: the moment anyone gives sourcing_logic
+    // a weight table or a verdict weight, Track 5 has become a voter and its ruled gate is broken.
+    // The n_a/never-votes behavioral locks live in track5.test.ts (AT-B2).
+    expect(weightKeysForTrack("sourcing_logic"), "sourcing_logic must NEVER have weight keys (non-voting)").toEqual([]);
+    expect(TRACK_WEIGHTS["sourcing_logic"], "sourcing_logic must NEVER have a verdict weight (non-voting)").toBeUndefined();
   });
 });
