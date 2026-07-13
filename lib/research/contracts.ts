@@ -109,6 +109,33 @@ export interface TrackContext {
   plan_type: PlanType;
 }
 
+// ── Track 5 (sub-gate B, founder-ruled 2026-07-14) — the sourcing-logic arbitration contract. ──
+// CONTRACT-FROZEN (OQ-B2): the contradiction record is the v2.1 Synthesis Module-4 shape, so Track 5
+// and the future synthesis engine share ONE contract. Revisitable ONLY at the synthesis gate via a
+// contract-version bump (the pack-version pattern) — never silently.
+export const SOURCING_CONTRADICTION_CONTRACT_VERSION = "m4c-1.0.0";
+export interface SourcingContradictionRecord {
+  contradiction_type: string;
+  assertion_a: { track_key: string; statement: string; evidence_ids: string[] };
+  assertion_b: { track_key: string; statement: string; evidence_ids: string[] };
+  interpretation: string;
+  // Capped at "high" BY CODE: Track 5 must never be able to arm computeVerdict's critical-
+  // contradiction lock, even if these records were ever piped toward Module 4 naively (test-locked).
+  risk_level: "low" | "medium" | "high";
+  // Always false from Track 5 v1 — load-bearing is Module 4's judgment at the synthesis gate;
+  // the record carries the raw tension, not the arbitration verdict.
+  is_load_bearing: boolean;
+}
+export interface SourcingLogicOutput {
+  contract_version: typeof SOURCING_CONTRADICTION_CONTRACT_VERSION;
+  flags: string[];
+  b2b_archetype_flag: boolean;
+  b2b_brands: string[];
+  scenario_coherence: { assessment: "consistent" | "tension" | "insufficient_data"; basis: string };
+  contradiction_count: number;
+  contradictions: SourcingContradictionRecord[];
+}
+
 // Layer 1 output — evidence ONLY (the LLM never decides the authoritative signal).
 export interface EvidenceItem {
   evidence_id: string;
@@ -201,6 +228,14 @@ export interface TrackOutput {
   analyst_reading?: { most_likely: string; alternative: string; confidence: "high" | "medium" | "low"; what_would_change_my_mind: string };
   // Track 4 (sub-gate A) — documentation narrative (ships like brand_relationship_finding, HARD-scanned at delivery).
   documentation_finding?: string;
+  // Track 5 (sub-gate B, founder-ruled) — NON-VOTING arbitration layer. non_voting routes the
+  // output through stageFindingTrack's structural n_a branch (NEVER deriveTrackSignal — an empty
+  // evidence set would hit the empty-set floor and vote soft_fail). sourcing_logic carries the
+  // flags + coherence + contract-frozen contradiction records into compiled_findings_json
+  // (ADMIN-ONLY until the client-surface/PDF gate — the OQ-D rule; stripped from the delivered
+  // payload like analyst_reading).
+  non_voting?: true;
+  sourcing_logic?: SourcingLogicOutput;
 }
 
 // Phase 5.1b — Track 1 weight-validation firewall audit (proposed → validated, with the gate that

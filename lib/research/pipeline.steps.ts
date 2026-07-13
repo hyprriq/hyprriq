@@ -148,6 +148,29 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
   }
 
+  // ── Track 5 (sub-gate B, founder-ruled) — NON-VOTING branch: a structural path, not a
+  // convention. Track 5 arbitrates (flags + contract-frozen contradiction records for Module 4)
+  // and NEVER votes: signal is n_a BY THIS BRANCH, never derived — an empty evidence set through
+  // the scored path would hit the empty-set floor and score soft_fail, which IS a vote. Approved
+  // (nothing to review — the flags are admin-side arbitration data), never escalated. ──
+  if (out.non_voting) {
+    const res = await upsertTrackResult({
+      case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
+      source_mode: "ai_generated",
+      evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
+      track_verdict_signal: "n_a", finding_certainty: "unknown",
+      manual_review_required: false, founder_review_status: "approved",
+      compiled_findings_json: {
+        signal: "n_a", non_voting: true, summary: out.reasoning_notes,
+        // The arbitration record (OQ-B1a): flags + coherence + contradictions ride the frozen
+        // per-attempt record; ADMIN-ONLY (OQ-D) — stripped from the delivered client payload.
+        sourcing_logic: out.sourcing_logic ?? null,
+      },
+    });
+    if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
+    return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
+  }
+
   // ── Acquisition-failure guard — an EMPTY Evidence Pack means we COULD NOT research, not that we
   // researched and found nothing. Such a track must NOT score (→ n_a, excluded from the verdict),
   // must NOT write institutional memory, and must escalate to manual review. ──

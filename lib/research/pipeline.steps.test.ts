@@ -339,6 +339,45 @@ describe("H3 stageFinalize skippedTracks (absence never escalates)", () => {
   });
 });
 
+// ── Sub-gate B (Track 5, founder-ruled) — the non_voting structural branch. A non-voting output
+// must NEVER route through deriveTrackSignal: an empty evidence set would hit the empty-set floor
+// and score soft_fail — a vote. The branch makes non-voting structural, not conventional. ──
+describe("Track 5 — stageFindingTrack non_voting branch (never votes, never escalates)", () => {
+  const sourcingBlock = {
+    contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"], b2b_archetype_flag: true, b2b_brands: ["Petzl"],
+    scenario_coherence: { assessment: "consistent", basis: "signals agree" },
+    contradiction_count: 0, contradictions: [],
+  };
+
+  it("non_voting → signal n_a (NOT the empty-set soft_fail floor), approved, not escalated, not failed", async () => {
+    runTrack1.mockResolvedValue({
+      track_key: "sourcing_logic", evidence_items: [], evidence_weights_applied: [],
+      reasoning_notes: "arbitration flags derived from existing track outputs", unknowns: [],
+      non_voting: true, sourcing_logic: sourcingBlock,
+    });
+    const r = await stageFindingTrack(ctx, 1);
+    expect(r.signal).toBe("n_a"); // an empty evidence set through the scored path would be soft_fail — the branch must preempt it
+    expect(r.failed).toBe(false);
+    expect(r.not_implemented).toBe(false);
+    const row = upsertTrackResult.mock.calls[0][0];
+    expect(row.track_verdict_signal).toBe("n_a");
+    expect(row.manual_review_required).toBe(false);
+    expect(row.founder_review_status).toBe("approved");
+    const cf = row.compiled_findings_json as Record<string, unknown>;
+    expect(cf.non_voting).toBe(true);
+    expect(cf.sourcing_logic).toEqual(sourcingBlock); // flags/coherence/contradictions ride the frozen record
+  });
+
+  it("a non_voting row persist failure THROWS (H2 — the durable step retries)", async () => {
+    upsertTrackResult.mockResolvedValueOnce({ error: "boom" });
+    runTrack1.mockResolvedValue({
+      track_key: "sourcing_logic", evidence_items: [], evidence_weights_applied: [],
+      reasoning_notes: "n", unknowns: [], non_voting: true, sourcing_logic: sourcingBlock,
+    });
+    await expect(stageFindingTrack(ctx, 1)).rejects.toThrow(/persist/i);
+  });
+});
+
 describe("H4 — the record says WHO was researched", () => {
   it("stageFindingTrack persists research_name/research_alias into compiled_findings_json", async () => {
     runTrack1.mockResolvedValue({
