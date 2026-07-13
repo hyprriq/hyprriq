@@ -90,6 +90,20 @@ export interface TrackContext {
   // supplier_identity instead of live resolution. The result is a genuine NEW attempt (ledger
   // event + audit marker; delivered rows untouched per H1) — never a silent shadow operation.
   replay_from_attempt?: number;
+  // DISPUTE/ESCALATION RE-RUN (founder-ruled 2026-07-13) — the system regenerating its OWN answer
+  // from the same facts: same case inputs (vendor, brands, already-uploaded documents), fresh
+  // research, a genuine NEW attempt (H1). Same verdict EXPECTED — verdict stability is the feature;
+  // a would-be flip is SURFACED in the audit log, never silently adopted. DISTINCT from "request
+  // further investigation": there a human adds NEW intelligence on top and the verdict may
+  // legitimately change; here nothing new is added, so it must not. When set, stageFinalize takes
+  // the deliberate NO-ADVANCE path — the live case pointer (verdict/status/track statuses/
+  // supplier_identity/delivered_*) is never advanced and the case is never auto-delivered,
+  // regardless of status (the AWI-2607-022 pointer-advance lesson made structural). Adoption of
+  // the new attempt is a separate, deliberate founder step. No credit is charged — this re-runs an
+  // existing PAID case. Used RARELY (client dispute / refund defense / applying a ruled fix to one
+  // case); never a routine step — the product promise is that the FIRST delivered verdict is
+  // complete and defensible.
+  dispute_rerun?: true;
   brands_submitted: string[];
   marketplace: string;
   plan_type: PlanType;

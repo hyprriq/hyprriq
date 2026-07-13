@@ -294,6 +294,32 @@ export async function stageFinalize(
   ctx: TrackContext,
   args: { included: Set<number>; identityAcquisitionFailed: boolean; failedTracks?: Set<number>; skippedTracks?: Set<number>; identityUnconfirmed?: boolean; supplierIdentity?: SupplierIdentity; verdict: string; confidence_0_15: number },
 ): Promise<{ error: string | null }> {
+  // ── DISPUTE/ESCALATION RE-RUN (founder-ruled 2026-07-13) — the deliberate NO-ADVANCE path, a
+  // first-class branch, not a flag layered onto the normal update (the AWI-2607-022 pointer-advance
+  // lesson). A dispute re-run is the system regenerating its OWN answer from the same facts (same
+  // verdict EXPECTED); DISTINCT from "request further investigation", where a human adds NEW
+  // intelligence and the verdict may legitimately change. The new attempt's rows/packs/synthesis
+  // are already persisted upstream under the new attempt_number (H1); HERE the live case pointer —
+  // verdict, status, track statuses, supplier_identity, delivered_* — is NEVER advanced and the
+  // case is NEVER auto-delivered, regardless of case status. Adoption of the new attempt is a
+  // separate, deliberate founder step. A would-be verdict flip is SURFACED in the audit log,
+  // never silently adopted. No credit is touched anywhere on this path (re-runs a PAID case).
+  if (ctx.dispute_rerun) {
+    const { data: cur } = await supabaseAdmin.from("cases").select("status, verdict").eq("id", ctx.case_id).maybeSingle();
+    const { error } = await supabaseAdmin.from("cases").update({ reinvestigation_pending: true }).eq("id", ctx.case_id);
+    if (error) throw new Error(`finalize persist failed: ${error.message}`); // H2 — fail loud
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "cases", record_id: ctx.case_id, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: {
+        dispute_rerun: true, attempt: ctx.attempt_number ?? null,
+        current_verdict: cur?.verdict ?? null, rerun_verdict: args.verdict,
+        verdict_stable: (cur?.verdict ?? null) === args.verdict,
+      },
+    });
+    return { error: null };
+  }
+
   // H1 — Case Investigation Ledger: a delivered case is IMMUTABLE. A re-investigation persists its
   // rows under the new attempt (already done upstream) and only raises a flag for admin review;
   // verdict/status/delivered_at/delivered_attempt never change outside an explicit admin publish.

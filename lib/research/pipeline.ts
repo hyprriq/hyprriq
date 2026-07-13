@@ -30,7 +30,10 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
   // track receives (Track 2+ classify against resolved_domain). Persist early so the manual-review
   // human sees it during research. ──
   const identity = await stageResolveIdentity(ctx);
-  await stagePersistIdentity(ctx.case_id, identity);
+  // DISPUTE RE-RUN — the live case row is never mutated outside finalize's no-advance path: the
+  // re-resolved identity threads to the tracks (and lands in the frozen per-attempt record via
+  // research_name) but is NOT persisted onto the case; the stored identity stays the live record.
+  if (!base.dispute_rerun) await stagePersistIdentity(ctx.case_id, identity);
   const ictx: TrackContext = { ...ctx, supplier_identity: identity };
 
   const trackOutputs: TrackOutput[] = [];
