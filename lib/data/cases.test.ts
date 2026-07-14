@@ -113,8 +113,8 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
     const rows = await getCaseFindings("c1");
     expect(rows).toHaveLength(1);
     const json = rows[0].compiled_findings_json as Record<string, unknown>;
-    expect(json.signal).toBe("n_a");
     expect(json).not.toHaveProperty("sourcing_logic");
+    expect(json).not.toHaveProperty("signal"); // F2 — raw per-track signals are method exposure, dropped for ALL tracks
     expect(JSON.stringify(rows)).not.toContain("INTERNAL arbitration reasoning");
     expect(JSON.stringify(rows)).not.toContain("b2b_only_archetype");
   });
@@ -146,6 +146,42 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
     // other tracks' summaries are untouched (the neutralization is track_5-scoped)
     const t3 = rows.find((r) => r.track_key === "brand_risk_assessment")!;
     expect((t3.compiled_findings_json as Record<string, unknown>).summary).toBe("brand summary stays untouched");
+  });
+});
+
+// ── F2 (founder-approved 2026-07-14) — the delivered findings payload is an ALLOWLIST projection
+// (the PG-1 pattern on findings): every compiled_findings_json key not client-purposed — including
+// any FUTURE field — is private BY DEFAULT. The structural close of the secondary-path leak class
+// before the Synthesis gate multiplies narrative fields. signal/score deliberately excluded
+// (founder-signed: verdict is case-level; raw per-track signals are method exposure).
+describe("F2 — delivered findings are an allowlist projection; method data cannot survive", () => {
+  it("only allowlisted keys survive; internal + unknown future fields drop", async () => {
+    maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
+    rowsResult.mockResolvedValueOnce({ data: [
+      { id: "r3", track: "track_3", track_key: "brand_risk_assessment", attempt_number: 1,
+        compiled_findings_json: {
+          signal: "hard_fail", score: 2, summary: "legacy summary", brand_risk_finding: "Petzl: no enforcement found.",
+          auth_level: "C", auth_level_reasoning: "INTERNAL AUTH REASONING",
+          research_name: "INTERNAL RESEARCH NAME", research_alias: "INTERNAL ALIAS",
+          hard_fail_consensus: { checked: ["INTERNAL CONSENSUS KEY"], dropped: [], second_call_failed: false },
+          source_diversity: { capped: true, cap_reason: "INTERNAL CAP REASON", distinct_sources: 1 },
+          b2b_only_detected: true, b2b_only_brands: ["INTERNAL B2B BRAND"],
+          evidence_count: 3,
+          future_internal_field: "FUTURE SENSITIVE THING", // a field nobody has written yet — private by default
+        } },
+    ]});
+    const rows = await getCaseFindings("c1");
+    const json = rows[0].compiled_findings_json as Record<string, unknown>;
+    const ALLOWLIST = ["title", "heading", "summary", "detail", "brand_relationship_finding", "brand_risk_finding",
+      "documentation_finding", "identity_scope_note", "authorization_scope_note", "marketplace_eligibility_disclaimer", "evidence_count"];
+    for (const k of Object.keys(json)) expect(ALLOWLIST, `non-allowlisted key shipped to client: ${k}`).toContain(k);
+    expect(json.brand_risk_finding).toBe("Petzl: no enforcement found.");
+    expect(json.evidence_count).toBe(3);
+    const s = JSON.stringify(rows);
+    for (const sentinel of ["INTERNAL AUTH REASONING", "INTERNAL RESEARCH NAME", "INTERNAL ALIAS",
+      "INTERNAL CONSENSUS KEY", "INTERNAL CAP REASON", "INTERNAL B2B BRAND", "FUTURE SENSITIVE THING", "hard_fail"]) {
+      expect(s.includes(sentinel), `client payload must not contain: ${sentinel}`).toBe(false);
+    }
   });
 });
 

@@ -164,28 +164,31 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   if (rows.length === 0) return rows;
   // H1 — the client always sees the DELIVERED attempt once delivered; latest attempt before that.
   const chosen = delivered_attempt ?? Math.max(...rows.map((r) => r.attempt_number ?? 1));
-  // Track 3 (founder-ruled 2026-07-11, the PG-1 pattern on a second field) — the analyst_reading
-  // quartet is ADMIN-ONLY (OQ-D) and leans harder than the veto-gated findings (AT-1 rider): strip
-  // it server-side so it is structurally absent from the delivered payload, not merely unrendered.
-  // brand_risk_finding STAYS (the Track-2-finding analog; HARD-scanned at delivery).
-  // Track 5 (sub-gate B, the same rule on a third field) — the whole sourcing_logic block is
-  // internal arbitration reasoning for Module 4 (the analyst-quartet class): ADMIN-ONLY until the
-  // client-surface/PDF gate.
-  const ADMIN_ONLY_FIELDS = ["analyst_reading", "sourcing_logic"] as const;
+  // ── F2 (founder-approved 2026-07-14, the PG-1 pattern applied to findings) — the delivered
+  // payload is an ALLOWLIST projection: only client-purposed fields cross the RSC boundary, and
+  // every other compiled_findings_json key — including any FUTURE field — is private BY DEFAULT.
+  // This supersedes the field-by-field denylist history (ai_output/manual_notes at H5;
+  // analyst_reading at Track 3; the sourcing_logic block + neutral summary at sub-gate B) and
+  // structurally closes the secondary-path leak class before the Synthesis gate multiplies
+  // narrative fields. FOUNDER-SIGNED exclusions: per-track signal/score (verdict is case-level;
+  // raw signals are method exposure — re-adding is a deliberate client-surface-gate decision),
+  // consensus/diversity records, research identity, auth_level*, b2b advisory metadata.
+  const FINDING_CLIENT_ALLOWLIST = [
+    "title", "heading", "summary", "detail",
+    "brand_relationship_finding", "brand_risk_finding", "documentation_finding",
+    "identity_scope_note", "authorization_scope_note", "marketplace_eligibility_disclaimer",
+    "evidence_count",
+  ] as const;
   return rows
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r) => {
       const cf = r.compiled_findings_json;
-      // OQ-D summary rule (founder-ruled 2026-07-14) — defense in depth on the read side: a
-      // track_5 summary is ALWAYS the neutral constant client-side (the write side stores it too);
-      // the arbitration conclusion (coherence + counts) must never ship, whatever a row carries.
-      const neutralizeSummary = r.track_key === "sourcing_logic" && cf && "summary" in cf;
-      if (cf && (neutralizeSummary || ADMIN_ONLY_FIELDS.some((f) => f in cf))) {
-        const rest: Record<string, unknown> = { ...cf };
-        for (const f of ADMIN_ONLY_FIELDS) delete rest[f];
-        if (neutralizeSummary) rest.summary = SOURCING_CLIENT_SUMMARY;
-        return { ...r, compiled_findings_json: rest };
-      }
-      return r;
+      if (!cf) return r;
+      const projected: Record<string, unknown> = {};
+      for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
+      // OQ-D summary rule (founder-ruled 2026-07-14) — read-side defense in depth stays: a track_5
+      // summary is ALWAYS the ruled neutral string, whatever the stored row carries.
+      if (r.track_key === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_CLIENT_SUMMARY;
+      return { ...r, compiled_findings_json: projected };
     });
 }
