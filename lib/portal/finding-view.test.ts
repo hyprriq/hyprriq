@@ -23,6 +23,25 @@ describe("findingText / findingNotes (ADR-T2-002 Evidence rendering)", () => {
     expect(notes.map((n) => n.label)).toEqual(["Identity scope", "Authorization scope", "Marketplace eligibility"]);
     expect(notes[2].text).toContain("does not guarantee marketplace approval");
   });
+  // ── Pre-Synthesis sweep F1 (founder-approved 2026-07-14): the purpose-built, HARD-scanned
+  // narratives MUST render — falling through to summary (= raw reasoning_notes) showed internal,
+  // conclusion-leaning reasoning to clients (the secondary-path leak class, third instance). ──
+  it("Track 3: prefers brand_risk_finding for the detail over the legacy summary", () => {
+    const f = mk("track_3", {
+      summary: "INTERNAL reasoning_notes line that must not render",
+      brand_risk_finding: "Petzl: no enforcement activity found in the review window.",
+    });
+    expect(findingText(f).detail).toContain("Petzl");
+    expect(findingText(f).detail).not.toContain("INTERNAL");
+  });
+  it("Track 4: prefers documentation_finding for the detail over the legacy summary", () => {
+    const f = mk("track_4", {
+      summary: "INTERNAL reasoning_notes line that must not render",
+      documentation_finding: "CONFIRMED POSITIVES: the invoice states the vendor's identifiers.",
+    });
+    expect(findingText(f).detail).toContain("CONFIRMED POSITIVES");
+    expect(findingText(f).detail).not.toContain("INTERNAL");
+  });
   it("other tracks: falls back to summary and renders no boundary notes", () => {
     const f = mk("track_1", { summary: "Supplier Identity narrative" });
     expect(findingText(f).detail).toBe("Supplier Identity narrative");

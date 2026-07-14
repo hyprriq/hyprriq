@@ -17,6 +17,20 @@ export function brandFindingFrom(json: Record<string, unknown> | null | undefine
   return json && typeof json.brand_relationship_finding === "string" ? json.brand_relationship_finding : "";
 }
 
+// Pre-Synthesis sweep F1 (founder-approved 2026-07-14) — the per-track PURPOSE-BUILT narrative
+// (Track 2 / 3 / 4; a row carries at most one). These are the decisive, positives-first,
+// HARD-scanned findings the engine produces for clients; before this helper, Tracks 3/4 fell
+// through to summary = raw reasoning_notes (internal, conclusion-leaning — the secondary-path
+// leak class). Never fall back to reasoning here — findingText owns the legacy-summary fallback.
+const NARRATIVE_FIELDS = ["brand_relationship_finding", "brand_risk_finding", "documentation_finding"] as const;
+export function narrativeFrom(json: Record<string, unknown> | null | undefined): string {
+  if (!json) return "";
+  for (const f of NARRATIVE_FIELDS) {
+    if (typeof json[f] === "string" && (json[f] as string).trim()) return json[f] as string;
+  }
+  return "";
+}
+
 // The Track 2 boundary notes (identity ↑ / authorization = this lane / marketplace ↓), in order,
 // present only when set. Empty for tracks/rows that don't emit them.
 export function boundaryNotesFrom(json: Record<string, unknown> | null | undefined): { label: string; text: string }[] {
@@ -37,7 +51,7 @@ export function findingText(f: Finding): { title: string; detail: string } {
     (typeof j.heading === "string" && j.heading) ||
     f.track.replace("track_", "Dimension ");
   const detail =
-    brandFindingFrom(j) || // ADR-T2-002 (Track 2) — prefer the scoped finding over the legacy summary
+    narrativeFrom(j) || // F1 — prefer the purpose-built per-track narrative (Track 2/3/4) over the legacy summary
     (typeof j.summary === "string" && j.summary) ||
     (typeof j.detail === "string" && j.detail) ||
     "";
