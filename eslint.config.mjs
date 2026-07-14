@@ -15,7 +15,12 @@ const eslintConfig = defineConfig([
     // Tooling/context dirs — not application source:
     ".claude/**",
     ".impeccable/**",
+    ".agents/**", // agent-skill scaffolding materialized by the plugin sync (2026-07-14) — never product code
     "supabase/**",
+    // Untracked working-tree artifacts (backups are JSON; the design explorations are static HTML):
+    "backups/**",
+    "codex-fresh-design/**",
+    "mockups-codex-exploration/**",
   ]),
 ]);
 
