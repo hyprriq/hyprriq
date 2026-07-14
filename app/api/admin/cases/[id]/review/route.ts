@@ -78,12 +78,22 @@ export async function POST(
       table_name: "cases", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin", new_value: { decision },
     });
+    // F3 (founder-approved 2026-07-14; H1 integrity) — the status pre-flip carries the SAME
+    // delivered-guard every other write site has. Without it, the re-run's finalize saw a
+    // non-delivered status and overwrote a DELIVERED case's live verdict/status through the
+    // normal flow. The enqueue above stays either way: a delivered case gets its genuine new
+    // attempt, keeps its frozen record, and finalize raises reinvestigation_pending (H1).
     const { error } = await supabaseAdmin
       .from("cases")
       .update({ status: "research_running", internal_notes: JSON.stringify(decision) })
+      .not("status", "in", "(delivered,complete)")
       .eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, delivered: false, status: "research_running" });
+    const frozen = c.status === "delivered" || c.status === "complete";
+    return NextResponse.json({
+      ok: true, delivered: false, status: frozen ? c.status : "research_running",
+      ...(frozen ? { note: "Re-investigation enqueued as a new attempt; the delivered record stays frozen (H1) — reinvestigation_pending will flag when it completes." } : {}),
+    });
   }
 
   // Delivery path (publish | override) — HARD-tier banned-language gate over EVERY client-visible
