@@ -123,6 +123,10 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
   // sensitive as the reasoning — even if a stored track_5 summary carried the descriptive line
   // (counts + coherence language), the client payload's summary must be the NEUTRAL constant.
   // Defense in depth: the write side already stores the neutral constant; this locks the read side.
+  it("the neutral constant is the FOUNDER-RULED client string, verbatim (standing copy bar)", () => {
+    expect(SOURCING_CLIENT_SUMMARY).toBe("Consistency check — informational; does not affect the verdict");
+  });
+
   it("delivered case: the track_5 client-facing summary is the neutral constant — never counts or coherence language", async () => {
     maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
     rowsResult.mockResolvedValueOnce({ data: [

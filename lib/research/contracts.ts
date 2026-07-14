@@ -118,7 +118,9 @@ export const SOURCING_CONTRADICTION_CONTRACT_VERSION = "m4c-1.0.0";
 // sensitive as the reasoning — the client-visible summary of a track_5 row is this NEUTRAL
 // constant (written by the non_voting branch AND enforced again at the client read; the
 // descriptive line lives in reasoning_notes, which only admin surfaces read).
-export const SOURCING_CLIENT_SUMMARY = "non-voting arbitration dimension — not scored";
+// EXACT CLIENT STRING FOUNDER-RULED 2026-07-14 (standing copy bar — the prior internal wording
+// "non-voting arbitration dimension — not scored" was analyst jargon on a client card).
+export const SOURCING_CLIENT_SUMMARY = "Consistency check — informational; does not affect the verdict";
 export interface SourcingContradictionRecord {
   contradiction_type: string;
   assertion_a: { track_key: string; statement: string; evidence_ids: string[] };
