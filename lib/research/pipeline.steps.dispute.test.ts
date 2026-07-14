@@ -117,9 +117,9 @@ describe("dispute re-run — verdict stability lock (rejudge-on-same-frozen-evid
   const FROZEN_ITEMS: Partial<Record<TrackKey, EvidenceItem[]>> = {
     // pass-by-score but SINGLE-SOURCE — the pipeline caps this to infer; the lock must too.
     supplier_identity: [
-      fitem("e1", "government_registration", "https://reg.gov/x"),
+      fitem("e1", "government_registration", "https://www.reg.gov/x/"),
       fitem("e2", "domain_age_5_plus", "http://reg.gov/x"),
-      fitem("e3", "address_verifiable", "https://reg.gov/x?utm=a"),
+      fitem("e3", "address_verifiable", "https://reg.gov/x?utm_source=a"),
     ],
     supply_chain_relationship: [],
     brand_risk_assessment: [],
