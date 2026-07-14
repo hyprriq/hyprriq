@@ -27,6 +27,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { getCaseFindings, getCaseById, projectSupplierIdentityForClient } from "./cases";
 import type { SupplierIdentity } from "@/lib/research/contracts";
+import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 
 beforeEach(() => {
   maybeSingle.mockReset();
@@ -116,6 +117,31 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
     expect(json).not.toHaveProperty("sourcing_logic");
     expect(JSON.stringify(rows)).not.toContain("INTERNAL arbitration reasoning");
     expect(JSON.stringify(rows)).not.toContain("b2b_only_archetype");
+  });
+
+  // OQ-D summary rule (founder-ruled 2026-07-14, pre-freeze): the arbitration CONCLUSION is as
+  // sensitive as the reasoning — even if a stored track_5 summary carried the descriptive line
+  // (counts + coherence language), the client payload's summary must be the NEUTRAL constant.
+  // Defense in depth: the write side already stores the neutral constant; this locks the read side.
+  it("delivered case: the track_5 client-facing summary is the neutral constant — never counts or coherence language", async () => {
+    maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
+    rowsResult.mockResolvedValueOnce({ data: [
+      { id: "r5", track: "track_5", track_key: "sourcing_logic", attempt_number: 1,
+        compiled_findings_json: { signal: "n_a", non_voting: true,
+          summary: "sourcing-logic arbitration (non-voting): tension; 2 flag(s), 1 contradiction record(s) — derived from this attempt's stored track outputs only",
+          sourcing_logic: { contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"],
+            scenario_coherence: { assessment: "tension", basis: "x" }, contradictions: [] } } },
+      { id: "r3", track: "track_3", track_key: "brand_risk_assessment", attempt_number: 1,
+        compiled_findings_json: { signal: "flag", summary: "brand summary stays untouched" } },
+    ]});
+    const rows = await getCaseFindings("c1");
+    const t5 = rows.find((r) => r.track_key === "sourcing_logic")!;
+    const json = t5.compiled_findings_json as Record<string, unknown>;
+    expect(json.summary).toBe(SOURCING_CLIENT_SUMMARY);
+    expect(JSON.stringify(rows)).not.toMatch(/tension|flag\(s\)|contradiction record/);
+    // other tracks' summaries are untouched (the neutralization is track_5-scoped)
+    const t3 = rows.find((r) => r.track_key === "brand_risk_assessment")!;
+    expect((t3.compiled_findings_json as Record<string, unknown>).summary).toBe("brand summary stays untouched");
   });
 });
 

@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
+import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 
 export type CaseRow = {
   id: string;
@@ -175,9 +176,14 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r) => {
       const cf = r.compiled_findings_json;
-      if (cf && ADMIN_ONLY_FIELDS.some((f) => f in cf)) {
+      // OQ-D summary rule (founder-ruled 2026-07-14) — defense in depth on the read side: a
+      // track_5 summary is ALWAYS the neutral constant client-side (the write side stores it too);
+      // the arbitration conclusion (coherence + counts) must never ship, whatever a row carries.
+      const neutralizeSummary = r.track_key === "sourcing_logic" && cf && "summary" in cf;
+      if (cf && (neutralizeSummary || ADMIN_ONLY_FIELDS.some((f) => f in cf))) {
         const rest: Record<string, unknown> = { ...cf };
         for (const f of ADMIN_ONLY_FIELDS) delete rest[f];
+        if (neutralizeSummary) rest.summary = SOURCING_CLIENT_SUMMARY;
         return { ...r, compiled_findings_json: rest };
       }
       return r;

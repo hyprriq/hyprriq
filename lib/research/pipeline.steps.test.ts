@@ -44,6 +44,7 @@ import {
   stageFindingTrack, stageResolveIdentity, stageFinalize, stageResolveAttempt, stageSetRunning, stageMemoryWrite,
 } from "./pipeline.steps";
 import type { TrackContext, SupplierIdentity } from "@/lib/research/contracts";
+import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 
 const ctx: TrackContext = {
   case_id: "c1", vendor_name: "Acme", vendor_website: null,
@@ -352,7 +353,7 @@ describe("Track 5 — stageFindingTrack non_voting branch (never votes, never es
   it("non_voting → signal n_a (NOT the empty-set soft_fail floor), approved, not escalated, not failed", async () => {
     runTrack1.mockResolvedValue({
       track_key: "sourcing_logic", evidence_items: [], evidence_weights_applied: [],
-      reasoning_notes: "arbitration flags derived from existing track outputs", unknowns: [],
+      reasoning_notes: "sourcing-logic arbitration (non-voting): tension; 2 flag(s), 1 contradiction record(s)", unknowns: [],
       non_voting: true, sourcing_logic: sourcingBlock,
     });
     const r = await stageFindingTrack(ctx, 1);
@@ -366,6 +367,12 @@ describe("Track 5 — stageFindingTrack non_voting branch (never votes, never es
     const cf = row.compiled_findings_json as Record<string, unknown>;
     expect(cf.non_voting).toBe(true);
     expect(cf.sourcing_logic).toEqual(sourcingBlock); // flags/coherence/contradictions ride the frozen record
+    // OQ-D (founder-ruled 2026-07-14, pre-freeze): the CONCLUSION of internal reasoning is as
+    // sensitive as the reasoning — summary (which survives the client strip) gets the NEUTRAL
+    // constant; the descriptive arbitration line stays in reasoning_notes (admin reads the row).
+    expect(cf.summary).toBe(SOURCING_CLIENT_SUMMARY);
+    expect(cf.summary).not.toMatch(/tension|consistent|flag\(s\)|contradiction/i);
+    expect(row.reasoning_notes).toMatch(/tension; 2 flag/); // admin loses nothing
   });
 
   it("a non_voting row persist failure THROWS (H2 — the durable step retries)", async () => {

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { TrackContext, TrackOutput, TrackSignal, SupplierIdentity } from "@/lib/research/contracts";
+import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 import { type TrackKey, trackByNumber } from "@/lib/constants/tracks";
 import { runTrack0 } from "@/lib/research/track0";
 import { resolveSupplierIdentity } from "@/lib/research/track05";
@@ -161,7 +162,10 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: false, founder_review_status: "approved",
       compiled_findings_json: {
-        signal: "n_a", non_voting: true, summary: out.reasoning_notes,
+        // OQ-D summary rule (founder-ruled 2026-07-14): summary survives the client strip, so it
+        // gets the NEUTRAL constant — the arbitration conclusion (coherence + counts) is as
+        // sensitive as the records. The descriptive line stays in reasoning_notes (admin-read).
+        signal: "n_a", non_voting: true, summary: SOURCING_CLIENT_SUMMARY,
         // The arbitration record (OQ-B1a): flags + coherence + contradictions ride the frozen
         // per-attempt record; ADMIN-ONLY (OQ-D) — stripped from the delivered client payload.
         sourcing_logic: out.sourcing_logic ?? null,

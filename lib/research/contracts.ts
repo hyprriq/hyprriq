@@ -114,6 +114,11 @@ export interface TrackContext {
 // and the future synthesis engine share ONE contract. Revisitable ONLY at the synthesis gate via a
 // contract-version bump (the pack-version pattern) — never silently.
 export const SOURCING_CONTRADICTION_CONTRACT_VERSION = "m4c-1.0.0";
+// OQ-D summary rule (founder-ruled 2026-07-14, pre-freeze): the arbitration CONCLUSION is as
+// sensitive as the reasoning — the client-visible summary of a track_5 row is this NEUTRAL
+// constant (written by the non_voting branch AND enforced again at the client read; the
+// descriptive line lives in reasoning_notes, which only admin surfaces read).
+export const SOURCING_CLIENT_SUMMARY = "non-voting arbitration dimension — not scored";
 export interface SourcingContradictionRecord {
   contradiction_type: string;
   assertion_a: { track_key: string; statement: string; evidence_ids: string[] };
