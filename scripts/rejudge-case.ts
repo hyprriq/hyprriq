@@ -11,7 +11,7 @@
  * comparison is skipped for other attempts (reported, not failed).
  */
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { deriveTrackSignal } from "@/lib/research/signals";
+import { rederiveStoredSignal } from "@/lib/research/rederive";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
@@ -53,12 +53,15 @@ async function main() {
       console.log(`· ${r.track_key}: n_a (carried — not evidence-derived)`);
       continue;
     }
-    const keys = [...new Set((r.evidence_items ?? []).map((e) => e.weight_key).filter((k): k is string => !!k))];
-    const re = deriveTrackSignal(r.track_key as TrackKey, keys).signal;
+    // F4 (founder-approved 2026-07-14) — the SHARED re-derivation composition (dedupe → signal →
+    // source-diversity cap), identical to what the pipeline stored. Re-composing the steps here
+    // (pre-F4, without the cap) made this proof false-fail on any capped single-source pass.
+    const items = r.evidence_items ?? [];
+    const re = rederiveStoredSignal(r.track_key as TrackKey, items);
     signals[r.track_key as TrackKey] = re;
     const ok = re === stored;
     if (!ok) mismatches++;
-    console.log(`${ok ? "✔" : "✘"} ${r.track_key}: stored=${stored} rejudged=${re} (${keys.length} evidence keys)`);
+    console.log(`${ok ? "✔" : "✘"} ${r.track_key}: stored=${stored} rejudged=${re} (${items.length} evidence items)`);
   }
 
   const { data: synth } = await supabaseAdmin.from("case_synthesis").select("contradictions")

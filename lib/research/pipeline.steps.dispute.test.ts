@@ -27,8 +27,9 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 import { stageFinalize } from "./pipeline.steps";
-import { deriveTrackSignal } from "./signals";
+import { rederiveStoredSignal } from "./rederive";
 import { computeVerdict } from "./verdictEngine";
+import type { EvidenceItem } from "./contracts";
 import { applyVerdictCeiling } from "./verdictCeiling";
 import { applyDocumentationNoOverride } from "./verdictNoOverride";
 import type { TrackContext, TrackSignal, SynthesisOutput } from "./contracts";
@@ -105,23 +106,38 @@ describe("dispute re-run — verdict stability lock (rejudge-on-same-frozen-evid
     module_8_vendor_questions: [],
     module_9_decision_snapshot: { headline: "", leading_interpretation: "", the_real_risk: "", what_to_verify: [], what_to_monitor: [] },
   };
-  const FROZEN_KEYS: Partial<Record<TrackKey, string[]>> = {
-    supplier_identity: ["government_registration", "domain_age_5_plus", "address_verifiable"],
+  // F4 (founder-approved 2026-07-14): the lock re-derives via the SHARED composition
+  // (rederiveStoredSignal = dedupe → signal → source-diversity cap) — the exact pipeline path —
+  // instead of re-composing steps locally (the pre-F4 version omitted the cap and could not have
+  // caught the rejudge divergence the sweep found).
+  const fitem = (id: string, key: string, url: string): EvidenceItem => ({
+    evidence_id: id, weight_key: key, statement: "", certainty: "verified", source_type: "government_record",
+    source_url: url, claimant: "independent_registry", claimant_benefits: false, supports: "supplier_identity",
+  });
+  const FROZEN_ITEMS: Partial<Record<TrackKey, EvidenceItem[]>> = {
+    // pass-by-score but SINGLE-SOURCE — the pipeline caps this to infer; the lock must too.
+    supplier_identity: [
+      fitem("e1", "government_registration", "https://reg.gov/x"),
+      fitem("e2", "domain_age_5_plus", "http://reg.gov/x"),
+      fitem("e3", "address_verifiable", "https://reg.gov/x?utm=a"),
+    ],
     supply_chain_relationship: [],
     brand_risk_assessment: [],
-    documentation_review: ["invoice_full"],
+    documentation_review: [fitem("d1", "invoice_full", "cases/c1/invoice.pdf")],
   };
   const judge = () => {
     const signals: Partial<Record<TrackKey, TrackSignal>> = {};
-    for (const [k, keys] of Object.entries(FROZEN_KEYS)) {
-      signals[k as TrackKey] = deriveTrackSignal(k as TrackKey, keys as string[]).signal;
+    for (const [k, items] of Object.entries(FROZEN_ITEMS)) {
+      signals[k as TrackKey] = rederiveStoredSignal(k as TrackKey, items as EvidenceItem[]);
     }
     const raw = computeVerdict(signals, EMPTY_SYNTH);
     const noOverride = applyDocumentationNoOverride(raw, signals, EMPTY_SYNTH);
-    return { ...raw, ...applyVerdictCeiling({ verdict: noOverride.verdict }, signals) };
+    return { signals, ...raw, ...applyVerdictCeiling({ verdict: noOverride.verdict }, signals) };
   };
-  it("re-judging identical frozen evidence twice yields a byte-identical verdict", () => {
-    expect(JSON.stringify(judge())).toBe(JSON.stringify(judge()));
+  it("re-judging identical frozen evidence twice yields a byte-identical verdict — through the PIPELINE composition (cap included)", () => {
+    const first = judge();
+    expect(first.signals.supplier_identity).toBe("infer"); // cap parity: single-source pass capped, exactly as stored
+    expect(JSON.stringify(first)).toBe(JSON.stringify(judge()));
   });
 });
 
