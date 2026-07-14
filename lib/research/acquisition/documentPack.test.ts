@@ -1,21 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { rows, download, updateEq } = vi.hoisted(() => ({
-  rows: vi.fn(),
-  download: vi.fn(),
-  updateEq: vi.fn().mockResolvedValue({ error: null }),
-}));
+const { rows, download, updateEq, updateFn, extractText } = vi.hoisted(() => {
+  const updateEq = vi.fn().mockResolvedValue({ error: null });
+  return {
+    rows: vi.fn(),
+    download: vi.fn(),
+    updateEq,
+    updateFn: vi.fn(() => ({ eq: updateEq })), // captures the write-back payloads (F6 cache locks)
+    extractText: vi.fn().mockResolvedValue({ text: "EXTRACTED PDF TEXT: wholesale invoice #123" }),
+  };
+});
 vi.mock("@/lib/supabase/admin", () => ({
   supabaseAdmin: {
     from: () => ({
       select: () => ({ eq: () => ({ is: () => rows() }) }),
-      update: () => ({ eq: updateEq }),
+      update: updateFn,
     }),
     storage: { from: () => ({ download }) },
   },
 }));
 vi.mock("unpdf", () => ({
-  extractText: vi.fn().mockResolvedValue({ text: "EXTRACTED PDF TEXT: wholesale invoice #123" }),
+  extractText,
   getDocumentProxy: vi.fn().mockResolvedValue({}),
 }));
 
@@ -27,7 +32,10 @@ const file = (over: Record<string, unknown> = {}) => ({
 });
 const blob = () => new Blob([new Uint8Array([37, 80, 68, 70])]); // %PDF
 
-beforeEach(() => { rows.mockReset(); download.mockReset(); updateEq.mockClear(); });
+beforeEach(() => {
+  rows.mockReset(); download.mockReset(); updateEq.mockClear(); updateFn.mockClear();
+  extractText.mockReset().mockResolvedValue({ text: "EXTRACTED PDF TEXT: wholesale invoice #123" });
+});
 
 // Track 4 (SO-A3, founder-signed) — the document-pack builder: frozen packs carry the EXTRACTED
 // CONTENT, not a pointer (documents self-delete at 12 months; judgment must survive them — H1's
@@ -90,6 +98,68 @@ describe("loadDocumentPack", () => {
     const { pack, unreadable } = await loadDocumentPack("c1");
     expect(pack.sources).toHaveLength(0);
     expect(unreadable).toHaveLength(0);
+  });
+
+  // ── Sweep F6 (founder-approved 2026-07-14) — the extraction-failure branches + the OQ-A2 "clean"
+  // admission + the write-back cache, all previously untested (only cached/PDF-happy/image paths were). ──
+  it("F6: 'clean' virus status is EXPLICITLY admitted (OQ-A2 names clean AND pending — an allow-list tightening to pending-only must fail here)", async () => {
+    rows.mockResolvedValue({ data: [file({ virus_scan_status: "clean" })], error: null });
+    download.mockResolvedValue({ data: blob(), error: null });
+    const { pack } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(1);
+  });
+
+  it("F6: storage download failure → honest unreadable, never a source", async () => {
+    rows.mockResolvedValue({ data: [file()], error: null });
+    download.mockResolvedValue({ data: null, error: { message: "object not found" } });
+    const { pack, unreadable } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(0);
+    expect(unreadable[0].reason).toMatch(/storage download failed/i);
+  });
+
+  it("F6: PDF with NO text layer → unreadable (OQ-A1 honesty), never an empty source", async () => {
+    rows.mockResolvedValue({ data: [file()], error: null });
+    download.mockResolvedValue({ data: blob(), error: null });
+    extractText.mockResolvedValueOnce({ text: "   " });
+    const { pack, unreadable } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(0);
+    expect(unreadable[0].reason).toMatch(/no text layer/i);
+  });
+
+  it("F6: PDF extraction THROW → unreadable with the failure reason, never a crash", async () => {
+    rows.mockResolvedValue({ data: [file()], error: null });
+    download.mockResolvedValue({ data: blob(), error: null });
+    extractText.mockRejectedValueOnce(new Error("malformed xref"));
+    const { pack, unreadable } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(0);
+    expect(unreadable[0].reason).toMatch(/PDF extraction failed: malformed xref/);
+  });
+
+  it("F6: plain-text files (.txt) extract via TextDecoder", async () => {
+    rows.mockResolvedValue({ data: [file({ file_name: "notes.txt", file_type: "other", storage_path: "cases/c1/notes.txt" })], error: null });
+    download.mockResolvedValue({ data: new Blob([new TextEncoder().encode("PLAIN TEXT CONTENT")]), error: null });
+    const { pack } = await loadDocumentPack("c1");
+    expect(pack.sources[0].snippet).toBe("PLAIN TEXT CONTENT");
+  });
+
+  it("F6: unsupported file types → honest unreadable (v1 scope)", async () => {
+    rows.mockResolvedValue({ data: [file({ file_name: "sheet.xlsx", file_type: "other", storage_path: "cases/c1/sheet.xlsx" })], error: null });
+    download.mockResolvedValue({ data: blob(), error: null });
+    const { pack, unreadable } = await loadDocumentPack("c1");
+    expect(pack.sources).toHaveLength(0);
+    expect(unreadable[0].reason).toMatch(/unsupported file type/i);
+  });
+
+  it("F6: the write-back cache persists (readable → ocr complete + text; unreadable → ocr unreadable) — re-runs stay cheap", async () => {
+    rows.mockResolvedValue({ data: [file()], error: null });
+    download.mockResolvedValue({ data: blob(), error: null });
+    await loadDocumentPack("c1");
+    expect(updateFn).toHaveBeenCalledWith(expect.objectContaining({ ocr_status: "complete", ocr_extracted_text: expect.stringContaining("EXTRACTED PDF TEXT") }));
+
+    updateFn.mockClear();
+    rows.mockResolvedValue({ data: [file({ id: "f9", file_name: "scan.jpg", file_type: "invoice_image", storage_path: "cases/c1/scan.jpg" })], error: null });
+    await loadDocumentPack("c1");
+    expect(updateFn).toHaveBeenCalledWith({ ocr_status: "unreadable" });
   });
 
   it("very long documents are capped with a truncation marker (pack size discipline)", async () => {

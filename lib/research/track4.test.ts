@@ -77,6 +77,26 @@ describe("runTrack4 (LIVE — replaces the H3 stub)", () => {
     expect(kept.hard_fail_consensus?.second_call_failed).toBe(true);
   });
 
+  // ── Sweep F6 (founder-approved 2026-07-14) — the MIXED path: readable + unreadable together.
+  // Pre-F6 every unreadable test had sources.length === 0; the wiring that hands the unreadable
+  // list to the prompt on the READABLE branch was unverified (a refactor dropping it would
+  // silently lose the "request a text-bearing copy" flow for partially-unreadable uploads). ──
+  it("F6: MIXED uploads (one readable + one unreadable) → prompt receives the unreadable list, review proceeds", async () => {
+    loadDocumentPack.mockResolvedValue(packOf(
+      [docSrc("cases/c1/invoice.pdf")],
+      [{ file_name: "scan.jpg", reason: "image-only document — no text layer (v1)" }],
+    ));
+    runModel.mockResolvedValue(model(payload([item()])));
+    const out = await runTrack4(ctx);
+    expect(out.nothing_to_review).toBeUndefined();
+    expect(out.acquisition_failed).toBeUndefined();
+    expect(out.evidence_items).toHaveLength(1); // the readable document was reviewed
+    // the unreadable file reached the prompt's user block (buildTrack4Prompt ctx.unreadable wiring)
+    const call = runModel.mock.calls[0][0] as { system: string; user: string };
+    expect(call.user).toContain("scan.jpg");
+    expect(call.user).toContain("UNREADABLE");
+  });
+
   it("OQ-A3: ZERO uploads → nothing_to_review (an absence, never a failure) — no model call", async () => {
     loadDocumentPack.mockResolvedValue(packOf([]));
     const out = await runTrack4(ctx);

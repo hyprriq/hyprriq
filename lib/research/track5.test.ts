@@ -195,6 +195,53 @@ describe("Track 5 — contradiction records (m4c-1.0.0, AT-B3 shape locks)", () 
   });
 });
 
+// ── Sweep F6 (founder-approved 2026-07-14) — detector fan-out + the negative sides. ──
+describe("Track 5 — detector fan-out (F6 coverage locks)", () => {
+  it("TWO vetoing tracks against Track 4 positives → one documentation_comfort record EACH", async () => {
+    rowsResult.mockResolvedValue({ data: [
+      row(1, "supplier_identity", "infer", { evidence_items: [item("i1", "government_registration")] }),
+      row(2, "supply_chain_relationship", "hard_fail", { evidence_items: [item("w1", "counterfeit_channel")] }),
+      row(3, "brand_risk_assessment", "hard_fail", { evidence_items: [item("v1", "active_ip_complaints")] }),
+      row(4, "documentation_review", "infer", { evidence_items: [item("d1", "invoice_full", "Petzl")] }),
+    ], error: null });
+    const s = await sl();
+    const docRecs = s.contradictions.filter((c) => c.contradiction_type === "documentation_comfort_vs_web_risk");
+    expect(docRecs).toHaveLength(2);
+    expect(docRecs.map((c) => c.assertion_b.track_key).sort()).toEqual(["brand_risk_assessment", "supply_chain_relationship"]);
+  });
+
+  it("divergence is a full pass×hard_fail cross-product with the self-skip guard (2 pass × 1 hard_fail → 2 records)", async () => {
+    rowsResult.mockResolvedValue({ data: [
+      row(1, "supplier_identity", "pass", { evidence_items: [item("i1", "government_registration")] }),
+      row(2, "supply_chain_relationship", "pass", { evidence_items: [item("i2", "dealer_page_listed")] }),
+      row(3, "brand_risk_assessment", "hard_fail", { evidence_items: [item("v1", "active_ip_complaints")] }),
+    ], error: null });
+    const s = await sl();
+    const div = s.contradictions.filter((c) => c.contradiction_type === "cross_track_signal_divergence");
+    expect(div).toHaveLength(2);
+    expect(div.map((c) => c.assertion_a.track_key).sort()).toEqual(["supplier_identity", "supply_chain_relationship"]);
+    for (const c of div) expect(c.assertion_a.track_key).not.toBe(c.assertion_b.track_key); // self-skip holds
+  });
+
+  it("negative sides: flags ABSENT when Track 2 ran / Track 4 had content (two-sided property)", async () => {
+    rowsResult.mockResolvedValue({ data: healthyRows(), error: null }); // tracks 1-4 all present with content
+    const s = await sl();
+    expect(s.flags).not.toContain("no_relationship_dimension");
+    expect(s.flags).not.toContain("no_documentation_provided");
+    expect(s.flags).not.toContain("identity_unconfirmed");
+    expect(s.b2b_archetype_flag).toBe(false);
+  });
+
+  it("b2b brands UNION across rows, duplicates collapsed", async () => {
+    rowsResult.mockResolvedValue({ data: [
+      row(2, "supply_chain_relationship", "infer", { compiled_findings_json: { b2b_only_detected: true, b2b_only_brands: ["Petzl", "Bosch"] } }),
+      row(3, "brand_risk_assessment", "flag", { compiled_findings_json: { b2b_only_detected: true, b2b_only_brands: ["Petzl"] } }),
+    ], error: null });
+    const s = await sl();
+    expect(s.b2b_brands.sort()).toEqual(["Bosch", "Petzl"]);
+  });
+});
+
 describe("Track 5 — honest edges", () => {
   it("zero rows → insufficient_data, no flags manufactured, never a failure", async () => {
     rowsResult.mockResolvedValue({ data: [], error: null });
