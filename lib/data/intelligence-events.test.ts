@@ -41,6 +41,17 @@ describe("buildInvestigationEvent (pure — the ledger row is derived ONCE, via 
     expect(ev.vendor_name_normalized).toBe("td synexx");
     expect(ev.identity_unconfirmed).toBe(true);
   });
+  // F5 (founder-ruled option b, migration applied 2026-07-15): a dispute/no-advance re-run is a
+  // ledger TRUTH but never a rollup input — it gets its own event_type, structurally excluded
+  // from the rollup queries (incl. future recomputes and corpus rebuilds).
+  it("F5: a dispute re-run builds event_type 'dispute_rerun' (the ledger records truth, tagged)", () => {
+    const ev = buildInvestigationEvent({ ...ctx, dispute_rerun: true }, {
+      signals: { supplier_identity: "pass" }, verdict: "do_not_rely",
+      identityFailed: false, identityUnconfirmed: false,
+    });
+    expect(ev.event_type).toBe("dispute_rerun");
+  });
+
   it("missing attempt_number defaults to 1", () => {
     const ev = buildInvestigationEvent({ ...ctx, attempt_number: undefined }, {
       signals: {}, verdict: null, identityFailed: false, identityUnconfirmed: false,

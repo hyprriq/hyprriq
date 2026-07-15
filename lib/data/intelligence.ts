@@ -69,17 +69,24 @@ const EVENT_COLUMNS =
 
 // Fetch the confirmed events feeding a vendor rollup. Used by the incremental write below AND the
 // rebuild script — same query, same compute, same upsert (one fn, all sites).
+// F5 (founder-ruled, 2026-07-14/15) — rollups consume ONLY adopted-flow events: the
+// event_type filter structurally excludes dispute_rerun events from EVERY recompute path
+// (incremental writes here AND the founder-run corpus rebuild — same query fns), which is why
+// the migration was required over a code-only skip (an untagged event would poison the next
+// recompute even if this write skipped it).
 async function confirmedVendorEvents(key: string): Promise<{ events: LedgerEvent[]; error: string | null }> {
   const { data, error } = await supabaseAdmin.from("intelligence_events")
     .select(EVENT_COLUMNS)
-    .eq("vendor_name_normalized", key).eq("identity_unconfirmed", false).eq("identity_failed", false);
+    .eq("vendor_name_normalized", key).eq("event_type", "investigation_completed")
+    .eq("identity_unconfirmed", false).eq("identity_failed", false);
   return { events: (data ?? []) as unknown as LedgerEvent[], error: error?.message ?? null };
 }
 
 async function confirmedBrandEvents(brandKey: string): Promise<{ events: LedgerEvent[]; error: string | null }> {
   const { data, error } = await supabaseAdmin.from("intelligence_events")
     .select(EVENT_COLUMNS)
-    .contains("brands_normalized", [brandKey]).eq("identity_unconfirmed", false).eq("identity_failed", false);
+    .contains("brands_normalized", [brandKey]).eq("event_type", "investigation_completed")
+    .eq("identity_unconfirmed", false).eq("identity_failed", false);
   return { events: (data ?? []) as unknown as LedgerEvent[], error: error?.message ?? null };
 }
 
@@ -109,8 +116,10 @@ export async function writeIntelligence(ctx: TrackContext, args: MemoryWriteArgs
   const rec = await recordInvestigationEvent(ev);
   if (rec.error) failures.push(`event(${ev.vendor_name_normalized}): ${rec.error}`);
   // Rollups fire only when THIS call appended a new event (replay-safe) AND the identity is
-  // confirmed (H6 gate — unconfirmed/failed attempts live in the ledger as truth, never in profiles).
-  if (rec.inserted && !ev.identity_unconfirmed && !ev.identity_failed) {
+  // confirmed (H6 gate — unconfirmed/failed attempts live in the ledger as truth, never in profiles)
+  // AND the event is adopted-flow (F5 — a dispute re-run's UNADOPTED verdict must never advance
+  // overall_risk_signal/risk_history; the query-side filter above is the structural twin).
+  if (rec.inserted && ev.event_type === "investigation_completed" && !ev.identity_unconfirmed && !ev.identity_failed) {
     const v = await rollupVendor(ev.vendor_name_normalized);
     if (v.error) failures.push(`vendor(${ev.vendor_name_normalized}): ${v.error}`);
     for (const brandKey of ev.brands_normalized) {

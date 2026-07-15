@@ -3,15 +3,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // H6 — profiles are ROLLUPS of the intelligence_events ledger. The compute fns are pure (tested
 // directly); writeIntelligence's GATING (event always; rollups only on fresh insert + confirmed
 // identity) is locked with the events module + supabase mocked.
-const { buildInvestigationEvent, recordInvestigationEvent, fromCalls, selectChainResult, upsertByTable, auditInsert } = vi.hoisted(() => {
+const { buildInvestigationEvent, recordInvestigationEvent, fromCalls, eqCalls, selectChainResult, upsertByTable, auditInsert } = vi.hoisted(() => {
   const fromCalls: string[] = [];
+  const eqCalls: unknown[][] = [];
   const selectChainResult: { data: unknown[]; error: { message: string } | null } = { data: [], error: null };
   const upsertByTable: Record<string, ReturnType<typeof vi.fn>> = {};
   const auditInsert = vi.fn().mockResolvedValue({ error: null });
   return {
     buildInvestigationEvent: vi.fn(),
     recordInvestigationEvent: vi.fn(),
-    fromCalls, selectChainResult, upsertByTable, auditInsert,
+    fromCalls, eqCalls, selectChainResult, upsertByTable, auditInsert,
   };
 });
 vi.mock("@/lib/data/intelligence-events", () => ({ buildInvestigationEvent, recordInvestigationEvent }));
@@ -22,7 +23,7 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "audit_log") return { insert: auditInsert };
       if (!upsertByTable[table]) upsertByTable[table] = vi.fn().mockResolvedValue({ error: null });
       const chain: Record<string, unknown> = {};
-      chain.eq = vi.fn(() => chain);
+      chain.eq = vi.fn((...args: unknown[]) => { eqCalls.push(args); return chain; });
       chain.contains = vi.fn(() => chain);
       chain.then = (resolve: (v: typeof selectChainResult) => void) => resolve(selectChainResult);
       return { select: vi.fn(() => chain), upsert: upsertByTable[table] };
@@ -33,13 +34,13 @@ vi.mock("@/lib/supabase/admin", () => ({
 import { computeVendorRollup, computeBrandRollup, writeIntelligence, type LedgerEvent } from "./intelligence";
 import type { TrackContext } from "@/lib/research/contracts";
 
-const ev = (over: Partial<LedgerEvent>): LedgerEvent => ({
+const ev = (over: Partial<LedgerEvent> & { event_type?: string }): LedgerEvent & { event_type: string } => ({
   case_id: "c1", attempt_number: 1, entered_name: "TD Synnex", resolved_name: "TD Synnex",
   vendor_name_normalized: "td synnex", resolved_domain: "tdsynnex.com",
   identity_unconfirmed: false, identity_failed: false,
   brands: ["Lenovo"], brands_normalized: ["lenovo"],
   signals: { supplier_identity: "pass" }, verdict: "usable_with_conditions",
-  created_at: "2026-07-06T10:00:00Z", ...over,
+  created_at: "2026-07-06T10:00:00Z", event_type: "investigation_completed", ...over,
 });
 
 describe("computeVendorRollup (profiles are RECOMPUTABLE from the ledger — one fn, all sites)", () => {
@@ -90,7 +91,7 @@ describe("writeIntelligence gating (H6: event always; rollups only on fresh inse
   const confirmedEvent = ev({});
 
   beforeEach(() => {
-    fromCalls.length = 0;
+    fromCalls.length = 0; eqCalls.length = 0;
     selectChainResult.data = []; selectChainResult.error = null;
     auditInsert.mockClear();
     for (const k of Object.keys(upsertByTable)) upsertByTable[k].mockClear();
@@ -103,6 +104,24 @@ describe("writeIntelligence gating (H6: event always; rollups only on fresh inse
     expect(recordInvestigationEvent).toHaveBeenCalledWith(confirmedEvent);
     expect(fromCalls).toContain("intelligence_events"); // rollup fetch fired
     expect(r.degraded).toBe(false);
+  });
+
+  // ── F5 (founder-ruled option b; migration widening the event_type CHECK applied 2026-07-15). ──
+  it("F5: a dispute_rerun event is RECORDED (ledger truth) but rollups are NOT invoked (unadopted verdicts never touch profiles)", async () => {
+    const disputeEvent = ev({ event_type: "dispute_rerun", verdict: "do_not_rely" });
+    buildInvestigationEvent.mockReturnValue(disputeEvent);
+    const r = await writeIntelligence(ctx, args);
+    expect(recordInvestigationEvent).toHaveBeenCalledWith(disputeEvent); // the ledger stays complete
+    expect(fromCalls).not.toContain("intelligence_events");             // no rollup fetch
+    expect(fromCalls).not.toContain("vendor_intelligence");
+    expect(fromCalls).not.toContain("brand_intelligence");
+    expect(r.degraded).toBe(false);
+  });
+
+  it("F5: rollup queries filter to investigation_completed — dispute events are STRUCTURALLY excluded from every recompute", async () => {
+    selectChainResult.data = [ev({})];
+    await writeIntelligence(ctx, args); // normal run → rollups fire
+    expect(eqCalls).toContainEqual(["event_type", "investigation_completed"]);
   });
   it("replay (inserted:false) → NO rollup work", async () => {
     recordInvestigationEvent.mockResolvedValue({ inserted: false, error: null });

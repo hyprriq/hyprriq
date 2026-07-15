@@ -12,7 +12,13 @@ import { normalizeName } from "@/lib/utils/normalize-name";
 export interface InvestigationEvent {
   case_id: string;
   attempt_number: number;
-  event_type: "investigation_completed";
+  // F5 (founder-ruled option b, 2026-07-14; CHECK widened by migration 20260715000000): a dispute/
+  // no-advance re-run appends to the ledger as TRUTH under its own event_type — the rollup queries
+  // filter to 'investigation_completed', so unadopted dispute verdicts are STRUCTURALLY excluded
+  // from profiles, including future recomputes and corpus rebuilds. (The deeper question — should
+  // rollups follow ADOPTION, recompute-at-publish, since normal re-runs of delivered cases share
+  // this shape — is routed to the caching/ADR-008 gate, not solved here.)
+  event_type: "investigation_completed" | "dispute_rerun";
   entered_name: string | null;
   resolved_name: string;
   vendor_name_normalized: string;
@@ -38,7 +44,7 @@ export function buildInvestigationEvent(ctx: TrackContext, args: MemoryWriteArgs
   return {
     case_id: ctx.case_id,
     attempt_number: ctx.attempt_number ?? 1,
-    event_type: "investigation_completed",
+    event_type: ctx.dispute_rerun ? "dispute_rerun" : "investigation_completed",
     entered_name: ctx.vendor_name ?? null,
     resolved_name: rid.name,
     vendor_name_normalized: normalizeName(rid.name),
