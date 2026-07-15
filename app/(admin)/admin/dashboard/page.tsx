@@ -3,6 +3,7 @@ import { requireAdmin, getAdminDashboard } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PLAN_NAME, type PlanType } from "@/lib/constants/plans";
 import { StatusBadge } from "@/components/portal/badges";
+import { buildKpiTiles } from "@/lib/admin/dashboard-tiles";
 
 function slaText(iso: string | null) {
   if (!iso) return "—";
@@ -14,14 +15,10 @@ export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
   const { kpis, reviewQueue, openSupport, recentClients } = await getAdminDashboard();
 
-  const tiles = [
-    { label: "MRR", value: `$${kpis.mrr.toLocaleString()}`, sub: "active subscriptions", tone: "" },
-    { label: "Credits Sold", value: kpis.creditsSold, sub: "charged to date", tone: "" },
-    { label: "Cases Created", value: kpis.casesCreated, sub: "all time", tone: "" },
-    { label: "Pending Review", value: kpis.pendingReview, sub: "awaiting founder", tone: "warn" },
-    { label: "Delivered", value: kpis.delivered, sub: "reports", tone: "ok" },
-    { label: "Open Requests", value: kpis.openRequests, sub: "support queue", tone: "warn" },
-  ];
+  // BUG-1 fix — tile destinations live in the unit-locked presenter (lib/admin/dashboard-tiles):
+  // publishing drops a case from the queue below, so the Delivered tile MUST route to the
+  // delivered list (whose View buttons open the review page) — no more direct-URL-only path.
+  const tiles = buildKpiTiles(kpis);
 
   return (
     <AdminShell
@@ -31,15 +28,25 @@ export default async function AdminDashboardPage() {
       topRight={<span className="text-[13px] text-muted">Last 30 days</span>}
     >
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-card border border-line bg-surface p-3.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t.label}</div>
-            <div className={`mt-1 font-display text-xl font-extrabold ${t.tone === "warn" ? "text-verify-ink" : t.tone === "ok" ? "text-clear-ink" : "text-ink"}`}>
-              {t.value}
-            </div>
-            <div className="mt-0.5 text-[12px] text-muted">{t.sub}</div>
-          </div>
-        ))}
+        {tiles.map((t) => {
+          const body = (
+            <>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t.label}</div>
+              <div className={`mt-1 font-display text-xl font-extrabold ${t.tone === "warn" ? "text-verify-ink" : t.tone === "ok" ? "text-clear-ink" : "text-ink"}`}>
+                {t.value}
+              </div>
+              <div className="mt-0.5 text-[12px] text-muted">{t.sub}</div>
+            </>
+          );
+          const cls = "rounded-card border border-line bg-surface p-3.5";
+          return t.href ? (
+            <Link key={t.label} href={t.href} className={`${cls} block transition-colors hover:border-brand hover:bg-subtle`}>
+              {body}
+            </Link>
+          ) : (
+            <div key={t.label} className={cls}>{body}</div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
