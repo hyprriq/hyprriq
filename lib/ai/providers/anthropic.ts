@@ -3,9 +3,20 @@ import type { RunModelInput, RunModelResult } from "@/lib/ai/runModel";
 
 export interface AnthropicInput extends RunModelInput { model: string; enableWebSearch?: boolean }
 
-// Rough Sonnet 4.6 pricing (USD per token) — for cost observability only, not billing.
-const PRICE_IN = 3 / 1_000_000;
-const PRICE_OUT = 15 / 1_000_000;
+// S-2 (d), founder-ruled 2026-07-17 (R3) — cost derives from the model ACTUALLY CALLED, per-model,
+// for cost observability only (not billing). A model with no entry prices LOUD-ZERO (console.error
+// + cost 0): attributable, never silently wrong — AT-SYN-COST feeds OQ-S3 and a wrong figure would
+// rule it on bad data. Adding a model to MODEL_CONFIG means adding its price row here (the S-2
+// lock test fails otherwise).
+const PRICES: Record<string, { inPerToken: number; outPerToken: number }> = {
+  "claude-sonnet-4-6": { inPerToken: 3 / 1_000_000, outPerToken: 15 / 1_000_000 },
+};
+
+export function priceFor(model: string): { known: boolean; inPerToken: number; outPerToken: number } {
+  const p = PRICES[model];
+  if (!p) return { known: false, inPerToken: 0, outPerToken: 0 };
+  return { known: true, ...p };
+}
 
 function extractText(content: { type: string; text?: string }[]): string {
   return content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("");
@@ -65,12 +76,14 @@ export async function runAnthropic(input: AnthropicInput): Promise<RunModelResul
   const json = parseModelJson(text); // tolerant: handles ```json fences + prose around the object
   const tokensIn = res.usage?.input_tokens ?? 0;
   const tokensOut = res.usage?.output_tokens ?? 0;
+  const price = priceFor(input.model);
+  if (!price.known) console.error(`[runAnthropic] no price entry for model "${input.model}" — cost_usd reported as 0 (add its row to PRICES)`);
   return {
     json,
     model_provider: "anthropic",
     model_version: input.model,
     tokens: tokensIn + tokensOut,
-    cost_usd: tokensIn * PRICE_IN + tokensOut * PRICE_OUT,
+    cost_usd: tokensIn * price.inPerToken + tokensOut * price.outPerToken,
     latency_ms: Date.now() - started,
     ...(schemaFallback ? { schema_fallback: true } : {}),
   };

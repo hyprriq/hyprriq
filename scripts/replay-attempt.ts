@@ -15,6 +15,10 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runPipeline } from "@/lib/research/pipeline";
 import { VALIDATION_VERSION } from "@/lib/research/weightValidation";
+import { RUBRIC_VERSION } from "@/lib/research/weights";
+import { IOS } from "@/lib/research/ios";
+import { modelFor } from "@/lib/ai/runModel";
+import { buildVersionDelta, formatVersionDelta } from "@/lib/research/versionDelta";
 import type { PlanType } from "@/lib/constants/plans";
 
 const REQUIRED_ENV = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY"];
@@ -53,11 +57,45 @@ async function main() {
     .eq("case_id", caseId).eq("attempt_number", replayAttempt);
   console.log(`  frozen packs @ attempt ${replayAttempt}: ${(packs ?? []).map((p) => `${p.track_key}(${p.schema_version}, ${String(p.evidence_hash).slice(0, 8)}…)`).join(", ") || "NONE"}`);
 
+  // ── S-2 (c) — R1, founder-RULED (2026-07-17): the preflight's job is ATTRIBUTION, NOT
+  // PREVENTION. No hard version STOP here (rerun-batch keeps its STOP — correct for a batch
+  // spending money under changed rules; A5's backtest replays attempts spanning firewall versions
+  // BY DESIGN and must run). Instead: the version delta between the replayed attempt's STORED
+  // versions and the current code is computed, PRINTED, and written onto the replay's audit
+  // marker on EVERY replay — a divergence can never again be misattributed to extraction noise. ──
+  const { data: synthRow } = await supabaseAdmin
+    .from("case_synthesis")
+    .select("prompt_version, rubric_version, synthesis_version, ios_version, model_version")
+    .eq("case_id", caseId).eq("attempt_number", replayAttempt).is("deleted_at", null)
+    .maybeSingle();
+  const { data: valRows } = await supabaseAdmin
+    .from("case_track_results")
+    .select("track_validation_report")
+    .eq("case_id", caseId).eq("attempt_number", replayAttempt).is("deleted_at", null)
+    .not("track_validation_report", "is", null)
+    .limit(1);
+  const storedValidation =
+    ((valRows?.[0]?.track_validation_report as { validation_version?: string } | null)?.validation_version) ?? null;
+  const s = (synthRow ?? {}) as Record<string, string | null>;
+  const versionsDelta = buildVersionDelta(
+    {
+      validation_version: storedValidation,
+      synthesis_version: s.synthesis_version, prompt_version: s.prompt_version,
+      rubric_version: s.rubric_version, ios_version: s.ios_version, model_version: s.model_version,
+    },
+    {
+      validation_version: VALIDATION_VERSION,
+      synthesis_version: IOS.synthesis_version, prompt_version: IOS.prompt_version,
+      rubric_version: RUBRIC_VERSION, ios_version: IOS.ios_version, model_version: modelFor("synthesis").model,
+    },
+  );
+  console.log(formatVersionDelta(versionsDelta));
+
   // OQ-D — the replay marker is the audit-log provenance record for this appended attempt.
   await supabaseAdmin.from("audit_log").insert({
     table_name: "cases", record_id: caseId, action: "UPDATE",
     actor_id: "system", actor_type: "system",
-    new_value: { replay_of_attempt: replayAttempt, reason: "H7 replay seam — judge frozen evidence again" },
+    new_value: { replay_of_attempt: replayAttempt, reason: "H7 replay seam — judge frozen evidence again", versions_delta: versionsDelta },
   });
 
   const res = await runPipeline({

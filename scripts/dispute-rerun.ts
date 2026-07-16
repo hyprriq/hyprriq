@@ -33,6 +33,7 @@ import { join } from "node:path";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runPipeline } from "@/lib/research/pipeline";
 import { VALIDATION_VERSION } from "@/lib/research/weightValidation";
+import { IOS } from "@/lib/research/ios";
 import type { PlanType } from "@/lib/constants/plans";
 
 const REQUIRED_ENV = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY", "SERPER_API_KEY", "WHOIS_API_KEY"];
@@ -57,6 +58,11 @@ async function main() {
       'Usage: npx tsx --env-file=.env.local scripts/dispute-rerun.ts <case-id> --reason "<dispute/ticket ref>" [--run]\n' +
       "This tool is for the EXCEPTION (client dispute / refund defense / applying a ruled fix to one case) — not the routine flow.",
     );
+    process.exit(1);
+  }
+  // S-2 (b) — synthesis pin, the rerun-batch pattern (pin-first; S-1 updates both together).
+  if (IOS.synthesis_version !== "0.0.0") {
+    console.error(`STOP: this code is synthesis_version "${IOS.synthesis_version}", expected "0.0.0" — aborting.`);
     process.exit(1);
   }
   if (VALIDATION_VERSION !== "1.7.0") { // version pin, the rerun-batch pattern — never re-score under unexpected logic

@@ -24,6 +24,7 @@ import { join } from "node:path";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runPipeline } from "@/lib/research/pipeline";
 import { VALIDATION_VERSION } from "@/lib/research/weightValidation";
+import { IOS } from "@/lib/research/ios";
 import type { PlanType } from "@/lib/constants/plans";
 
 // Fixture rule (earned thrice): identity comes from the DB, never a shorthand label — case ids are
@@ -45,6 +46,12 @@ const signalsByTrack = (rows: Row[]): Record<string, unknown> =>
 function preflight() {
   if (CASE_IDS.length === 0) {
     console.error("STOP: no case ids given.\nUsage: npx tsx --env-file=.env.local scripts/rerun-batch.ts <case-id> [<case-id>…] [--run]");
+    process.exit(1);
+  }
+  // S-2 (b) — synthesis_version joins the pins (pin-first: S-1 bumps IOS.synthesis_version and
+  // updates this expectation in the same commit).
+  if (IOS.synthesis_version !== "0.0.0") {
+    console.error(`STOP: this code is synthesis_version "${IOS.synthesis_version}", expected "0.0.0" — aborting so we don't re-score under unexpected synthesis logic.`);
     process.exit(1);
   }
   if (VALIDATION_VERSION !== "1.7.0") { // H7 (SO-2) — pin tracks the firewall version deliberately

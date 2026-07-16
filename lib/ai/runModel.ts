@@ -28,6 +28,14 @@ const MODEL_CONFIG: Record<ModelTask, { provider: string; model: string }> = {
   synthesis: { provider: "anthropic", model: "claude-sonnet-4-6" }, // → "claude-opus-4-8" before go-live
 };
 
+// S-2 (a), founder-ruled 2026-07-17 — the ONE readable source of the model routing: ios_version
+// assembly (pipeline.steps) and the price table (providers/anthropic) derive from HERE, so a
+// config flip can never leave a stale model string in the determinism-versioning layer or a
+// misreported cost. Read-only accessor; the config stays private and editable in one place.
+export function modelFor(task: ModelTask): { provider: string; model: string } {
+  return MODEL_CONFIG[task];
+}
+
 export async function runModel(input: RunModelInput): Promise<RunModelResult> {
   const cfg = MODEL_CONFIG[input.task];
   if (cfg.provider === "anthropic") {

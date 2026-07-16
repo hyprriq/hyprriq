@@ -20,6 +20,7 @@ import { applyDocumentationNoOverride, type NoOverrideResult } from "@/lib/resea
 import { certifySynthesisForVerdict, type CertificationAudit } from "@/lib/research/synthesisFirewall";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
+import { modelFor } from "@/lib/ai/runModel";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
 import { upsertCaseSynthesis, getSynthesisByEvidenceHash } from "@/lib/data/synthesis";
 import { writeIntelligence } from "@/lib/data/intelligence";
@@ -285,7 +286,11 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
 export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutput[]): Promise<{ synthesis: Synthesis }> {
   const normalized = normalizeEvidence(trackOutputs);
   const enriched = enrichWithGraph(normalized);
-  const ios = assembleIosVersion(enriched.evidence_hash, "anthropic", "claude-sonnet-4-6");
+  // S-2 (a) — the ios model string derives from MODEL_CONFIG (was hardcoded: flipping synthesis to
+  // another model via the config map left ios_version stale, so memoized/stored synthesis would be
+  // reused across a model change — silent drift in the determinism-versioning layer).
+  const synthesisModel = modelFor("synthesis");
+  const ios = assembleIosVersion(enriched.evidence_hash, synthesisModel.provider, synthesisModel.model);
   // Memoize (enhancement #2): identical evidence under the same IOS version → same synthesis.
   const memoized = await getSynthesisByEvidenceHash(enriched.evidence_hash, ios.ios_version);
   const synthesis = memoized ?? (await runSynthesis(enriched));
