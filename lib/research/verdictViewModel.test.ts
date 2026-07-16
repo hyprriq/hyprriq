@@ -88,6 +88,26 @@ describe("buildVerdictViewModel — Track 5 sourcing_logic", () => {
   });
 });
 
+// ── S-0 (founder-signed 2026-07-16) — the ADMIN verdict site is firewalled too. ──
+describe("S-0 — buildVerdictViewModel certifies synthesis before the verdict", () => {
+  it("poisoned synthesis → verdict byte-identical to clean; audits exposed for admin QA", () => {
+    const poisoned = synth({
+      module_4_contradictions: [
+        { is_load_bearing: true, risk_level: "critical" }, // asserted, no resolving evidence
+        { is_load_bearing: true, risk_level: "critical", origin: "track5_m4c" } as never,
+      ],
+      module_7_doubt_calibration: { doubt_level: "critical", doubt_focus: "all", rationale: "do_not_rely" },
+    });
+    const clean = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });
+    const vm = buildVerdictViewModel({ trackRows: rows, synthesis: poisoned, ios: null });
+    expect(JSON.stringify(vm.verdict)).toBe(JSON.stringify(clean.verdict));
+    expect(vm.certification_audits.length).toBeGreaterThan(0);
+    expect(clean.certification_audits).toEqual([]);
+    // the admin DISPLAY still shows the raw records (role-gated QA sees what was clamped)
+    expect(vm.crossTrack?.contradictions).toHaveLength(2);
+  });
+});
+
 describe("buildVerdictViewModel", () => {
   it("recomputed verdict matches computeVerdict on the same persisted signals (determinism)", () => {
     const vm = buildVerdictViewModel({ trackRows: rows, synthesis: synth(), ios: null });

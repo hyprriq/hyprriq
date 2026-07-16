@@ -8,6 +8,7 @@ import type { TrackResultRow } from "@/lib/data/track-results";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
+import { certifySynthesisForVerdict, type CertificationAudit } from "@/lib/research/synthesisFirewall";
 import { assertionAdvisories } from "@/lib/utils/banned-language";
 import { expectedEvidenceTypes, evidenceLabel, alternativeGroupFor } from "@/lib/research/weights";
 import { brandFindingFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
@@ -96,6 +97,8 @@ export interface VerdictViewModel {
   coverage: EvidenceCoverage | null;       // item 3
   gaps: EvidenceGaps | null;               // item 4
   trace: EngineTraceView;
+  // S-0 — certification audits (clamps/coercions the firewall applied): admin QA visibility.
+  certification_audits: CertificationAudit[];
 }
 
 export function buildVerdictViewModel(input: {
@@ -121,8 +124,11 @@ export function buildVerdictViewModel(input: {
   // H3 — the ceiling (and the documentation no-override, founder-ruled 2026-07-12) are applied
   // HERE exactly as in the pipeline's stageVerdict and the rejudge script (one shared fn each,
   // three sites) so the displayed verdict always equals cases.verdict.
-  const rawVerdict = engineComplete ? computeVerdict(signals, synthesis) : null;
-  const noOverride = rawVerdict && synthesis ? applyDocumentationNoOverride(rawVerdict, signals, synthesis) : null;
+  // S-0 — the synthesis→verdict firewall: the verdict path consumes ONLY certified synthesis
+  // (the admin DISPLAY below keeps the original — role-gated QA sees the raw reasoning).
+  const certified = synthesis ? certifySynthesisForVerdict(synthesis) : null;
+  const rawVerdict = engineComplete && certified ? computeVerdict(signals, certified.synthesis) : null;
+  const noOverride = rawVerdict && certified ? applyDocumentationNoOverride(rawVerdict, signals, certified.synthesis) : null;
   const ceiling = rawVerdict ? applyVerdictCeiling({ verdict: noOverride?.verdict ?? rawVerdict.verdict }, signals) : null;
   const verdict = rawVerdict && ceiling ? { ...rawVerdict, verdict: ceiling.verdict } : null;
 
@@ -183,7 +189,7 @@ export function buildVerdictViewModel(input: {
     ...assertionAdvisories(r.questions_to_ask ?? null),
   ]))];
 
-  return { engineComplete, verdict, ceiling, assertion_advisories, executiveSummary, crossTrack, tracks, coverage, gaps, trace };
+  return { engineComplete, verdict, ceiling, assertion_advisories, executiveSummary, crossTrack, tracks, coverage, gaps, trace, certification_audits: certified?.audits ?? [] };
 }
 
 // item 3 — aggregate evidence completeness over the finding tracks.

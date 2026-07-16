@@ -1,5 +1,6 @@
 import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey } from "@/lib/constants/tracks";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { tracksForPlan } from "@/lib/research/pipeline.registry";
 import {
   stageResolveAttempt, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack,
@@ -62,6 +63,15 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
 
   // ── Layer 4 Judgment + Layer 5 Communication ──
   const verdict = stageVerdict(signals, synthesis);
+  // S-0 — certification audits are an anomaly record (the firewall clamped/coerced something an
+  // upstream layer emitted): persist loud, never silent. Empty in normal operation.
+  if (verdict.certification_audits.length > 0) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_synthesis", record_id: base.case_id, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { synthesis_certification: verdict.certification_audits, attempt: ctx.attempt_number ?? null },
+    });
+  }
 
   // ── Institutional memory write-side (ADR-G006/G007) ──
   await stageMemoryWrite(ictx, {

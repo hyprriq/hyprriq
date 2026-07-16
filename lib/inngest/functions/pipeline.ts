@@ -66,7 +66,19 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
   }
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs));
-  const verdict = await step.run("verdict", () => stageVerdict(signals, synthesis));
+  const verdict = await step.run("verdict", async () => {
+    const v = stageVerdict(signals, synthesis);
+    // S-0 — certification audits are an anomaly record (the firewall clamped something an
+    // upstream layer emitted): persist loud inside the same durable step. Empty in normal runs.
+    if (v.certification_audits.length > 0) {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "case_synthesis", record_id: ctx.case_id, action: "UPDATE",
+        actor_id: "system", actor_type: "system",
+        new_value: { synthesis_certification: v.certification_audits, attempt: ctx.attempt_number ?? null },
+      });
+    }
+    return v;
+  });
   await step.run("memory-write", () => stageMemoryWrite(ictx, {
     signals, verdict: verdict.verdict, identityFailed, identityUnconfirmed: identity.identity_unconfirmed,
   }));

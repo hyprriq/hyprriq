@@ -35,7 +35,7 @@ beforeEach(() => {
     signal: "pass", acquisition_failed: false, failed: false, not_implemented: false, track_number: n,
   }));
   steps.stageSynthesis.mockResolvedValue({ synthesis: {} });
-  steps.stageVerdict.mockReturnValue({ verdict: "usable_with_conditions", confidence_0_15: 9 });
+  steps.stageVerdict.mockReturnValue({ verdict: "usable_with_conditions", confidence_0_15: 9, certification_audits: [] });
   steps.stageMemoryWrite.mockResolvedValue(undefined);
   steps.stageFinalize.mockResolvedValue({ error: null });
   steps.stageTrack0.mockResolvedValue(undefined);

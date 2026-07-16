@@ -28,6 +28,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import { stageFinalize } from "./pipeline.steps";
 import { rederiveStoredSignal } from "./rederive";
+import { certifySynthesisForVerdict } from "./synthesisFirewall";
 import { computeVerdict } from "./verdictEngine";
 import type { EvidenceItem } from "./contracts";
 import { applyVerdictCeiling } from "./verdictCeiling";
@@ -130,8 +131,10 @@ describe("dispute re-run — verdict stability lock (rejudge-on-same-frozen-evid
     for (const [k, items] of Object.entries(FROZEN_ITEMS)) {
       signals[k as TrackKey] = rederiveStoredSignal(k as TrackKey, items as EvidenceItem[]);
     }
-    const raw = computeVerdict(signals, EMPTY_SYNTH);
-    const noOverride = applyDocumentationNoOverride(raw, signals, EMPTY_SYNTH);
+    // S-0 — the lock mirrors the full pipeline composition: certify → compute → no-override → ceiling.
+    const certified = certifySynthesisForVerdict(EMPTY_SYNTH);
+    const raw = computeVerdict(signals, certified.synthesis);
+    const noOverride = applyDocumentationNoOverride(raw, signals, certified.synthesis);
     return { signals, ...raw, ...applyVerdictCeiling({ verdict: noOverride.verdict }, signals) };
   };
   it("re-judging identical frozen evidence twice yields a byte-identical verdict — through the PIPELINE composition (cap included)", () => {

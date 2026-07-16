@@ -279,11 +279,26 @@ export interface DecisionSnapshot {
   what_to_verify: string[];
   what_to_monitor: string[];
 }
+// S-0 (founder-signed 2026-07-16) — m4c-1.1.0, READER side: Module 4's stored records carry the
+// full m4c shape plus an additive `origin`. Track 5's WRITER stays on m4c-1.0.0 (frozen at the
+// sub-gate B freeze); this reader accepts both. All fields beyond the first two are OPTIONAL and
+// verdict-inert: computeVerdict reads only {is_load_bearing, risk_level}, and post-S-0 it only
+// ever sees them through certifySynthesisForVerdict (the origin cap lives there).
+export const M4C_READER_CONTRACT_VERSION = "m4c-1.1.0";
+export interface Module4ContradictionRecord {
+  is_load_bearing: boolean;
+  risk_level: string;
+  origin?: "track5_m4c" | "synthesis";
+  contradiction_type?: string;
+  assertion_a?: { track_key?: string; statement?: string; evidence_ids?: string[] };
+  assertion_b?: { track_key?: string; statement?: string; evidence_ids?: string[] };
+  interpretation?: string;
+}
 export interface SynthesisOutput {
   module_1_normalized_evidence: unknown[];
   module_2_claim_attributions: unknown[];
   module_3_assertions: unknown[];
-  module_4_contradictions: { is_load_bearing: boolean; risk_level: string }[];
+  module_4_contradictions: Module4ContradictionRecord[];
   module_5_hypotheses: { hypotheses: unknown[]; what_would_change_the_leader: string };
   module_6_risk_gaps: unknown[];
   module_7_doubt_calibration: { doubt_level: string; doubt_focus: string; rationale: string };

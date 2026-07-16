@@ -41,7 +41,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 import {
-  stageFindingTrack, stageResolveIdentity, stageFinalize, stageResolveAttempt, stageSetRunning, stageMemoryWrite,
+  stageFindingTrack, stageResolveIdentity, stageFinalize, stageResolveAttempt, stageSetRunning, stageMemoryWrite, stageVerdict,
 } from "./pipeline.steps";
 import type { TrackContext, SupplierIdentity } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
@@ -382,6 +382,54 @@ describe("Track 5 — stageFindingTrack non_voting branch (never votes, never es
       reasoning_notes: "n", unknowns: [], non_voting: true, sourcing_logic: sourcingBlock,
     });
     await expect(stageFindingTrack(ctx, 1)).rejects.toThrow(/persist/i);
+  });
+});
+
+// ── S-0 (founder-signed 2026-07-16) — stageVerdict certifies synthesis before the verdict. ──
+describe("S-0 — stageVerdict is firewalled (certify before computeVerdict)", () => {
+  const EMPTY_SYNTH = {
+    module_1_normalized_evidence: [], module_2_claim_attributions: [], module_3_assertions: [],
+    module_4_contradictions: [], module_5_hypotheses: { hypotheses: [], what_would_change_the_leader: "" },
+    module_6_risk_gaps: [], module_7_doubt_calibration: { doubt_level: "minimal", doubt_focus: "", rationale: "" },
+    module_8_vendor_questions: [],
+    module_9_decision_snapshot: { headline: "", leading_interpretation: "", the_real_risk: "", what_to_verify: [], what_to_monitor: [] },
+  };
+  const SIGNALS = { supplier_identity: "pass", supply_chain_relationship: "pass", brand_risk_assessment: "pass", documentation_review: "pass" } as Parameters<typeof stageVerdict>[0];
+  const stripAudits = (v: ReturnType<typeof stageVerdict>) => ({ ...v, certification_audits: [] });
+
+  it("poisoned synthesis (asserted critical, junk everywhere) → verdict byte-identical to empty synthesis", () => {
+    const poisoned = {
+      ...EMPTY_SYNTH,
+      module_4_contradictions: [
+        { is_load_bearing: true, risk_level: "critical" }, // no resolving evidence — must not lock DNR
+        { is_load_bearing: true, risk_level: "critical", origin: "track5_m4c" },
+      ],
+      module_7_doubt_calibration: { doubt_level: "critical", doubt_focus: "all", rationale: "do_not_rely" },
+      module_9_decision_snapshot: { headline: "critical", leading_interpretation: "critical", the_real_risk: "critical", what_to_verify: [], what_to_monitor: [] },
+    } as typeof EMPTY_SYNTH;
+    const a = stageVerdict(SIGNALS, EMPTY_SYNTH);
+    const b = stageVerdict(SIGNALS, poisoned);
+    expect(JSON.stringify(stripAudits(b))).toBe(JSON.stringify(stripAudits(a)));
+    expect(b.verdict).toBe("source_clear");
+    expect(b.certification_audits.length).toBeGreaterThan(0); // the clamps are on the record, loud
+    expect(a.certification_audits).toEqual([]);
+  });
+
+  it("a structurally EARNED critical still locks do_not_rely through the firewall", () => {
+    const earned = {
+      ...EMPTY_SYNTH,
+      module_1_normalized_evidence: [
+        { evidence_id: "e1", source_track: "supplier_identity", certainty: "verified" },
+        { evidence_id: "e2", source_track: "brand_risk_assessment", certainty: "inferred" },
+      ],
+      module_4_contradictions: [{
+        is_load_bearing: true, risk_level: "critical", origin: "synthesis",
+        assertion_a: { evidence_ids: ["e1"] }, assertion_b: { evidence_ids: ["e2"] },
+      }],
+    } as typeof EMPTY_SYNTH;
+    const v = stageVerdict(SIGNALS, earned);
+    expect(v.verdict).toBe("do_not_rely");
+    expect(v.certification_audits).toEqual([]);
   });
 });
 

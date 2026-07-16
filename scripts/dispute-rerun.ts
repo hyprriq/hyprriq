@@ -59,8 +59,8 @@ async function main() {
     );
     process.exit(1);
   }
-  if (VALIDATION_VERSION !== "1.6.0") { // version pin, the rerun-batch pattern — never re-score under unexpected logic
-    console.error(`STOP: this code is VALIDATION_VERSION "${VALIDATION_VERSION}", expected "1.6.0" — aborting.`);
+  if (VALIDATION_VERSION !== "1.7.0") { // version pin, the rerun-batch pattern — never re-score under unexpected logic
+    console.error(`STOP: this code is VALIDATION_VERSION "${VALIDATION_VERSION}", expected "1.7.0" — aborting.`);
     process.exit(1);
   }
   const missing = REQUIRED_ENV.filter((k) => !process.env[k]);

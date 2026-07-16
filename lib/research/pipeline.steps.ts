@@ -17,6 +17,7 @@ import { runSynthesis } from "@/lib/research/synthesisEngine";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling, type CeilingResult } from "@/lib/research/verdictCeiling";
 import { applyDocumentationNoOverride, type NoOverrideResult } from "@/lib/research/verdictNoOverride";
+import { certifySynthesisForVerdict, type CertificationAudit } from "@/lib/research/synthesisFirewall";
 import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
@@ -297,16 +298,21 @@ export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutpu
 // H3 — the verdict ceiling (shared fn, all three verdict sites) is applied here for the pipeline:
 // the returned .verdict is the CEILED one (what cases.verdict stores); the pre-cap score-verdict
 // and reason ride along for the admin explanation. confidence_0_15 stays evidence-derived.
+// S-0 (founder-signed 2026-07-16) — the synthesis→verdict firewall: computeVerdict (and the
+// no-override recompute inside the composition) receive ONLY certify(...).synthesis — an LLM
+// narrative can never reach the verdict uncertified. Layer 5 (buildReport) keeps the ORIGINAL
+// synthesis: Module 9/8 are a client-surface path, not a verdict path.
 export function stageVerdict(
   signals: Partial<Record<TrackKey, TrackSignal>>, synthesis: Synthesis,
-): Verdict & Omit<CeilingResult, "verdict"> & Omit<NoOverrideResult, "verdict"> {
-  const verdict = computeVerdict(signals, synthesis);
+): Verdict & Omit<CeilingResult, "verdict"> & Omit<NoOverrideResult, "verdict"> & { certification_audits: CertificationAudit[] } {
+  const certified = certifySynthesisForVerdict(synthesis);
+  const verdict = computeVerdict(signals, certified.synthesis);
   buildReport(synthesis, verdict); // payload computed here; Phase H renders the PDF from it.
   // Documentation no-override (founder-ruled 2026-07-12; shared fn, all three verdict sites):
   // documents can raise concern, never manufacture comfort — applied BEFORE the ceiling.
-  const noOverride = applyDocumentationNoOverride(verdict, signals, synthesis);
+  const noOverride = applyDocumentationNoOverride(verdict, signals, certified.synthesis);
   const ceiled = applyVerdictCeiling({ verdict: noOverride.verdict }, signals);
-  return { ...verdict, no_override_applied: noOverride.no_override_applied, research_only_verdict: noOverride.research_only_verdict, ...ceiled };
+  return { ...verdict, no_override_applied: noOverride.no_override_applied, research_only_verdict: noOverride.research_only_verdict, ...ceiled, certification_audits: certified.audits };
 }
 
 // Institutional memory (ADR-G006/G007, H6): EVERY completed attempt appends one intelligence_events

@@ -28,7 +28,11 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // for all 10 keys (user_upload-only; loa_legitimate's first entry, Track-4-proposable per
 // ADR-T2-001 with Track 2's code backstop now load-bearing); both vetoes single-source per the
 // OQ-A4 observed-artifact ruling (NO corroboration rows — the deliberate opposite of Keepa).
-export const VALIDATION_VERSION = "1.6.0";
+// 1.6.0 → 1.7.0 (S-0, founder-signed 2026-07-16): the synthesis→verdict certification is firewall
+// config — the enum law, the structural critical/load-bearing conditions (SO-S0-2 split), and the
+// m4c origin cap join the validation layer's contract. Pins updated same commit (rerun-batch,
+// dispute-rerun).
+export const VALIDATION_VERSION = "1.7.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 // Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;

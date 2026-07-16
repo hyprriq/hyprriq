@@ -12,6 +12,7 @@
  */
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { rederiveStoredSignal } from "@/lib/research/rederive";
+import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
@@ -68,11 +69,15 @@ async function main() {
     .eq("case_id", caseId).eq("attempt_number", attempt).is("deleted_at", null).maybeSingle();
   const contradictions = (synth?.contradictions as SynthesisOutput["module_4_contradictions"] | null) ?? [];
   const synthUsed = { ...EMPTY_SYNTH, module_4_contradictions: contradictions };
-  const raw = computeVerdict(signals, synthUsed);
+  // S-0 — the synthesis→verdict firewall applied HERE exactly as at the other sites: the
+  // re-derived verdict consumes only certified synthesis, matching what the pipeline stored.
+  const certified = certifySynthesisForVerdict(synthUsed);
+  if (certified.audits.length > 0) console.log(`· certification audits: ${JSON.stringify(certified.audits)}`);
+  const raw = computeVerdict(signals, certified.synthesis);
   // H3 — the ceiling AND the documentation no-override (founder-ruled 2026-07-12) are applied
   // HERE exactly as in stageVerdict and the admin viewModel (one shared fn each, three sites):
   // the re-derived verdict must equal what the pipeline stored.
-  const noOverride = applyDocumentationNoOverride(raw, signals, synthUsed);
+  const noOverride = applyDocumentationNoOverride(raw, signals, certified.synthesis);
   const ceiled = applyVerdictCeiling({ verdict: noOverride.verdict }, signals);
 
   const { data: c } = await supabaseAdmin.from("cases").select("verdict, status, delivered_attempt").eq("id", caseId).maybeSingle();
