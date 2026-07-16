@@ -6,12 +6,15 @@
  *
  * Run (founder):
  *   npx tsx --env-file=.env.local scripts/rejudge-case.ts <case_id> [attempt]
- * Default attempt = the case's latest. Note: cases.verdict reflects the LATEST finalized attempt
- * unless the case is delivered (frozen) — when re-judging a non-delivered attempt the verdict
- * comparison is skipped for other attempts (reported, not failed).
+ * DEFAULT ATTEMPT (founder-ruled 2026-07-16): the DELIVERED attempt when the case is delivered —
+ * that is the attempt cases.verdict belongs to and the only one the comparison is meaningful
+ * against; the latest attempt otherwise. An explicit [attempt] always wins (latest-attempt
+ * rejudging stays available, explicitly). A skipped verdict comparison NEVER prints the full
+ * PASS: it prints TRACKS-ONLY PASS + SKIPPED and exits 2 (0 = full pass, 1 = mismatch).
  */
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { rederiveStoredSignal } from "@/lib/research/rederive";
+import { resolveRejudgeAttempt, rejudgeSummary } from "@/lib/research/rejudgeReport";
 import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
@@ -40,9 +43,20 @@ async function main() {
   const all = (data ?? []) as Row[];
   if (!all.length) { console.error("no track rows for this case"); process.exit(1); }
 
-  const attempt = attemptArg ? Number(attemptArg) : Math.max(...all.map((r) => r.attempt_number ?? 1));
+  // 2026-07-16 (founder-caught): the case row is read FIRST so the default attempt can target the
+  // DELIVERED attempt — pre-fix the default was the latest attempt, which on any case with
+  // post-delivery attempts skipped the verdict comparison while still printing the full PASS.
+  const { data: c } = await supabaseAdmin.from("cases").select("verdict, status, delivered_attempt").eq("id", caseId).maybeSingle();
+  const latestAttempt = Math.max(...all.map((r) => (r.attempt_number as number | null) ?? 1));
+  const resolution = resolveRejudgeAttempt({
+    requested: attemptArg ? Number(attemptArg) : null,
+    deliveredAttempt: (c?.delivered_attempt as number | null) ?? null,
+    latestAttempt,
+  });
+  const attempt = resolution.attempt;
   const rows = all.filter((r) => (r.attempt_number ?? 1) === attempt && r.track_number >= 1 && r.track_number <= 4);
-  console.log(`Re-judging case ${caseId} attempt ${attempt} (${rows.length} scoring tracks) — READ-ONLY\n`);
+  if (!rows.length) { console.error(`no scoring-track rows for attempt ${attempt}`); process.exit(1); }
+  console.log(`Re-judging case ${caseId} attempt ${attempt} [${resolution.basis.replace("_", " ")}] (${rows.length} scoring tracks) — READ-ONLY\n`);
 
   const signals: Partial<Record<TrackKey, TrackSignal>> = {};
   let mismatches = 0;
@@ -80,18 +94,22 @@ async function main() {
   const noOverride = applyDocumentationNoOverride(raw, signals, certified.synthesis);
   const ceiled = applyVerdictCeiling({ verdict: noOverride.verdict }, signals);
 
-  const { data: c } = await supabaseAdmin.from("cases").select("verdict, status, delivered_attempt").eq("id", caseId).maybeSingle();
-  const verdictComparable = c?.delivered_attempt != null ? c.delivered_attempt === attempt : true;
-  const verdictOk = !verdictComparable || c?.verdict === ceiled.verdict;
+  const summary = rejudgeSummary({
+    mismatches, attempt,
+    deliveredAttempt: (c?.delivered_attempt as number | null) ?? null,
+    storedVerdict: (c?.verdict as string | null) ?? null,
+    rejudgedVerdict: ceiled.verdict,
+  });
   const ceilNote = ceiled.ceiling_applied ? ` [ceiling: ${ceiled.original_verdict} → ${ceiled.verdict}]` : "";
-  if (!verdictComparable) {
-    console.log(`· verdict: rejudged=${ceiled.verdict}${ceilNote} — stored cases.verdict belongs to delivered attempt ${c?.delivered_attempt}, comparison skipped`);
+  if (!summary.verdictComparable) {
+    console.log(`· verdict: rejudged=${ceiled.verdict}${ceilNote} — stored cases.verdict belongs to delivered attempt ${c?.delivered_attempt}, comparison SKIPPED`);
   } else {
-    console.log(`${verdictOk ? "✔" : "✘"} verdict: stored=${c?.verdict} rejudged=${ceiled.verdict}${ceilNote} (score ${raw.weighted_score.toFixed(2)}, vetoes: ${raw.veto_reasons.join("; ") || "none"})`);
+    console.log(`${summary.verdictOk ? "✔" : "✘"} verdict: stored=${c?.verdict} rejudged=${ceiled.verdict}${ceilNote} (score ${raw.weighted_score.toFixed(2)}, vetoes: ${raw.veto_reasons.join("; ") || "none"})`);
   }
 
-  const pass = mismatches === 0 && verdictOk;
-  console.log(`\n${pass ? "PASS — the stored record fully determines the verdict." : `FAIL — ${mismatches} signal mismatch(es)${verdictOk ? "" : " + verdict mismatch"}.`}`);
-  process.exit(pass ? 0 : 1);
+  // The summary line + exit code come from the unit-locked helper: a skipped comparison can never
+  // print the full determinism claim (exit 2 = tracks-only; 0 = full pass; 1 = any mismatch).
+  console.log(`\n${summary.line}`);
+  process.exit(summary.exitCode);
 }
 main();
