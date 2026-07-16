@@ -1,0 +1,170 @@
+# Synthesis Engine Gate — ADR-G005 (founder-review spec; SPEC ONLY, NO CODE)
+
+**Status:** 🔴 **DRAFT — AWAITING FOUNDER REVIEW. NO CODE UNTIL RULED (per sub-gate).**
+**Sources read in full for this spec:** ADR-G005 (all 537 lines) · ADR-G006 · ADR-G004 master spec (`hyprriq_intelligence_engine_master.md` v2.0) · frozen `verdictEngine.ts` / `verdictCeiling.ts` / `verdictNoOverride.ts` · m4c-1.0.0 (`contracts.ts`) · F2 allowlist (`lib/data/cases.ts`) · `synthesisEngine.ts` stub + `lib/data/synthesis.ts` + admin `case-review.tsx` rendering · the tracker.
+**Standing law inherited whole:** LLM proposes, code decides · frozen core byte-identical (computeVerdict, deriveTrackSignal, weights, identityResolver) · delivered records immutable (H1) · absence ≠ fraud; never "confirm authorization"; report-they-decide-never-guarantee; infra failure is never a claim about the supplier · Modules 1–8 never reach any external party · no threshold tuning to force an AT — stop and return near-miss data · Rider 2 (the secondary-path leak class) governs every narrative field.
+
+---
+
+# PART A — PRE-SPEC FINDINGS (answered from source, not memory)
+
+## A1 — The stub scaffold vs G005's contract
+
+**What the admin review page renders today** (via `buildVerdictViewModel` → `case-review.tsx`):
+- **"Executive Intelligence Summary" (Module 9):** `headline`, `leading_interpretation`, `the_real_risk`, "What to Verify", "What to Monitor". **Divergence:** "What to Verify" is populated from **`module_8_vendor_questions`, NOT `module_9.what_to_verify`** — a founder-specified mapping in the viewmodel; `module_9.what_to_verify` exists in the contract but is dead weight (the vm test says "ignored — UI uses Module 8").
+- **"Cross-Track Intelligence (Modules 4/5/7)":** contradictions (risk_level chip — literal `"critical"` renders red — + load-bearing marker), hypotheses — **only `what_would_change_the_leader` renders; the hypotheses array itself is never shown** (the committed leading hypothesis surfaces only indirectly via Module 9's `leading_interpretation`), and doubt calibration (`doubt_level`/`doubt_focus`/`rationale`).
+- **Never rendered anywhere, admin included:** Modules 1, 2, 3, 6.
+
+**What data shape it expects:** the `SynthesisOutput` in `contracts.ts`. Plainly: **this is a deliberately thin stage-1 scaffold, not a faithful encoding of G005's contract.** Field-level divergences:
+1. **Modules 1/2/3/6 are typed `unknown[]`** — no contract exists. G005 defines full shapes (normalized evidence item; claim attribution `{claim, claimant, claimant_benefits, corroboration, weight}`; assertion `{assertion, status, supporting_evidence, contradicting_evidence, confidence}`; gap `{unknown, why_it_matters, is_material, resolvable_by_client}`).
+2. **Module 4 is a two-field subset** `{is_load_bearing, risk_level}` — exactly and only what `computeVerdict` reads. G005's shape also has `contradiction_type`, `assertion_a/b`, `interpretation`. The coupling to the verdict engine is correctly minimal; the *stored/rendered* contract is missing the reasoning fields. Piping m4c-1.0.0 records into today's `module_4` type would **silently drop their audit fields**.
+3. **Module 5 hypotheses are `unknown[]`** — G005's `{label, interpretation, supporting_evidence, contradicting_evidence, likelihood}` shape is untyped, and the "commit to a leading hypothesis, max three" discipline is structurally unenforced.
+4. **Module 7 is three free strings** (`doubt_level` unvalidated) — G005's calibration inputs (`claim_observable_gap`, `cost_of_being_wrong`) do not exist in the contract at all.
+5. `runSynthesis` is a typed placeholder returning empty modules (`doubt_level: "minimal"`, headline `"stub"`); **Module 1 normalization already exists as DETERMINISTIC CODE outside the engine** (`normalizeEvidence` — it also feeds `evidence_hash`/memoization). G005 draws Module 1 inside the LLM engine. **Frozen state wins and is better**: normalization stays code (see B2).
+
+**Verdict on A1:** the scaffold matches G005's nine-module *skeleton* (names, count, storage columns, admin sections) but the *contract* is an early thin draft. This gate must type Modules 1–8 for real — flagged here plainly, not spec'd around.
+
+## A2 — The seam inventory (every path synthesis → verdict)
+
+| # | Path | Fields read | Status today |
+|---|---|---|---|
+| 1 | `computeVerdict(signals, synthesis)` → `synthesis.module_4_contradictions`: `filter(is_load_bearing).length ≥ 2` → **floor VBP**; `some(risk_level === "critical")` → **LOCK do_not_rely** | `is_load_bearing` (bool), `risk_level` (raw LLM string) | **WIRED — live at all three verdict sites** (pipeline `stageVerdict`, admin `buildVerdictViewModel`, `rejudge-case.ts`). Both fields trusted uncertified. Dormant only because the stub emits `[]`. **This is the seam S-0 certifies.** |
+| 2 | `applyDocumentationNoOverride(result, signals, synthesis)` → calls `computeVerdict` a SECOND time (research-only recompute) with the same synthesis object | same two fields, via path 1 | **WIRED** — same exposure, second entry point. S-0 must cover it (certify once, upstream of both). |
+| 3 | `applyVerdictCeiling` | none — reads signals only | **NO PATH.** |
+| 4 | G005: "the proportional doubt level feeds the verdict engine as an input" (Module 7) | — | **NONEXISTENT.** No consumer of `doubt_calibration` outside storage + the admin panel. ADR-G004's locked algorithm has no doubt input either. **G005 vs frozen state: FROZEN WINS.** Doubt is NOT a verdict input, and S-0 locks that it cannot become one without its own certification gate (see B1/SO-S0-4). |
+| 5 | ADR-G004 Part 4 paper vetoes never built: `contradiction_count ≥ 2 → floor` sourced from **Track 5** records, and `b2b_archetype_flag === true → LOCK do_not_rely` | — | **NONEXISTENT in code — and superseded.** Frozen `computeVerdict` floors on *synthesis* load-bearing count (not Track 5's), has no b2b flag input; the b2b lock was rebuilt as the Track-3 weight-key veto `b2b_only_confirmed` (g003-1.1.0 pure veto), and Track 5 is non-voting by AT-B1. **Frozen state wins; G004-paper divergences surfaced here, not silently reconciled.** Also G004's "Track 5 may raise verdict severity" is superseded by the T5 freeze: Track 5 raises NOTHING — its records inform Module 4, which is the certified path. |
+| 6 | Layer 5 `buildReport` (Module 9 + 8 pass-through) | snapshot, vendor_questions | Wired but **not a verdict input** — a CLIENT-SURFACE path; governed by B4, not S-0. |
+| 7 | `getClientDecisionSnapshot` (column-scoped Module 9 + 8 read) | snapshot, vendor_questions | Wired to **nothing** (tests only). Client-surface path for the PDF/client gate; carries a known annotation: **no ownership gate** (sweep INFO item) — must gain one before ever being wired. |
+| 8 | Synthesis memoization (`evidence_hash` + `ios_version`) | — | Not a field path, but the versioning seam that decides WHICH synthesis object flows. The hardcoded ios model string (tracker rider) must be fixed inside this gate (S-2). |
+
+**Complete inventory: exactly two live code entries (1 and 2), both funneling through the same two module_4 fields; zero for module_7 and everything else.** S-0's surface is therefore: certify module_4 before both entries, and lock that no new field can join the flow uncertified.
+
+## A3 — m4c-1.0.0 vs Module 4's input contract
+
+Frozen m4c-1.0.0 (contracts.ts): `contradiction_type: string` · `assertion_a/b: {track_key, statement, evidence_ids[]}` · `interpretation: string` · `risk_level: "low"|"medium"|"high"` (**code-capped — can never be "critical"**) · `is_load_bearing: boolean` (**always false from Track 5 — Module 4's judgment, by ruling**).
+
+Against G005's Module 4 sketch (`contradiction_type`, `assertion_a/b` as plain strings, `interpretation`, `risk_level`, `is_load_bearing`):
+- **Structurally SATISFIED, and richer:** m4c's assertion sides are structured with track + evidence IDs where G005 has prose strings — a superset; Module 4 can consume records as-is (projection to prose is trivial, the reverse is not).
+- **Gap 1 — vocabulary:** m4c uses `low|medium|high`; G005's examples use `moderate`/`critical`; frozen code tests the literal `"critical"`. There is no certified enum anywhere. S-0 defines it: `low | medium | high | critical`, code-validated, with the m4c cap preserved on merge — a Track-5-originated record can NEVER be escalated to `critical` by copy-through; only a synthesis-layer contradiction that itself passes the S-0 structural test can carry `critical`.
+- **Gap 2 — the storage type:** `SynthesisOutput.module_4_contradictions` is the two-field subset (A1.2) — Module 4's OUTPUT contract must be the full m4c-shaped record (contract version bumped m4c-1.0.0 → m4c-1.1.0 per the OQ-B2 door: additive `origin` field, see B2/M4), while `computeVerdict` continues to read only the two certified fields. Frozen core untouched.
+- **Gap 3 — `is_load_bearing`:** m4c defers it (always false). Module 4 is where the judgment finally happens — and because ≥2 load-bearing = a verdict floor, load-bearing certification is inside S-0's scope (structural conditions, not trust).
+
+## A4 — G005's ten action items vs the frozen state (frozen wins; divergences surfaced)
+
+| # | G005 action item | Status | Notes (divergence surfaced where present) |
+|---|---|---|---|
+| 1 | Track prompts → evidence + reasoning + unknowns + confidence | **SATISFIED** | The hardening arc delivered beyond it: analyst-native prompts, per-item certainty/confidence, unknowns, questions, firewall validation, consensus. |
+| 2 | Build `synthesisEngine.ts` Modules 1–9 | **OPEN** — this gate | With one divergence: Module 1 is already deterministic CODE (`normalizeEvidence`, feeds evidence_hash). Frozen state wins — Module 1 stays code (B2). |
+| 3 | Synthesis prompt (fixed method) | **OPEN** — this gate | |
+| 4 | Wire as step after tracks, before verdict | **SATISFIED** | `stageSynthesis` in both orchestrators, per-attempt persisted (H1), evidence-hash memoized — stronger than asked. |
+| 5 | Verdict stays in deterministic `verdictEngine.ts` | **SATISFIED & HARDENED** | Three-site agreement + ceiling + no-override + dispute/replay. **Except:** G005's "doubt feeds the verdict" clause was never honored and G004 has no such input — frozen wins; doubt is advisory (A2.4, SO-S0-4). |
+| 6 | Store reasoning role-gated; expose only the Snapshot | **PARTIAL** | Storage + admin role-gate + column-scoped client read all exist. But the client read is UNWIRED and lacks an ownership gate; and today the client sees NO synthesis at all — F2's allowlist (which postdates G005's visibility table) makes everything private by default. **Frozen state wins: G005's visibility table is re-based on the F2 allowlist** (B4); Module 9 ships only at the client-surface/PDF gate, deliberately. |
+| 7 | Override capability (add-evidence / redact) | **OPEN — NOT THIS GATE** | Agency-mode machinery; its own gate. The B2C approve/rerun/override-verdict flow exists (admin review route). |
+| 8 | Log overrides to `founder_decisions`/audit_log | **PARTIAL** | Verdict overrides + decisions audit-log today. `founder_decisions` table usage: **not confirmed** — verify at the agency-mode gate. |
+| 9 | Cascade into Tech Arch v1.4 | **OPEN — founder docs task** | Planning set (`Docs\`) is founder-maintained; out of engineering scope. |
+| 10 | Determinism: same evidence pattern → same verdict | **PARTIAL — machinery exceeds G005, ATs are this gate's** | Memoization gives same-hash → same synthesis BY CONSTRUCTION; F4 made the zero-API proof leg trustworthy; the synthesis-live determinism ATs are B6's. |
+
+**Also surfaced, not reconciled:** G005's `SYNTHESIS_CONFIG` and the docs' tier table disagree with each other AND with the frozen plan registry (whose `plan_gates` are the only truth in force; G005's dimension names `brand_risk_basic` / `brand_risk_plus_keepa` / `sourcing_logic_deep` do not exist as track_keys). Handled in B3 — mechanism spec'd, mapping **UNRULED, EMPTY**.
+
+---
+
+# PART B — THE SPEC
+
+## B1 · S-0 — THE SYNTHESIS→VERDICT FIREWALL MICRO-GATE (first, separate, frozen before Module 1 exists)
+
+**Nature:** the entry condition ruled at the Track-3 gate, done the H7/registry way — as enforced code, not a memo. S-0 is spec'd → founder-signed → TDD-built → founder-AT'd → **FROZEN as its own commit** before any module code is written.
+
+**The one new function:** `certifySynthesisForVerdict(raw: SynthesisOutput): CertifiedSynthesis` — a pure firewall applied **upstream of every entry into computeVerdict** (pipeline `stageVerdict`, admin viewmodel, `rejudge-case.ts`, and *inside the composition before* `applyDocumentationNoOverride`'s recompute — one shared function at every site, the ceiling pattern, or it doesn't ship). Frozen `computeVerdict` stays byte-identical; certification happens before its argument is formed.
+
+**What certification does (all code, no trust):**
+1. **Enum law:** `risk_level ∈ {low, medium, high, critical}` — anything else is clamped DOWN to `low` and recorded in a certification audit (never silently accepted, never guessed upward).
+2. **Critical is EARNED structurally, never asserted:** a record may carry `critical` into the verdict path only if code verifies: both assertion sides carry `evidence_ids` that resolve to real Module-1 items, from ≥2 distinct tracks, at least one side certainty `verified`. Fails the check → clamped to `high` + certification audit. (Proposal — founder rules the exact structural conditions: SO-S0-2.)
+3. **Load-bearing is counted, capped, and structurally gated the same way** (a floor fires at ≥2 — so `is_load_bearing: true` requires resolving evidence_ids; else coerced false + audited).
+4. **m4c origin cap preserved:** records merged from Track 5 (`origin: "track5_m4c"`) keep their ceiling — copy-through can never mint `critical` or `is_load_bearing: true` from a Track-5 record (AT-B1's never-votes property, extended through the merge).
+5. **Shape coercion:** non-array → `[]`; non-boolean load_bearing → false; every coercion audited.
+
+**Structural locks (the registry-lock pattern — a failing test, not discipline):**
+- **The poisoned-synthesis property test:** feed a synthesis object with adversarial content in EVERY field (critical-lookalike strings in module_7, module_9, module_5, unknown extra fields, prototype junk) — the verdict must be **byte-identical** to the same signals with an empty synthesis, except through certified module_4 records. This is the "no uncertified path" proof over the whole A2 inventory in one property.
+- **Composition locks at all entry sites** (certify-then-compute asserted per site, like the ceiling/no-override site tests) + a source-scan lock that `computeVerdict` is called nowhere without certification.
+- **Doubt lock (SO-S0-4):** module_7 is structurally advisory — the poisoned test plants a maximal doubt object and asserts zero verdict effect. Any future "doubt feeds the verdict" is its own founder-gated spec with its own certification, never a rider.
+
+**S-0 ATs (founder-run):** AT-S0-1 poisoned-synthesis byte-identity (unit, the conscience) · AT-S0-2 rejudge on existing delivered cases reproduces stored verdicts (certification of stub/empty synthesis is a proven no-op — zero-API) · AT-S0-3 the structural-critical rules two-sided (an earning record passes; an asserted-only `critical` clamps + audits) · AT-S0-4 all-sites composition green · AT-S0-5 full suite + versions (VALIDATION bump justified here — certification IS firewall config; pins updated same commit).
+
+## B2 · MODULES 1–9 — CONTRACTS (input → fixed reasoning move → output; all scenario-independent)
+
+Orchestration: Module 1 is deterministic code; Modules 2–9 run as three LLM calls (B7) with per-call schemas (H7 structured-outputs pattern, fail-open + tolerant parser), each stage certified/validated in code before the next consumes it. Every output is per-attempt persisted (existing `case_synthesis` columns — **no migration expected**; the columns exist since the initial schema).
+
+- **M1 — Evidence Normalization (CODE, exists).** In: all `TrackOutput`s. Move: flatten to `NormalizedEvidenceItem[]` (already carries statement/certainty/source_type/url/claimant/claimant_benefits/supports + source_track) + `evidence_hash`. Out: typed as today. *Divergence from G005 (LLM-internal Module 1) surfaced at A4.2 — code wins: it is the determinism anchor.*
+- **M2 — Claim Attribution.** In: M1 items. Move: for each claim-bearing item — who said it, who benefits, corroboration status. Out: `{evidence_id, claim, claimant, claimant_benefits, corroboration: "independent"|"cross_source"|"none_found", weight: "standalone"|"low_until_corroborated"}[]`. Law: a self-serving uncorroborated claim can never be weighted as independent evidence (schema-enforced pairing: `claimant_benefits && corroboration==="none_found"` ⇒ weight is locked by CODE to `low_until_corroborated`, whatever the LLM wrote).
+- **M3 — Assertion Engine.** In: M1 + M2. Move: testable assertions with status. Out: `{assertion_id, assertion, status: "supported"|"refuted"|"unresolved", supporting_evidence[], contradicting_evidence[], confidence: high|medium|low}[]`. Code validation: every referenced evidence_id must resolve to M1 (dangling → item dropped + audited; the auditability property is structural).
+- **M4 — Contradiction Engine.** In: M3 assertions + Track 5's stored m4c records (merged with `origin: "track5_m4c"`; synthesis-born records get `origin: "synthesis"`). Move: cross-track conflicts; the gap between claimed and observable is the finding. Out: **m4c-1.1.0** = m4c-1.0.0 + `origin` (additive bump through the OQ-B2 door; Track 5's writer stays on 1.0.0 — reader accepts both). Verdict engine reads only the two certified fields, post-S-0.
+- **M5 — Hypothesis Engine.** In: M3 + M4. Move: competing interpretations of the verdict-critical question; **commit**. Out: `{hypotheses: [{label, interpretation, supporting_evidence[], contradicting_evidence[], likelihood: "leading"|"alternative"}] (1–3), what_would_change_the_leader}`. CODE enforces exactly one `leading` and length ≤3 (truncate + audit). Never a verdict input.
+- **M6 — Risk Gap Detection.** In: M1–M5 + the unassessed-dimensions list (from the tier seam, B3). Move: what is unknown and does it matter. Out: `{gap_id, unknown, why_it_matters, is_material, resolvable_by_client}[]`. Law: a plan-excluded dimension may appear ONLY as a stated limitation, never as a material gap counted against the case (code filter — the N2 lesson at synthesis altitude).
+- **M7 — Proportional Doubt Calibration (the heart of the IP).** In: **calibration inputs, not scenario rules** — (a) `claim_observable_gap`: CODE-derived from M2/M3 (count + weight of load-relevant claims at `none_found`/`unresolved` vs `supported`-verified); (b) `cost_of_being_wrong`: CODE-assembled from observable stakes signals available today — brand enforcement posture (Track 3 signal + validated enforcement-class keys), veto-grade findings present, breadth of brands at issue. Move: allocate doubt intensity proportionally; name its focus. Out: `{doubt_level: "minimal"|"targeted"|"elevated"|"broad", doubt_focus, gap_inputs, cost_inputs, rationale}` — the inputs ride the record so calibration is auditable and later tunable against the outcome corpus. **Advisory only — shapes Module 9's tone; structurally locked out of the verdict (S-0).** ⚠ **OQ-S1:** order value / account exposure (G005's cost inputs) are NOT collected at intake today — not confirmed as available. Options: (a) v1 cost inputs = observable enforcement stakes only (recommendation — honest, no product change); (b) add an optional intake field (product ruling, its own lane). Founder rules.
+- **M8 — Vendor Question Generator.** In: M6 gaps (material AND resolvable_by_client) + tracks' stored `questions_to_ask`. Move: convert to specific pre-commitment questions; dedupe. Out: `string[]` (client-facing → HARD-scanned at delivery). Material-but-unresolvable gaps route to M9 as stated limitations instead.
+- **M9 — Decision Snapshot Builder.** In: M5 leading + M7 doubt + M6 material items + M8. Move: the only client-facing assembly — plain language, template-disciplined, banned-language-native (the prevent-not-rewrite law), states non-assessed dimensions as limitations. Out: existing `DecisionSnapshot` shape (contract keeps `what_to_verify`; the UI's Module-8 sourcing stays the law — surfaced at A1, founder may retire the dead field at the client-surface gate).
+
+**Analyst quartet rule (OQ-D lineage):** every narrative field in M2–M8 is ADMIN-ONLY until the client-surface/PDF gate — enforced structurally by B4, not by rendering choices. C3's standing requirement (quartet-class fields get full scanner scrutiny before ANY client surface) applies to M9 + M8 at delivery.
+
+## B3 · TIER-GATING — A PARAMETERIZED SEAM; MAPPING **UNRULED — FOUNDER RULING PENDING**
+
+G005's `SYNTHESIS_CONFIG` and the docs' tier table both descend from Business Plan v1 and **contradict each other**; neither matches the frozen plan registry. **Neither is copied. Nothing is invented. This spec contains no prices and no per-tier dimension list.**
+
+**The mechanism (spec'd now):** synthesis consumes exactly the dimensions that RAN — derived at runtime from the attempt's stored rows, the same per-attempt truth every other layer uses; nothing tier-specific is hardcoded in the engine. A dimension with no row / `n_a` enters as **absent**: excluded from M2–M5 inputs, barred from M6 materiality (limitation only), stated in M9 as "not assessed in this report" in limitation language (never a finding, never a penalty — the H3/N2 law at synthesis altitude; the existing ceiling + weight redistribution already govern the verdict side and are untouched). The engine must function with the minimum dimension set the registry allows and never fabricate an excluded dimension.
+**The parameter (empty):** `SYNTHESIS_TIER_MAP: —— UNRULED — FOUNDER RULING PENDING ——` · sole source once ruled = the plan registry's `plan_gates` (single source of truth; no second table). Any future tier redesign edits the registry, not the engine.
+
+## B4 · RIDER 2 — FIELD-BY-FIELD CLIENT-STRIP PROOF (every field presumed a leak until proven)
+
+**Baseline facts (verified in code):** the client findings path (`getCaseFindings`) selects only `case_track_results` columns and projects `compiled_findings_json` through the F2 **allowlist** — synthesis never enters it, and no synthesis field can ever ride it (future-fields-private-by-default is test-locked with a sentinel). The ONLY client-capable synthesis read is `getClientDecisionSnapshot` — column-scoped to `decision_snapshot, vendor_questions`, currently **wired to nothing**, and **missing an ownership gate** (known INFO item — a hard precondition below).
+
+| Module / field group | Storage | Survives to a client payload? | Proof (existing or S-gate lock to build) |
+|---|---|---|---|
+| M1 normalized_evidence · M2 claim_attributions · M3 assertions · M4 contradictions · M5 hypotheses · M6 risk_gaps · M7 doubt_calibration (all fields incl. rationale/inputs) | `case_synthesis` columns | **NO — never** | (P1) column-scope lock: a test asserting `getClientDecisionSnapshot`'s select is exactly the two client columns — any widening fails; (P2) import lock: no client-surface data module reads `case_synthesis` except that one function (source-scan test, the F5-lock pattern); (P3) the F2 sentinel lock already proves the track-row path cannot smuggle any new field; (P4) RSC audit AT: DevTools sweep on a delivered case for module-content sentinels (the AT-B5/F2 method). |
+| M4 records specifically (the double-home risk: same records also live in track_5's `compiled_findings_json.sourcing_logic`) | both tables | **NO** | F2 allowlist drops `sourcing_logic` (sentinel-locked, shipped); P1–P4 cover the synthesis home. |
+| M8 vendor_questions | `case_synthesis` + report payload | **YES — by design, at delivery only** | Ships only through the snapshot fn after: (G1) ownership gate added (`client_id` check — precondition to ANY wiring); (G2) the delivery HARD-scan **extended to `case_synthesis` client columns** — today `review/route.ts` scans track rows + questions + identity note ONLY; **named gap, closed in this gate**; (G3) delivered-attempt pinning (already present). |
+| M9 decision_snapshot (headline, leading_interpretation, the_real_risk, what_to_verify, what_to_monitor) | same | **YES — the product, at the client-surface/PDF gate** | Same G1–G3 + the C3 scanner-scrutiny requirement + sentinel-serialization AT on the wired page (plant reasoning-flavored sentinels in M1–M7 of a test case; assert zero survive the delivered page payload). |
+| ios/version vector (model, versions, evidence_hash) | same | **NO** | P1/P2 (not in the client columns); admin QA view only. |
+| Module fields inside admin viewmodel | in-memory | Admin only | Role-gated route (existing test pattern); never serialized to portal pages (P4 sweep). |
+
+**Rule going forward (the structural answer to Rider 2):** any NEW synthesis field is client-invisible by construction — it would have to be added to the two-column select AND pass G2's scanner extension AND the sentinel AT to ever ship. Leak-by-default is inverted.
+
+## B5 · THE G006 SEAM — MEMORY BETWEEN SYNTHESIS AND VERDICT (placeholder now, engine at G6)
+
+G006 places Institutional Memory between Synthesis and Verdict; G005's diagram omits the slot. **The seam is reserved NOW so G6 never retrofits through the firewalled seam:** the S-0 certification boundary gains one reserved, versioned input — `memory_signal: null` in v1 — flowing THROUGH certification like everything else. Contract (reserved, unbuilt): memory may only ever contribute a **historical-risk advisory** that (a) passes its own future certification, (b) can never lock/floor a verdict alone (informs, never overrides — G006's own read-side determinism guard), (c) carries `corpus_version` (the `IosVersion` field already exists for exactly this). Wiring anything real into it is the G6 gate. S-0's poisoned test covers the slot from day one (a stuffed memory_signal must byte-change nothing in v1).
+
+**G006 G3 write-side audit (satisfied / gap, per item):**
+1. *Intelligence writes on every completed case* — **SATISFIED, stronger than asked:** H6's append-only `intelligence_events` + recomputable rollups supersede G006's mutable append/increment rows; F5 adds adopted-flow-only rollups. Divergence surfaced: G006's mutable-profile design is superseded by ledger+rollup — frozen wins.
+2. *normalizeName solid* — **GAP, named:** the tracker carries "normalizeName too weak as universal key (merges different companies; empty-string CJK)". It is the corpus join key G6 will match on. Not this gate's scope — but it must be fixed BEFORE the G6 read-side, and is hereby pinned as a G6 entry condition.
+3. *30/90-day outcome collection* — **SATISFIED with a ruled divergence:** H6's outcome-checkpoints cron + Outcome panel exist; H6 OQ-3 ruled ADMIN-digest-only where G006 sketched client emails. Frozen ruling wins; client-facing collection is a product decision for later.
+4. *No case complete until writes fire* — **DIVERGENCE, ruled:** H2 OQ-2's loud-but-non-fatal contract (degraded:true + audit, case still finalizes) supersedes G006's hard block. Frozen wins; surfaced, not reconciled.
+Plus the standing forward-flag at the caching/ADR-008 gate: rollups-follow-adoption (F5) — G6 inherits it.
+
+## B6 · DETERMINISM PLAN (Action Item 10, verified — not asserted)
+
+Two distinct properties, verified separately:
+1. **Same stored record → same verdict (zero-API, absolute):** unchanged foundation — rejudge re-derives via the shared compositions (F4's `rederiveStoredSignal` + certify→compute→no-override→ceiling). S-0 extends rejudge with certification; AT-S0-2 proves no-op on the existing corpus. This property admits ZERO drift, ever.
+2. **Same frozen evidence → same verdict across fresh syntheses (the G005 DD property):** by construction where the memo hits (`evidence_hash`+`ios_version` → stored synthesis reused — an acquirer's re-run of the same case reuses the identical reasoning record); proven live where it matters via the replay seam: **AT-SYN-D** — replay a delivered synthesis-bearing attempt TWICE with memoization disabled for the test (fresh reasoning both times) → narratives may differ; the **certified verdict-relevant projection** (certified module_4 set, signals, final verdict, confidence) must be identical. A would-be divergence is returned as near-miss data — never tuned away (standing law).
+**Canary ride-along:** the monthly panel adds one synthesis-bearing delivered attempt. The zero-API leg re-derives through certification (judgment drift, zero tolerance); the replay leg watches extraction+reasoning variance with the double-replay noise floor; the seeded envelope (band-boundary re-inference swung a track ~5 pts / one band with zero drift) prices the NARRATIVE noise floor — but certified-field drift has **no floor**: any above-zero certified drift on the zero-API leg is stop-the-line. `synthesis_version` joins the version pins (rerun/dispute preflights) and the ios model string is derived from MODEL_CONFIG in this gate (S-2, existing rider).
+
+## B7 · ONE CALL VS MULTI-STEP — RECOMMENDATION (a decision, not a survey)
+
+**Recommendation: staged synthesis — THREE calls** along the data-dependency joints: **Call A = M2+M3** (attribution + assertions over code-normalized M1) → code validation (dangling-ID drops, the M2 weight law) → **Call B = M4+M5+M6** (contradictions + hypotheses + gaps over certified A output + merged m4c records) → S-0 certification + M5 code rules → **Call C = M7+M8+M9** (doubt + questions + snapshot over everything). Each call: pinned schema (H7 structured-outputs, fail-open), tolerant parser, per-stage persistence.
+**Why (against the criteria):**
+- **Quality:** each stage's fixed move is enforced by a small schema; a single call over nine modules invites module bleed (M9 written first, modules back-filled as rationalization) — the exact failure the fixed-method law exists to prevent. Nine separate calls add nothing: M2/M3 (and M4/M5/M6) genuinely share context.
+- **Verdict determinism:** unaffected by call count (the verdict reads only certified fields, and memoization keys the whole artifact) — but stage B in isolation lets the highest-stakes output (module_4) get an H7-style consensus second pass someday without re-running the world; one call would make that surgically impossible.
+- **Cost:** ~3 synthesis-class calls/case vs 1 — bounded, and the memo/caching gate already owns the margin lever. Not confirmed until measured: AT-SYN-COST records the delta (the AT-7/AT-A6 pattern) and feeds the caching gate.
+- **Debuggability (decisive):** per-stage frozen artifacts mean a bad snapshot is traceable to the stage that broke — the same reason the track layer validates per-track instead of one mega-call. Also the backtesting (I1) unit becomes the stage, not the monolith.
+G005's "decide empirically" is honored as a check, not a stall: if Call-B/C quality on real cases contradicts this, the founder sees near-miss data at the ATs — the seam (three stages behind one `runSynthesis` signature) makes consolidation a one-site change.
+
+## SIGN-OFFS / OQs / SEQUENCE (proposed boards — founder rules)
+
+**Sub-gates, in order, never bundled:** **S-0** firewall micro-gate (build → founder ATs → FREEZE) → **S-1** contracts + M1-code + the three-stage engine + prompts (the big build; its own AT board incl. AT-SYN-D, Rider-2 locks P1–P4/G2, tier-seam mechanism ATs) → **S-2** versioning/pins (ios model string from MODEL_CONFIG, synthesis_version pins) — may fold into S-1 at founder's option → client-surface wiring stays OUT (the PDF/client gate owns G1–G3's activation).
+**Sign-offs requested:** SO-S0-1 certification fn + all-sites composition · SO-S0-2 the structural-critical/load-bearing conditions (B1.2–3) · SO-S0-3 m4c merge law + m4c-1.1.0 additive bump · SO-S0-4 doubt locked out of the verdict in v1 · SO-S1-1 module contracts as written (B2) · SO-S1-2 the three-call staging (B7) · SO-S1-3 tier-seam mechanism with the mapping left UNRULED (B3) · SO-S1-4 Rider-2 proof plan incl. the delivery-scan extension (B4/G2).
+**Open questions:** OQ-S1 Module 7 cost-of-being-wrong inputs (B2/M7 — rec (a)) · OQ-S2 does M9 retire the dead `what_to_verify` field or keep contract compatibility (rec: keep until the client-surface gate) · OQ-S3 synthesis model tier at go-live (config-only flip per runModel design; cost data from AT-SYN-COST informs it — no figure stated here).
+**NOT IN THIS ITEM:** agency override machinery (G005 item 7) · G6 memory read-side (seam only) · client-surface/PDF wiring of M9/M8 · Tech-Arch cascade (founder docs) · Keepa (inert; signal at its gate) · caching (its own pre-launch gate).
+
+---
+
+# PART C — STAGING→MAIN PROMOTION (founder-run; exact steps + rollback)
+
+*(Also delivered in chat. All commands run from `D:\Projects\Hyprriq\portal`. Nothing here touches the database.)* — see the session message; steps recorded there verbatim so this spec stays engine-scoped.
