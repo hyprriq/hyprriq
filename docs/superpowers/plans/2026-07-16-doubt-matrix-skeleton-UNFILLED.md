@@ -30,17 +30,20 @@ Recommendation on record (rec (a)): observable enforcement stakes only — Track
 signal + validated veto-grade keys present + breadth of brands at issue. (Order value / account
 exposure are NOT collected at intake — not available to v1 unless the founder rules a product change.)
 
+Axis values renamed 2026-07-16 (founder): `elevated` collided with the OUTPUT enum (fixed by the
+M7 contract), so the cost axis renames — `low | significant | severe`.
+
 | Level | Meaning (fixed) | Derivation inputs/thresholds (FOUNDER FILLS after OQ-S1) |
 |---|---|---|
 | `low` | ____ | ____ |
-| `elevated` | ____ | ____ |
-| `high` | ____ | ____ |
+| `significant` | ____ | ____ |
+| `severe` | ____ | ____ |
 
 ## The matrix — doubt_level = MATRIX[gap][cost] (every cell FOUNDER-FILLED)
 
 Output enum (fixed, from the B2/M7 contract): `minimal | targeted | elevated | broad`.
 
-| gap \ cost | `low` | `elevated` | `high` |
+| gap \ cost | `low` | `significant` | `severe` |
 |---|---|---|---|
 | `none` | ____ | ____ | ____ |
 | `narrow` | ____ | ____ | ____ |
