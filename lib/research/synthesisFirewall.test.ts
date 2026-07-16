@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { certifySynthesisForVerdict, SYNTHESIS_CERT_VERSION } from "./synthesisFirewall";
 import { computeVerdict } from "./verdictEngine";
@@ -155,11 +155,86 @@ describe("S-0 · SO-S0-3 — enum law + the m4c origin cap (Track 5 stays non-vo
   });
 });
 
-describe("S-0 · SO-S0-1 — composition locks (certify at EVERY entry, the ceiling pattern)", () => {
-  it("all three verdict sites + the dispute stability lock compose through certifySynthesisForVerdict", () => {
-    for (const file of ["lib/research/pipeline.steps.ts", "lib/research/verdictViewModel.ts", "scripts/rejudge-case.ts", "lib/research/pipeline.steps.dispute.test.ts"]) {
-      const src = readFileSync(join(process.cwd(), file), "utf8");
-      expect(src.includes("certifySynthesisForVerdict"), `${file} must certify before computeVerdict`).toBe(true);
+// ── S-0 · SO-S0-1 — THE SOURCE-SCAN LOCK (the Track-3 registry-lock pattern: the caller set is
+// DERIVED from source, never remembered). "computeVerdict is called nowhere without certification"
+// is a claim about the FUTURE: a fifth file added tomorrow that invokes computeVerdict raw must
+// fail this test BY NAME, without anyone editing a list. Exemptions are explicit and justified
+// (the RULED_EXCLUSIONS pattern) — anything else that invokes computeVerdict must certify first. ──
+const SCAN_ROOTS = ["lib", "scripts", "app"];
+// Invocation, not mention: no-space paren (code style never spaces a call; prose comments do).
+const INVOKE = /computeVerdict\(/;
+const CERT_INVOKE = "certifySynthesisForVerdict(";
+// Exempt WITH justification — each is frozen and receives certified input from its own callers:
+const EXEMPT: Record<string, string> = {
+  "lib/research/verdictEngine.ts": "the definition site (frozen)",
+  "lib/research/verdictNoOverride.ts":
+    "frozen internal composer — recomputes with the SAME synthesis object its caller passed; certification happens upstream at every entry (locked below + behaviorally by the poisoned site tests)",
+};
+
+// Strip comments before matching so prose can't false-positive the lock. CONSERVATIVE on purpose:
+// only block comments and whole-line comments are removed — code can never hide in what remains
+// (no false negatives); a trailing code-line comment mentioning computeVerdict( would still flag,
+// which fails LOUD for a human look, never silent.
+function codeOf(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((l) => !l.trimStart().startsWith("//"))
+    .join("\n");
+}
+
+function walkTs(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) {
+      if (name === "node_modules" || name.startsWith(".")) continue;
+      walkTs(p, out);
+    } else if (/\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) && !name.endsWith(".d.ts")) {
+      out.push(p);
     }
+  }
+  return out;
+}
+
+describe("S-0 · SO-S0-1 — source-scan lock: computeVerdict is invoked NOWHERE without certification", () => {
+  const root = process.cwd();
+  const files = SCAN_ROOTS.flatMap((r) => walkTs(join(root, r)));
+  const rel = (p: string) => p.slice(root.length + 1).replace(/\\/g, "/");
+  const callers = files.filter((p) => INVOKE.test(codeOf(readFileSync(p, "utf8")))).map(rel);
+  const unexempt = callers.filter((f) => !(f in EXEMPT));
+
+  it("the scan sees the known world (sanity floor — the set is DERIVED, this only proves the scan works)", () => {
+    for (const known of ["lib/research/pipeline.steps.ts", "lib/research/verdictViewModel.ts", "scripts/rejudge-case.ts"]) {
+      expect(callers, `scan failed to find known caller ${known} — the lock itself is broken`).toContain(known);
+    }
+    expect(callers).toContain("lib/research/verdictEngine.ts"); // definition site found, exempted below
+  });
+
+  it("every derived, un-exempted caller certifies BEFORE it computes — a new raw caller fails BY NAME", () => {
+    expect(unexempt.length).toBeGreaterThan(0);
+    for (const file of unexempt) {
+      const src = codeOf(readFileSync(join(root, file), "utf8"));
+      const certIdx = src.indexOf(CERT_INVOKE);
+      expect(certIdx >= 0, `UNCERTIFIED VERDICT PATH: ${file} invokes computeVerdict( without ever invoking certifySynthesisForVerdict(`).toBe(true);
+      // Ordering is asserted on first INVOCATION positions (call-parens, so imports don't satisfy
+      // it). This is textual first-use order — a heuristic, honestly stated: true execution-order
+      // proof is the per-site poisoned behavioral tests (stageVerdict + viewmodel + AT-S0-2 live).
+      const computeIdx = src.search(INVOKE);
+      expect(certIdx < computeIdx, `${file}: first certifySynthesisForVerdict( invocation must precede the first computeVerdict( invocation`).toBe(true);
+    }
+  });
+
+  it("exemptions are exactly the two frozen internals, each justified — an exemption without a caller is stale", () => {
+    for (const f of Object.keys(EXEMPT)) expect(callers, `stale exemption: ${f} no longer calls computeVerdict`).toContain(f);
+    expect(Object.keys(EXEMPT).sort()).toEqual(["lib/research/verdictEngine.ts", "lib/research/verdictNoOverride.ts"]);
+  });
+
+  // Test files are deliberately OUTSIDE the caller scan (they unit-test the frozen engine raw, by
+  // design). The dispute stability lock is held to the composition separately — it is a TEST
+  // asserting the pipeline composition, not a production verdict site; kept distinct on purpose.
+  it("the dispute stability lock's judge() composes through certification (test-composition check, not a verdict site)", () => {
+    const src = codeOf(readFileSync(join(root, "lib/research/pipeline.steps.dispute.test.ts"), "utf8"));
+    expect(src.indexOf(CERT_INVOKE)).toBeGreaterThanOrEqual(0);
+    expect(src.indexOf(CERT_INVOKE)).toBeLessThan(src.search(INVOKE));
   });
 });
