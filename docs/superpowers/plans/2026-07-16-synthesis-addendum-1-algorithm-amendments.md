@@ -1,0 +1,55 @@
+# ADDENDUM-1 — Synthesis Algorithm Amendments (Amendments 1–8)
+
+**Status:** 🟢 **RULED (founder, 2026-07-16) — SEVEN APPROVED, ONE HELD.** Rulings recorded verbatim below; they enter the S-1 board as recorded in the gate spec + tracker.
+
+## FOUNDER RULINGS (2026-07-16, verbatim)
+
+- **A1 APPROVED** — widen M1's input to the full frozen record (accepted evidence + rejected-with-gate + unknowns + advisory metadata). "The firewall's rejection records ARE the claim-observable gap: already computed, deterministic, stored per attempt. M2 and M7 receive the gap MEASURED, not inferred. This is the proprietary input representation (= ADDENDUM-2 Move 2) and the strongest item in either addendum. Ruled NOW because it changes M1's output contract, which is M2/M3's input contract — before those get written, not after." **PRECONDITION: Q3 (evidence_hash impact) answered before A1 is built** — ANSWERED 2026-07-16, recorded as an S-1 build constraint: `computeEvidenceHash`'s input projection stays byte-identical; the widened M1 fields ride BESIDE the hash, never inside it (full answer in the session record + gate spec).
+- **A2 APPROVED IN PRINCIPLE** — doubt_level becomes deterministic code via a founder-tuned matrix; both axes code-derived; the LLM writes doubt_focus and rationale only (WHERE, never HOW MUCH). Two consequences on record: **(i) OQ-S1 is now BLOCKING for S-1** — cost-of-being-wrong is half the matrix; **(ii) the FOUNDER authors the v1 matrix.** Tuning against the outcome corpus is G4.
+- **A3 APPROVED** — refuter pass on Call B; code compares commitments; disagreement degrades the advisory + admin flag; never a verdict input. **This re-opens SO-S1-2: three calls becomes four. RE-RATIFIED — measured disagreement is worth the call.**
+- **A4 HELD — UNRULED.** Does not enter S-1 until Q2 is answered. *(Q2 answered 2026-07-16: A4 is (a) — narrative-only; "routes to VBP" was loose language, corrected below in the amendment text's constraint. The MECHANISM remains unruled; A4 stays HELD for the founder's ruling with that answer in hand. Founder's note on record: the INSTINCT is correct — forced commitment on balanced evidence manufactures conviction, and landing "evidence does not discriminate" inside the locked four verdicts is right; the mechanism is what is unruled.)*
+- **A5 APPROVED, STATUS UPGRADED** — the backtest over the ~36 frozen attempts is NOT an AT-board line. **It is an S-1 FREEZE CONDITION: the synthesis prompts do not freeze until it has run and the founder has seen the data.** It then stands forever as the change-control harness. Rationale on record: "a cloner has zero cases to validate against — the deepest moat item in either addendum." **PRECONDITION: the replay version-pin preflight (rider R1) lands FIRST, in S-2.**
+- **A6 APPROVED** — per-hypothesis watch conditions + prediction_correct scoring. Write-side S-1 (cannot be backfilled — G006's own law). Scoring half G4. The describe-and-stop flag on a possible additive case_outcomes change stands: if a migration appears, describe it and STOP; the founder runs every migration.
+- **A7 APPROVED** — order-invariance AT + injection fixture AT. Tests only. Rationale on record: "evidence originates from hostile web pages and client uploads. S-0 guards the verdict; A7 guards the narrative."
+- **A8 APPROVED** — brand scope on M3 assertions. "Brands field is the sole research scope (locked architecture); multi-brand cases bleed context without it. NOTE: A8 does NOT discharge C2 — A8 partitions assertions, C2 asks how brands aggregate into one verdict. Related, not the same. Both are needed." (C2 is now OQ-S4 in the gate spec — founder ruling required.)
+
+**Original status line:** 🔴 UNRULED — founder reads and rules item-by-item. Standalone document; NOT part of the signed S-0 board; enters no build until ruled.
+**Provenance (stated honestly):** authored as CHAT-ONLY output in the 2026-07-16 session ("think as CTO and algorithm scientist"); a prior session message falsely described this addendum as already committed to the gate spec — it was not. First written to disk 2026-07-16 as this file. Parent spec: `2026-07-16-synthesis-engine-gate.md` (9642aea).
+**Thesis:** the drafted engine concentrates the IP in prompt prose (copyable); these amendments relocate it into code-derived features, deterministic calibration, measured disagreement, and an outcome-tuned backtested corpus (not copyable). Architecture unchanged; the center of gravity moves.
+
+---
+
+## The eight amendments
+
+**Amendment 1 — Widen Module 1's input to the full frozen record.** The richest judgment signal the system produces is discarded at the synthesis boundary: the firewall **rejection records** (every proposed claim code refused, and which gate refused it), consensus records, diversity records, unknowns, and the identity audit. A claim that died at the corroboration gate IS the claim-observable gap — already computed, deterministic, stored per attempt. M1's input contract becomes: accepted evidence + rejected-with-gate (corroboration-rejected items tagged `asserted_but_unverifiable`) + unknowns + advisory metadata. Modules 2 and 7 receive the gap *measured*, not inferred. This is proprietary representation: it exists only downstream of our firewall.
+
+**Amendment 2 — Module 7's doubt level becomes deterministic code.** G005: `doubt_intensity = f(gap, cost)`. Make `f` an actual function: both axes code-derived (gap from Amendment 1's rejection/assertion ratios; cost from enforcement-posture signals + veto-grade findings), and `doubt_level` computed by a **founder-tuned matrix** — versioned like the rubric, refined against the outcome corpus (only parameters can be tuned; prose cannot). The LLM writes only `doubt_focus` + rationale (WHERE the doubt lands, never HOW MUCH). Kills the paranoia machine structurally; makes the heart of the IP un-copyable and auditable. "LLM proposes, code decides" applied to the center of the product.
+
+**Amendment 3 — Adversarial self-consensus on the judgment layer.** H7's consensus pattern lifted upward: Call B (contradictions/hypotheses) runs twice, the second pass framed as the refuter ("strongest case against the leading hypothesis"). Code compares commitments: same leader → conviction recorded high; different leaders → the case is genuinely uncertain — decision-confidence-class advisory degrades + admin flag. Never a verdict input. (Feeds the future confidence-aware-autonomy routing for free.)
+
+**Amendment 4 — A commitment tiebreak law. [HELD — UNRULED; text corrected per Q2, 2026-07-16.]** Forced commitment on balanced evidence manufactures conviction (the inverse of the paranoia machine). When the refuter pass disagrees AND code-measured support is balanced, the engine may output the one honest alternative: "evidence does not discriminate" — **NARRATIVE-ONLY (Q2 answer: option (a))**: M9 frames non-discrimination in limitation language and sharpens the vendor questions; the synthesis-conviction advisory degrades; **the VERDICT is untouched** — it lands wherever the certified signals/score/floors put it (on genuinely thin evidence the frozen engine's own floors typically land at Verify Before Purchase already; cf. the tracker's all-n_a note for the confidence/abstention discussion). The original phrase "routes to Verify Before Purchase" was loose language and is retracted: any mechanism that MOVED a verdict would be a new verdict input path — the exact thing S-0 firewalled — and per the SO-S0-4 freeze condition would require its own founder-gated spec with its own certification, never a rider. No new client vocabulary. CONSTRAINT unchanged: never touches `decision_confidence` inside frozen computeVerdict.
+
+**Amendment 5 — Backtesting inside this gate, not deferred to I1.** Before the synthesis prompts freeze: replay the module pipeline over ALL frozen attempts (~36 cases; stored evidence in, synthesis calls only, zero new acquisition) and answer with data: does any delivered verdict flip through the certified fields, and are doubt levels proportionate case-by-case? Proposed as AT-SYN-B. Becomes the standing change-control harness every future prompt change must pass ("flips 3 of 29, here's the diff").
+
+**Amendment 6 — Outcome hooks written now (cannot be backfilled).** M5 hypotheses stored with structured, machine-checkable watch conditions (seller-count drop, enforcement event, …); the 30/90-day loop scores `prediction_correct` per HYPOTHESIS, not just per verdict. This is what turns the outcome corpus into calibration data for Amendment 2's matrix. The G006 no-backfill lesson applied to the reasoning layer.
+
+**Amendment 7 — Two cheap robustness properties.** (a) Order-invariance AT: shuffle M1 input order → certified outputs identical (position bias is a real LLM failure). (b) Injection fixture AT: evidence statements originate from hostile web pages and client uploads — one test case whose evidence contains instruction-shaped text, asserting the reasoning treats it as data (S-0 already guards the verdict; this guards the narrative).
+
+**Amendment 8 — Multi-brand partitioning in Module 3.** Assertions carry a `brand` scope field like track evidence already does — prevents cross-brand context bleed on multi-brand cases (the Amendment-2/subject-discipline lesson at synthesis altitude).
+
+---
+
+## Cost table (1.3 — blunt)
+
+| id | Touches | Modifies computeVerdict / deriveTrackSignal / weights / identityResolver? | Changes a SIGNED contract? | Gate (my view) |
+|---|---|---|---|---|
+| A1 | new code (M1 assembler) + PROPOSED S-1 contracts (B2 M1/M2/M7 inputs) | **NO** | No — S-1's SO-S1-1 is unsigned; this amends the proposal | **S-1** |
+| A2 | new code + NEW versioned CONFIG (doubt matrix) + proposed B2/M7 | **NO** | No (proposal amendment) | **S-1** (matrix tuning → G4 outcomes) |
+| A3 | new code (one extra LLM call) + proposed B7 staging + additive storage field | **NO** | No (amends proposed SO-S1-2) | **S-1** (founder may defer — it is a cost/quality option, severable) |
+| A4 | new code + proposed B2/M5 + an advisory field beside decision_confidence | **NO — with the stated constraint.** Merging it INTO decision_confidence would touch frozen computeVerdict → sign-off gate; not proposed. | No | **S-1** |
+| A5 | new founder-run script + AT-board line; zero product code path | **NO** | No | **S-1 AT board** (pre-freeze evidence) + standing harness |
+| A6 | new code (watch-condition storage in existing case_synthesis jsonb — no migration expected) + G4 scoring consumption (per-hypothesis prediction_correct MAY need an additive case_outcomes change — **not confirmed until designed; describe-and-stop rule applies if a migration appears**) | **NO** | No | write-side **S-1**; scoring **G4** |
+| A7 | tests only | **NO** | No | **S-1 AT board** |
+| A8 | proposed contract field only (B2/M3) | **NO** | No | **S-1** |
+
+**Already-satisfied check:** none of A1–A8 is satisfied by frozen state — all are additive to the unbuilt S-1. None touches the four frozen files. None touches the signed S-0 board.
