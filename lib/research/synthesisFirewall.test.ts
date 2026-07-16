@@ -160,16 +160,29 @@ describe("S-0 · SO-S0-3 — enum law + the m4c origin cap (Track 5 stays non-vo
 // is a claim about the FUTURE: a fifth file added tomorrow that invokes computeVerdict raw must
 // fail this test BY NAME, without anyone editing a list. Exemptions are explicit and justified
 // (the RULED_EXCLUSIONS pattern) — anything else that invokes computeVerdict must certify first. ──
-const SCAN_ROOTS = ["lib", "scripts", "app"];
-// Invocation, not mention: no-space paren (code style never spaces a call; prose comments do).
-const INVOKE = /computeVerdict\(/;
+// Roots are DERIVED from the repo top level (Gap 2 — remembered roots were the same disease as
+// remembered files): every top-level directory is scanned except the explicit exclusions below.
+// A new source directory joins the scan automatically. Cost: the full-repo walk is file-stat +
+// read over a few hundred .ts files — the whole suite file runs in well under a second.
+const ROOT_EXCLUDE = new Set(["node_modules", ".git", ".next", ".agents", "backups", "codex-fresh-design", "mockups-codex-exploration", "docs", "supabase", "public"]);
 const CERT_INVOKE = "certifySynthesisForVerdict(";
-// Exempt WITH justification — each is frozen and receives certified input from its own callers:
-const EXEMPT: Record<string, string> = {
-  "lib/research/verdictEngine.ts": "the definition site (frozen)",
-  "lib/research/verdictNoOverride.ts":
-    "frozen internal composer — recomputes with the SAME synthesis object its caller passed; certification happens upstream at every entry (locked below + behaviorally by the poisoned site tests)",
+// Exempt WITH justification AND an OBLIGATION (Gap 1): an exempted composer is itself an entry
+// point into the frozen engine, so its OWN invocation symbol JOINS the derived scan — a file that
+// reaches the engine through the composer without certifying fails BY NAME, exactly like a raw
+// computeVerdict caller. Adding a future exemption without an `entry` is a type error unless
+// explicitly null (the definition site), so the obligation is structural, not remembered.
+const EXEMPT: Record<string, { why: string; entry: string | null }> = {
+  "lib/research/verdictEngine.ts": { why: "the definition site (frozen)", entry: null },
+  "lib/research/verdictNoOverride.ts": {
+    why: "frozen internal composer — recomputes with the SAME synthesis object its caller passed; certification is enforced on ITS callers via the entry symbol below",
+    entry: "applyDocumentationNoOverride(",
+  },
 };
+// Invocation, not mention: no-space paren (code style never spaces a call; prose comments do).
+// The engine's entry symbols = computeVerdict itself + every exempted composer's entry.
+const ENTRY_SYMBOLS = ["computeVerdict(", ...Object.values(EXEMPT).map((e) => e.entry).filter((s): s is string => !!s)];
+const invokesEngine = (code: string) => ENTRY_SYMBOLS.some((s) => code.includes(s));
+const firstEntryIdx = (code: string) => Math.min(...ENTRY_SYMBOLS.map((s) => { const i = code.indexOf(s); return i === -1 ? Infinity : i; }));
 
 // Strip comments before matching so prose can't false-positive the lock. CONSERVATIVE on purpose:
 // only block comments and whole-line comments are removed — code can never hide in what remains
@@ -196,37 +209,40 @@ function walkTs(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("S-0 · SO-S0-1 — source-scan lock: computeVerdict is invoked NOWHERE without certification", () => {
+describe("S-0 · SO-S0-1 — source-scan lock: the frozen engine is reached NOWHERE without certification", () => {
   const root = process.cwd();
-  const files = SCAN_ROOTS.flatMap((r) => walkTs(join(root, r)));
+  const roots = readdirSync(root).filter((d) => !ROOT_EXCLUDE.has(d) && !d.startsWith(".") && statSync(join(root, d)).isDirectory());
+  const files = roots.flatMap((r) => walkTs(join(root, r)));
   const rel = (p: string) => p.slice(root.length + 1).replace(/\\/g, "/");
-  const callers = files.filter((p) => INVOKE.test(codeOf(readFileSync(p, "utf8")))).map(rel);
+  const callers = files.filter((p) => invokesEngine(codeOf(readFileSync(p, "utf8")))).map(rel);
   const unexempt = callers.filter((f) => !(f in EXEMPT));
 
   it("the scan sees the known world (sanity floor — the set is DERIVED, this only proves the scan works)", () => {
+    expect(roots).toContain("components"); // Gap 2 — the roots are derived; components is in the walk
     for (const known of ["lib/research/pipeline.steps.ts", "lib/research/verdictViewModel.ts", "scripts/rejudge-case.ts"]) {
       expect(callers, `scan failed to find known caller ${known} — the lock itself is broken`).toContain(known);
     }
     expect(callers).toContain("lib/research/verdictEngine.ts"); // definition site found, exempted below
   });
 
-  it("every derived, un-exempted caller certifies BEFORE it computes — a new raw caller fails BY NAME", () => {
+  it("every derived, un-exempted caller certifies BEFORE it reaches the engine (any entry symbol) — a new raw caller fails BY NAME", () => {
     expect(unexempt.length).toBeGreaterThan(0);
     for (const file of unexempt) {
       const src = codeOf(readFileSync(join(root, file), "utf8"));
       const certIdx = src.indexOf(CERT_INVOKE);
-      expect(certIdx >= 0, `UNCERTIFIED VERDICT PATH: ${file} invokes computeVerdict( without ever invoking certifySynthesisForVerdict(`).toBe(true);
+      expect(certIdx >= 0, `UNCERTIFIED VERDICT PATH: ${file} reaches the frozen engine (${ENTRY_SYMBOLS.join(" / ")}) without ever invoking certifySynthesisForVerdict(`).toBe(true);
       // Ordering is asserted on first INVOCATION positions (call-parens, so imports don't satisfy
       // it). This is textual first-use order — a heuristic, honestly stated: true execution-order
       // proof is the per-site poisoned behavioral tests (stageVerdict + viewmodel + AT-S0-2 live).
-      const computeIdx = src.search(INVOKE);
-      expect(certIdx < computeIdx, `${file}: first certifySynthesisForVerdict( invocation must precede the first computeVerdict( invocation`).toBe(true);
+      expect(certIdx < firstEntryIdx(src), `${file}: first certifySynthesisForVerdict( invocation must precede the first engine entry invocation`).toBe(true);
     }
   });
 
-  it("exemptions are exactly the two frozen internals, each justified — an exemption without a caller is stale", () => {
-    for (const f of Object.keys(EXEMPT)) expect(callers, `stale exemption: ${f} no longer calls computeVerdict`).toContain(f);
+  it("exemptions are exactly the two frozen internals, each justified — an exemption without a caller is stale, and a composer exemption MUST carry its entry symbol", () => {
+    for (const f of Object.keys(EXEMPT)) expect(callers, `stale exemption: ${f} no longer reaches the engine`).toContain(f);
     expect(Object.keys(EXEMPT).sort()).toEqual(["lib/research/verdictEngine.ts", "lib/research/verdictNoOverride.ts"]);
+    expect(EXEMPT["lib/research/verdictNoOverride.ts"].entry).toBe("applyDocumentationNoOverride("); // the obligation, asserted
+    expect(ENTRY_SYMBOLS).toContain("applyDocumentationNoOverride("); // and it JOINED the scan
   });
 
   // Test files are deliberately OUTSIDE the caller scan (they unit-test the frozen engine raw, by
@@ -235,6 +251,6 @@ describe("S-0 · SO-S0-1 — source-scan lock: computeVerdict is invoked NOWHERE
   it("the dispute stability lock's judge() composes through certification (test-composition check, not a verdict site)", () => {
     const src = codeOf(readFileSync(join(root, "lib/research/pipeline.steps.dispute.test.ts"), "utf8"));
     expect(src.indexOf(CERT_INVOKE)).toBeGreaterThanOrEqual(0);
-    expect(src.indexOf(CERT_INVOKE)).toBeLessThan(src.search(INVOKE));
+    expect(src.indexOf(CERT_INVOKE)).toBeLessThan(firstEntryIdx(src));
   });
 });
