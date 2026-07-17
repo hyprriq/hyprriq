@@ -11,7 +11,7 @@ stakes only (below). Every cell and every threshold still BLANK; the founder aut
 
 ---
 
-## Axis 1 — CLAIM-OBSERVABLE GAP (code-derived; PRIMARILY deterministic — honesty label below)
+## Axis 1 — CLAIM-OBSERVABLE GAP (LLM-DERIVED — fallback RULED 2026-07-17; truthful label below)
 
 Derived per attempt from the widened M1 record + M3 assertions:
 - `R` = load-relevant claims that died at the corroboration gate or sit `unresolved`
@@ -19,9 +19,13 @@ Derived per attempt from the widened M1 record + M3 assertions:
   **⛔ THIS DEFINITION IS RULED DEAD (founder, 2026-07-17 — A1 split ruling): corroboration
   deaths are empty on this corpus AND wrong-polarity on any corpus (they measure allegations
   AGAINST the vendor). FOUNDER PRINCIPLE, RULED: R measures THE VENDOR'S OWN LOAD-RELEVANT
-  STORY THAT WE COULD NOT OBSERVE — never allegations against them. Replacement definition:
-  PLANNING-THREAD RULING pending, from the enumeration
-  (`2026-07-17-r-axis-enumeration.md`). Axis 1 cannot be filled until it lands.**
+  STORY THAT WE COULD NOT OBSERVE — never allegations against them.**
+  **✅ REPLACEMENT RULED — THE PRE-COMMITTED FALLBACK (founder-confirmed 2026-07-17, four
+  candidates killed on the record): R = M3 `unresolved` statuses + the stored unknowns —
+  LLM-DERIVED, TRUTHFULLY LABELED. The gap axis is LLM-derived; the cost axis is
+  deterministic; the LLM moves ONE of the two matrix inputs; safety = the S-0 lock (doubt
+  advisory, narrative tone only), as always. The earlier "primarily deterministic" honesty
+  label is SUPERSEDED accordingly.**
 - `S` = load-relevant assertions `supported` with certainty `verified`
 
 **HONESTY LABEL (SO-S1-1 Condition 2, founder 2026-07-17 — the claim must match the artifact):**
@@ -97,6 +101,17 @@ versioned, deterministic. An LLM writing more `unresolved` moves an input; it ca
 case broad-doubt. The paranoia machine still dies at the conversion step. That was always A2's
 real mechanism — not input purity. (A2's PREMISE — that a deterministic gap signal exists today
 at useful volume — is DISPROVEN on this corpus, known before a line of module code.)
+
+**THE CELLS WERE FILLABLE THROUGHOUT — FOUNDER'S OWN ERROR, RECORDED PLAINLY (founder-ordered,
+2026-07-17, beside the A2 premise-disproven note):** for four rounds the planning thread told the
+founder the matrix fill was blocked — WRONG. R's definition determines the THRESHOLDS; it never
+touched the CELLS. The gap levels carry FIXED SEMANTIC MEANINGS ("wide = the story is mostly
+claim, little observable") — correct regardless of how R computes them. The twelve cells ask
+"given `wide` gap and `severe` cost, how much doubt?" — pure method, answerable from the meanings
+alone. And the ruled fill order was already: fill the cells, leave the thresholds blank
+(thresholds get measured at G4). The four-round hunt was for the half the founder was told not to
+fill. A blocker asserted without checking what it actually blocked is the same class as a claim
+broader than its code.
 
 **G4 ENTRY CONDITION — THE RE-EXAMINATION PATH (founder, 2026-07-17):** the Track-2 routing
 defect (nothing routes a failed strong key to its weak counterpart — 98 dealer_page_listed
