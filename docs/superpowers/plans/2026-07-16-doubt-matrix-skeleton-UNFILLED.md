@@ -16,6 +16,12 @@ stakes only (below). Every cell and every threshold still BLANK; the founder aut
 Derived per attempt from the widened M1 record + M3 assertions:
 - `R` = load-relevant claims that died at the corroboration gate or sit `unresolved`
   (asserted-but-unverifiable — the firewall's rejection records, measured not inferred)
+  **⛔ THIS DEFINITION IS RULED DEAD (founder, 2026-07-17 — A1 split ruling): corroboration
+  deaths are empty on this corpus AND wrong-polarity on any corpus (they measure allegations
+  AGAINST the vendor). FOUNDER PRINCIPLE, RULED: R measures THE VENDOR'S OWN LOAD-RELEVANT
+  STORY THAT WE COULD NOT OBSERVE — never allegations against them. Replacement definition:
+  PLANNING-THREAD RULING pending, from the enumeration
+  (`2026-07-17-r-axis-enumeration.md`). Axis 1 cannot be filled until it lands.**
 - `S` = load-relevant assertions `supported` with certainty `verified`
 
 **HONESTY LABEL (SO-S1-1 Condition 2, founder 2026-07-17 — the claim must match the artifact):**
