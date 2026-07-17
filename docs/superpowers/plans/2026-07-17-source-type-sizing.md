@@ -1,0 +1,38 @@
+# source_type Sizing — the FOURTH AND LAST R candidate (2026-07-17)
+
+**Context:** the founder's last-candidate ruling: Q1 (authorship of `source_type`) decides whether Q2 (sizing) runs at all. **PRE-COMMITMENT, RECORDED (founder, 2026-07-17): this is the fourth and last candidate — no fifth hunt. If source_type is LLM-written, mixed, or does not discriminate: AXIS 1 SHIPS LLM-DERIVED (M3 `unresolved` + unknowns), TRUTHFULLY LABELED — the LLM drives one axis, blast radius bounded to narrative tone by the S-0 lock, tuned at G4 when the corpus carries adversarial cases. Four candidates enumerated and killed on the record IS the finding.**
+**Discipline:** READ-ONLY (census #4, temp script, deleted). No R formula, no cell, no threshold, no grouping. The planning thread rules; the founder places his own cases.
+
+## Q1 — CODE-CLASSIFIED, UNCONDITIONAL AUTHORSHIP. IT CLEARS. Traced end to end:
+
+1. **Acquisition (the only writer):** every pack source's `provenance.source_type` is written by `buildProvenance` (`lib/research/acquisition/provenance.ts:10,18`) = `sourceTypeFor(classifySource(url, pluginId, ctx))`. `classifySource` (`source_profile.ts:61-76`) is a deterministic host/domain classifier — the file header states the design intent: "LOCKED, code-only trust registry… never LLM-assigned." The vendor's own site is recognized exactly as the ruling hypothesized: **URL-match against the vendor's domain** (`domainLabel(host) === domainLabel(vendorHost)` → `official_company`), sharing the Track 0.5 resolver's host helpers. `official_company → vendor_self_assertion` and `user_upload → vendor_self_assertion` are fixed rows of the code registry (`SOURCE_PROFILES`).
+2. **ClassifyContext supply:** tracks pass `vendorHost = supplier_identity.resolved_domain ?? vendor_website` (track2.ts/track3.ts; track1 uses vendor_website). Whois/inference plugins bypass by plugin id.
+3. **Evidence items (code copy):** all four construction sites write `source_type: src?.provenance.source_type ?? "inference"` — a code copy from the cited pack source. Track 4's document pack writes the literal in code.
+4. **The LLM never writes source_type anywhere.** The prompts' "you PROPOSE classifications" refers to weight-key mapping, which the firewall validates — a different field.
+
+**Two honest caveats, named (neither changes the authorship verdict):**
+- **Correctness (not authorship) is metadata-conditional:** if the client entered no website AND identity is unresolved, `vendorHost` is null and the vendor's own site classifies as "news" → `third_party`. The value is still code-authored; the vendor-recognition depends on identity metadata being present.
+- **Item-level linkage is LLM-mediated:** an item's source_type is copied from the FIRST source the LLM cited that exists in the pack. Code authors every value; the LLM influences WHICH source's class flows to an item. (Counting over pack sources instead of items would remove this; noted as fact, not design.)
+
+## Q2 — SIZING (65 attempts, 500 accepted items)
+
+**(a) Per attempt** — asserted = accepted items with `source_type: "vendor_self_assertion"` (by certainty; web-row vs doc-row split); observed = accepted items at certainty `verified` with source_type ∉ {vendor_self_assertion, inference}. Full 65-row listing in the census output (headlines below). Corpus totals: **56 asserted items across 27 attempts — 51 web-borne, 5 document-borne** — the web-blindness that killed the claimant candidate is exactly what this carrier fixes.
+
+**(b) DISCRIMINATION — stated both ways, plainly:**
+- **27 of 65 attempts have a defined non-zero ratio, spread 0.11 → 1.50** (0.11, 0.13, 0.17×3, 0.20, 0.22×2, 0.25×3, 0.29×3, 0.30, 0.33×2, 0.43×2, 0.50×2, 0.60×2, 0.67, 1.00×2, 1.50). No attempt reads asserted>0 with observed=0 (no undefined-high) on this corpus. This is not the last three candidates' shape (1 proposal ever · 2 acceptances ever · 3 attempts on one case).
+- **The majority reading is still zero: asserted=0 on 38/65** (13 of those have zero accepted items at all — the absence state; 25 have items but no vendor-asserted ones). **The zeros differ in kind from claimant's zeros:** claimant-zero was BLINDNESS (web-borne assertions invisible on any corpus); source_type-zero is a MEASUREMENT — the accepted evidence genuinely contains no vendor-asserted content, i.e., nothing in the record rests on the vendor's say-so. Whether a majority-zero distribution on a legitimate-vendor test corpus suffices for the axis is the ruling, not stated here.
+- **Measured instability worth knowing before thresholds (fact, no threshold suggested):** the same vendor's ratio varies substantially across attempts — AWI-2607-022 spans 0.29→1.00 over five attempts (asserted 2–4, observed 4–10); AWI-2606-012 spans 0.22→0.60; AWI-2607-021 spans 0.13→0.29 plus one asserted=0 attempt. The denominator moves with acquisition richness per run, and asserted counts are small integers — the ratio is coarse and attempt-sensitive. (A5's backtest/noise-floor machinery is the existing home for pricing exactly this kind of envelope.)
+
+**(c) Conditionality:** source_type present and inside the enum on **all 500 accepted items — 0 missing, 0 defaulted**. Carried by evidence items (the 13 zero-item attempts have nothing to read — absence, not default). No era-conditionality (unlike weight_validation). Plus the two Q1 caveats: metadata-conditional vendor-recognition; LLM-mediated item→source linkage.
+
+**(d) The conflation argument, re-evaluated against THIS carrier from the measured distribution:**
+- **The bounded-not-fatal case, visible in the data:** the observed side does rise on its own where verification is rich, exactly as the bounding argument predicts — independently-confirmed vendors carrying vendor-asserted items still read LOW (the 0.11–0.33 cluster is real TD Synnex/Ingram attempts with high observed_verified), and the highest reading (1.50) is the attempt with the thinnest independent side (AWI-2607-031#2: observed=2). Rich-acquisition attempts pull the ratio down (022#4: 3/10 = 0.30). Directionally, corroboration self-corrects the ratio without per-claim linkage.
+- **What the data cannot yet bound:** the corpus contains no adversarial case exercising the deciding scenario (a vendor claim that WAS corroborated vs one that was NOT, on the same case) — the conflation's direction is bounded by the mechanism above, but its MAGNITUDE on adversarial cases is unmeasured here; and the intra-case attempt variance in (b) means some ratio movement is acquisition luck, not vendor property. Both facts are for the ruling, not smoothed.
+
+## Recorded alongside (this round's ruled items)
+
+- **Claimant candidate DEAD — mechanism recorded, not sample:** `claimant:"vendor"` is written only at Track 4's construction site (the OQ-S5 equivalence), so the vendor's web-borne story is invisible to claimant on ANY corpus; traffic fixes 62-of-65, never web-blindness. (In this census: 51 of 56 vendor-asserted items are web-borne — invisible to claimant, visible to source_type.)
+- **dealer_page_listed routing finding corrected to TRACK 2** in the tracker (planning-thread error owned; data was right).
+- Everything else stands untouched: the widening, Move 2, S-0's lock (unaffected by design), Axis 2 unblocked, doubt_level shape PROPOSED.
+
+**Handoff:** Q1 cleared (code, unconditional); Q2 delivered with the distribution stated both ways. Whether source_type carries Axis 1, or the pre-committed LLM-derived fallback ships truthfully labeled, is the planning thread's ruling — nothing further is hunted; this was the fourth and last candidate.
