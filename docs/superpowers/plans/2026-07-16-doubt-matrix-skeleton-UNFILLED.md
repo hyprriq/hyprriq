@@ -1,11 +1,21 @@
-# Module 7 — Doubt Matrix SKELETON (UNFILLED — founder authors every value)
+# Module 7 — Doubt Matrix (FILLED — founder-authored 2026-07-17; filename keeps "-UNFILLED" for reference stability, the content governs)
 
-**Status:** 🔴 EMPTY BY DESIGN. Per the A2 ruling (founder, 2026-07-16): the FOUNDER authors the
-v1 matrix — not the build thread, not the planning thread. This file defines the two code-derived
-axes and their value ranges; every cell and every derivation threshold is blank. Born as versioned
-config (ADDENDUM-2 Move 1 reduced form, instance #1): on fill it becomes
-`DOUBT_MATRIX_VERSION = "d7-1.0.0"` in the S-1 config layer. Tuning against the outcome corpus is
-G4. Scenario-independent by construction — the axes are calibration inputs, never supplier types.
+**Status:** 🟢 **FILLED AND CONFIRMED (founder, 2026-07-17) — `DOUBT_MATRIX_VERSION = "d7-1.0.0"`.**
+Every cell founder-authored; derivation THRESHOLDS stay BLANK — G4 measures them. Axis-2 level
+MEANINGS are drafted PROPOSED below (unpacked from the ruled OQ-S1 (a) inputs; founder confirms).
+*(Prior status, preserved: 🔴 EMPTY BY DESIGN — per the A2 ruling, founder 2026-07-16: the FOUNDER
+authors the v1 matrix; born as versioned config, ADDENDUM-2 Move 1 reduced form instance #1;
+tuning against the outcome corpus is G4. Scenario-independent by construction.)*
+
+**THE FOUNDER'S LAW — THE GOVERNING LAW OF THE MATRIX (founder, 2026-07-17; binds M7's
+calibration AND M9's rendering):**
+**"DOUBT IS CALIBRATED TRUST IN A STATED CONCLUSION. CONFUSION IS THE ABSENCE OF ONE."**
+Doubt says: here is what I think, here is how hard I would lean on it, here is what would change
+my mind. Confusion says: I don't know. The client paid for the first. EVERY level — including
+`broad` — states the verdict sentence identically and commits to a leading reading. `broad` is
+not a shrug: it is "here is my best account, and here is why you should not wire money against it
+yet." THE TEST FOR EVERY CELL: CAN THE CLIENT ACT ON IT? If `broad` ever produces a non-answer,
+the report failed.
 **OQ-S1 ✅ RULED (a) (founder, 2026-07-17): Axis 2 inputs are now DEFINED — observable enforcement
 stakes only (below). Every cell and every threshold still BLANK; the founder authors them.**
 
@@ -34,6 +44,14 @@ status — LLM-WRITTEN. The axis is PRIMARILY deterministic with ONE LLM-written
 retains an indirect, one-module-upstream lever on doubt_level. The design stands (`unresolved`
 captures gaps the firewall never gated); what makes it safe is not input purity but the S-0 lock —
 doubt is advisory, structurally locked out of the verdict; the lever moves narrative tone only.
+**⛔ THIS PARAGRAPH IS SUPERSEDED IN PLACE (2026-07-17, executing the fallback ruling — the R
+bullet announced the supersession; this marks it where the claim actually lives): under the ruled
+fallback R = M3 `unresolved` + stored unknowns, the gap axis is WHOLLY LLM-DERIVED, not "primarily
+deterministic." AND the S side is LLM-gated too: S filters on certainty `verified`, and
+`certainty` is LLM-written (enum-validated only — source-verified at the fourth-candidate round).
+BOTH SIDES OF AXIS 1 ARE LLM-GATED. Consistent with the fallback ruling's truthful label; the
+safety property is unchanged and was never input purity: the S-0 lock, plus the founder's matrix
+owning the conversion.**
 
 | Level | Meaning (fixed) | Derivation threshold (FOUNDER FILLS) |
 |---|---|---|
@@ -55,26 +73,54 @@ calibration of the module whose entire job is measuring unverified claims).
 Axis values renamed 2026-07-16 (founder): `elevated` collided with the OUTPUT enum (fixed by the
 M7 contract), so the cost axis renames — `low | significant | severe`.
 
-| Level | Meaning (fixed) | Derivation thresholds (FOUNDER FILLS — inputs ruled above, thresholds his) |
-|---|---|---|
-| `low` | ____ | ____ |
-| `significant` | ____ | ____ |
-| `severe` | ____ | ____ |
+**Level meanings — DRAFTED PROPOSED (build thread, 2026-07-17, unpacked strictly from the ruled
+OQ-S1 (a) inputs — enforcement-posture signal + validated veto-grade keys present + breadth of
+brands at issue; no judgment authored; FOUNDER CONFIRMS). Thresholds stay BLANK — G4 measures.**
 
-## The matrix — doubt_level = MATRIX[gap][cost] (every cell FOUNDER-FILLED)
+| Level | Meaning (PROPOSED — founder confirms) | Derivation thresholds (BLANK — G4) |
+|---|---|---|
+| `low` | No observed enforcement stakes: the brands at issue carry no enforcement-posture signals and no veto-grade findings are present — the observable cost of being wrong is ordinary commercial exposure. | ____ |
+| `significant` | Observed enforcement stakes are present: enforcement-posture signals and/or a validated veto-grade finding on a brand at issue — being wrong carries observed, active-consequence exposure. | ____ |
+| `severe` | The strongest observable stakes: veto-grade findings together with enforcement posture, and/or the exposure spans the breadth of the brands at issue — being wrong carries enforcement-grade consequences across the case. | ____ |
+
+## The matrix — doubt_level = MATRIX[gap][cost] — ✅ FOUNDER-FILLED AND CONFIRMED (2026-07-17)
 
 Output enum (fixed, from the B2/M7 contract): `minimal | targeted | elevated | broad`.
 
 | gap \ cost | `low` | `significant` | `severe` |
 |---|---|---|---|
-| `none` | ____ | ____ | ____ |
-| `narrow` | ____ | ____ | ____ |
-| `material` | ____ | ____ | ____ |
-| `wide` | ____ | ____ | ____ |
+| `none` | minimal | minimal | minimal |
+| `narrow` | minimal | targeted | targeted |
+| `material` | targeted | elevated | elevated |
+| `wide` | elevated | broad | broad |
 
-G005's own calibration examples, for orientation only (NOT prefilled): large gap + high cost →
-heavy, broad doubt · small gap + high cost → light, targeted doubt at the one gap · small gap +
-low cost → minimal · large gap + low cost → moderate, proportionate to stakes.
+**TWO GOVERNING PRINCIPLES (recorded with the cells — they ARE the method):**
+(i) **GAP SETS THE LEVEL. COST ONLY MODULATES WITHIN IT.** High stakes never manufacture doubt on
+their own. If we verified everything, a litigious brand does not make the picture thinner. This is
+the paranoia machine dying at the conversion step.
+(ii) **DOUBT FRAMING HAS A COST — IT BURIES THE ANSWER.** So it must earn its place.
+
+**PER-ROW RATIONALE — METHOD, ADMIN-ONLY, NEVER CLIENT-FACING (founder, 2026-07-17):**
+- `none` (minimal everywhere) — THE ROW THAT IS THE WHOLE THESIS. Everything verified, brand sues
+  people, large order: we still say "this is solid," cleanly. Hedging because the stakes are high
+  is cowardice wearing rigor's clothes.
+- `narrow` + severe → targeted, NOT elevated. One thing unverified, catastrophic stakes: name that
+  one thing SHARPLY. Precision, not volume.
+- `material` never reaches `broad`. "Leans on unverified assertions" means there IS structure.
+  Inverting the snapshot would read as "we found nothing" when we found plenty — the founder's
+  doubt/confusion line, live.
+- `wide` + low → elevated, not broad. Thin story, small stakes: the reading still leads.
+
+**SANITY CHECK, on record:** this grid reproduces all four of G005's own calibration corners
+exactly, derived independently of them before they were consulted. *(G005's examples, for
+orientation: large gap + high cost → heavy, broad · small gap + high cost → light, targeted ·
+small gap + low cost → minimal · large gap + low cost → moderate, proportionate.)*
+
+**RECORDED FOR G4 — DO NOT ACT ON IT NOW (founder, 2026-07-17):** `severe` NEVER DIFFERS FROM
+`significant` — anywhere in the grid. The cost axis has three levels and only two do work in v1.
+Either a cell is wrong (candidate: material+severe → broad) or the axis should be binary and
+OQ-S1's inputs collapse accordingly. The founder confirmed the grid as filled; this is a G4
+tuning question, not a v1 blocker. A blank grid would never have surfaced it.
 
 **What the LLM still does (unchanged ruling):** writes `doubt_focus` and `rationale` — WHERE the
 doubt lands, never HOW MUCH. The gap/cost inputs and the chosen cell ride the stored record so
@@ -119,3 +165,9 @@ rejections vs 2 claims_authorization_unverified acceptances) is WHY A1's accepte
 reads empty. If that is ever fixed AND the corpus carries adversarial vendors, A1's insight
 becomes measurable and Axis 1 can be re-derived deterministically. Not this gate. Not Track 2
 now. Re-examine at G4.
+
+**SECOND ENTRY CONDITION, RECORDED ALONGSIDE (founder, 2026-07-17 — from the brand_status
+ruling):** option (β) — persisting per-source brand/question linkage — was DECLINED for this gate
+(it changes `EvidencePack`, marked FROZEN CONTRACT in code; its own sign-off gate). If (β) ever
+lands, per-brand attribution becomes DETERMINISTIC and the brand_evidence_status ruling is
+re-derived. Do not touch EvidencePack until then.
