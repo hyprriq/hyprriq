@@ -36,3 +36,28 @@
 - Everything else stands untouched: the widening, Move 2, S-0's lock (unaffected by design), Axis 2 unblocked, doubt_level shape PROPOSED.
 
 **Handoff:** Q1 cleared (code, unconditional); Q2 delivered with the distribution stated both ways. Whether source_type carries Axis 1, or the pre-committed LLM-derived fallback ships truthfully labeled, is the planning thread's ruling — nothing further is hunted; this was the fourth and last candidate.
+
+---
+
+## ROUND-2 ADDENDUM (2026-07-17) — per-track authorship verification closed + two decisive new facts
+
+The prior Q1 trace verified the classifier and the code copy-sites but had NOT verified per-track that the LLM's output schema cannot inject `source_type` — the unverified-invariant class, called out and now closed FROM SOURCE:
+
+| Track | LLM output schema carries source_type? | Parser | Construction site |
+|---|---|---|---|
+| 1 (supplier_identity) | **NO** — `ProposedEvidenceItem` = {evidence_id, statement, proposed_weight_key, supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence} (track1.prompt.ts:13-17) | Typed field-by-field projection — unknown fields DROPPED (track1.prompt.ts:94-100) | code copy from pack provenance (track1.ts:144) |
+| 2 | **NO** — same shape (`ProposedTrack2Item`, track2.prompt.ts:176-180) | same pattern | code copy (track2.ts:157) |
+| 3 | **NO** — same shape (`ProposedTrack3Item`, track3.prompt.ts:173-177) | same pattern | code copy (track3.ts:153) |
+| 4 | **NO** — same shape (`ProposedTrack4Item`, track4.prompt.ts:156-160) | same pattern | code copy (track4.ts:160); pack literal in documentPack.ts:112 |
+| 5 | emits no evidence items (frozen AT-B1) | — | — |
+
+`source_type` appears in ZERO prompt files (grep). **NOT MIXED — code-written at every site**, and pack provenance is stamped at ACQUISITION time, before any model call, then frozen (H1). Bonus conditionality closure: the `?? "inference"` fallback is UNREACHABLE on accepted items — the grounding gate guarantees at least one cited source exists in the pack, so an accepted item's `source_type` is never the defaulted value.
+
+**DECISIVE NEW FACT 1 — the AXIS (not source_type) contains an LLM-written gate: `certainty` is model-authored.** All four parsers validate certainty only against the enum (`CERTAINTIES.has(...) ? raw : "unknown"`); the VALUE is the LLM's choice. The ruled axis definition is asserted (vsa items) ÷ observed (**certainty-`verified`** non-vsa items) — so the observed side of the ratio is gated on an LLM-written field. Source_type is code-pure; **the axis as specified is code-authored on the asserted side and LLM-gated on the observed side.** Nobody had surfaced certainty's authorship before; it is on the record now.
+
+**DECISIVE NEW FACT 2 — the conflation steelman, answered mechanically: self-correction is NOT guaranteed, and the standing prompt rule biases against it.** Two pathways when a vendor self-assertion is corroborated:
+- *Separate items:* the corroborating brand-page item is its own evidence item — the firewall's cross-item dedupe kills only same-key+SAME-source pairs (`${key} ${sourceId}`, weightValidation.ts:204), so a same-key different-source corroborator SURVIVES to the observed side. Self-correction works.
+- *Merged item:* the standing "cite ALL corroborating sources on ONE item" rule (adopted Bucket-A; designed FOR the corroboration gate) pushes the model to attach the corroborating source to the SAME item — then one item exists, and its source_type is copied from the FIRST cited source present in the pack (`supporting_source_ids.find(...)`, all four sites). LLM citation ORDER decides which side the item lands on, and the observed side gains nothing. No self-correction.
+Which pathway occurs is LLM-behavioral, not code-determined. Empirically unmeasurable here: the corpus has no corroborated-vendor-claim case to test (established at the investigation). **This weakens the round-1 (d) "bounded" argument: the bounding mechanism exists but is contingent on item granularity, with the standing prompt rule pushing toward the non-correcting pathway.**
+
+**PLAIN ASSESSMENT (assessment, not a ruling):** the three hard disqualifiers as written do NOT fire on source_type itself (not LLM-written, not mixed, not conditional — all 500 in-enum, default unreachable on accepted items). But the hunt was for a fully deterministic axis, and the axis AS SPECIFIED is not one: its observed side is LLM-certainty-gated, its item→source linkage is LLM-cited, its self-correction is LLM-behavioral, and 38/65 attempts read zero with same-vendor ratios varying up to ~3.4× across attempts. On the pre-commitment's own standard — "a deterministic-LOOKING axis over a signal that is not there is not honest" — this candidate cannot carry a deterministic label without qualification. **Whether that substantively fires the pre-committed fallback is the founder's one-word confirmation — not a fifth hunt, which does not happen regardless.** The conditional records (the honest label in B2/M7 + the skeleton) are drafted-ready but NOT applied — contract text is not edited on the build thread's own trigger interpretation.

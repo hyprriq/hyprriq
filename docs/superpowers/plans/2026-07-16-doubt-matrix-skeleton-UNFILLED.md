@@ -89,3 +89,18 @@ reading) is PROPOSED in the gate spec at B2/M9, authored on founder order 2026-0
 confirms it with this fill. Corpus raw-input table for the fill:
 `docs/superpowers/plans/2026-07-17-doubt-matrix-corpus-pull.md` (read-only pull; no cell filled,
 no grouping suggested).
+
+**WHY THE MOAT SURVIVES AN LLM-DERIVED GAP AXIS (founder, 2026-07-17 — recorded with the
+pre-committed fallback ruling):** THE LLM NEVER CHOOSES doubt_level. It reports counts. THE
+FOUNDER'S MATRIX decides what those counts MEAN — the conversion stays founder-authored,
+versioned, deterministic. An LLM writing more `unresolved` moves an input; it cannot declare a
+case broad-doubt. The paranoia machine still dies at the conversion step. That was always A2's
+real mechanism — not input purity. (A2's PREMISE — that a deterministic gap signal exists today
+at useful volume — is DISPROVEN on this corpus, known before a line of module code.)
+
+**G4 ENTRY CONDITION — THE RE-EXAMINATION PATH (founder, 2026-07-17):** the Track-2 routing
+defect (nothing routes a failed strong key to its weak counterpart — 98 dealer_page_listed
+rejections vs 2 claims_authorization_unverified acceptances) is WHY A1's accepted-side class
+reads empty. If that is ever fixed AND the corpus carries adversarial vendors, A1's insight
+becomes measurable and Axis 1 can be re-derived deterministically. Not this gate. Not Track 2
+now. Re-examine at G4.
