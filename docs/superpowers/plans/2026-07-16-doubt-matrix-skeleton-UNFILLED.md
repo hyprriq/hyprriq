@@ -69,3 +69,17 @@ low cost → minimal · large gap + low cost → moderate, proportionate to stak
 **What the LLM still does (unchanged ruling):** writes `doubt_focus` and `rationale` — WHERE the
 doubt lands, never HOW MUCH. The gap/cost inputs and the chosen cell ride the stored record so
 calibration is auditable and G4-tunable.
+
+**THE MATRIX IS TIER-INDEPENDENT (founder, 2026-07-17 — a different claim from "scenario-
+independent" above, recorded so the tier-mapping ruling cannot re-open it):** ONE matrix, the SAME
+at every tier. The tier changes what evidence EXISTS; the matrix converts evidence-state → doubt
+IDENTICALLY (two tracks or six, Keepa or no Keepa). A cheaper tier gets the SAME judgment, honestly
+stated, with the doubt its thinner evidence earns — never a tighter matrix for a premium tier; the
+method is the moat and the method has no tiers. Per B3's law, the gap axis measures what is
+unverified WITHIN what was assessed — a client is never charged doubt for the tier he bought.
+
+**What each doubt_level DOES:** the output contract (shape per value + the intensity-ladder enum
+reading) is PROPOSED in the gate spec at B2/M9, authored on founder order 2026-07-17 — the founder
+confirms it with this fill. Corpus raw-input table for the fill:
+`docs/superpowers/plans/2026-07-17-doubt-matrix-corpus-pull.md` (read-only pull; no cell filled,
+no grouping suggested).
