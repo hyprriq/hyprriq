@@ -11,12 +11,19 @@ stakes only (below). Every cell and every threshold still BLANK; the founder aut
 
 ---
 
-## Axis 1 — CLAIM-OBSERVABLE GAP (code-derived from the A1 record; no LLM input)
+## Axis 1 — CLAIM-OBSERVABLE GAP (code-derived; PRIMARILY deterministic — honesty label below)
 
 Derived per attempt from the widened M1 record + M3 assertions:
 - `R` = load-relevant claims that died at the corroboration gate or sit `unresolved`
   (asserted-but-unverifiable — the firewall's rejection records, measured not inferred)
 - `S` = load-relevant assertions `supported` with certainty `verified`
+
+**HONESTY LABEL (SO-S1-1 Condition 2, founder 2026-07-17 — the claim must match the artifact):**
+R's first half is the firewall's deterministic record; its second half (`unresolved`) is M3's
+status — LLM-WRITTEN. The axis is PRIMARILY deterministic with ONE LLM-written input, so the LLM
+retains an indirect, one-module-upstream lever on doubt_level. The design stands (`unresolved`
+captures gaps the firewall never gated); what makes it safe is not input purity but the S-0 lock —
+doubt is advisory, structurally locked out of the verdict; the lever moves narrative tone only.
 
 | Level | Meaning (fixed) | Derivation threshold (FOUNDER FILLS) |
 |---|---|---|
