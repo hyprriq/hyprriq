@@ -294,6 +294,133 @@ export interface Module4ContradictionRecord {
   assertion_b?: { track_key?: string; statement?: string; evidence_ids?: string[] };
   interpretation?: string;
 }
+// ── S-1 (sitting S-1a, founder-ruled 2026-07-17) — THE NINE MODULE CONTRACTS (gate spec B2;
+// SO-S1-1 signed + re-affirmed). TYPES ONLY — the engine sittings (S-1b..e) produce them.
+// SynthesisOutput's legacy module fields stay UNTOUCHED below (the frozen S-0 lock test constructs
+// them loosely; narrowing them would require editing a frozen file) — the typed contracts here
+// assign INTO those fields one-way, and every stored addition is an OPTIONAL ADDITIVE sibling
+// (S-0's certification rebuilds from scratch, so no sibling can ever reach the verdict —
+// source-verified 2026-07-17). ──
+
+// The d7-1.0.0 matrix output enum (fixed; the founder's matrix chooses the value — never the LLM).
+export const DOUBT_LEVELS = ["minimal", "targeted", "elevated", "broad"] as const;
+export type DoubtLevel = (typeof DOUBT_LEVELS)[number];
+
+// M1 — the A1-widened record (assembled by CODE, S-1b). THE Q3 LAW ENCODED STRUCTURALLY:
+// `accepted` is the hash anchor (computeEvidenceHash's input projection, byte-identical);
+// the extension rides BESIDE it and never feeds the hash.
+export interface RejectedWithGate {
+  evidence_id: string;
+  proposed_weight_key: string;
+  gate: ValidationGate | null;            // the gate that refused it (null: llm_returned_unknown)
+  rejection_reason: RejectionReason | null;
+  validation_version: string;
+  source_track: TrackKey;
+  tag?: "asserted_but_unverifiable";      // A1 — corroboration-rejected items carry the ruled tag
+}
+export interface M1RecordExtension {
+  rejected_with_gate: RejectedWithGate[];
+  unknowns: (Unknown & { source_track: TrackKey })[];
+  advisory_metadata: { b2b_only_detected: boolean; b2b_only_brands: string[] };
+  identity_audit: SupplierIdentity | null;
+  consensus_records: ({ source_track: TrackKey } & NonNullable<TrackOutput["hard_fail_consensus"]>)[];
+  // Mirrors DiversityCapResult (sourceDiversity.ts) — inlined so the contracts spine stays
+  // dependency-free (sourceDiversity imports from here; a type import back would cycle).
+  diversity_records: { source_track: TrackKey; signal: TrackSignal; capped: boolean; cap_reason: string | null; distinct_sources: number }[];
+}
+export interface WidenedM1Record { accepted: NormalizedEvidence; extension: M1RecordExtension }
+
+// M2 — Claim Attribution (Call A). NAMING LAW (founder, 2026-07-17): per-claim attribution takes
+// DISTINCT names from M1's per-track PROVENANCE-CLASS fields — same names here would rebuild the
+// `elevated` collision on a verdict-adjacent surface (source-scan-locked in s1a.contracts.test.ts).
+export interface ClaimAttribution {
+  evidence_id: string;
+  claim: string;
+  claim_attributed_to: string;            // an LLM judgment about the claim, not a provenance class
+  attributed_party_benefits: boolean;     // does the attributed party benefit from it being believed?
+  corroboration: "independent" | "cross_source" | "none_found";
+  weight: "standalone" | "low_until_corroborated"; // the M2 weight law + firewall-wins law lock this by CODE (S-1c)
+}
+
+// M3 — Assertion Engine (Call A). brand = the A8 scope field ("" = vendor-level, the QuestionToAsk
+// convention). Partition only — aggregation is OQ-S4's ruling, applied at M9.
+export interface SynthesisAssertion {
+  assertion_id: string;
+  assertion: string;
+  brand: string;
+  status: "supported" | "refuted" | "unresolved";
+  supporting_evidence: string[];          // evidence_ids — must resolve to M1 (code-validated, S-1c)
+  contradicting_evidence: string[];
+  confidence: "high" | "medium" | "low";
+}
+
+// M5 — Hypothesis Engine (Call B). Exactly one "leading" and length ≤3 are CODE rules (S-1d), not types.
+export interface SynthesisHypothesis {
+  label: string;
+  interpretation: string;
+  supporting_evidence: string[];
+  contradicting_evidence: string[];
+  likelihood: "leading" | "alternative";
+}
+export interface HypothesisSet { hypotheses: SynthesisHypothesis[]; what_would_change_the_leader: string }
+
+// M6 — Risk Gap Detection (Call B). B3's law (plan-excluded = limitation, never a material gap)
+// is a CODE filter at S-1d; the cause-selects-the-law mapping consumes dimension_run_record.
+export interface RiskGap { gap_id: string; unknown: string; why_it_matters: string; is_material: boolean; resolvable_by_client: boolean }
+
+// M7 — Proportional Doubt Calibration (Call C). doubt_level is computed by the founder-authored
+// d7-1.0.0 matrix from the recorded inputs — the LLM writes doubt_focus + rationale only (the
+// derivation rule binds rationale; B4-EXT). The gap axis is LLM-DERIVED under the ruled fallback —
+// the axis marker + chosen levels ride the record so calibration stays auditable and G4-tunable.
+export interface DoubtGapInputs {
+  axis: "llm_derived";                    // the fallback ruling's truthful label, on the record
+  unresolved_assertions: number;          // M3 `unresolved` count (LLM-written statuses)
+  stored_unknowns: number;                // stored track unknowns (LLM-written)
+  gap_level: "none" | "narrow" | "material" | "wide";
+}
+export interface DoubtCostInputs {
+  enforcement_posture_signals: string[];  // OQ-S1 (a): observable enforcement stakes ONLY
+  veto_grade_keys_present: string[];
+  brands_at_issue: number;
+  cost_level: "low" | "significant" | "severe";
+}
+export interface DoubtCalibration {
+  doubt_level: DoubtLevel;
+  doubt_focus: string;
+  rationale: string;
+  gap_inputs?: DoubtGapInputs;            // optional — stub/rejudge/frozen constructors omit them
+  cost_inputs?: DoubtCostInputs;
+}
+
+// OQ-S4 (i) carrier — brand_evidence_status: a CODE-merged sibling, NEVER the M9 LLM call's output
+// (the two-authorship-classes home ruling). TWO states (ruled 2026-07-17): absence is NEVER a
+// clearance — ADR-G004's law at brand granularity; renders as a limitation at the client-surface gate.
+export const BRAND_EVIDENCE_STATUS_STATES = ["adverse_findings_attributed", "no_adverse_findings_attributed"] as const;
+export type BrandEvidenceStatusState = (typeof BRAND_EVIDENCE_STATUS_STATES)[number];
+export interface BrandEvidenceStatusEntry {
+  brand: string;                          // from cases.brands_submitted ONLY — the unconditional roster lock (S-1e)
+  status: BrandEvidenceStatusState;
+  driving: boolean;                       // which brand drives the verdict band — LLM-attributed on multi-brand cases
+  attribution: "llm_attributed";          // the ruled honest label, riding every entry
+}
+
+// dimension_run_record — the deterministic CASE-level execution record (ruled cause-preserving,
+// 2026-07-17). NOT the complement of B3's plan-excluded list (gate spec M6 states which concept is
+// which). All CODE: plan_excluded = row absent (orchestrator omission + the plan registry); the
+// other causes are the stored H3 flags, verbatim. The cause selects the client sentence's LAW
+// (B3 / H2 / OQ-A3).
+export const DIMENSION_RUN_CAUSES = ["plan_excluded", "acquisition_failed", "llm_failed", "nothing_to_review", "not_implemented"] as const;
+export type DimensionRunCause = (typeof DIMENSION_RUN_CAUSES)[number];
+export interface DimensionRunEntry {
+  dimension: TrackKey;
+  state: "assessed" | "not_assessed";
+  cause: DimensionRunCause | null;        // null iff assessed (code rule, S-1e)
+}
+
+// R2 — per-call schema_fallback persistence (a silent tolerant-parsing fallback is invisible in
+// prod, and A5's backtest would see variance it cannot attribute). The four ruled calls (B7).
+export interface SchemaFallbackRecord { call_a: boolean; call_b: boolean; call_b_refuter: boolean; call_c: boolean }
+
 export interface SynthesisOutput {
   module_1_normalized_evidence: unknown[];
   module_2_claim_attributions: unknown[];
@@ -301,9 +428,16 @@ export interface SynthesisOutput {
   module_4_contradictions: Module4ContradictionRecord[];
   module_5_hypotheses: { hypotheses: unknown[]; what_would_change_the_leader: string };
   module_6_risk_gaps: unknown[];
-  module_7_doubt_calibration: { doubt_level: string; doubt_focus: string; rationale: string };
+  module_7_doubt_calibration: { doubt_level: string; doubt_focus: string; rationale: string; gap_inputs?: DoubtGapInputs; cost_inputs?: DoubtCostInputs };
   module_8_vendor_questions: string[];
   module_9_decision_snapshot: DecisionSnapshot;
+  // ── S-1a ADDITIVE SIBLINGS (all optional — legacy rows and the stub lack them; S-0's
+  // certification rebuilds from scratch so none can reach the verdict; B4-EXT presumes each a
+  // leak until its row proves otherwise). ──
+  module_1_extension?: M1RecordExtension;
+  brand_evidence_status?: BrandEvidenceStatusEntry[];
+  dimension_run_record?: DimensionRunEntry[];
+  schema_fallbacks?: SchemaFallbackRecord;
 }
 
 // Layer 4b output
