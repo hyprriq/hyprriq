@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 
 // Phase 4 — Founder Decision. The Intelligence Engine reaches report-ready autonomously; review is
@@ -103,10 +105,17 @@ export async function POST(
   const identityNote =
     ((c as { supplier_identity?: { identity_discrepancy?: { client_note?: string } | null } | null })
       .supplier_identity?.identity_discrepancy?.client_note) ?? null;
+  // S-1e (G2, founder-ruled) — the scan now ALSO covers case_synthesis (the B4-EXT named gap,
+  // closed): the client columns (M9 snapshot + M8 questions) get the banned-language gate, and
+  // the DERIVATION-RULE method scanner runs over them plus M7's rationale/focus — gate names,
+  // thresholds, corroboration counts, firewall vocabulary never ship (the Rider-2 leak class).
+  const intel = await getCaseIntelligence(id);
   const violations = [...new Set([
     ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
     ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
     ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
+    ...(intel ? scanFindingsForBannedLanguage({ decision_snapshot: intel.synthesis.module_9_decision_snapshot, vendor_questions: intel.synthesis.module_8_vendor_questions }) : []),
+    ...(intel ? scanSynthesisAtDelivery(intel.synthesis) : []),
   ])];
   if (violations.length > 0) {
     await supabaseAdmin.from("audit_log").insert({
