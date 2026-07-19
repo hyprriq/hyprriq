@@ -40,6 +40,34 @@ export async function upsertCaseSynthesis(
   return { error: error?.message ?? null };
 }
 
+
+// S-1f (Step 1) — the synthesis-extension persist: the ruled siblings (module_1_extension,
+// brand_evidence_status, dimension_run_record, schema_fallbacks) + the run artifacts (refuter,
+// limitations, audits, R2 parse flags, cost). Target column `synthesis_extension` is an ADDITIVE
+// founder-run migration (S-1f describe-and-stop). Until it lands this is LOUD-BUT-NON-FATAL
+// (the H2 OQ-2 contract): the drop is audit-logged, never silent, and the case still completes.
+export async function persistSynthesisExtension(
+  caseId: string,
+  attemptNumber: number,
+  extension: Record<string, unknown>,
+): Promise<{ error: string | null }> {
+  const { error } = await supabaseAdmin
+    .from("case_synthesis")
+    .update({ synthesis_extension: extension })
+    .eq("case_id", caseId)
+    .eq("attempt_number", attemptNumber);
+  if (error) {
+    console.error(`[synthesis] extension persist failed (non-fatal until the migration lands): ${error.message}`);
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_synthesis", record_id: caseId, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { synthesis_extension_dropped: true, attempt: attemptNumber, reason: error.message },
+    });
+    return { error: error.message };
+  }
+  return { error: null };
+}
+
 // Evidence-hash memoization (enhancement #2): if a prior case produced synthesis from the
 // IDENTICAL normalized evidence under the SAME IOS version, reuse it instead of regenerating.
 // This makes "same evidence → same synthesis → same verdict" demonstrably reproducible.

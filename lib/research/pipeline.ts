@@ -56,7 +56,7 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
   // ── Layers 2 / 2.5 / 3 — Normalization → Graph → Intelligence (memoized synthesis) ──
   let synthesis;
   try {
-    ({ synthesis } = await stageSynthesis(ctx, trackOutputs));
+    ({ synthesis } = await stageSynthesis(ctx, trackOutputs, signals));
   } catch (e) {
     return { error: e instanceof Error ? e.message : "synthesis failed" };
   }

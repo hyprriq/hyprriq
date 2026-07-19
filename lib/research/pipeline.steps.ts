@@ -22,7 +22,7 @@ import { buildReport } from "@/lib/research/reportBuilder";
 import { assembleIosVersion } from "@/lib/research/ios";
 import { modelFor } from "@/lib/ai/runModel";
 import { upsertTrackResult, getNextAttemptNumber } from "@/lib/data/track-results";
-import { upsertCaseSynthesis, getSynthesisByEvidenceHash } from "@/lib/data/synthesis";
+import { upsertCaseSynthesis, persistSynthesisExtension } from "@/lib/data/synthesis";
 import { writeIntelligence } from "@/lib/data/intelligence";
 import type { MemoryWriteArgs } from "@/lib/data/intelligence-events";
 import { PIPELINE_VERSION } from "@/lib/research/pipeline.registry";
@@ -38,7 +38,7 @@ const TRACK_FNS: Record<number, (ctx: TrackContext) => Promise<TrackOutput>> = {
   1: runTrack1, 2: runTrack2, 3: runTrack3, 4: runTrack4, 5: runTrack5,
 };
 
-type Synthesis = Awaited<ReturnType<typeof runSynthesis>>;
+type Synthesis = Awaited<ReturnType<typeof runSynthesis>>["synthesis"];
 type Verdict = ReturnType<typeof computeVerdict>;
 
 export interface FindingTrackResult {
@@ -282,8 +282,14 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   return { output: out, signal: div.signal, acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
 }
 
-// Layers 2 / 2.5 / 3 + memoized synthesis persist. Throws on persist error so the step retries.
-export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutput[]): Promise<{ synthesis: Synthesis }> {
+// Layers 2 / 2.5 / 3 — the WIRED staged engine (S-1f Step 1). Throws on persist error so the
+// step retries. MEMOIZATION IS DISABLED per Q4(b) (founder-ruled 2026-07-16): with the A1-widened
+// input, the evidence-hash memo key covers only the accepted-evidence projection — reusing
+// reasoning across different full inputs is the unsoundness Q4 closed. Fresh reasoning every
+// case; the memo returns ONLY at the caching/ADR-008 gate, keyed on the FULL synthesis input.
+export async function stageSynthesis(
+  ctx: TrackContext, trackOutputs: TrackOutput[], signals: Partial<Record<TrackKey, TrackSignal>>,
+): Promise<{ synthesis: Synthesis }> {
   const normalized = normalizeEvidence(trackOutputs);
   const enriched = enrichWithGraph(normalized);
   // S-2 (a) — the ios model string derives from MODEL_CONFIG (was hardcoded: flipping synthesis to
@@ -291,11 +297,30 @@ export async function stageSynthesis(ctx: TrackContext, trackOutputs: TrackOutpu
   // reused across a model change — silent drift in the determinism-versioning layer).
   const synthesisModel = modelFor("synthesis");
   const ios = assembleIosVersion(enriched.evidence_hash, synthesisModel.provider, synthesisModel.model);
-  // Memoize (enhancement #2): identical evidence under the same IOS version → same synthesis.
-  const memoized = await getSynthesisByEvidenceHash(enriched.evidence_hash, ios.ios_version);
-  const synthesis = memoized ?? (await runSynthesis(enriched));
+  const { synthesis, artifacts } = await runSynthesis({
+    trackOutputs,
+    identity: ctx.supplier_identity ?? null,
+    roster: ctx.brands_submitted ?? [],
+    planType: ctx.plan_type,
+    signals,
+  });
   const synthErr = await upsertCaseSynthesis(ctx.case_id, synthesis, ios, ctx.attempt_number ?? 1);
   if (synthErr.error) throw new Error(`synthesis persist failed: ${synthErr.error}`);
+  // The extension siblings (module_1_extension, brand_evidence_status, dimension_run_record,
+  // schema_fallbacks, refuter/limitations/audits) persist LOUD-BUT-NON-FATAL until the founder
+  // runs the additive `synthesis_extension` migration (S-1f describe-and-stop; the H2 OQ-2
+  // contract pattern — a drop is audited, never silent).
+  await persistSynthesisExtension(ctx.case_id, ctx.attempt_number ?? 1, {
+    module_1_extension: synthesis.module_1_extension ?? null,
+    brand_evidence_status: synthesis.brand_evidence_status ?? null,
+    dimension_run_record: synthesis.dimension_run_record ?? null,
+    schema_fallbacks: synthesis.schema_fallbacks ?? null,
+    refuter: artifacts.refuter,
+    limitations: artifacts.limitations,
+    audits: artifacts.audits,
+    parse_failures: artifacts.parse_failures,
+    synthesis_cost_usd: artifacts.cost_usd,
+  });
   return { synthesis };
 }
 
