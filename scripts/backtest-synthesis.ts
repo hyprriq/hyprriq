@@ -16,7 +16,7 @@
  */
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runSynthesis } from "@/lib/research/synthesisEngine";
-import { TEST_ONLY_GAP_THRESHOLDS } from "@/lib/research/synthesisCallC";
+import { SYNTHESIS_GAP_THRESHOLDS } from "@/lib/research/synthesisEngine";
 import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
@@ -126,7 +126,12 @@ async function main() {
           roster: c?.brands_submitted ?? [],
           planType: (c?.plan_type ?? "scale_499") as PlanType,
           signals,
-          gapThresholds: TEST_ONLY_GAP_THRESHOLDS, // FLAGGED: test-only — the founder rules real values from this table
+          // S-1f Step 4: the harness now measures the PRODUCT thresholds (the founder's ruling,
+          // 3/8/13). HISTORICAL NOTE, so the delivered table stays interpretable: the 66-attempt
+          // backtest of 2026-07-19 (docs/superpowers/plans/2026-07-19-a5-backtest.md) was produced
+          // under the TEST_ONLY stand-in 1/3/6 — re-running now yields a DIFFERENT distribution by
+          // design. Reproduce that table from the commit, not from this harness.
+          gapThresholds: SYNTHESIS_GAP_THRESHOLDS,
         });
         const baseline = compose(signals, emptySynth(storedM4.get(key) ?? []));
         const wired = compose(signals, synthesis);

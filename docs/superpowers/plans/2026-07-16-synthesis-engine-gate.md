@@ -231,3 +231,59 @@ G005's "decide empirically" is honored as a check, not a stall: if Call-B/B′/C
 # PART C — STAGING→MAIN PROMOTION (founder-run; exact steps + rollback)
 
 *(Also delivered in chat. All commands run from `D:\Projects\Hyprriq\portal`. Nothing here touches the database.)* — see the session message; steps recorded there verbatim so this spec stays engine-scoped.
+
+---
+
+# S-1f — THE TWO FOUNDER RULINGS (recorded 2026-07-19) + STEPS 3/4 BUILD RECORD
+
+**RULING 1 — THE FLIP RULING: ACCEPTED.** The four `usable_with_conditions → verify_before_purchase`
+flips (018#9, 021#8, 022#2, 022#6) are **the designed mechanism engaging on real contradictions** —
+the claimed-vs-observed authorization gap — founder-confirmed on all four cases. Zero delivered
+attempts flipped; direction uniformly toward caution. **NOT DRIFT.** No code action on the flips;
+they are correct engine behavior. The stop-the-line is lifted.
+
+**RULING 2 — THE GAP-THRESHOLD RULING (STOP #1).**
+`SYNTHESIS_GAP_THRESHOLDS = { narrow: 3, material: 8, wide: 13 }` over (unresolved + unknowns).
+**PROVISIONAL-PENDING-G4.** Replaces the FLAGGED TEST_ONLY fixture (1/3/6) that carried Steps 1–3.
+
+## Build record (TDD, watched-fails throughout)
+
+- **STEP 3 — A6 watch conditions.** `lib/research/watchConditions.ts`, wired in `runSynthesis`.
+  Per-hypothesis, written at synthesis time because it is **unbackfillable** (G006's own law). The
+  derivation is a **deterministic structural projection of M5** — no model call, no paraphrase:
+  code derives structure (ordinal id, pairing, the empty slot), the LLM's words ride verbatim or
+  the field is null. `prediction_correct`/`scored_at` are the **scoring hook**, null at write time;
+  G4 owns scoring. **NO MIGRATION — describe-and-stop NOT triggered:** storage rides the existing
+  `case_synthesis.hypotheses` jsonb, locked by a test RED-proven by temporarily column-mapping the
+  set. S-0 safety re-proven: certification rebuilds M5 from the empty input, so the new field is
+  structurally unreachable by the verdict.
+- **STEP 4 — the freeze commit.** Ruled thresholds wired; `TEST_ONLY_GAP_THRESHOLDS` no longer
+  imported by production code (the S-1e-flagged defect closed); `synthesis_version` `0.0.0` →
+  `g005-1.0.0` with **both** forward pins (`rerun-batch.ts`, `dispute-rerun.ts`) repinned in the
+  same commit per the S-2 law. The A5 harness now measures the product thresholds — the delivered
+  2026-07-19 table was produced under TEST_ONLY 1/3/6 and reproduces from that commit, not from
+  the current harness.
+- **Gates:** 796/796 unpiped `$LASTEXITCODE 0` · `tsc` 0 · `eslint` 0 · **frozen core byte-identical**
+  (zero diff across the four synthesis calls, `doubtMatrix`, `m1Assembler`, the three verdict files,
+  the firewall, the method scanner, `weights`, `pipeline.steps`).
+
+## FOR THE FOUNDER AT STOP #2 — two items I set by convention, not by ruling
+
+1. **The version string `g005-1.0.0`** is convention-derived (ADR tag + frozen-v1 semver, mirroring
+   rubric `g003-1.1.0`). The founder named "its S-1 value" without naming the string. One-line
+   change in `lib/research/ios.ts` + both pins + two test constants if he meant otherwise.
+2. **A6 required an ADDITIVE field on the S-1a frozen contracts** (`HypothesisWatchCondition` +
+   optional `watch_conditions`), made under A6's standing APPROVED status. Additive only; no
+   existing field changed shape or meaning.
+
+## G4 ENTRY CONDITIONS (recorded — why the threshold ruling is provisional)
+
+- **(a) K-term noise dominance in the gap axis.** The axis sums unresolved assertions + stored
+  unknowns; real attempts carry 3–14 stored unknowns, so the unknowns term dominates the signal the
+  threshold is meant to read. G4 decides whether the two terms should weigh equally.
+- **(b) Degenerate cost axis.** Axis 2 lands `low` on 59/66 and `severe` on 0/66. An axis that never
+  reaches its top level is not calibrated — it is unexercised.
+- **Also G4's:** per-hypothesis scoring writes would mutate a delivered attempt's reasoning row,
+  which H1 exists to protect. The write path is G4's design problem — flagged here, not solved here.
+
+**⛔ STOP #2 — the founder runs the AT board; the planning thread declares the S-1 FREEZE.**

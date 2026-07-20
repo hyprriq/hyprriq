@@ -51,6 +51,27 @@ describe("H1 — case_synthesis per attempt", () => {
     expect(opts).toEqual({ onConflict: "case_id,attempt_number" });
   });
 
+  // A6 (S-1f Step 3) — the storage claim, locked: watch conditions ride the EXISTING
+  // `hypotheses` jsonb because the whole HypothesisSet is upserted. This is the test that makes
+  // "no migration needed" a checked fact rather than an assumption — if anyone ever column-maps
+  // the hypothesis set field-by-field, the A6 record vanishes silently and this fails by name.
+  it("A6 — the watch-condition record reaches the hypotheses jsonb whole (no migration; nothing strips it)", async () => {
+    await upsertCaseSynthesis("c1", {
+      ...stubSynthesis,
+      module_5_hypotheses: {
+        hypotheses: [], what_would_change_the_leader: "",
+        watch_conditions: [{
+          watch_id: "wc-1", hypothesis_label: "genuine-wholesaler", likelihood: "leading",
+          rests_on: ["e1"], disconfirmed_by: [], what_would_change_the_leader: "an invoice",
+          prediction_correct: null, scored_at: null,
+        }],
+      },
+    }, ios, 1);
+    const [row] = upsert.mock.calls[0];
+    expect(row.hypotheses.watch_conditions).toHaveLength(1);
+    expect(row.hypotheses.watch_conditions[0]).toMatchObject({ watch_id: "wc-1", prediction_correct: null });
+  });
+
   it("getCaseIntelligence reads the LATEST attempt (order desc + limit 1) — case_id alone is no longer unique", async () => {
     await getCaseIntelligence("c1");
     expect(order).toHaveBeenCalledWith("attempt_number", { ascending: false });

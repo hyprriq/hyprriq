@@ -22,8 +22,8 @@ describe("S-2 (a) — the ios model string is DERIVED from MODEL_CONFIG, never h
 });
 
 describe("S-2 (b) — synthesis_version joins the version pins (pin-first discipline)", () => {
-  it("the pinned value (S-1 bumps it and updates pins in the same commit)", () => {
-    expect(IOS.synthesis_version).toBe("0.0.0");
+  it("the pinned value (S-1 bumped it and updated both pins in the same commit — S-1f Step 4)", () => {
+    expect(IOS.synthesis_version).toBe("g005-1.0.0");
   });
   it("rerun-batch and dispute-rerun preflight the synthesis pin like the VALIDATION pin", () => {
     for (const script of ["scripts/rerun-batch.ts", "scripts/dispute-rerun.ts"]) {

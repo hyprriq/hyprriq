@@ -362,7 +362,28 @@ export interface SynthesisHypothesis {
   contradicting_evidence: string[];
   likelihood: "leading" | "alternative";
 }
-export interface HypothesisSet { hypotheses: SynthesisHypothesis[]; what_would_change_the_leader: string }
+// A6 (ADDENDUM-1, APPROVED — S-1f Step 3) — the per-hypothesis WATCH CONDITION: the scorable
+// record of what each hypothesis committed to, written at synthesis time so G4 can score it later.
+// WRITE-SIDE and UNBACKFILLABLE (G006's law). Every text field is carried VERBATIM from M5 or is
+// null — code derives structure, never meaning. `prediction_correct`/`scored_at` are the SCORING
+// HOOK: always null at write time; G4 owns the scoring half. Storage rides the EXISTING
+// case_synthesis.hypotheses jsonb (no migration — addendum-1's expectation, confirmed in code).
+// ADDITIVE-ONLY change to the S-1a frozen contracts, made under A6's standing approval.
+export interface HypothesisWatchCondition {
+  watch_id: string;                             // deterministic, M5-ordinal: `wc-1`, `wc-2`, …
+  hypothesis_label: string;                     // M5 label, VERBATIM
+  likelihood: "leading" | "alternative";        // as recorded at synthesis time
+  rests_on: string[];                           // M5 supporting_evidence ids, VERBATIM
+  disconfirmed_by: string[];                    // M5 contradicting_evidence ids, VERBATIM
+  what_would_change_the_leader: string | null;  // set-level LLM text — LEADING hypothesis only
+  prediction_correct: boolean | null;           // SCORING HOOK — null at write time (G4 fills)
+  scored_at: string | null;                     // SCORING HOOK — null at write time (G4 fills)
+}
+export interface HypothesisSet {
+  hypotheses: SynthesisHypothesis[];
+  what_would_change_the_leader: string;
+  watch_conditions?: HypothesisWatchCondition[]; // A6 — absent on every pre-S-1f-Step-3 row
+}
 
 // M6 — Risk Gap Detection (Call B). B3's law (plan-excluded = limitation, never a material gap)
 // is a CODE filter at S-1d; the cause-selects-the-law mapping consumes dimension_run_record.
@@ -426,7 +447,9 @@ export interface SynthesisOutput {
   module_2_claim_attributions: unknown[];
   module_3_assertions: unknown[];
   module_4_contradictions: Module4ContradictionRecord[];
-  module_5_hypotheses: { hypotheses: unknown[]; what_would_change_the_leader: string };
+  // The hypothesis set stays deliberately LOOSE here (`unknown[]`) so legacy rows and the retired
+  // stub still parse — unchanged. A6 adds only the optional watch-condition record beside it.
+  module_5_hypotheses: { hypotheses: unknown[]; what_would_change_the_leader: string; watch_conditions?: HypothesisWatchCondition[] };
   module_6_risk_gaps: unknown[];
   module_7_doubt_calibration: { doubt_level: string; doubt_focus: string; rationale: string; gap_inputs?: DoubtGapInputs; cost_inputs?: DoubtCostInputs };
   module_8_vendor_questions: string[];

@@ -49,9 +49,9 @@ function preflight() {
     process.exit(1);
   }
   // S-2 (b) — synthesis_version joins the pins (pin-first: S-1 bumps IOS.synthesis_version and
-  // updates this expectation in the same commit).
-  if (IOS.synthesis_version !== "0.0.0") {
-    console.error(`STOP: this code is synthesis_version "${IOS.synthesis_version}", expected "0.0.0" — aborting so we don't re-score under unexpected synthesis logic.`);
+  // updates this expectation in the same commit). REPINNED at the S-1 FREEZE: "0.0.0" → "g005-1.0.0".
+  if (IOS.synthesis_version !== "g005-1.0.0") {
+    console.error(`STOP: this code is synthesis_version "${IOS.synthesis_version}", expected "g005-1.0.0" — aborting so we don't re-score under unexpected synthesis logic.`);
     process.exit(1);
   }
   if (VALIDATION_VERSION !== "1.7.0") { // H7 (SO-2) — pin tracks the firewall version deliberately

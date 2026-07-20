@@ -8,9 +8,10 @@ import { TRACK_REGISTRY } from "@/lib/research/pipeline.registry";
 import { assembleM1Record, type M1TrackInput } from "@/lib/research/m1Assembler";
 import { runCallA, type CallAModelFn } from "@/lib/research/synthesisCallA";
 import { runCallB, runCallBRefuter, type CallBModelFn, type RefuterResult, type DimensionLimitation, type CallBAudit } from "@/lib/research/synthesisCallB";
-import { runCallC, TEST_ONLY_GAP_THRESHOLDS, type CallCModelFn, type CallCAudit } from "@/lib/research/synthesisCallC";
+import { runCallC, type CallCModelFn, type CallCAudit } from "@/lib/research/synthesisCallC";
 import type { CallAAudit } from "@/lib/research/synthesisCallA";
 import type { GapThresholds } from "@/lib/research/doubtMatrix";
+import { deriveWatchConditions } from "@/lib/research/watchConditions";
 import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
@@ -34,10 +35,12 @@ export const VERDICT_SENTENCES: Record<Verdict, string> = {
   do_not_rely: "Verdict: Do Not Rely.",
 };
 
-// ⚠ INTERIM, FLAGGED (S-1f Step 2/4): gap thresholds are FOUNDER-RULED and not yet ruled — these
-// are the loudly-marked TEST_ONLY values standing in so a live case cannot crash mid-sitting.
-// Step 4's freeze commit replaces them with the founder's ruling (from the Step-2 backtest read).
-export const SYNTHESIS_GAP_THRESHOLDS: GapThresholds = TEST_ONLY_GAP_THRESHOLDS;
+// THE GAP-THRESHOLD RULING — founder, 2026-07-19 (STOP #1), read off the A5 backtest's 66-attempt
+// distribution. PROVISIONAL-PENDING-G4: G4 owns retuning, on the two recorded entry conditions
+// (the k-term noise dominance in this axis; the degenerate cost axis). These values are the
+// founder's authorship, like the matrix cells — no threshold tuning to force a result, ever.
+// The INTERIM TEST_ONLY stand-in (1/3/6) that carried Steps 1–3 is retired here.
+export const SYNTHESIS_GAP_THRESHOLDS: GapThresholds = { narrow: 3, material: 8, wide: 13 };
 
 export interface SynthesisModels { callA?: CallAModelFn; callB?: CallBModelFn; callBRefuter?: CallBModelFn; callC?: CallCModelFn }
 
@@ -130,12 +133,17 @@ export async function runSynthesis(input: SynthesisRunInput): Promise<{ synthesi
   });
 
   const extension: M1RecordExtension = record.extension;
+
+  // A6 (S-1f Step 3) — the watch-condition record: written HERE, at synthesis time, because it
+  // cannot be backfilled (G006's law). Deterministic projection of M5; rides the hypotheses jsonb.
+  const hypothesesWithWatch = { ...b.hypotheses, watch_conditions: deriveWatchConditions(b.hypotheses) };
+
   const synthesis: SynthesisOutput = {
     module_1_normalized_evidence: record.accepted.items,
     module_2_claim_attributions: a.attributions,
     module_3_assertions: a.assertions,
     module_4_contradictions: b.contradictions,
-    module_5_hypotheses: b.hypotheses,
+    module_5_hypotheses: hypothesesWithWatch,
     module_6_risk_gaps: b.gaps,
     module_7_doubt_calibration: c.doubt,
     module_8_vendor_questions: c.questions,

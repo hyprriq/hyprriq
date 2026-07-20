@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { runSynthesis, deriveDimensionRunRecord, VERDICT_SENTENCES, type SynthesisModels } from "@/lib/research/synthesisEngine";
+import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import type { EvidenceItem, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import type { TrackKey } from "@/lib/constants/tracks";
 
@@ -119,6 +120,28 @@ describe("S-1f Step 1 — dimension_run_record derivation (code, cause-preservin
     const by = Object.fromEntries(record.map((d) => [d.dimension, d]));
     expect(by.documentation_review).toMatchObject({ state: "not_assessed", cause: "nothing_to_review" });
     expect(by.supply_chain_relationship).toMatchObject({ state: "not_assessed", cause: "not_implemented" });
+  });
+});
+
+describe("S-1f Step 3 — A6 watch conditions ride the wired engine (write-side, unbackfillable)", () => {
+  it("module_5_hypotheses carries one watch condition per hypothesis, with the M5 label verbatim and the scoring slot unscored", async () => {
+    const { synthesis } = await runSynthesis(runInput());
+    const w = synthesis.module_5_hypotheses.watch_conditions;
+    expect(w, "A6: the wired engine must write watch conditions").toBeTruthy();
+    expect(w).toHaveLength(synthesis.module_5_hypotheses.hypotheses.length);
+    expect(w![0].hypothesis_label).toBe("genuine-wholesaler");
+    expect(w![0].likelihood).toBe("leading");
+    expect(w![0].what_would_change_the_leader).toBe("w");
+    expect(w![0].prediction_correct).toBeNull();
+    expect(w![0].scored_at).toBeNull();
+  });
+
+  it("S-0 SAFETY: watch conditions can never reach the verdict — certification rebuilds M5 from the empty input, so the new field is structurally unreachable", async () => {
+    const { synthesis } = await runSynthesis(runInput());
+    expect(synthesis.module_5_hypotheses.watch_conditions).toBeTruthy();
+    const certified = certifySynthesisForVerdict(synthesis);
+    expect(certified.synthesis.module_5_hypotheses).toEqual({ hypotheses: [], what_would_change_the_leader: "" });
+    expect((certified.synthesis.module_5_hypotheses as { watch_conditions?: unknown }).watch_conditions).toBeUndefined();
   });
 });
 
