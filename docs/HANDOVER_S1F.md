@@ -1,3 +1,5 @@
+> ⛔ **SUPERSEDED 2026-07-19 — DO NOT WORK FROM THIS FILE.** Both rulings landed, Steps 3 + 4 built at `875f158`, and **S-1 IS FROZEN**. Current handover: **`docs/HANDOVER_S1_FREEZE.md`**. Text below preserved verbatim as the record of the mid-sitting stop (correction discipline: mark, never delete).
+
 # HyprrIQ — Session Handover (S-1f mid-sitting: backtest delivered, TWO founder rulings pending → Step 3 + Step 4 → S-1 FREEZE) · 2026-07-19
 
 **Working dir:** `D:\Projects\Hyprriq\portal`. **Branch:** `staging` (pushed through the flip-content commit `b587a42` + this handover). **Model note:** next session may be Opus 4.8 or Fable — nothing here is model-specific; follow the artifacts, not memory.

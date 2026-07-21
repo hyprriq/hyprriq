@@ -287,3 +287,44 @@ they are correct engine behavior. The stop-the-line is lifted.
   which H1 exists to protect. The write path is G4's design problem — flagged here, not solved here.
 
 **⛔ STOP #2 — the founder runs the AT board; the planning thread declares the S-1 FREEZE.**
+
+---
+
+# 🟢 S-1 FROZEN — THE INTELLIGENCE SYNTHESIS ENGINE (ADR-G005) IS COMPLETE
+
+**Founder-declared 2026-07-19 at `875f158` on `staging`. `synthesis_version g005-1.0.0`. LAYER 2 COMPLETE.**
+**S-1 = S-0 + S-2 + S-1a–f, all frozen.** The planning thread declared; this is the build thread's record.
+
+## Freeze evidence (re-verified FROM SOURCE by the build thread at recording time)
+
+| Claim | Verified |
+|---|---|
+| Suite 796/796 across 91 files, unpiped, `$LASTEXITCODE 0` | ✅ |
+| `tsc` 0 | ✅ — and it EARNED its gate: tsc caught the module-5 type divergence the green suite could not see (`SynthesisOutput` declares module 5 inline, not via `HypothesisSet`) |
+| Frozen core byte-identical | ✅ `git diff 875f158~1 875f158 --` over verdictEngine · verdictCeiling · verdictNoOverride · weights · synthesisFirewall · the four synthesis calls · doubtMatrix · m1Assembler · synthesisMethodScan returns **EMPTY**; no frozen file appears in the commit's 14-file list |
+| `synthesis_version` at the freeze commit | ✅ `git show 875f158:lib/research/ios.ts` → `g005-1.0.0` |
+| All seven sittings' conscience locks green | ✅ (founder-declared) |
+| AWI-2607-021 reproduces `usable_with_conditions` | ✅ (founder-run) — **the 3/8/13 rewire is DOUBT-ONLY and moved no verdict**, proven on a real delivered case rather than asserted |
+
+## What shipped at the freeze
+
+- **The four-call engine wired** behind `runSynthesis` (M1 assembler → Call A → Call B + B′ → Call C), each stage code-certified before the next consumes it.
+- **The founder-authored doubt matrix** (d7-1.0.0) owns `doubt_level`; the LLM writes focus + rationale only.
+- **The ruled gap thresholds 3/8/13** over (unresolved + unknowns) — **PROVISIONAL-PENDING-G4**.
+- **The flip ruling ACCEPTED** — the four UWC→VBP flips are the designed mechanism engaging on a real corpus, not drift.
+- **A6 watch conditions LIVE, write-side** — unbackfillable by G006's law; scoring hook null until G4.
+- **Both forward pins repinned in-commit** — `rerun-batch` and `dispute-rerun` stop until repinned, by design.
+
+## G4 ENTRY CONDITIONS — carried forward, all three
+
+- **(a) K-term noise dominance in the gap axis.** The axis sums unresolved assertions + stored unknowns; real attempts carry 3–14 stored unknowns, so the unknowns term dominates the signal the threshold reads. G4 decides whether the terms weigh equally.
+- **(b) Degenerate cost axis.** Axis 2 lands `low` on 59/66 and `severe` on 0/66 — an axis that never reaches its top level is unexercised, not calibrated.
+- **(c) A6 per-hypothesis scoring vs H1 immutability.** Scoring a delivered attempt's hypothesis would write to the reasoning row H1 exists to protect. The write path is G4's design problem — named here, unsolved by design.
+
+## Standing at the freeze
+
+Versions: PIPELINE 1.7.0 · VALIDATION 1.7.0 · **synthesis g005-1.0.0** · rubric g003-1.1.0 · pack 1.1.0.
+**Outstanding, non-blocking:** the additive migration `ALTER TABLE case_synthesis ADD COLUMN synthesis_extension jsonb;` (founder-run; until it lands, extension persists drop LOUD and audit-logged, never silent).
+**Two items set by convention at Step 4, not by ruling:** the version string `g005-1.0.0` (ADR tag + frozen-v1 semver, mirroring rubric `g003-1.1.0`); A6's additive field on the S-1a frozen contracts, made under A6's standing approval.
+
+**NEXT (ruled sequence, unchanged):** client-surface/PDF gate → pre-launch security phase → caching/ADR-008 → Keepa gate + Category Compliance track (paired).
