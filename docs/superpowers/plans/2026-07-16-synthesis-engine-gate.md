@@ -267,7 +267,7 @@ they are correct engine behavior. The stop-the-line is lifted.
   (zero diff across the four synthesis calls, `doubtMatrix`, `m1Assembler`, the three verdict files,
   the firewall, the method scanner, `weights`, `pipeline.steps`).
 
-## FOR THE FOUNDER AT STOP #2 — two items I set by convention, not by ruling
+## FOR THE FOUNDER AT STOP #2 — two items I set by convention, not by ruling *(✅ RESOLVED: both FOUNDER-CONFIRMED 2026-07-19 in-session, recorded 2026-07-21 — see the freeze record below; text kept verbatim as the STOP #2 submission)*
 
 1. **The version string `g005-1.0.0`** is convention-derived (ADR tag + frozen-v1 semver, mirroring
    rubric `g003-1.1.0`). The founder named "its S-1 value" without naming the string. One-line
@@ -292,8 +292,8 @@ they are correct engine behavior. The stop-the-line is lifted.
 
 # 🟢 S-1 FROZEN — THE INTELLIGENCE SYNTHESIS ENGINE (ADR-G005) IS COMPLETE
 
-**Founder-declared 2026-07-19 at `875f158` on `staging`. `synthesis_version g005-1.0.0`. LAYER 2 COMPLETE.**
-**S-1 = S-0 + S-2 + S-1a–f, all frozen.** The planning thread declared; this is the build thread's record.
+**Founder-declared 2026-07-19 at `875f158` on `staging`; record written 2026-07-21. `synthesis_version g005-1.0.0`. LAYER 2 COMPLETE.**
+**S-1 = S-0 + S-2 + S-1a–f, all frozen.** The planning thread declared; this is the build thread's record. *(Two dates by design: the freeze WORK and declaration are 2026-07-19; this RECORD was written 2026-07-21 — do not read the gap as anything other than recording lag.)*
 
 ## Freeze evidence (re-verified FROM SOURCE by the build thread at recording time)
 
@@ -325,6 +325,6 @@ they are correct engine behavior. The stop-the-line is lifted.
 
 Versions: PIPELINE 1.7.0 · VALIDATION 1.7.0 · **synthesis g005-1.0.0** · rubric g003-1.1.0 · pack 1.1.0.
 **Outstanding, non-blocking:** the additive migration `ALTER TABLE case_synthesis ADD COLUMN synthesis_extension jsonb;` (founder-run; until it lands, extension persists drop LOUD and audit-logged, never silent).
-**Two items set by convention at Step 4, not by ruling:** the version string `g005-1.0.0` (ADR tag + frozen-v1 semver, mirroring rubric `g003-1.1.0`); A6's additive field on the S-1a frozen contracts, made under A6's standing approval.
+**Two items set by convention at Step 4, not by ruling** — ~~awaiting founder confirm~~ **✅ BOTH FOUNDER-CONFIRMED 2026-07-19 (in-session; recorded 2026-07-21). CLOSED, not open items:** the version string `g005-1.0.0` (ADR tag + frozen-v1 semver, mirroring rubric `g003-1.1.0`) — CONFIRMED as the S-1 value; A6's additive field on the S-1a frozen contracts (`HypothesisWatchCondition` + optional `watch_conditions`) — ACCEPTED under A6's standing approval, additive-only, S-0 safety re-proven in a lock.
 
 **NEXT (ruled sequence, unchanged):** client-surface/PDF gate → pre-launch security phase → caching/ADR-008 → Keepa gate + Category Compliance track (paired).

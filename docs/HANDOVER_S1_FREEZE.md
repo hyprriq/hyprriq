@@ -1,4 +1,4 @@
-# HyprrIQ — Session Handover · 🏁 **S-1 FROZEN, LAYER 2 COMPLETE** · 2026-07-19
+# HyprrIQ — Session Handover · 🏁 **S-1 FROZEN, LAYER 2 COMPLETE** · declared 2026-07-19, recorded 2026-07-21
 
 **Working dir:** `D:\Projects\Hyprriq\portal`. **Branch:** `staging`. **Model note:** nothing here is model-specific — follow the artifacts, not memory.
 **Read this first, then the tracker (`docs/HyprrIQ_OPEN_ITEMS.md` — THE SSOT), then the gate spec's freeze record. Supersedes `HANDOVER_S1F.md` (kept, marked).**
@@ -19,7 +19,7 @@ The client-surface gate owns: **M9 activation** · **G1–G3** · **the EXACT cl
 
 ## FOUNDER'S LEDGER (his, not the build thread's)
 
-1. **Morendelli 30-day outcome-checkpoint email — WAS DUE ~2026-07-20; now past.** 2. **The additive migration (Supabase dashboard, non-blocking):** `ALTER TABLE case_synthesis ADD COLUMN synthesis_extension jsonb;` — until it lands, extension persists drop LOUD (audit-logged, H2 OQ-2 pattern). 3. staging→main promotion (steps long delivered; still pending). 4. Canary panel first monthly run. 5. `skills-lock.json` + untracked folders (`backups/`, `codex-fresh-design/`, `mockups-codex-exploration/`) rulings. 6. BUG-1 live check. 7. **Two items set by CONVENTION at Step 4, not by ruling — his to confirm or change:** the version string `g005-1.0.0` (ADR tag + frozen-v1 semver, mirroring rubric `g003-1.1.0`); A6's additive field on the S-1a frozen contracts, made under A6's standing approval.
+1. **Morendelli 30-day outcome-checkpoint email — WAS DUE ~2026-07-20; now past.** 2. **The additive migration (Supabase dashboard, non-blocking):** `ALTER TABLE case_synthesis ADD COLUMN synthesis_extension jsonb;` — until it lands, extension persists drop LOUD (audit-logged, H2 OQ-2 pattern). 3. staging→main promotion (steps long delivered; still pending). 4. Canary panel first monthly run. 5. `skills-lock.json` + untracked folders (`backups/`, `codex-fresh-design/`, `mockups-codex-exploration/`) rulings. 6. BUG-1 live check. 7. ~~Two items set by CONVENTION at Step 4 — his to confirm or change~~ **✅ RESOLVED (founder-confirmed 2026-07-19 in-session, recorded 2026-07-21): `g005-1.0.0` CONFIRMED as the S-1 value; A6's additive contract field ACCEPTED under A6's standing approval. Not open items.**
 
 ## G4 ENTRY CONDITIONS (all three, carried forward)
 
