@@ -88,5 +88,7 @@ export const comparison: {
   { feature: "Delivery SLA", values: ["5 days", "5 days", "3 days"] },
   { feature: "Portal + case history", values: ["Read-only", "Full", "Full"] },
   { feature: "Credit rollover", values: ["—", "Up to 2", "Up to 4"] },
-  { feature: "Top-up packs", values: ["—", "+3 / $129", "+6 / $239"] },
+  // Stripe-verified 2026-07-23: the top-up price IDs charge $99/$179 — the portal billing page
+  // was right, this table was wrong. Retired figures locked out by retiredPricing.lock.test.ts.
+  { feature: "Top-up packs", values: ["—", "+3 / $99", "+6 / $179"] },
 ];

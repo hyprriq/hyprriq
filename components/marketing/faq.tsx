@@ -29,7 +29,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I try it before subscribing?",
-    a: "Yes. Buy a single report from $79 to see the depth before committing to a monthly plan.",
+    a: "Yes. Buy a single report for $99 to see the depth before committing to a monthly plan.",
   },
 ];
 

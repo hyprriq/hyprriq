@@ -9,7 +9,7 @@ import { pricingHero, comparison, comparisonColumns } from "@/lib/content/pricin
 export const metadata: Metadata = {
   title: "Pricing — HyprrIQ source intelligence",
   description:
-    "Subscribe monthly or buy a single supplier-intelligence report. Plans for Amazon and Walmart wholesale sellers, from $79.",
+    "Subscribe monthly or buy a single supplier-intelligence report. Plans for Amazon and Walmart wholesale sellers, from $99.",
 };
 
 export default function PricingPage() {
