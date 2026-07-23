@@ -1,6 +1,7 @@
 # Category Compliance Track — V1 SPEC (BRAND-LEVEL) · 2026-07-23
 
-**Status: 🔴 DRAFT — AWAITING FOUNDER RULING. NO CODE UNTIL RULED (the gate discipline S-1 just completed under).**
+**Status: 🟡 UPDATED 2026-07-23 (same day) — CENTRAL DESIGN APPROVED; OQ-CC3 CLOSED (real table recovered); OQ-CC2 HELD; OQ-CC4 + §4 ACCEPTED. Remaining open: OQ-CC1 (amended payload) + OQ-CC5. STILL NO CODE — the founder rules the updated spec before any build.**
+**(original status line, kept)** 🔴 DRAFT — AWAITING FOUNDER RULING. NO CODE UNTIL RULED (the gate discipline S-1 just completed under).
 **Author:** build thread (Fable), from source. **Every repo-state claim below was verified from source this sitting; file:line cited.**
 **Founder rulings already made (2026-07-19 + 2026-07-23) are marked RULED and are not proposals. Everything marked PROPOSED is mine and awaits his ruling.**
 
@@ -35,28 +36,58 @@ Per submitted brand (the Track 3 subject model — the BRAND is the research sub
    Analysis), restricted-substances constraints, hazmat/dangerous-goods programs, category
    documentation requirements?
 
-**Vocabulary provenance (⚠ flagged, not silently adopted):** the founder cites Brief v1 §8 and
-Research Prompts v2.0/2.1 as carrying the vocabulary verbatim. Verified from source this sitting:
-`Docs/HyprrIQ_Master_Research_Prompts_v2_1.md:190` confirms the category-flags line but says
-**"carried from v2.0"** with no vocabulary detail; **the v2.0 file and `HyprrIQ_ClaudeCode_Brief_v1.docx`
-are NOT on disk** (the docx is referenced in `CONTINUITY_BRIEFING 15-06.md` doc #3, whose content
-list includes "category flags," but the file itself is absent from `Docs/` and `files1.zip`).
-The vocabulary below therefore rides on the founder's two consistent verbatim quotes
-(2026-07-21 + 2026-07-23) — **"may require seller-level independent third-party lab testing separate
-from any manufacturer Certificate of Analysis; check Amazon's restricted substances list"** — plus
-hazmat and category documentation. **PROPOSED requirement enum (from that quoted vocabulary, nothing
-invented):**
+**Vocabulary provenance — ✅ OQ-CC3 CLOSED (2026-07-23, same day): THE REAL TABLE IS RECOVERED.**
+The founder extracted Brief v1 §8 from the .docx (confirmed genuinely absent from the repo) —
+**`docs/CATEGORY_FLAGS_TABLE_recovered.md`**, now committed. **NINE subcategories** with verbatim
+trigger keywords, verbatim founder-authored flag language, and founder-authored risk levels
+(**HIGH | MODERATE-HIGH | MODERATE** — this IS the risk enum; nothing invented). The table's
+governing law, verbatim: *"All category flags use 'may require' language. Never state requirements
+as absolute. Amazon policies change. These flags inform the client of potential requirements —
+they do not confirm or deny Amazon approval."* — this is §3's honesty law, in the founder's own
+words, and the flag-language column is **code-injected VERBATIM, never paraphrased** (founder-
+authored client-facing copy; the byte-identical-injection law, same as `VERDICT_SENTENCES`).
 
-```
-requirement_kind:
-  "third_party_lab_testing"     — seller-level 3P lab testing, distinct from a manufacturer COA
-  "restricted_substances"       — Amazon restricted-substances list exposure
-  "hazmat_dangerous_goods"      — hazmat / dangerous-goods program review
-  "category_documentation"      — category-specific documentation Amazon may request
-  "other_category_requirement"  — named in research but outside the four above (never guessed)
-```
+The nine subcategories (see the recovered file for the full verbatim table): energy/stimulant
+supplements (HIGH) · general supplements/vitamins (MODERATE) · baby/infant (MODERATE-HIGH) ·
+children's toys (MODERATE) · food/grocery/perishables (MODERATE) · topical/beauty/cosmetics
+(MODERATE-HIGH) · medical devices/health monitors (HIGH) · hazmat/chemical/aerosol/battery (HIGH)
+· electronics major-brand partner programmes (MODERATE-HIGH).
 
-If the founder recovers Brief v1 §8, its table supersedes this enum — the spec reserves that.
+~~PROPOSED requirement enum (reconstructed)~~ **SUPERSEDED by the recovered table** — the
+reconstructed five-key enum (third_party_lab_testing / restricted_substances /
+hazmat_dangerous_goods / category_documentation / other_category_requirement) is retired; the
+payload keys on the table's subcategories directly (§2, amended). Kept struck-through as the
+record of what stood in while the source was off-disk.
+
+## 1b. THE TWO-HOP DESIGN — what the recovery surfaced (spec'd explicitly, per the ruling)
+
+**The table's trigger keywords are PRODUCT keywords** ("pre-workout", "aerosol", "SPF") — it was
+designed for ASIN/product-description matching. **At brand level you cannot keyword-match.** V1
+therefore runs TWO HOPS, and the keyword column changes role:
+
+- **HOP 1 — brand → categories:** web research per brand (the Track 3 acquisition pattern):
+  what does this brand observably sell? Sources, in reliability order: the brand's own catalogue/
+  product-line pages (highest — the brand describing itself), major-retailer category placement
+  (Amazon browse paths, big-box category listings), third-party retail/industry descriptions.
+  Each category attribution must cite evidence (the evidence_ids discipline); a category no source
+  supports is never emitted. Multi-source agreement upgrades confidence; a single weak source
+  yields the category with `confidence: "low"`, stated as such.
+- **HOP 2 — categories → flags:** DETERMINISTIC CODE, not research. The brand's evidenced
+  categories are matched against the nine subcategories; **the keyword column is a CATEGORY-
+  DEFINITION AID, not a matcher** — it tells the Hop-1 research (and the Hop-2 prompt-free code
+  mapping) what "energy/stimulant supplements" MEANS, so "thermogenic fat-burner line" lands in
+  the right subcategory. A hit emits the row's verbatim flag language + risk level.
+- **THE EXCEPTION — the electronics row needs NO hop:** its trigger column is ALREADY brand-keyed
+  (Lenovo, HP, Cisco, Microsoft, Adobe, Samsung Business, Zebra, Honeywell, Epson — B2B line).
+  It matches `brands_submitted` directly, deterministically, with no research dependency — and it
+  is **the row most likely to fire on the actual client base.** V1 fires it in code even if Hop 1
+  returns nothing.
+- **THE KNOWN LIMITATION, stated (the one place brand-level V1 is genuinely weaker than ASIN V2):**
+  Hop 1 finds the brand's category SPREAD, not the client's product. A brand selling in a flagged
+  category triggers the flag even if the client's intended product sits in the brand's unflagged
+  line — brand-level truth, product-level over-breadth. The scope sentence (§3) carries this
+  honestly; V2's ASIN collapses the spread to the actual product. This limitation is BY DESIGN
+  (founder ruling: multi-category coverage of the whole potential order is the V1 feature).
 
 **The OQ-B3 boundary, honored not fought:** OQ-B3 (2026-07-14) ruled Track 5 derived-only precisely
 because category flags need NEW research. This track IS that new research — a first-class acquiring
@@ -78,12 +109,14 @@ interface CategoryComplianceAssessment {
   per_brand: Array<{
     brand: string;                           // from cases.brands_submitted ONLY (the roster-lock discipline)
     categories_found: Array<{
-      category: string;                      // as researched, e.g. "Dietary Supplements"
+      category: string;                      // as researched (Hop 1), e.g. "pre-workout supplements"
       evidence_ids: string[];                // must resolve to this track's evidence items
-      requirements: Array<{
-        requirement_kind: RequirementKind;   // the §1 enum
-        statement: string;                   // "may require …" — the honesty law binds this
-        evidence_ids: string[];
+      confidence: "high" | "medium" | "low"; // Hop-1 source agreement, stated
+      flags: Array<{                         // Hop 2 — DETERMINISTIC from the recovered table
+        subcategory: string;                 // the table's Subcategory column, verbatim key
+        flag_language: string;               // the table's Flag Language column, VERBATIM (code-injected, never LLM-written)
+        risk_level: "HIGH" | "MODERATE-HIGH" | "MODERATE"; // the table's enum — nothing invented
+        matched_via: "category_research" | "brand_keyed";  // the electronics row = brand_keyed, no hop
       }>;
     }>;
     brand_category_note: string | null;      // e.g. "brand spans 4 categories; 2 carry requirements"
@@ -100,8 +133,14 @@ rendered as clearance (B3's law, applied to categories).
 
 ## 3. THE HONESTY LAW (RULED — prompt law + code enforcement)
 
+**The governing law is now the founder's own, verbatim from the recovered Brief v1 §8:** *"All
+category flags use 'may require' language. Never state requirements as absolute. Amazon policies
+change. These flags inform the client of potential requirements — they do not confirm or deny
+Amazon approval."*
+
 - Findings state **"these categories MAY carry these requirements"** — NEVER "your product is
-  restricted," never a guarantee, never ungating language. **Code enforcement, not just prompt:**
+  restricted," never a guarantee, never ungating language. Flag language is the table's column,
+  code-injected verbatim — the LLM never writes it, so the law cannot drift in generation. **Code enforcement, not just prompt:**
   a banned-pattern scan on every client-purposed string (the `procurementLanguage.ts` /
   `containsProcurementLanguage` pattern, `track3.ts:21` — a category-specific sibling:
   no "restricted/banned/approved/ungated/eligible" as verdictive claims about THE CLIENT'S product).
@@ -222,13 +261,32 @@ on/off byte-identical verdict proof, the honesty-law scan two-sided, a multi-cat
   before go-live; the remaining 10% is depth and polish refined on real traffic — **NEVER
   truthfulness. An honest-and-thin finding ships; a confident-and-wrong one does not.**
 
-## OPEN QUESTIONS FOR THE FOUNDER (the ruling board)
+## THE RULING BOARD (founder rulings 2026-07-23, same-day update)
 
-- **OQ-CC1:** §2 payload shape + the 3-state category verdict + code-derived basis — approve/amend?
-- **OQ-CC2:** §5/§6 structural decision — evidence stays OUT of M1 in V1 (absolute verdict-inertia,
-  zero engine entry) vs. any narrative integration (an engine touch, described and stopped on)?
-- **OQ-CC3:** the §1 requirement enum stands in for the unrecoverable Brief v1 §8 table — adopt as
-  cc-1.0.0, or recover the docx and reconcile first?
-- **OQ-CC4:** Track number 6 + `category_compliance` key + the additive CHECK migration — approve?
-- **OQ-CC5:** the admin-side scope-sentence literal (§3) — approve as PROPOSED (client wording
-  stays at the client-surface gate)?
+- **CENTRAL DESIGN (§5/§6) — ✅ APPROVED, and the finding behind it is RULING-GRADE, recorded:**
+  `SCORING_TRACKS` being closed stops the weighted score, but M1 → Call B contradictions →
+  certified M4 → the ≥2 load-bearing floor is a LIVE verdict path (the A5 flip mechanism, proven
+  on the real corpus). A naive "just another evidence track" build WOULD have moved verdicts.
+  V1 keeps category evidence OUT of M1 entirely — Track 5's zero-items non-voting shape, evidence
+  on its own row for replay/audit, assessment on the sibling block. **Verdict-inertia is absolute
+  because the engine is never entered.**
+  **THE COST, RECORDED PLAINLY (founder's words):** V1's category finding is **UN-SYNTHESIZED** —
+  the engine never reasons over it; it is a parallel assessment rendered alongside. That is the
+  correct V1 trade (absolute verdict-inertia, zero engine change). OQ-CC2 is what would turn it
+  from a bolted-on section into integrated intelligence — **a V2 ENGINE-TOUCH with its own gate
+  and its own certification. Never a rider.**
+- **OQ-CC1 — OPEN (amended):** §2 payload as amended for the recovered table (subcategory-keyed
+  flags, verbatim flag_language, the table's risk enum, `matched_via`) + the 3-state category
+  verdict + code-derived basis — approve/amend?
+- **OQ-CC2 — ⏸ HELD (correct describe-and-stop). Not in V1.** V2 engine-touch, own gate, own
+  certification.
+- **OQ-CC3 — ✅ CLOSED FROM SOURCE:** the real Brief v1 §8 table recovered to
+  `docs/CATEGORY_FLAGS_TABLE_recovered.md`; supersedes the reconstructed enum (§1, marked).
+- **OQ-CC4 — ✅ ACCEPTED:** additive `case_track_results` CHECK update; **the FOUNDER runs it at
+  build time.**
+- **§4 single_149 — ✅ ACCEPTED:** gate on `scale_499` alone until the tier exists. **Do not create
+  a PlanType.**
+- **OQ-CC5 — OPEN:** the admin-side scope-sentence literal (§3) — approve as PROPOSED (client
+  wording stays at the client-surface gate)? Note it now also carries §1b's known limitation
+  (brand-spread over-breadth) — the sentence must state that a flag can fire on a brand line the
+  client is not buying.
