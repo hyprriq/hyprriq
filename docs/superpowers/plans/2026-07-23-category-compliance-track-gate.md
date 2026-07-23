@@ -145,9 +145,10 @@ Amazon approval."*
   `containsProcurementLanguage` pattern, `track3.ts:21` — a category-specific sibling:
   no "restricted/banned/approved/ungated/eligible" as verdictive claims about THE CLIENT'S product).
 - **Brand-level precision stated as such**: every assessment carries `scope: "brand_level"` and a
-  fixed, code-injected scope sentence (exact client wording = client-surface gate; the PROPOSED
-  admin-side literal: *"Identified at category level from the brand's observable catalogue — not a
-  SKU-level gating check for a specific product."*).
+  fixed, code-injected scope sentence. ~~The PROPOSED admin-side literal: "Identified at category
+  level from the brand's observable catalogue — not a SKU-level gating check for a specific
+  product."~~ **SUPERSEDED — the founder drafted the scope sentence himself (OQ-CC5 on the ruling
+  board, verbatim there); exact final wording remains a client-surface ruling.**
 - **Multi-category brands:** every category found is named; each carries or doesn't carry
   requirements explicitly — the client sees the full spread, not a summary rollup.
 
@@ -275,9 +276,11 @@ on/off byte-identical verdict proof, the honesty-law scan two-sided, a multi-cat
   correct V1 trade (absolute verdict-inertia, zero engine change). OQ-CC2 is what would turn it
   from a bolted-on section into integrated intelligence — **a V2 ENGINE-TOUCH with its own gate
   and its own certification. Never a rider.**
-- **OQ-CC1 — OPEN (amended):** §2 payload as amended for the recovered table (subcategory-keyed
-  flags, verbatim flag_language, the table's risk enum, `matched_via`) + the 3-state category
-  verdict + code-derived basis — approve/amend?
+- **OQ-CC1 — ✅ APPROVED AS AMENDED (founder, 2026-07-23):** keyed on the table's nine
+  subcategories; the 3-state category verdict + code-derived basis stand. **The ruling-grade part,
+  in the founder's words: `matched_via: "category_research" | "brand_keyed"` puts the two-hop
+  provenance IN THE DATA — a deterministic brand-keyed electronics hit is never confused with an
+  evidenced, confidence-bearing researched match. Honest-label discipline on a new field.**
 - **OQ-CC2 — ⏸ HELD (correct describe-and-stop). Not in V1.** V2 engine-touch, own gate, own
   certification.
 - **OQ-CC3 — ✅ CLOSED FROM SOURCE:** the real Brief v1 §8 table recovered to
@@ -286,7 +289,15 @@ on/off byte-identical verdict proof, the honesty-law scan two-sided, a multi-cat
   build time.**
 - **§4 single_149 — ✅ ACCEPTED:** gate on `scale_499` alone until the tier exists. **Do not create
   a PlanType.**
-- **OQ-CC5 — OPEN:** the admin-side scope-sentence literal (§3) — approve as PROPOSED (client
-  wording stays at the client-surface gate)? Note it now also carries §1b's known limitation
-  (brand-spread over-breadth) — the sentence must state that a flag can fire on a brand line the
-  client is not buying.
+- **OQ-CC5 — ✅ RULED, FOUNDER-DRAFTED (2026-07-23; exact final wording remains a client-surface
+  ruling). The scope sentence, verbatim:**
+  > *"Category findings are assessed at brand level. We identify the product categories these
+  > brands sell in and flag categories that may carry Amazon selling requirements. These findings
+  > describe the CATEGORY, not any specific product — a brand may sell across several categories,
+  > so a flag may apply to a product line you are not purchasing. Category requirements are stated
+  > as 'may require'; they are not confirmation of Amazon approval or refusal."*
+  The closing clause deliberately echoes the recovered table's own governing law **so the two
+  cannot drift apart** — build-time consequence: a lock should assert the echo (both strings carry
+  "may require" + the not-confirmation clause). The over-breadth limitation is stated as a
+  LIMITATION, in the client's own sentence, not buried in the spec. This literal replaces §3's
+  PROPOSED scope sentence (superseded, kept there marked).
