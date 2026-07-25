@@ -301,3 +301,114 @@ on/off byte-identical verdict proof, the honesty-law scan two-sided, a multi-cat
   "may require" + the not-confirmation clause). The over-breadth limitation is stated as a
   LIMITATION, in the client's own sentence, not buried in the spec. This literal replaces §3's
   PROPOSED scope sentence (superseded, kept there marked).
+
+---
+
+# BUILD RECORD — CORE BUILT 2026-07-23 (approved-with-conditions sitting) · ⛔ STOPPED BEFORE WIRING + ATs
+
+**Built, TDD RED-first throughout, 845/845 unpiped exit 0 · tsc 0 · eslint 0 · frozen surfaces
+byte-identical (18-file diff empty):**
+
+- **`lib/research/categoryFlagsTable.ts` (cc-1.0.0)** — the nine §8 rows as config, flag language
+  verbatim. **The doc-identity lock** (`categoryFlagsTable.test.ts`): every string byte-identical
+  to the recovered doc, or it fails by name — module and founder doc can never drift.
+- **`lib/research/categoryLanguage.ts` — CONDITION 1 satisfied.** Polarity-blind on status claims
+  (both "restricted" and "not restricted" are violations — the negation-escape hole closed by
+  design, not by carve-out), alternation-complete (sell/list/stock/resell; approve/reject/accept/
+  allow/permit/take-action), **RED-proven by feeding 18 actual evasion shapes through the live
+  scanner** (the audit's method), two-sided (all nine flag strings + the governing law + the
+  founder's scope sentence PASS).
+- **`lib/research/track6.ts` — the two-hop track.** LLM proposes categories + closed-key
+  subcategory candidates; CODE decides: key validation (invalid keys dropped + audited), verbatim
+  injection, `matched_via` provenance, roster lock, scanner-scrubbed narrative (violating notes
+  nulled + audited), code-derived 3-state category verdict (the model's opinion of it is never
+  read), brand-keyed electronics row fired deterministically — proven to fire on EMPTY acquisition.
+  `could_not_determine` stated as absence of research, never clearance.
+
+## CONDITION 2 REPORT — founder copy vs founder bans (BEFORE injection code, as ruled)
+
+**The nine flag strings are CLEAN** — against the built scanners at runtime AND against the
+recovered §12 table pair-by-pair. **But both flanking texts CONFLICT with the BUILT scanner:**
+the §8 governing law and the OQ-CC5 scope sentence each contain "Amazon approval" in DENIAL form
+("do not confirm or deny Amazon approval" / "not confirmation of Amazon approval or refusal") —
+and **H4 (`/amazon\s+approv/i`) has no negation carve-out**, unlike H2's guarantee handling. This
+is not §8-vs-§12 (the founder's artifacts are consistent); it is founder-denial-copy vs the built
+regex — the H2-precedent fix shape (negation carve-out for H4) **belongs to the banned-language
+fix gate**. NOT resolved here. **Build consequence, RED-proven:** an embedded governing-law copy
+in the payload tripped the delivery gate's HARD walk (watched-fail: `["amazon approved"]`) — the
+payload now carries `contract_version` only (the law derivable from cc-1.0.0), plus a standing
+**delivery-gate compatibility lock**: the full assessment payload must walk clean through
+`scanFindingsForBannedLanguage`, forever.
+
+## STRUCTURAL FINDING (build-time, ruling-grade class): THE FROZEN CORE FORCES THE PARALLEL DESIGN
+
+`DIMENSION_TOKENS: Record<TrackKey, RegExp>` in **FROZEN `synthesisCallB.ts:130` is exhaustive
+over the TrackKey union** — `category_compliance` cannot join TrackKey without breaking a frozen
+file. So the approved design isn't just chosen, it is structurally enforced: Track 6 has its OWN
+output type (`CategoryTrackOutput`), its own key-space, and touches neither `contracts.ts` nor
+`lib/constants/tracks.ts`. Zero frozen-surface diff.
+
+## ⛔ DESCRIBE-AND-STOP 1 — THE ORCHESTRATION FORK (founder rules before wiring)
+
+The spec's §9 proposed a `TRACK_REGISTRY` entry. **Build-time verification shows a registry entry
+IS an engine input:** frozen `deriveDimensionRunRecord` (synthesisEngine.ts) maps over the
+registry — a track-6 entry would add a `dimension_run_record` row (assessed on scale, or
+`plan_excluded` on lower plans), which feeds Call B's prompt and M6 limitations → synthesis no
+longer byte-identical on/off, and "category" leaks into vendor-verdict limitation sentences on
+plans that never bought it. **This violates the mandatory AT-B1-style proof.** The alternative:
+Track 6 runs as its **own orchestration step outside the registry** (the Track-0/identity
+precedent), plan-gated in the step (`scale_499` now, `single_149` when the tier exists) — the
+engine's world literally does not change. Consequences to rule: it forgoes the registry's
+"one entry" convenience; `requiredFindingTracks`/report-readiness would not require the category
+row in V1 (readiness inclusion = a data-layer follow-up decision); the registry drift-lock stays
+untouched. **RECOMMENDED: own step. Founder rules.**
+
+## ⛔ DESCRIBE-AND-STOP 2 — THE MIGRATION (founder-run, additive; exact text to be finalized at wiring)
+
+```sql
+-- Category Compliance V1 (cc-1.0.0) — additive only.
+-- (a) allow the new track row:
+ALTER TABLE case_track_results DROP CONSTRAINT IF EXISTS case_track_results_track_check;
+ALTER TABLE case_track_results ADD CONSTRAINT case_track_results_track_check
+  CHECK (track IN ('track_0','track_1','track_2','track_3','track_4','track_5','track_6'));
+-- (equivalent additive widening for the track_key CHECK: + 'category_compliance')
+-- (b) admin dashboard status column (mirrors track_1..5):
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS track_6_status text DEFAULT 'pending'
+  CHECK (track_6_status IN ('complete','failed','skipped','manual_required','pending'));
+```
+Also at wiring: the acquisition layer's frozen `ResearchQuestion`/`AcquisitionRequest.track_key`
+unions predate this track — the wiring either reuses an existing routable question (the Track-0.5
+precedent) or widens the union at a gate that may touch frozen acquisition types. Described, not
+done: **live `gather`/`model` defaults are deliberately absent** (deps are required parameters)
+so nothing can run against the frozen unions before the ruling.
+
+## NON-BLOCKING COST REPORT (shape now, figure at ATs)
+
+Per brand: ~2 search calls + 1 LLM proposal call ⇒ $499 worst case (5 brands): ~10 searches +
+5 LLM calls/case on top of today's pipeline; $149 (1 brand): ~2 + 1. Comparable to one extra
+Track-3 per brand. Actual dollars measured at the AT run (the AT-SYN-COST pattern).
+
+**STOPPED before: orchestration wiring (fork ruling) · the migration (founder-run) · client
+projection (client-surface gate) · ATs (founder-run: AT-B1-style on/off byte-identity ·
+two-sided honesty scan · multi-category fixture · could_not_determine · cost).**
+
+## CONTINUATION RECORD (same sitting, resumed after interruption)
+
+- **The mandated AT-B1-style proof is now BUILT, not deferred:** `track6.inertia.test.ts`,
+  TWO-SIDED. Side 1 reproduces the §5 trap ON PURPOSE — naive M1 wiring + two load-bearing
+  synthesis-born contradictions flips `source_clear → verify_before_purchase` through the ≥2
+  floor (the A5 mechanism as a permanent test; if it ever stops flipping, the floor changed).
+  Side 2: track on vs off — synthesis deep-equal, composed verdict identical — plus structural
+  source locks (`category_compliance` appears in NO frozen file). Suite 845 → **848/848**.
+- **Condition-2 runtime re-scan (the live-scanner method):** all nine flag strings CLEAN through
+  scanHard + scanAssertion + findProcurementLanguage; the OQ-CC5 scope sentence TRIPS H4 at
+  runtime (confirming the governing-law finding above — same "Amazon approval"-in-denial class).
+  Second semantic conflict logged for founder ruling: §8 row 5 "Expiry dates visible on units
+  required." states a requirement as absolute, against §8's own governing law. Injected verbatim
+  pending amend-or-accept.
+- **The doc-identity lock is MUTATION-PROVEN:** a one-word paraphrase ("may"→"might") fails three
+  tests by name; an accidental encoding corruption during the sitting (a PowerShell ANSI
+  round-trip mangling em-dashes) was ALSO caught by the same lock and repaired from the verbatim
+  source. The lock guards against paraphrase AND transport damage.
+- **Final gates at stop:** 848/848 unpiped exit 0 · tsc 0 · eslint 0 · frozen-core diff EMPTY
+  across the 18-file list including tracks.ts / registry / pipeline.steps / contracts.
