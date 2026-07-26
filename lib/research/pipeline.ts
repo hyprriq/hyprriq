@@ -6,6 +6,7 @@ import {
   stageResolveAttempt, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack,
   stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize,
 } from "@/lib/research/pipeline.steps";
+import { stageCategoryCompliance } from "@/lib/research/categoryStep";
 
 // The Intelligence-OS pipeline — orchestrates the STAGES (lib/research/pipeline.steps) sequentially.
 // Layers 1→5 reach report-ready AUTONOMOUSLY (no human gate). This synchronous caller is kept for
@@ -52,6 +53,12 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
     if (r.acquisition_failed && t.track_key === "supplier_identity") identityAcquisitionFailed = true;
     if (r.failed && t.track_key === "supplier_identity") identityFailed = true;
   }
+
+  // ── Track 6 — Category Compliance (OWN STEP, outside the registry per the 2026-07-23 fork
+  // ruling; plan-gated in the step). PARALLEL ASSESSMENT: its output never enters trackOutputs,
+  // signals, or synthesis — the engine's world does not change (the frozen inertia proof).
+  // Fail-loud-non-fatal inside the step; never blocks the vendor case.
+  await stageCategoryCompliance(ictx);
 
   // ── Layers 2 / 2.5 / 3 — Normalization → Graph → Intelligence (memoized synthesis) ──
   let synthesis;

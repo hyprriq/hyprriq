@@ -4,6 +4,7 @@ import { sendAdminAlert } from "@/lib/email/notify";
 import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan, executionGroupsForPlan } from "@/lib/research/pipeline.registry";
+import { stageCategoryCompliance } from "@/lib/research/categoryStep";
 import {
   stageResolveAttempt, stageSetRunning, stageTrack0, stageResolveIdentity, stagePersistIdentity,
   stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize, type FindingTrackResult,
@@ -64,6 +65,12 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
     if (r.acquisition_failed && tk === "supplier_identity") identityAcquisitionFailed = true;
     if (r.failed && tk === "supplier_identity") identityFailed = true;
   }
+
+  // Track 6 — Category Compliance (OWN STEP outside the registry, per the 2026-07-23 fork ruling;
+  // plan-gated in the step). Parallel assessment: never enters trackOutputs/signals/synthesis.
+  // Its own durable step so an Inngest retry re-runs it in isolation; failures are contained
+  // inside the step (fail-loud-non-fatal) and can never block the vendor case.
+  await step.run("track-6-category", () => stageCategoryCompliance(ictx));
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs, signals));
   const verdict = await step.run("verdict", async () => {
