@@ -412,3 +412,45 @@ two-sided honesty scan · multi-category fixture · could_not_determine · cost)
   source. The lock guards against paraphrase AND transport damage.
 - **Final gates at stop:** 848/848 unpiped exit 0 · tsc 0 · eslint 0 · frozen-core diff EMPTY
   across the 18-file list including tracks.ts / registry / pipeline.steps / contracts.
+
+---
+
+# 🟢 CATEGORY COMPLIANCE CORE FROZEN — founder-declared 2026-07-23 at `14bf958` on `staging` · `contract_version cc-1.0.0`
+
+**CORE FROZEN; WIRING NOT DONE.** The frozen set: `lib/research/categoryFlagsTable.ts` ·
+`lib/research/categoryLanguage.ts` · `lib/research/track6.ts` + their three test files +
+`track6.inertia.test.ts` + `docs/CATEGORY_FLAGS_TABLE_recovered.md` (row 5 as amended).
+
+## AT record (founder-declared; build-thread evidence re-verified from source at recording time)
+
+| AT | Result |
+|---|---|
+| `track6.inertia` | **3/3** — Side 1: the §5 trap REPRODUCED (naive M1 wiring + 2 load-bearing contradictions flips `source_clear → verify_before_purchase`; the A5 mechanism as a permanent test) · Side 2: on/off BYTE-IDENTICAL (synthesis deep-equal, composed verdict identical) · structural locks green BY NAME (`category_compliance` in no frozen file) |
+| `categoryLanguage` | **34/34** — the ten audit holes closed by name (polarity-blind, alternation-complete, 18 evasion shapes through the live scanner); the AMENDED row 5 passes as a live test (the must-pass set iterates the table) |
+| `categoryFlagsTable` | **6/6** — doc-identical (mutation-proven: one-word paraphrase fails 3 by name; an encoding corruption was also caught), may-require law checked per row, electronics row the sole brand-keyed exception |
+| Suite | **848/848 across 96 files, unpiped, `$LASTEXITCODE 0`** (797 → 848) · tsc 0 |
+| Frozen surfaces | `git diff 82957b3~1..14bf958` over the 18-file frozen list = **EMPTY** (verified at recording); the two commits touched ONLY new `lib/research/category*`/`track6*` files, the recovered doc, and the tracker |
+
+**Row 5 FOUNDER-AMENDED 2026-07-23** ("…visible on units required." → "…may need to be visible on
+units.") under §8's own governing law — the higher authority; marked on BOTH sides (module comment
++ doc repo note preserving the original verbatim) against future "restoration."
+
+**The three build conditions, met:** (1) the honesty scanner is evasion-proof by the audit's own
+method (live-scanner feeding, not regex review); (2) the nine §8 flag strings were honesty-scanned
+BEFORE injection code (two conflicts surfaced and ruled/routed); (3) `category_verdict` is an
+INTERNAL field name only — the client never sees the word "verdict" for it (client-surface-gate
+constraint, recorded).
+
+## OPEN BEHIND THE FREEZE (recorded; none blocks the core)
+
+- **ORCHESTRATION FORK — ✅ RULED: Track 6 wires as its OWN STEP OUTSIDE THE REGISTRY**, plan-gated
+  in the step (the Track-0.5 precedent). Reason on the record: the registry is itself a synthesis
+  input (`deriveDimensionRunRecord` maps it; `DIMENSION_TOKENS` consumes the TrackKey union
+  exhaustively) — category must stay invisible to the vendor verdict, so it cannot live in the
+  registry.
+- **MIGRATION (founder-run at wiring):** `case_track_results` CHECK widening (+ `track_6`,
+  `category_compliance`) + `cases.track_6_status` (SQL text in the build record above).
+- **OQ-CC5/H4 "Amazon approval" negation carve-out → the BANNED-LANGUAGE FIX GATE.** V1 embeds
+  neither the governing law nor the scope sentence (RED-proven inert via the delivery-gate
+  compatibility lock). Not now.
+- **Tier gate:** `scale_499` alone until the `single_149` tier exists (no PlanType before then).
