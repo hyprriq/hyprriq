@@ -2,6 +2,7 @@ import type { TrackContext } from "@/lib/research/contracts";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { upsertTrackResult } from "@/lib/data/track-results";
 import { runTrack6, type Track6Deps, type CategoryTrackOutput } from "@/lib/research/track6";
+import { liveCategoryGather } from "@/lib/research/categoryGather";
 import { runModel } from "@/lib/ai/runModel";
 
 // ── Track 6 WIRING (2026-07-23, post-core-freeze) — THE OWN-STEP DISPATCH, per the orchestration-
@@ -13,11 +14,11 @@ import { runModel } from "@/lib/ai/runModel";
 // delay the vendor case. Every failure — model, gather, the un-run migration's CHECK rejecting
 // the persist — is audit-logged and contained; the pipeline continues.
 //
-// DEGRADED-HONEST LAUNCH MODE: the live gather adapter awaits the STOP-1 ruling (the
-// ResearchQuestion union / acquisition track_key typing fork). Until it lands, the default
-// gather returns ZERO sources with the pending state audited on the record — the brand-keyed
-// electronics row still fires (it needs no research), and everything else is could_not_determine,
-// stated as absence of research, never clearance. ──
+// LIVE ACQUISITION (Decisions A + B, founder-ruled 2026-07-24): the default gather is
+// liveCategoryGather — marketplace_signals reuse (routing-only label, never persisted), pack
+// keyed honestly under category_compliance via the acquisition layer's additive widen. The
+// degraded-honest STOP-1 stub is retired; empty acquisition still degrades honestly
+// (brand-keyed flags fire, everything else could_not_determine). ──
 
 // PROPOSED admin-side literal (client-copy bar: exact client strings are ruled at the
 // client-surface gate). Condition 3: never the word "verdict" on a client surface.
@@ -27,10 +28,6 @@ export const CATEGORY_CLIENT_SUMMARY =
 // The plans that run category compliance. single_149 joins WHEN THE TIER EXISTS (no PlanType is
 // created before then — founder-ruled); the gate widens here, in the step, never in the registry.
 const CATEGORY_PLANS = new Set<string>(["scale_499"]);
-
-// The STOP-1 pending gather — replaced by the live acquisition adapter once the founder rules the
-// ResearchQuestion reuse-vs-widen fork. Zero sources, honestly labeled.
-const pendingGather: Track6Deps["gather"] = async () => ({ pack: { sources: [] }, metrics: [] });
 
 // Live Hop-1 model adapter (mechanical — no frozen touches): proposes categories per brand from
 // the gathered sources, with the table's non-brand-keyed rows as the CATEGORY-DEFINITION AID.
@@ -79,16 +76,9 @@ export async function stageCategoryCompliance(
   }
 
   const attempt = ctx.attempt_number ?? 1;
-  const gatherPending = !deps?.gather;
   let out: CategoryTrackOutput;
   try {
-    out = await runTrack6(ctx, { gather: deps?.gather ?? pendingGather, model: deps?.model ?? liveModel });
-    if (gatherPending) {
-      out.category_compliance.audits.push({
-        field: "gather",
-        reason: "live gather adapter pending the STOP-1 founder ruling (ResearchQuestion union) — research not attempted this run; brand-keyed flags unaffected",
-      });
-    }
+    out = await runTrack6(ctx, { gather: deps?.gather ?? liveCategoryGather, model: deps?.model ?? liveModel });
   } catch (e) {
     // Contained: the advisory track can never kill the vendor case.
     const reason = `track_6 run failed (non-fatal, advisory): ${e instanceof Error ? e.message : String(e)}`;

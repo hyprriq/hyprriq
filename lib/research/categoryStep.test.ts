@@ -29,6 +29,8 @@ const ctx = (over: Partial<TrackContext> = {}): TrackContext => ({
 });
 
 const modelDep = vi.fn().mockResolvedValue({ json: { per_brand: [] }, cost_usd: 0.01 });
+// The default gather is LIVE (Decision A) — unit tests inject; acquisition is categoryGather.test.ts's job.
+const emptyGatherDep = () => vi.fn().mockResolvedValue({ pack: { sources: [] }, metrics: [] });
 
 beforeEach(() => { upsert.mockClear().mockResolvedValue({ error: null }); auditInsert.mockClear(); modelDep.mockClear(); });
 
@@ -44,7 +46,7 @@ describe("Track 6 wiring — the own-step dispatch (outside the registry, plan-g
   });
 
   it("scale_499 runs it and persists the NON-VOTING row: track_6 / category_compliance / n_a / approved / the sibling block / this attempt", async () => {
-    const r = await stageCategoryCompliance(ctx(), { model: modelDep });
+    const r = await stageCategoryCompliance(ctx(), { model: modelDep, gather: emptyGatherDep() });
     expect(r.ran).toBe(true);
     expect(r.persisted).toBe(true);
     const row = upsert.mock.calls[0][0];
@@ -59,25 +61,34 @@ describe("Track 6 wiring — the own-step dispatch (outside the registry, plan-g
     expect(row.compiled_findings_json.category_compliance.contract_version).toBe("cc-1.0.0");
   });
 
-  it("DEGRADED-HONEST MODE (gather pending STOP-1): zero sources by default — the brand-keyed electronics flag STILL fires; the pending state is audited on the record", async () => {
-    const r = await stageCategoryCompliance(ctx(), { model: modelDep });
+  it("EMPTY ACQUISITION: the brand-keyed electronics flag STILL fires (no research needed); the model is never asked to invent on zero sources", async () => {
+    const emptyGather = vi.fn().mockResolvedValue({ pack: { sources: [] }, metrics: [] });
+    const r = await stageCategoryCompliance(ctx(), { model: modelDep, gather: emptyGather });
     const cc = upsert.mock.calls[0][0].compiled_findings_json.category_compliance;
     expect(cc.category_verdict).toBe("requirements_identified"); // Lenovo — brand-keyed, no research needed
     expect(cc.per_brand[0].categories_found[0].flags[0].matched_via).toBe("brand_keyed");
-    expect(cc.audits.some((a: { reason: string }) => /gather.*pending|pending.*gather/i.test(a.reason))).toBe(true);
-    expect(modelDep).not.toHaveBeenCalled(); // zero sources ⇒ the model is never asked to invent
+    expect(modelDep).not.toHaveBeenCalled();
     expect(r.cost_usd).toBe(0);
   });
 
-  it("non-electronics brand + pending gather ⇒ could_not_determine (absence of research, never clearance)", async () => {
-    await stageCategoryCompliance(ctx({ brands_submitted: ["Optimum Nutrition"] }), { model: modelDep });
+  it("non-electronics brand + empty acquisition ⇒ could_not_determine (absence of research, never clearance)", async () => {
+    const emptyGather = vi.fn().mockResolvedValue({ pack: { sources: [] }, metrics: [] });
+    await stageCategoryCompliance(ctx({ brands_submitted: ["Optimum Nutrition"] }), { model: modelDep, gather: emptyGather });
     const cc = upsert.mock.calls[0][0].compiled_findings_json.category_compliance;
     expect(cc.category_verdict).toBe("could_not_determine");
   });
 
+  it("DECISION A LANDED: the default gather is the LIVE marketplace_signals adapter — the STOP-1 pending stub is retired (source-scan lock)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(join(process.cwd(), "lib/research/categoryStep.ts"), "utf8");
+    expect(src.includes("liveCategoryGather"), "the step must default to the live gather").toBe(true);
+    expect(src.includes("pendingGather"), "the STOP-1 pending stub must be gone").toBe(false);
+  });
+
   it("FAIL-LOUD-NON-FATAL persist (the un-run migration's CHECK will reject the new track values): audit-logged, persisted:false, NEVER throws", async () => {
     upsert.mockResolvedValue({ error: 'new row violates check constraint "case_track_results_track_check"' });
-    const r = await stageCategoryCompliance(ctx(), { model: modelDep });
+    const r = await stageCategoryCompliance(ctx(), { model: modelDep, gather: emptyGatherDep() });
     expect(r.ran).toBe(true);
     expect(r.persisted).toBe(false);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
@@ -100,7 +111,7 @@ describe("Track 6 wiring — the own-step dispatch (outside the registry, plan-g
     expect(CATEGORY_CLIENT_SUMMARY.toLowerCase()).not.toContain("verdict");
     expect(scanHard(CATEGORY_CLIENT_SUMMARY)).toEqual([]);
     expect(scanAssertion(CATEGORY_CLIENT_SUMMARY)).toEqual([]);
-    await stageCategoryCompliance(ctx(), { model: modelDep });
+    await stageCategoryCompliance(ctx(), { model: modelDep, gather: emptyGatherDep() });
     expect(upsert.mock.calls[0][0].compiled_findings_json.summary).toBe(CATEGORY_CLIENT_SUMMARY);
   });
 });

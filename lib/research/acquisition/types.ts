@@ -42,11 +42,18 @@ export interface RawSource {
   provenance: Provenance;
 }
 
+// ── DECISION B (founder-ruled 2026-07-24, Track 6 wiring — THE ONE DELIBERATE FROZEN-CONTRACT
+// EDIT, additive only): the acquisition layer accepts the engine-external category track's key.
+// `category_compliance` is deliberately NOT a TrackKey (the engine consumes that union
+// exhaustively in frozen files); this alias widens ACQUISITION ONLY, so packs/requests key
+// honestly under the researching track without a cast. Never widen TrackKey itself. ──
+export type AcquisitionTrackKey = TrackKey | "category_compliance";
+
 export interface AcquisitionQuery {
   question: ResearchQuestion;
   input: string;                       // domain (whois) or search string (serper)
   case_id: string;
-  track_key: TrackKey;
+  track_key: AcquisitionTrackKey;      // DECISION B — additive widen, never a cast
   classification?: ClassifyContext;    // optional official-domain metadata (Track 2+); whois/native ignore it
 }
 
@@ -81,7 +88,7 @@ export interface AcquisitionPlugin {
 export interface EvidencePack {
   schema_version: string;
   case_id: string;
-  track_key: TrackKey;
+  track_key: AcquisitionTrackKey;      // DECISION B — additive widen (shape unchanged; same keys)
   sources: RawSource[];                // deterministically ordered by finalizePack()
   evidence_hash: string;
   collected_at: string;

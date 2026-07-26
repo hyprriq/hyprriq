@@ -1,13 +1,12 @@
-import type { TrackKey } from "@/lib/constants/tracks";
 import type {
-  AcquisitionPlugin, AcquisitionMetric, AcquisitionResult, EvidencePack, RawSource, ResearchQuestion,
+  AcquisitionPlugin, AcquisitionMetric, AcquisitionResult, AcquisitionTrackKey, EvidencePack, RawSource, ResearchQuestion,
 } from "./types";
 import { finalizePack } from "./pack";
 import { worseStatus } from "./retry";
 
 export interface GatherRequest {
   case_id: string;
-  track_key: TrackKey;
+  track_key: AcquisitionTrackKey;      // DECISION B — additive widen, never a cast
   requests: { question: ResearchQuestion; input: string }[];
   classification?: import("@/lib/research/source_profile").ClassifyContext; // official-domain metadata (Track 2+)
 }
