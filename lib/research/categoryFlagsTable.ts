@@ -53,7 +53,10 @@ export const CATEGORY_FLAGS_TABLE: readonly CategoryFlagRow[] = [
   {
     subcategory: "Food / grocery / perishables",
     trigger_keywords: ["food", "grocery", "snack", "beverage", "perishable", "frozen", "best by", "expiration", "drink", "supplement bar"],
-    flag_language: "Check Amazon shelf-life requirements, lot tracking requirements, and FBA storage requirements before shipping. Expiry dates visible on units required.",
+    // Row 5 FOUNDER-AMENDED 2026-07-23: "Expiry dates visible on units required." (the recovered
+    // verbatim) stated a requirement as absolute, violating §8's OWN governing law — the higher
+    // authority. A RULED amendment, recorded in the doc; not drift, and never to be "restored".
+    flag_language: "Check Amazon shelf-life requirements, lot tracking requirements, and FBA storage requirements before shipping. Expiry dates may need to be visible on units.",
     risk_level: "MODERATE", brand_keyed: false,
   },
   {
