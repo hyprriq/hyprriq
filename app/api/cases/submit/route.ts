@@ -9,6 +9,8 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 import { inngest } from "@/lib/inngest/client";
+import { findLegalSignals } from "@/lib/research/legalSignals";
+import { sendAdminAlert } from "@/lib/email/notify";
 import { fileCountError } from "@/lib/constants/uploads";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
@@ -126,6 +128,20 @@ export async function POST(req: Request) {
       { error: caseErr?.message ?? "Could not create case." },
       { status: 500 },
     );
+  }
+
+  // ---- TRIGGER 9 (BL fix gate, BL3 founder-ruled): legal/IP-notice detection in CLIENT INPUT.
+  // FLAG, NEVER BLOCK — the client must never be prevented from disclosing something important;
+  // the submission proceeds unconditionally. A hit alerts the admin inbox (non-fatal, key-safe);
+  // the review page re-derives the same scan at render (zero storage, no stale flag). ----
+  const legalSignals = findLegalSignals(notes);
+  if (legalSignals.length > 0) {
+    try {
+      await sendAdminAlert(
+        `legal signal in client notes — case ${created.case_number}`,
+        `<p>Trigger 9: the client's notes on case ${created.case_number} mention: ${legalSignals.join(", ")}. Review before research reaches conclusions.</p>`,
+      );
+    } catch { /* the alert is a pager, never a gate — submission continues regardless */ }
   }
 
   // ---- optional file uploads (non-fatal, per file; count validated pre-charge above) ----

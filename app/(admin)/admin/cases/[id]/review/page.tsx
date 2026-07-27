@@ -10,6 +10,7 @@ import { CaseReview } from "@/components/admin/case-review";
 import { OutcomePanel } from "@/components/admin/outcome-panel";
 import { getCaseOutcome } from "@/lib/data/outcomes";
 import { PLAN_NAME } from "@/lib/constants/plans";
+import { findLegalSignals } from "@/lib/research/legalSignals";
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -72,6 +73,13 @@ export default async function CaseReviewPage({
           </div>
           {c.client_notes && (
             <div className="rounded-card border border-line bg-surface p-4">
+              {/* TRIGGER 9 (BL fix gate) — derived at render, zero storage: the client disclosed
+                  something legal-adjacent; make sure the founder SEES it. Flags, never blocks. */}
+              {findLegalSignals(c.client_notes).length > 0 && (
+                <div className="mb-2 rounded-lg border border-deny-ink/30 bg-deny-bg px-3 py-2 text-[13px] font-semibold text-deny-ink">
+                  ⚖ LEGAL FLAG — the client&apos;s notes mention: {findLegalSignals(c.client_notes).join(", ")}. No legal advice; review before any response.
+                </div>
+              )}
               <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted">Client Notes</div>
               <p className="text-[14px] leading-relaxed text-ink-2">{c.client_notes}</p>
             </div>

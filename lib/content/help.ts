@@ -42,7 +42,11 @@ export const verdicts: VerdictInfo[] = [
     key: "do_not_rely",
     name: "Do Not Rely",
     desc: "Observable concerns are significant enough that relying on this supplier carries material risk.",
-    action: "→ Do not purchase from this supplier",
+    // BL fix gate (2026-07-24): "Do not purchase from this supplier" was recommendation language
+    // beyond the verdict — the exact class the verdict-is-the-recommendation ruling bans, caught
+    // by the BL6 static lock. PROPOSED rewording (evidence-status framing); the client-surface
+    // gate confirms exact wording.
+    action: "→ Resolve the listed concerns before relying on this source",
   },
 ];
 

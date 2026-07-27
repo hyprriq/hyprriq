@@ -54,7 +54,10 @@ export const dontDo = {
   title: "What we don't do",
   items: [
     {
-      title: "We don't ungate brands or guarantee approval",
+      // BL fix gate (2026-07-24): negation made explicit on both clauses ("or guarantee" left the
+      // second clause un-negated for the scanner). Meaning identical; compliance-mechanical edit,
+      // client-surface gate confirms wording.
+      title: "We don't ungate brands and we don't guarantee approval",
       body: "We're intelligence, not a service that gets you into a category.",
     },
     {
