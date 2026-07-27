@@ -454,3 +454,32 @@ constraint, recorded).
   neither the governing law nor the scope sentence (RED-proven inert via the delivery-gate
   compatibility lock). Not now.
 - **Tier gate:** `scale_499` alone until the `single_149` tier exists (no PlanType before then).
+
+---
+
+# 🟢🟢 TRACK 6 WIRING FROZEN — CATEGORY COMPLIANCE V1 COMPLETE END-TO-END
+
+**Founder-declared 2026-07-23 · `cc-1.0.0` · gated `scale_499` · HEAD `42e4818`.**
+The full capability is live behind $499: intake brands → live Hop-1 acquisition
+(marketplace_signals reuse) → LLM proposes / code decides → verbatim founder flag language →
+code-derived category verdict → non-voting row persisted (admin-only pending the client-surface
+gate). **Core freeze (`14bf958`) + wiring freeze together close the capability that was specced
+in Brief v1, silently dropped at OQ-B3, and recovered 2026-07-21.**
+
+## AT record (evidence re-verified from git at recording time)
+
+| Claim | Verified |
+|---|---|
+| `track6.inertia` 3/3 BY NAME, with the LIVE GATHER wired | ✅ Side 1: the trap reproduces (category-in-M1 moves the verdict — the design's premise, permanent) · Side 2: inert (synthesis deep-equal, composed verdict identical) · structural locks (not a TrackKey, not in SCORING_TRACKS, not in the engine) |
+| Suite | ✅ **865/865 across 98 files, unpiped, `$LASTEXITCODE 0`** · tsc 0 · eslint 0 |
+| `git diff 92a60ec..HEAD` | ✅ EXACTLY: acquisition types/orchestrator/pack (the ruled Decision-B edits) + categoryGather(+test) + categoryStep(+test) + the migration file — **NO frozen surface** (19-file frozen-list diff EMPTY across the span) |
+| Migration `20260724000000` | ✅ file reproduces the founder-verified live state: `track_6` · `category_compliance` + legacy `intake` kept · `track_number <= 6` · `cases.track_6_status` — reconciles the hand-applied 2026-07-23 dashboard change; **applied to live: founder-verified** |
+| Decision A | ✅ BUILT — live gather reusing `marketplace_signals` (routing-only, never persisted); discovery-shaped queries locked (never gating/eligibility); pack per attempt under `category_compliance`; pendingGather retired with a source-scan lock |
+| Decision B | ✅ BUILT — `AcquisitionTrackKey` additive widen at the three ruled sites + finalizePack's parameter (mechanical propagation); **NO cast anywhere**; watched RED at type level; blast radius proven ACQUISITION-LAYER-ONLY (contract-freeze 3/3 · synthesisCallB 18/18) |
+| STOP #2 | ✅ additive-optional HOLDS BY CONSTRUCTION (TRACK_CONFIG untouched; the fork-ruling lock forbids drift) |
+
+**FROZEN SET now includes the wiring:** `categoryStep.ts` · `categoryGather.ts` (+ tests) · the
+Decision-B acquisition edits · the two orchestrator dispatch sites · migration `20260724000000`.
+**Still deliberately OUTSIDE this freeze:** the client-surface projection (that gate's), OQ-CC2
+narrative integration (V2 engine-touch), ASIN/V2, the `single_149` gate widening (one line here
+when the tier exists).
