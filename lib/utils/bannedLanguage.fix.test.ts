@@ -126,6 +126,31 @@ describe("BL fix — the verdict-is-the-recommendation ruling, named fixtures", 
   });
 });
 
+describe("BL fix — POST-FREEZE AMENDMENT (founder-authorized bug-hunt, 2026-07-24): research vocabulary vs OUR verdicts", () => {
+  // THE BUG (runtime-proven right after the freeze): H14's fraud side and H11's bare "unsafe"
+  // were PRESENCE-based — but the pipeline RESEARCHES scam reports (Track 1's scam_reports
+  // question), so its own absence-reporting narrative ("No scam reports were found") blocked
+  // delivery of clean cases. The rules are now VERDICT-SHAPED: our-voice conclusions block;
+  // research-artifact and absence-reporting vocabulary passes. Same two-sided law, third surface.
+  const RESEARCH_MUST_PASS = [
+    "No scam reports were found for this vendor across consumer-complaint sources.",
+    "Scam reports search returned no relevant complaints.",
+    "No fake or counterfeit product complaints were located.",
+    "The CPSC recall notice deemed the product unsafe for infants.",
+    "Reviews mention fraudulent charges by a similarly-named company.",
+  ];
+  for (const s of RESEARCH_MUST_PASS) {
+    it(`research/absence vocabulary PASSES: "${s.slice(0, 60)}…"`, () => expect(scanHard(s)).toEqual([]));
+  }
+  it("OUR verdict shapes still BLOCK (the audit's holes stay closed)", () => {
+    expect(scanHard("The supplier is fraudulent.").length).toBeGreaterThan(0);
+    expect(scanHard("This vendor is fake.").length).toBeGreaterThan(0);
+    expect(scanHard("This listing is unsafe.").length).toBeGreaterThan(0);
+    expect(scanHard("They are running a scam.").length).toBeGreaterThan(0);
+    expect(scanHard("A fraudulent vendor operating from a rented address.").length).toBeGreaterThan(0);
+  });
+});
+
 describe("BL fix — the H4 negation carve-out (BL4)", () => {
   it("affirmative Amazon-approval claims STILL block", () => {
     expect(scanHard("This supplier has Amazon approval.").length).toBeGreaterThan(0);

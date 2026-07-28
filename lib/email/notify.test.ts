@@ -20,7 +20,7 @@ import { sendAdminAlert, sendDualNotification } from "./notify";
 
 beforeEach(() => {
   sendMock.mockClear();
-  auditInsert.mockClear();
+  auditInsert.mockReset().mockResolvedValue({ error: null });
   process.env.RESEND_API_KEY = "re_test_key";
   process.env.SUPPORT_INBOX = "ops@example.com";
 });
@@ -73,6 +73,12 @@ describe("BL2 — the outbound-email banned-language gate (block-the-send)", () 
   it("html tags never mask a violation (the scan strips tags before scanning)", async () => {
     const r = await sendAdminAlert("update", "<p>suspension-<b>proof</b> setup</p>");
     expect(r.sent).toBe(false);
+  });
+
+  it("POST-FREEZE HUNT (2026-07-24): the gate's own audit write failing never turns into a caller-facing throw", async () => {
+    auditInsert.mockRejectedValue(new Error("audit_log unavailable"));
+    const r = await sendAdminAlert("case update", "we can get you ungated");
+    expect(r).toEqual({ sent: false, reason: "banned_language" });
   });
 
   it("the scan runs BEFORE the key check — a violation reports banned_language even with email unconfigured", async () => {

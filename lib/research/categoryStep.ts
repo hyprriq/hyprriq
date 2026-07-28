@@ -57,11 +57,18 @@ const liveModel: Track6Deps["model"] = async ({ brands, sources, tableAid }) => 
 };
 
 async function auditDrop(caseId: string, attempt: number, reason: string): Promise<void> {
-  await supabaseAdmin.from("audit_log").insert({
-    table_name: "case_track_results", record_id: caseId, action: "UPDATE",
-    actor_id: "system", actor_type: "system",
-    new_value: { category_compliance_dropped: true, attempt, reason },
-  });
+  // POST-FREEZE HUNT (2026-07-24): the containment must contain its own reporter — an audit-log
+  // outage can never convert an advisory drop into a pipeline-killing throw. Console is the
+  // reporter of last resort.
+  try {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_track_results", record_id: caseId, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { category_compliance_dropped: true, attempt, reason },
+    });
+  } catch (e) {
+    console.error(`[category] audit-log write failed while recording a drop (${reason}): ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
 export interface CategoryStepResult { ran: boolean; persisted: boolean; reason?: string; cost_usd: number }

@@ -28,11 +28,17 @@ const stripTags = (html: string) => html.replace(/<[^>]*>/g, " ");
 async function emailGate(kind: string, subject: string, htmls: string[]): Promise<string[]> {
   const violations = [...new Set([subject, ...htmls].flatMap((t) => scanHard(stripTags(t))))];
   if (violations.length > 0) {
-    await supabaseAdmin.from("audit_log").insert({
-      table_name: "audit_log", record_id: null, action: "INSERT",
-      actor_id: "system", actor_type: "system",
-      new_value: { blocked: "banned_language_email", kind, subject, violations },
-    });
+    // POST-FREEZE HUNT (2026-07-24): the block stands even if the audit write fails — the gate's
+    // reporter can never become a caller-facing throw (notify's contract is non-throwing).
+    try {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "audit_log", record_id: null, action: "INSERT",
+        actor_id: "system", actor_type: "system",
+        new_value: { blocked: "banned_language_email", kind, subject, violations },
+      });
+    } catch (e) {
+      console.error(`[notify] audit-log write failed while recording a blocked email (${violations.join(",")}): ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
   return violations;
 }

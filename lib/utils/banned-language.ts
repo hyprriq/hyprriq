@@ -104,7 +104,9 @@ const HARD: Rule[] = [
   { re: /\b(?:safe|cleared|ok(?:ay)?|fine|good)\s+to\s+(?:buy|purchas\w*|sourc\w*)\b/i, label: "safe-to-buy" },
   // ── H11 — safe/unsafe as sell/list classifications, alternation-complete (the safe-to-SELL hole). ──
   { re: /\b(?:safe|unsafe)\s+to\s+(?:sell|list|stock|resell|offer)\b/i, label: "safe/unsafe to sell (either polarity)" },
-  { re: /\bunsafe\b/i, label: "unsafe classification" },
+  // POST-FREEZE AMENDMENT (2026-07-24): verdict-shaped — OUR "is unsafe" blocks; an attributed
+  // regulator finding ("the CPSC recall notice deemed the product unsafe") is evidence and passes.
+  { re: /\b(?:is|are|was|were|looks?|seems?)\s+unsafe\b/i, label: "unsafe classification" },
   // ── H12 — confirm/certify authorization/approval/authenticity, denial-aware (the instead-column
   // IS the denial: "could not confirm authorization" passes; "confirm your intended supplier" is
   // out of scope by object). ──
@@ -131,7 +133,13 @@ const HARD: Rule[] = [
   // "consistent with a legitimate wholesale operation" — no is/are before "legitimate"); quality
   // GUARANTEE vocabulary blocks ("authentic/genuine vendor", bare "is legitimate"). ──
   { re: /\b(?:is|are|was|were|seems?|looks?)\s+(?:a\s+|an\s+)?legitimate\b/i, label: "bare legitimacy verdict" },
-  { re: /\b(?:fraudulent|fraudster|bogus)\b|\bfake\b|\bscam(?:mer)?s?\b/i, label: "fraud verdict" },
+  // POST-FREEZE AMENDMENT (founder-authorized bug-hunt, 2026-07-24): VERDICT-SHAPED, not
+  // presence-based — the pipeline RESEARCHES scam reports, so its absence-reporting narrative
+  // ("No scam reports were found") must never block delivery. Our-voice conclusions block;
+  // research-artifact vocabulary passes. Attributed allegations ("the vendor is a scam") still
+  // block by the H2 even-attributed precedent — the founder rephrases at review.
+  { re: /\b(?:is|are|was|were|being)\s+(?:a\s+|an\s+)?(?:scam(?:mer)?|fake|fraud(?:ulent|ster)?|bogus)\b|\blooks?\s+(?:like\s+)?(?:a\s+)?(?:scam|fake|fraud)\b|\brunning\s+a\s+scam\b|\bscammers?\b/i, label: "fraud verdict" },
+  { re: /\b(?:fraudulent|fake|bogus)\s+(?:vendor|supplier|wholesaler|distributor|company|business|operation|reseller|entity)\b/i, label: "fraud verdict (attributive)" },
   { re: /\b(?:authentic|genuine)\s+(?:vendor|supplier|wholesaler|distributor|source|business|operation|reseller)\b/i, label: "authenticity guarantee" },
   // ── H15 — approved as a status, word-order-complete (the adjacency hole: A3/A5 need
   // "approved seller/supplier"; the predicate order escaped). ──

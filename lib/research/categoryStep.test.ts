@@ -32,7 +32,7 @@ const modelDep = vi.fn().mockResolvedValue({ json: { per_brand: [] }, cost_usd: 
 // The default gather is LIVE (Decision A) — unit tests inject; acquisition is categoryGather.test.ts's job.
 const emptyGatherDep = () => vi.fn().mockResolvedValue({ pack: { sources: [] }, metrics: [] });
 
-beforeEach(() => { upsert.mockClear().mockResolvedValue({ error: null }); auditInsert.mockClear(); modelDep.mockClear(); });
+beforeEach(() => { upsert.mockReset().mockResolvedValue({ error: null }); auditInsert.mockReset().mockResolvedValue({ error: null }); modelDep.mockClear(); });
 
 describe("Track 6 wiring — the own-step dispatch (outside the registry, plan-gated in the step)", () => {
   it("PLAN GATE: single_99 and growth_279 never run it — no research, no persist, ran:false", async () => {
@@ -104,6 +104,14 @@ describe("Track 6 wiring — the own-step dispatch (outside the registry, plan-g
     expect(r.ran).toBe(true);
     expect(r.persisted).toBe(false);
     expect(auditInsert).toHaveBeenCalled();
+  });
+
+  it("POST-FREEZE HUNT (2026-07-24): even the AUDIT-LOG write failing cannot kill the case — the containment contains its own reporter", async () => {
+    upsert.mockResolvedValue({ error: "CHECK violation" });
+    auditInsert.mockRejectedValue(new Error("audit_log unavailable"));
+    const r = await stageCategoryCompliance(ctx(), { model: modelDep, gather: emptyGatherDep() });
+    expect(r.ran).toBe(true);
+    expect(r.persisted).toBe(false);
   });
 
   it("CONDITION 3 + client strip: the write-side summary is the neutral constant — no 'verdict' word, and it passes both banned-language tiers", async () => {
