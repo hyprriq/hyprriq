@@ -151,6 +151,45 @@ describe("BL fix — POST-FREEZE AMENDMENT (founder-authorized bug-hunt, 2026-07
   });
 });
 
+describe("BL amendments 2026-07-28 (founder-authorized) — the REAL-OUTPUT probe's false block + false pass", () => {
+  // (a) H12 REQUEST-VOICE CARVE-OUT — M8's mandated job is REQUESTING evidence, not asserting.
+  it("PASSES the real 021 M8 sentence (request voice): asking the vendor for confirming documentation", () => {
+    expect(scanHard("Are the specific Bosch product lines in this procurement designated as open-distribution or select-partner-exclusive by Bosch, and can you provide documentation from Bosch confirming your authorization to distribute those lines?")).toEqual([]);
+  });
+  it("PASSES equivalent request/interrogative forms", () => {
+    expect(scanHard("Please provide proof confirming your authorization for this product line.")).toEqual([]);
+    expect(scanHard("Does documentation confirming the authorization appear in your records?")).toEqual([]);
+  });
+  it("STILL BLOCKS our-voice confirmation assertions (the carve-out is voice-scoped, not word-scoped)", () => {
+    expect(scanHard("We confirm your authorization to distribute these lines.").length).toBeGreaterThan(0);
+    expect(scanHard("This confirms authorization from the brand.").length).toBeGreaterThan(0);
+    expect(scanHard("The authorization is confirmed.").length).toBeGreaterThan(0);
+  });
+  it("denials keep passing (the mandated language, unchanged)", () => {
+    expect(scanHard("We could not confirm authorization.")).toEqual([]);
+    expect(scanHard("The authorization could not be confirmed through available public sources.")).toEqual([]);
+  });
+
+  // (b) H14 WIDENED — alternation-complete, not one adverb slot.
+  it("BLOCKS the real 021 the_real_risk sentence (the false PASS): intensified our-voice legitimacy", () => {
+    expect(scanHard("The operative risk is not supplier identity fraud — TD SYNNEX is a verifiably legitimate corporate entity.").length).toBeGreaterThan(0);
+  });
+  it("BLOCKS the intensifier family (genuinely/clearly/demonstrably/entirely/fully/wholly/completely)", () => {
+    for (const adv of ["genuinely", "clearly", "demonstrably", "evidently", "entirely", "fully", "wholly", "completely"]) {
+      expect(scanHard(`This is a ${adv} legitimate operation.`).length, adv).toBeGreaterThan(0);
+    }
+  });
+  it("BLOCKS the verb variation on ENTITY claims: 'holds/remains a legitimate business'", () => {
+    expect(scanHard("The vendor holds a legitimate business here.").length).toBeGreaterThan(0);
+    expect(scanHard("TD SYNNEX remains a legitimate distributor.").length).toBeGreaterThan(0);
+  });
+  it("TWO-SIDED, MANDATORY: consistent-with framing, 'legitimately registered', and 022's borderline relationship sentence ALL stay passing", () => {
+    expect(scanHard("Supplier identity indicators are consistent with a legitimate wholesale operation")).toEqual([]);
+    expect(scanHard("TD SYNNEX is a legitimately registered, large-scale corporate entity with verifiable government contracts.")).toEqual([]);
+    expect(scanHard("The evidence record strongly supports that TD SYNNEX holds a legitimate, award-recognized authorized distribution relationship with Lenovo.")).toEqual([]);
+  });
+});
+
 describe("BL fix — the H4 negation carve-out (BL4)", () => {
   it("affirmative Amazon-approval claims STILL block", () => {
     expect(scanHard("This supplier has Amazon approval.").length).toBeGreaterThan(0);

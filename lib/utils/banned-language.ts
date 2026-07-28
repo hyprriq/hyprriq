@@ -48,6 +48,13 @@ function hasUnnegatedAmazonApproval(text: string): boolean {
 // BL FIX — H12's denial-awareness: "could not confirm authorization" IS the instead-column;
 // only UNNEGATED confirm/certify-authorization claims block.
 const CONFIRM_NEGATION_BEFORE = /(?:\bnot|n[o'’]t|\bcannot|\bcan'?t|\bnever|\bno|\bunable\s+to|\bcould\s+not|\bdo(?:es)?\s+not)\s*$/i;
+// AMENDMENT 2026-07-28 (founder-authorized, from the REAL-OUTPUT probe) — REQUEST-VOICE carve-out:
+// Module 8's mandated job is REQUESTING evidence ("can you provide documentation confirming your
+// authorization?") — a request/question is not our assertion. The guard is sentence-scoped: a
+// request marker or interrogative subject earlier in the SAME sentence exempts the match. Our-voice
+// assertions ("we confirm your authorization", "this confirms authorization") carry no such marker
+// and still block. (The H13 embedded-question guard is the precedent.)
+const REQUEST_VOICE_IN_SENTENCE = /\b(?:provide|supply|share|submit|send|obtain|request(?:ing)?)\b|\b(?:can|could|will|would|do|does)\s+you\b|^[\s"']*(?:can|could|do|does|is|are|has|have)\b/i;
 function hasUnnegatedConfirmAuth(text: string): boolean {
   // The object must FOLLOW the verb as its complement ("confirms authorization", "certified as an
   // authorized distributor") — attributive uses ("a confirmed distributor or authorization
@@ -56,8 +63,15 @@ function hasUnnegatedConfirmAuth(text: string): boolean {
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     const before = text.slice(Math.max(0, m.index - 20), m.index);
-    if (!CONFIRM_NEGATION_BEFORE.test(before)) return true;
+    if (CONFIRM_NEGATION_BEFORE.test(before)) continue;
+    const sentenceStart = Math.max(text.lastIndexOf(".", m.index), text.lastIndexOf("?", m.index), text.lastIndexOf("!", m.index), 0);
+    if (REQUEST_VOICE_IN_SENTENCE.test(text.slice(sentenceStart, m.index))) continue;
+    return true;
   }
+  // AMENDMENT 2026-07-28 — the PASSIVE our-voice form ("authorization is confirmed"), which the
+  // verb-first pattern cannot see. Negation-aware: "could not be confirmed" is mandated language.
+  const passive = /\bauthoriz\w+\s+(?:is|are|was|were|has\s+been|have\s+been)\s+confirmed\b/gi;
+  while ((m = passive.exec(text)) !== null) return true;
   return false;
 }
 
@@ -132,7 +146,14 @@ const HARD: Rule[] = [
   // language principle (founder-ruled): observable DESCRIPTION passes ("established wholesaler",
   // "consistent with a legitimate wholesale operation" — no is/are before "legitimate"); quality
   // GUARANTEE vocabulary blocks ("authentic/genuine vendor", bare "is legitimate"). ──
-  { re: /\b(?:is|are|was|were|seems?|looks?)\s+(?:a\s+|an\s+)?legitimate\b/i, label: "bare legitimacy verdict" },
+  // AMENDMENT 2026-07-28 (founder-authorized, from the REAL-OUTPUT probe): alternation-complete —
+  // the real 021 M9 field carried "is a VERIFIABLY legitimate corporate entity" and the adverb sat
+  // in the pattern gap (a false PASS on the most client-facing field). Now: -ly adverbs and
+  // intensifiers (any number), the holds/remains verb variation — while the RELATIONSHIP-framed
+  // borderline ("holds a legitimate … authorized distribution relationship", evidence-attributed)
+  // and "legitimately registered" (adverb, no bare adjective) stay passing. Our-voice BARE
+  // ASSERTION of entity legitimacy only; consistent-with framing untouched (no is/are before it).
+  { re: /\b(?:is|are|was|were|seems?|looks?|holds?|remains?)\s+(?:a\s+|an\s+)?(?:\w+ly\s+)*legitimate\b(?![^.?!]{0,60}\b(?:relationship|agreement|channel|chain-of-custody)\b)/i, label: "bare legitimacy verdict" },
   // POST-FREEZE AMENDMENT (founder-authorized bug-hunt, 2026-07-24): VERDICT-SHAPED, not
   // presence-based — the pipeline RESEARCHES scam reports, so its absence-reporting narrative
   // ("No scam reports were found") must never block delivery. Our-voice conclusions block;
