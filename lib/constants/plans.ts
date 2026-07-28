@@ -14,9 +14,8 @@ export const PLAN_TYPES: PlanType[] = ["single_99", "growth_279", "scale_499"];
 export const PLAN_BRAND_CAPS: Record<PlanType, number> = {
   single_99: 5, // confirmed
   growth_279: 5, // confirmed
-  // TODO: confirm Scale brand cap — see SESSION_F_PROGRESS.md (open question).
-  // Placeholder 5 keeps everything working; Scale currently shows no brand-cap
-  // differentiation from Growth until this is decided by Gautam.
+  // FOUNDER-RULED 2026-07-28 (Roadmap v5 reconciliation): Scale = 5 brands, 1 ASIN per brand
+  // (the ASIN half lands with the client-surface gate's intake field — Keepa ruling 4).
   scale_499: 5,
 };
 
