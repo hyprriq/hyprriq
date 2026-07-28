@@ -148,3 +148,40 @@ all Spec-B client_note templates (already locked, must stay green) · the four `
 - **OQ-BL4:** the H4 negation carve-out per §5 — approve?
 - **OQ-BL5:** the §6 mandated-denial list — complete, or does the founder add phrases?
 - **OQ-BL6:** UI/error surfaces as STATIC locks (specced — commit-time, zero runtime cost) vs runtime scanning — approve static?
+
+---
+
+# 🟢 GATE FROZEN — founder-declared 2026-07-24 · frozen pointer `20ede18` (ratified, superseding `5da1fa5`)
+
+**THE POINTER MOVED ONCE, ON THE RECORD:** the gate was first declared frozen at `5da1fa5`; the
+founder-authorized post-freeze probe (the runtime-feeding method, same session) found **two latent
+bugs in the frozen state**, fixed at `20ede18`, and the founder RATIFIED the amended commit as the
+frozen state the same day. Reason verbatim on the tracker; summary:
+
+1. **Research-vocabulary false 422s (operational):** H14's fraud side and H11's bare "unsafe" were
+   presence-based — Track 1's own absence-reporting narrative ("No scam reports were found") and
+   attributed regulator findings ("deemed the product unsafe") hit the bans. **Would have blocked
+   the first real $499 case at publish.** Reshaped VERDICT-ONLY: our-voice conclusions block;
+   research-artifact/absence vocabulary passes; attributed allegations still block (H2 precedent).
+2. **Containment leak:** unwrapped audit-log writes in `categoryStep.auditDrop` and the email
+   gate could convert an advisory drop into a pipeline-killing throw / a caller-facing rejection.
+   Wrapped; `stageCategoryCompliance` is now provably non-throwing end-to-end.
+
+Both RED-proven (5 + 2 watched fails), all original MUST_BLOCK locks green, suite **965/965
+unpiped exit 0** · tsc 0 · frozen surfaces byte-identical outside the authorized amendment.
+
+## AT record (founder-declared at the first freeze; unchanged by the amendment)
+
+Must-pass fixture 66/66 (now 72/72 with the research-vocabulary block) — direction proven by
+name · H10–H15 evasions blocked incl. the M9 "should not buy" → 422 · banned-language suite
+92/92 → 99/99 across 4 files · email gate 7/7 → 8/8 (block-the-send; ADR-G004 divergence closed)
+· BL6 lock 2/2 (caught the live help.ts violation on first run) · trigger 9 flag-never-block,
+derive-at-render, zero migration · the 2 PROPOSED copy edits (help.ts action line,
+how-it-works.ts negation) ride to the client-surface gate.
+
+**THE FROZEN SET:** `lib/utils/banned-language.ts` (as of `20ede18`) · the fix/lock/notify/
+legalSignals test files · `notify.ts`'s gate semantics · the trigger-9 wiring (submit alert +
+review-page banner) · the direction law ("a legal signal can never produce an error response") as
+a named lock. **The lesson this gate leaves behind:** two-sided isn't one list — it is denials
+(§6), verdict vocabulary (the whitelist-by-construction), AND the evidence's own research
+vocabulary (the post-freeze find). Any future rule addition tests all three sides.
