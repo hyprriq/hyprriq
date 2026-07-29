@@ -6,6 +6,28 @@
 **Legend:** 🔴 OPEN · 🟡 IN-PROGRESS · ⛔ BLOCKED · ✅ DONE · 🗄️ DEFERRED
 **Last updated: 2026-07-23. 🏁 TRACK 6 WIRING FROZEN — CATEGORY COMPLIANCE V1 COMPLETE END-TO-END behind $499 (cc-1.0.0, HEAD `42e4818`); full board reconciliation below. NEXT: the pre-launch gate sequence — banned-language fix · client-surface/PDF · Keepa · $149 tier · Phase J.**
 **(historical) Last updated: 2026-07-19. 🏁🏁 LAYER 2 COMPLETE — THE INTELLIGENCE SYNTHESIS ENGINE (ADR-G005) IS FROZEN. S-1 founder-declared 2026-07-19 at `875f158` on staging, `synthesis_version g005-1.0.0`; S-1 = S-0 + S-2 + S-1a–f, all frozen; 796/796 unpiped exit 0 · tsc 0 · frozen core byte-identical. The evidence layer (all six tracks) was complete at 2026-07-14; the reasoning layer is complete now. NEXT GATE: the client-surface/PDF gate (owns M9 activation, G1–G3, the exact client strings, per-brand-status rendering) → pre-launch security phase (env separation, RLS, virus scan, PRICING RECONCILIATION go-live blocker) → caching/ADR-008 → the Keepa gate + Category Compliance track (paired, both $149/$499, both need the new ASIN field). Full S-1 freeze record: item 5 below + `docs/superpowers/plans/2026-07-16-synthesis-engine-gate.md`.**
+## 🧭 SEQUENCE RATIFIED + FOUNDER HOUR COMPLETE — 2026-07-28
+
+**THE RULED ORDER (founder ratified the build thread's recommendation INCLUDING the security amendment — reasoning on record: the DB is the least-hardened thing in the system and the only board item marked "business-ending"; it is Keepa-independent so the reordering costs the Keepa track nothing; and no version of shipping fast survives a tenancy leak between two paying clients):**
+**(1) Founder hour ✅ DONE (below) → (2) CLIENT-SURFACE/PDF GATE — spec first; ASIN field + one-brand cap built ONCE here; the CLIENT-PROJECTION LAYER as a named deliverable → (3) ENV SEPARATION + RLS SUITE → (4) Keepa gate → (5) $149 tier assembly → (6) Phase J.**
+
+**THE FOUNDER HOUR — all four done, verified as reported (founder-run, DB-verified):**
+1. **`synthesis_extension` migration RUN + schema-verified** (information_schema returns synthesis_extension/jsonb). **Ledger item CLOSED.**
+2. **rerun-batch 021+022 — 2/2, no vetoes.** DB-verified: attempts 13/11/10 all `g005-1.0.0` with `synthesis_extension` NOT NULL; attempt 9 = the old 0.0.0 stub row. **The extension payload now persists instead of dropping.** *Logged, not acted on: 021's track_4 moved soft_fail → n_a between runs — watch for a flap.*
+3. **AWI-2607-022 PUBLISHED CLEAN through the wired engine — THE FIRST FULL LOOP PROVEN END TO END** (wired engine → real synthesis → M9 narrative → publish gate → delivered), no 422, no rephrase. The BL amendment behaved exactly two-sided (caught 021's true positive, passed 022's ruled borderline). **022 = the client-surface gate's DEVELOPMENT FIXTURE.**
+4. **PHASE E CLOSED** — test checkout created the clients row (single_99 / one_time / 1 credit / active); lazy creation, plan mapping, credit allocation DB-verified. Roadmap v5 updated 🟡 → ✅.
+
+**THREE BOARD ITEMS CLOSED (founder-ruled 2026-07-28):**
+- **VERDICT_SENTENCES — client wording is a RENDERING concern, never a stored-literal change.** The frozen literals stay as the internal/admin record; the client projection maps them to whatever the gate rules. **No client-wording ruling can ever reopen a freeze.** Recorded pre-gate so it cannot arise mid-gate.
+- **"NEED MORE INFORMATION" — CLOSED, do NOT add.** The four verdicts are locked vocabulary; "Verify Before Purchase" already carries this meaning; a fifth output forks the vocabulary for no semantic gain. Removed from the client-surface board.
+- **CONFIDENCE ARBITRATION LAYER — SATISFIED by the built form.** B′ refuter + the synthesis firewall + certified M4 occupy the ground; what was missing was the ruling saying so. **Build-thread check, as invited: the one form the original framing imagined that was NOT built is a confidence signal that INFLUENCES the verdict — and that form is now FORBIDDEN by the frozen architecture (nothing new enters the verdict), not merely unbuilt. No unmet requirement survives that is buildable under current law. CLOSED.**
+
+**ELEVATED: the CATEGORY CLIENT PROJECTION is a NAMED client-surface-gate DELIVERABLE, not polish** — the $499 pitch includes category findings; shipping the gate without the allowlisted projection makes the tier's differentiator invisible to the people paying for it. **The gate does not close without it.**
+
+**FLAGGED FOR THE GATE SPEC (founder, from the checkout verification): `clients.max_brands_per_credit` is NULL on every row, including growth_279** — the brand cap is NOT written per-client at checkout. The one-brand cap and the 5-brand/5-ASIN rule must read from `PLAN_BRAND_CAPS` in code, OR the column gets populated at checkout — **resolved in the gate spec; the column is NOT authoritative today.**
+
+**ENGINE-VOICE DATA (added to the logged question, two points):** (i) the same case produced a BLOCKING sentence on attempt 10 and a CLEAN narrative on attempt 13 — the engine rewrites narrative each run, so the H14-class friction is **INTERMITTENT, not per-case-inevitable**; (ii) evidence-ID leakage ("(A1, E2)", "(A10, RG-02)") appeared in 021's narrative but NOT 022's — **the client-projection layer must strip tags DEFENSIVELY**, never assuming presence or absence. Both inform whether a prompt fix is ever warranted.
+
 ## 🧭 BOARD RECONCILIATION — 2026-07-23, post-Track-6-wiring-freeze (every FINISHED claim verified against git/source at writing; two marked founder-reported)
 
 **✅ FINISHED (verified):**

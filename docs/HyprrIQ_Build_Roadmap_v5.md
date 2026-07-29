@@ -29,7 +29,7 @@ DELIVERY               ⬜ THE GAP   (H-pdf / client-surface gate — the client
 | Phase | What it is | v4 said | **v5 reality (verified)** |
 |---|---|---|---|
 | A–D | Schema, health, auth, marketing, Stripe products | ✅ | ✅ |
-| E | Checkout + webhook | 🟡 "test-mode webhook fix pending" | **✅ CODE-COMPLETE** — signature verification, idempotency (`stripe_events` UNIQUE), **5 events handled** (checkout.session.completed with topup/subscription/one-time branches · subscription.updated · subscription.deleted · invoice.paid · invoice.payment_failed), lazy client-row creation ("payment is never lost"), fail-loud top-up grants (H6 B2/B3), billing_audit trail. All five price IDs Stripe-verified against the locked model. **Remaining: a founder-run end-to-end test checkout in test mode (an AT, not code) + live-mode keys at Phase J.** |
+| E | Checkout + webhook | 🟡 "test-mode webhook fix pending" | **✅ CLOSED (founder AT 2026-07-28)** — code-complete (signature verification, idempotency, 5 events, lazy client-row creation, fail-loud top-ups, billing_audit; five price IDs Stripe-verified) **AND the end-to-end test checkout PASSED: clients row created with single_99 / one_time / 1 credit / active — lazy creation, plan mapping, and credit allocation DB-verified.** Live-mode keys remain a Phase J item. *Gate-spec flag: `clients.max_brands_per_credit` is NULL on every row — `PLAN_BRAND_CAPS` in code is the authority until the gate rules otherwise.* |
 | F | Portal screens, lifecycle | ✅ mostly | ✅ — settings/support/help/billing/onboarding pages exist; drag-drop in submit-form; **role-enum migration 20260620 IS APPLIED** (live probe: `role` values founder/client + `agency_id` present — v3's "written not applied" is stale). **Open: admin credit-adjust/refund tool (not found in admin API — still manual via dashboard).** |
 | G1 | Tracks 0–2, acquisition, Inngest | ✅ | ✅ hardened (H1–H7 under it) |
 | H1–H7 | The integrity substrate | H4 building; H5–H7 ⬜ | **✅ ALL SEVEN FROZEN** (H7 at 2026-07-07) |
@@ -49,7 +49,7 @@ DELIVERY               ⬜ THE GAP   (H-pdf / client-surface gate — the client
 
 > "G3, G6, and K are enhancements that come after you can take money and deliver a report."
 
-**v5's path:** the engine is done; the money path is code-complete. What stands between here and a first paying client is: **the client-surface/PDF gate (H-pdf) → the pre-launch security phase (env separation + RLS suite) → Phase J.** Keepa and the $149 tier ride per the pre-launch sequence ruling ("$149 must be visibly worth $50 more than $99"). Everything else is enhancement.
+**v5's path — RATIFIED BY THE FOUNDER 2026-07-28 (security amendment included):** the engine is done; the money path is CLOSED (Phase E AT passed); **the first full loop is proven end to end** (AWI-2607-022: wired engine → real synthesis → M9 → publish gate → delivered — the client-surface gate's development fixture). The ruled order: **(1) founder hour ✅ → (2) client-surface/PDF gate (spec first; ASIN field + one-brand cap built once; the client-projection layer a named deliverable, category projection included — the gate does not close without it) → (3) env separation + RLS suite → (4) Keepa → (5) $149 tier → (6) Phase J.** Keepa and $149 ride per the pre-launch sequence ruling ("$149 must be visibly worth $50 more than $99"). Everything else is enhancement.
 
 ---
 
