@@ -1,3 +1,8 @@
+// Build-time poison: if this module ever enters a client bundle again, `next build` fails
+// loudly instead of shipping a page that crashes at module evaluation (the /admin/users bug).
+// Non-Next consumers (vitest, tsx scripts) resolve "server-only" to a no-op stub — see
+// vitest.config.ts alias and the "imports"/alias notes there.
+import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 // Admin / system Supabase client — service-role, bypasses RLS. Use ONLY for

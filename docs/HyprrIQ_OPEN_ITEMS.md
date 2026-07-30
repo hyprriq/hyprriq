@@ -124,6 +124,18 @@ self-escalation) · `requireAdmin` = `getOperator` (two-sided proven; all nine p
 API routes funnel through it) · run-a-case · attempt history · pipeline progress · billing reads ·
 credit adjust · three thin screens (`/admin/users`, `/admin/cases/run`, credit-adjust widget).
 
+**FIX (2026-07-30, founder-ordered, log-confirmed):** `/admin/users` crashed client-side (200 +
+"Application error") because `users-manager.tsx` ("use client") imported the `CAPABILITIES` value
+from `permissions.ts`, dragging `supabaseAdmin` into the browser bundle where the service key is
+stripped → `createClient` threw pre-mount. Fixed: constants extracted to dependency-free
+`lib/auth/capabilities.ts` (re-exported from `permissions.ts`; server callsites untouched) +
+`import "server-only"` in `lib/supabase/admin.ts` (client-bundle inclusion now FAILS `next build`
+— proven two-sided by temporary reintroduction) + `clientBoundary.lock.test.ts` (walks the
+value-import graph from every "use client" module; failed BY NAME pre-fix). **Consequence for
+founder-run scripts:** the probe template is now
+`npx tsx --conditions=react-server --tsconfig tsconfig.json --env-file=.env.local <script>`
+(the server-only poison throws under plain Node without the condition; vitest stubs it).
+
 | # | Item | Status | Owner | Notes |
 |---|---|---|---|---|
 | 4.1 | Admin redesign — output reading format | 🔴 | UX | Denser than client side by design |

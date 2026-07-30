@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CAPABILITIES, type Capability } from "@/lib/auth/permissions";
+import { CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
 
 // ── ADMIN ACCESS FIX — the thin user-management screen (function only; UI/UX thread restyles).
 // Calls the existing users APIs. The STRUCTURAL RULES are surfaced, not discovered as errors:

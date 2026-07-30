@@ -15,13 +15,11 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 // NO SELF-ESCALATION, structurally: manage_users is NOT a grantable capability — it is the
 // super_admin ROLE itself. The users API additionally refuses to touch the caller's own row. ──
 
-export const CAPABILITIES = [
-  "view_cases", "review_publish", "run_case", "rerun", "adjust_credits", "view_billing",
-] as const;
-export type Capability = (typeof CAPABILITIES)[number];
-
-// FULL ACCESS preset = everything EXCEPT managing users (that is the super admin's role, not a cap).
-export const FULL_ACCESS: readonly Capability[] = CAPABILITIES;
+// Constants live in the dependency-free capabilities.ts (client-importable — the /admin/users
+// crash was this module's supabaseAdmin import reaching the browser bundle via a client
+// component that only wanted CAPABILITIES). Re-exported here so server callsites are unchanged.
+export { CAPABILITIES, FULL_ACCESS, type Capability } from "@/lib/auth/capabilities";
+import { CAPABILITIES, FULL_ACCESS, type Capability } from "@/lib/auth/capabilities";
 
 export interface Operator {
   user_id: string;

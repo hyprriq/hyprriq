@@ -6,6 +6,10 @@ export default defineConfig({
     // Mirror the tsconfig "@/*" path alias so value imports resolve under vitest.
     alias: {
       "@": fileURLToPath(new URL(".", import.meta.url)),
+      // The real "server-only" throws under vitest's node environment (no "react-server"
+      // export condition). Tests exercise server modules directly, so stub it to a no-op —
+      // the client-bundle poison is enforced by `next build` and the client-boundary lock.
+      "server-only": fileURLToPath(new URL("./test/stubs/server-only.ts", import.meta.url)),
     },
   },
   test: {
