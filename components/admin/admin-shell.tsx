@@ -11,7 +11,9 @@ export type AdminNavKey =
   | "outcomes"
   | "revenue"
   | "prompts"
-  | "settings";
+  | "settings"
+  | "run"
+  | "users";
 
 type Item = { key: AdminNavKey; label: string; icon: string; href: string; badge?: number };
 
@@ -23,6 +25,7 @@ const GROUPS: { section?: string; items: Item[] }[] = [
       { key: "review", label: "Quality Review", icon: "🔍", href: "/admin/cases?filter=queue" },
       { key: "delivered", label: "Delivered", icon: "✓", href: "/admin/cases?filter=delivered" },
       { key: "all", label: "All Cases", icon: "▦", href: "/admin/cases" },
+      { key: "run", label: "Run a Case", icon: "▶", href: "/admin/cases/run" },
     ],
   },
   {
@@ -31,6 +34,7 @@ const GROUPS: { section?: string; items: Item[] }[] = [
       { key: "clients", label: "Clients", icon: "👥", href: "/admin/clients" },
       { key: "support", label: "Support Queue", icon: "✉", href: "/admin/dashboard" },
       { key: "outcomes", label: "Outcomes", icon: "📈", href: "/admin/outcomes" },
+      { key: "users", label: "Users", icon: "🔐", href: "/admin/users" },
     ],
   },
   {

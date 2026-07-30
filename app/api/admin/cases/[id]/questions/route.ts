@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { AdditionalQuestion } from "@/lib/research/contracts";
 import { addQuestion, editQuestion, deleteQuestion } from "@/lib/portal/additional-questions";
+import { getOperator } from "@/lib/auth/permissions";
 
 // ADR-T2-002 follow-up — analyst/review-team questions (cases.additional_questions). Create / Edit /
 // Delete, admin-only. The AI questions_to_ask (per-track) are NEVER touched here — this is a separate
@@ -14,8 +15,9 @@ type Priority = (typeof PRIORITIES)[number];
 const asPriority = (v: unknown): Priority | undefined => (PRIORITIES.includes(v as Priority) ? (v as Priority) : undefined);
 
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
+  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
+  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
+  return (await getOperator(userId)) !== null;
 }
 
 async function readList(id: string): Promise<AdditionalQuestion[] | null> {

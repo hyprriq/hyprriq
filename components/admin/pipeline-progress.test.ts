@@ -31,6 +31,7 @@ describe("UX-1 — pipeline progress derivation (pure, includes Track 6)", () =>
   });
 
   it("a missing track_6_status column (pre-migration env) degrades to pending, never throws", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { track_6_status: _drop, ...noT6 } = base;
     const by = Object.fromEntries(deriveStages(noT6).map((s) => [s.key, s.state]));
     expect(by.t6).toBe("working"); // researching → working; null raw tolerated

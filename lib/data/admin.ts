@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getCurrentClient, type Role } from "@/lib/data/client";
+import { auth } from "@clerk/nextjs/server";
+import { getOperator } from "@/lib/auth/permissions";
+import { type Role } from "@/lib/data/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
@@ -7,11 +9,27 @@ import type { AdditionalQuestion } from "@/lib/research/contracts";
 
 // Admin-role guard. The (admin) layout enforces authentication; this enforces
 // the role (clients.is_admin). Non-admins are bounced to their own portal.
+// ── ADMIN ACCESS FIX (2026-07-30) — admin PAGE access = getOperator(userId) !== null. The
+// super-admin identity has NO clients row by founder ruling; the old clients-row gate would
+// bounce it before any admin screen rendered. getOperator carries the transitional legacy
+// clients.role fallback INSIDE it, so the founder's current toggle keeps working unchanged.
+// This one function gates all admin pages (they all funnel through it). ──
 export async function requireAdmin() {
-  const client = await getCurrentClient();
-  if (!client) redirect("/sign-in");
-  if (client.role === "client") redirect("/portal/dashboard");
-  return client;
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const op = await getOperator(userId);
+  if (!op) redirect("/portal/dashboard"); // plain clients (and unknowns) land at the portal
+  // Display fields for the shell/header: the clients row when one exists (legacy identities),
+  // else the admin_permissions email label (rows-only operators have no clients row by ruling).
+  const { data: c } = await supabaseAdmin.from("clients").select("email, full_name").eq("id", userId).maybeSingle();
+  let email = c?.email ?? "";
+  if (!email) {
+    try {
+      const { data: p } = await supabaseAdmin.from("admin_permissions").select("email").eq("user_id", userId).maybeSingle();
+      email = p?.email ?? "";
+    } catch { /* pre-migration */ }
+  }
+  return { ...op, email, full_name: c?.full_name ?? null };
 }
 
 type AdminCaseRow = {

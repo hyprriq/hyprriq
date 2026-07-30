@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getOperator } from "@/lib/auth/permissions";
 
 // Admin-only: save the internal notes for a client (Item 2). Sets notes_updated_at
 // so the admin can see how stale the notes are. Never reachable by a client — the
 // client portal has no route that writes clients.internal_notes.
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
+  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
+  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
+  return (await getOperator(userId)) !== null;
 }
 
 export async function PATCH(

@@ -203,16 +203,22 @@ export function PortalShell({
   active,
   title,
   children,
+  isOperator,
 }: {
   client: Client;
   active: PortalNavKey;
   title: string;
   children: React.ReactNode;
+  // ADMIN ACCESS FIX (2026-07-30): admin_permissions rows live on their own identities, so a
+  // portal user may be an operator without an elevated clients.role. Callers that load the
+  // operator can pass this; the legacy clients.role path keeps working unchanged. (A rows-only
+  // super-admin has no portal presence at all — they enter via /admin directly.)
+  isOperator?: boolean;
 }) {
   const access = deriveAccess(client);
   // Dev/staging-only view switcher, admin-only. VERCEL_ENV (not NODE_ENV) — Vercel
   // sets NODE_ENV='production' on preview builds too (see ADR-005).
-  const showSwitcher = process.env.VERCEL_ENV !== "production" && client.role !== "client";
+  const showSwitcher = process.env.VERCEL_ENV !== "production" && (client.role !== "client" || isOperator === true);
 
   return (
     <div className="flex min-h-dvh bg-base">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getOperator } from "@/lib/auth/permissions";
 
 // Item 4 — admin-only HARD delete of a client account (GDPR right-to-erasure).
 // This is the ONE exception to the never-hard-delete rule. Double-confirmed in
@@ -11,6 +12,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 //   non-destructive, so if the column is missing the request fails before
 //   anything is destroyed.
 async function getActor(userId: string): Promise<{ role: string } | null> {
+  // ADMIN ACCESS FIX (2026-07-30): operator identities (admin_permissions, possibly no clients
+  // row) act as elevated here too — pages and APIs can never disagree.
+  const op = await getOperator(userId);
+  if (op) return { role: op.role };
   const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
   return data ?? null;
 }

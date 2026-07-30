@@ -7,6 +7,8 @@ import {
   getClientBillingAudit,
 } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { CreditAdjust } from "@/components/admin/credit-adjust";
+import { can } from "@/lib/auth/permissions";
 import { InternalNotes } from "@/components/admin/internal-notes";
 import { DeleteClient } from "@/components/admin/delete-client";
 import { StatusBadge, VerdictBadge } from "@/components/portal/badges";
@@ -91,6 +93,12 @@ export default async function AdminClientDetailPage({
           </div>
         </div>
       </div>
+
+      {can(admin, "adjust_credits") && (
+        <div className="mt-5">
+          <CreditAdjust clientId={client.id} currentBalance={client.credits_available} />
+        </div>
+      )}
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Internal notes — full width, first (highest day-to-day value) */}

@@ -9,6 +9,7 @@ import { persistEvidencePack, persistAcquisitionMetrics } from "@/lib/data/acqui
 import { writeIntelligence } from "@/lib/data/intelligence";
 import { normalizeName } from "@/lib/utils/normalize-name";
 import type { ResearchQuestion } from "@/lib/research/acquisition/types";
+import { getOperator } from "@/lib/auth/permissions";
 
 // Phase 5.1a INFRASTRUCTURE VALIDATION endpoint (admin-only, dev tool). Runs the REAL Research
 // Orchestrator + plugins end-to-end on one supplier, persists the Evidence Pack + acquisition
@@ -17,8 +18,9 @@ import type { ResearchQuestion } from "@/lib/research/acquisition/types";
 // NOT part of the product surface — remove or keep behind admin once 5.1a is frozen.
 
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
+  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
+  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
+  return (await getOperator(userId)) !== null;
 }
 
 function hostOf(website: string | null): string | null {

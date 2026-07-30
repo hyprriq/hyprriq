@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { recordCaseOutcome, OUTCOME_TYPES, type OutcomeType } from "@/lib/data/outcomes";
+import { getOperator } from "@/lib/auth/permissions";
 
 // H6 — founder records what actually happened with a delivered case (the learning loop's raw
 // material). Update-only: the row exists iff the case was delivered (seeded by the review route).
 
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
+  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
+  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
+  return (await getOperator(userId)) !== null;
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
