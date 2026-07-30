@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -109,21 +109,38 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ## 4. ADMIN CONSOLE
 
+**RULING (founder, 2026-07-30) — super-admin identity, Option B:** `gautamnaidu.p@gmail.com`
+(Clerk `user_3FMpveJshdQq9bDAzxygPyPaMy2`) **IS the super-admin/master** — single owner identity.
+The earlier g@hyprriq.com no-client-row plan is **SUPERSEDED** for this account (the migration
+file's g@ seed template is now a dead comment, harmless). Sub-user hierarchy **DEFERRED until
+there is staff**. No conflict with his clients row: `admin_permissions` wins by explicit
+precedence in `getOperator`; portal/dual-identity unaffected; by-design edge — a `disabled=true`
+permissions row blocks everything including the legacy fallback. **Seed CONFIRMED RUN (read-only
+probe 2026-07-30): exactly one row — the master Clerk id, role=super_admin, disabled=false.**
+
+**Admin batch shipped `d71da31` + `b548447` (2026-07-30, fast-and-rough per standing rule 10):**
+role hierarchy (`lib/auth/permissions.ts`, fail-closed, six checked capabilities, no
+self-escalation) · `requireAdmin` = `getOperator` (two-sided proven; all nine pages + six legacy
+API routes funnel through it) · run-a-case · attempt history · pipeline progress · billing reads ·
+credit adjust · three thin screens (`/admin/users`, `/admin/cases/run`, credit-adjust widget).
+
 | # | Item | Status | Owner | Notes |
 |---|---|---|---|---|
 | 4.1 | Admin redesign — output reading format | 🔴 | UX | Denser than client side by design |
-| 4.2 | **Rerun button + attempt-history versioning** (OQ-CASE-RERUN) | 🔴 | FA | Re-runs currently overwrite in place |
-| 4.3 | **Operator-added material — Modes A & B** | 🔴 | FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. Forbidden: track-added material reaching the verdict without a re-run. |
-| 4.4 | Live pipeline-progress tracker (UX-1) | 🔴 | FA | Per-stage status; diagnosis when a case breaks |
-| 4.5 | **Super user — unlimited credits, run reports for direct clients** | 🔴 | FA | See 4.6/4.7 — **one coherent feature, not three** |
-| 4.6 | **Manual client creation** | 🔴 | FA | Attribution matters: reports must belong to a client for delivery + corpus |
-| 4.7 | **Credit bypass for admin-run cases** | 🔴 | FA | ⚠️ Touches money. Must be explicit, audited, impossible to trigger accidentally (H6 atomic RPCs) |
-| 4.8 | **Billing control** — view invoices, manual refunds, partial refunds, add credits | 🔴 | FA | Admin credit-adjust tool does not exist. Refunds are straightforward Stripe API |
+| 4.2 | **Rerun button + attempt-history versioning** (OQ-CASE-RERUN) | ✅ | FA | ~~Re-runs currently overwrite in place~~ **FALSE (source-verified 2026-07-30):** the rerun path already existed (review route `request_investigation`) and H1 appends attempts. Added `rerun`/`review_publish` capability gates + `AttemptHistory` (DELIVERED pin, LATEST marker; per-attempt verdict not stored — shown as markers, honestly). |
+| 4.3 | **Operator-added material — Modes A & B** | 🔴 | FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. Forbidden: track-added material reaching the verdict without a re-run. On the client-surface gate ruling board (§1.1–1.3, §7b). |
+| 4.4 | Live pipeline-progress tracker (UX-1) | ✅ | FA | `PipelineProgress` chips on review page over `track_0..6_status`; failed stages named. Diagnostic-grade; UX restyle stays under 4.1. |
+| 4.5 | **Super user — unlimited credits, run reports for direct clients** | ✅ | FA | Shipped as one feature with 4.7: `POST /api/admin/cases/run`, normal pipeline, `cases.origin='operator'` + `operator_meta` = one-query provenance, audit row per run, house row `operator-house` (0 credits, inert) for attribution. Super-admin seed **confirmed run 2026-07-30** (Option-B ruling above). Tier fork STOP-2 → 4.14. |
+| 4.6 | **Manual client creation** | 🔴 | FA | Attribution matters: reports must belong to a client for delivery + corpus. Interim: operator runs attribute to the `operator-house` row. |
+| 4.7 | **Credit bypass for admin-run cases** | ✅ | FA | Proven: NO credit call anywhere on the operator-run path (rpc spy untouched), audited per run, explicit capability (`run_case`). |
+| 4.8 | **Billing control** — view invoices, manual refunds, partial refunds, add credits | 🟡 | FA | Reads ✅ (`lib/data/stripeBilling.ts`, read-only, key-safe — NO write call exists) + credit adjust ✅ (`/api/admin/clients/[id]/credits`, H6 atomic RPCs only, REQUIRED reason, audited). **Refunds = STOP-3 → 4.15, deliberately unbuilt.** |
 | 4.9 | **Invoice format/branding** | 🔴 | F | Do Stripe invoice branding settings FIRST (logo/colour/footer, ~20 min) before any custom generator |
-| 4.10 | Staff accounts + permissions | 🔴 | FA | Role-enum migration **is applied** — unblocked |
+| 4.10 | Staff accounts + permissions | 🟡 | FA | Mechanism ✅ built (`admin_permissions`: super_admin \| sub_user, six checked capabilities, FULL_ACCESS preset, fail-closed, disabled-beats-all; manage-users is the super_admin ROLE, never a grantable cap — self-escalation structurally impossible; `/admin/users` super-admin only). **Activation of sub-users DEFERRED until there is staff (Option-B ruling above).** |
 | 4.11 | Verify ⚖ LEGAL FLAG banner renders | 🔴 | F | Built, unverified |
 | 4.12 | Outcome panel refinement | 🔴 | UX | Recurring task, not a buried field |
 | 4.13 | Agency panel | 🔒 | — | Phase K |
+| 4.14 | **STOP-2 fork — operator-run case tier** | ⛔ | F | Built shape: per-run explicit `plan_type`, NO default. Options as presented: (A) always scale_499 (full engine incl. Track 6 — build-thread lean, intelligence value) · (B) operator picks per run (the built shape; corpus-honest) · (C) fixed lower tier (no case made). One-line change on ruling. |
+| 4.15 | **STOP-3 fork — refunds** | ⛔ | F | DESCRIBED ONLY, deliberately unbuilt: `stripe.refunds.create`, a `refund` capability, audit + credit-clawback decision. Build-thread recommendation: dashboard-only until Phase J. **NO refund write exists anywhere in the codebase.** |
 
 ---
 
