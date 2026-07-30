@@ -85,6 +85,7 @@ export function CaseReview({
   caseStatus,
   additionalQuestions = [],
   supplierIdentity = null,
+  canRerun = false,
 }: {
   caseId: string;
   caseNumber: string;
@@ -93,9 +94,10 @@ export function CaseReview({
   caseStatus: string;
   additionalQuestions?: AdditionalQuestion[];
   supplierIdentity?: SupplierIdentity | null;
+  canRerun?: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"idle" | "override" | "investigate">("idle");
+  const [mode, setMode] = useState<"idle" | "override" | "investigate" | "dispute">("idle");
   const [overrideVerdict, setOverrideVerdict] = useState<Verdict | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -162,8 +164,10 @@ export function CaseReview({
         }
         throw new Error(data?.message || data?.error || "Could not save.");
       }
-      // Name the delivered case in the success toast (server echoes case_number; fall back to the prop).
-      setDone(buildDeliveredToast(action, typeof data?.case_number === "string" ? data.case_number : caseNumber));
+      // Name the delivered case in the success toast (server echoes case_number; fall back to the
+      // prop). A dispute re-run on a delivered case returns an explicit note (frozen record, H1) —
+      // surface the server's own wording when it sends one.
+      setDone(typeof data?.note === "string" ? data.note : buildDeliveredToast(action, typeof data?.case_number === "string" ? data.case_number : caseNumber));
       setMode("idle");
       router.refresh();
     } catch (e) {
@@ -568,7 +572,50 @@ export function CaseReview({
           </div>
         )}
         {delivered ? (
-          <p className="text-[14px] font-semibold text-clear-ink">✓ This case has been delivered.</p>
+          <div className="space-y-3">
+            <p className="text-[14px] font-semibold text-clear-ink">✓ This case has been delivered.</p>
+            {/* DISPUTE RE-RUN (founder-ordered 2026-07-30) — the API already supported rerunning a
+                delivered case (enqueue a new attempt; the delivered record stays frozen, H1); this
+                button surfaces that EXISTING path. Deliberately distinct from the pre-delivery
+                "Request further investigation": different act, different consequence, own confirm. */}
+            {canRerun && mode !== "dispute" && (
+              <button
+                type="button"
+                onClick={() => { setMode("dispute"); setError(null); setDone(null); }}
+                className="rounded-lg border border-deny-ink/40 bg-deny-bg px-4 py-2.5 text-sm font-semibold text-deny-ink hover:opacity-90"
+              >
+                Re-investigate (dispute)
+              </button>
+            )}
+            {mode === "dispute" && (
+              <div className="space-y-3 rounded-lg border border-deny-ink/30 bg-deny-bg/40 p-3">
+                <div className="text-[13px] font-semibold text-ink">Dispute re-run — costs a real engine run</div>
+                <p className="text-[13px] leading-relaxed text-ink-2">
+                  Creates a new attempt through the full pipeline. The delivered report the client
+                  received stays frozen and unchanged (H1); the case is flagged
+                  reinvestigation_pending when the new attempt completes.
+                </p>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  rows={2}
+                  placeholder="Why is this delivered case being re-investigated? (required, audited)…"
+                  className="w-full rounded-lg border border-line bg-base px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => send("request_investigation")}
+                    disabled={busy !== null || !reason.trim()}
+                    className="rounded-lg bg-deny-ink px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    {busy === "request_investigation" ? "Enqueuing…" : "Confirm dispute re-run"}
+                  </button>
+                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-base px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             {mode === "idle" && (
