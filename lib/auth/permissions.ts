@@ -1,0 +1,67 @@
+import { supabaseAdmin } from "@/lib/supabase/admin";
+
+// ── ADMIN BATCH (2026-07-30) — the role hierarchy: ONE super admin + sub-users with CHECKED
+// CAPABILITIES (never hardcoded ids/emails). Rows live in `admin_permissions` (founder-run
+// migration; roles live on their OWN identities — never on client rows, per the identity ruling:
+// super admin = g@hyprriq.com when the mailbox exists; gautamnaidu.p@gmail.com = full-access
+// sub-user; no role is ever assigned to an existing clients row).
+//
+// TRANSITIONAL FALLBACK (until the migration + super-admin seed run): a clients row with
+// role='founder' operates as super-admin-equivalent, role='admin' as a full-access sub-user —
+// existing admin access keeps working the moment this ships, and dies naturally once the real
+// rows exist. FAIL CLOSED everywhere else: no row (or a query error, or the table not existing
+// yet) means NO capabilities.
+//
+// NO SELF-ESCALATION, structurally: manage_users is NOT a grantable capability — it is the
+// super_admin ROLE itself. The users API additionally refuses to touch the caller's own row. ──
+
+export const CAPABILITIES = [
+  "view_cases", "review_publish", "run_case", "rerun", "adjust_credits", "view_billing",
+] as const;
+export type Capability = (typeof CAPABILITIES)[number];
+
+// FULL ACCESS preset = everything EXCEPT managing users (that is the super admin's role, not a cap).
+export const FULL_ACCESS: readonly Capability[] = CAPABILITIES;
+
+export interface Operator {
+  user_id: string;
+  role: "super_admin" | "sub_user";
+  capabilities: readonly Capability[];
+  transitional?: boolean; // true when derived from the legacy clients.role fallback
+}
+
+export async function getOperator(userId: string): Promise<Operator | null> {
+  try {
+    const { data: row, error } = await supabaseAdmin
+      .from("admin_permissions")
+      .select("user_id, role, capabilities, disabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!error && row && !row.disabled) {
+      const caps = (Array.isArray(row.capabilities) ? row.capabilities : []).filter(
+        (c): c is Capability => (CAPABILITIES as readonly string[]).includes(c),
+      );
+      return row.role === "super_admin"
+        ? { user_id: userId, role: "super_admin", capabilities: FULL_ACCESS }
+        : { user_id: userId, role: "sub_user", capabilities: caps };
+    }
+    if (!error && row?.disabled) return null; // disabled beats every fallback
+  } catch {
+    /* table may not exist pre-migration — fall through to the transitional check */
+  }
+  // Transitional: legacy clients.role keeps the founder working pre-seed.
+  const { data: c } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
+  if (c?.role === "founder") return { user_id: userId, role: "super_admin", capabilities: FULL_ACCESS, transitional: true };
+  if (c?.role === "admin") return { user_id: userId, role: "sub_user", capabilities: FULL_ACCESS, transitional: true };
+  return null; // fail closed
+}
+
+export function can(op: Operator | null, cap: Capability): boolean {
+  if (!op) return false;
+  if (op.role === "super_admin") return true;
+  return op.capabilities.includes(cap);
+}
+
+export function canManageUsers(op: Operator | null): boolean {
+  return op?.role === "super_admin"; // the role IS the permission — never grantable to a sub-user
+}

@@ -11,6 +11,9 @@ import { OutcomePanel } from "@/components/admin/outcome-panel";
 import { getCaseOutcome } from "@/lib/data/outcomes";
 import { PLAN_NAME } from "@/lib/constants/plans";
 import { findLegalSignals } from "@/lib/research/legalSignals";
+import { getCaseOpsView } from "@/lib/data/adminOps";
+import { PipelineProgress, deriveStages } from "@/components/admin/pipeline-progress";
+import { AttemptHistory } from "@/components/admin/attempt-history";
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -41,6 +44,7 @@ export default async function CaseReviewPage({
   // H6 — outcome ground truth, only meaningful once delivered (row seeded by the publish route).
   const delivered = c.status === "delivered" || c.status === "complete";
   const outcome = delivered ? await getCaseOutcome(c.id) : null;
+  const ops = await getCaseOpsView(c.id); // ADMIN BATCH — progress + attempt history + provenance
   const vm = buildVerdictViewModel({
     trackRows,
     synthesis: intel?.synthesis ?? null,
@@ -85,6 +89,19 @@ export default async function CaseReviewPage({
             </div>
           )}
           {delivered && <OutcomePanel caseId={c.id} existing={outcome} />}
+          {ops && (
+            <>
+              {ops.origin === "operator" && (
+                <div className="rounded-card border border-line bg-subtle p-3 text-[13px] text-ink-2">
+                  <span className="font-semibold">Operator-run case</span> (no credit charged)
+                  {ops.operator_meta?.client_name && <> · for <span className="font-medium">{ops.operator_meta.client_name}</span></>}
+                  {ops.operator_meta?.company_name && <> — {ops.operator_meta.company_name}</>}
+                </div>
+              )}
+              <PipelineProgress stages={deriveStages(ops.statuses)} />
+              <AttemptHistory attempts={ops.attempts} deliveredAttempt={ops.delivered_attempt} currentVerdict={c.verdict} />
+            </>
+          )}
         </div>
 
         <CaseReview caseId={c.id} caseNumber={c.case_number} vendorName={c.vendor_name} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} />

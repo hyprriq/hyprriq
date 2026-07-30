@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import { getOperator, can } from "@/lib/auth/permissions";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
@@ -42,6 +43,13 @@ export async function POST(
   const action = body.action;
   if (action !== "publish" && action !== "override" && action !== "request_investigation") {
     return NextResponse.json({ error: "invalid_action" }, { status: 400 });
+  }
+  // ADMIN BATCH — capability layer over the legacy isAdmin gate: publish/override need
+  // review_publish; the re-run action needs rerun. (Transitional founder role passes both.)
+  {
+    const op = await getOperator(userId);
+    const needed = action === "request_investigation" ? "rerun" : "review_publish";
+    if (!can(op, needed)) return NextResponse.json({ error: `forbidden: requires ${needed}` }, { status: 403 });
   }
   if (action === "override" && (!body.override_verdict || !VALID_VERDICTS.includes(body.override_verdict))) {
     return NextResponse.json({ error: "Select a valid verdict to override.", message: "Select a valid verdict to override." }, { status: 400 });

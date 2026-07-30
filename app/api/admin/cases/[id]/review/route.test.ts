@@ -26,6 +26,12 @@ const { auth, caseMaybeSingle, roleMaybeSingle, casesUpdate, casesNot, casesEq, 
   };
 });
 vi.mock("@clerk/nextjs/server", () => ({ auth }));
+// ADMIN BATCH — the capability layer is unit-tested in lib/auth/permissions.test.ts; here the
+// operator passes so the route's OWN behavior stays the subject under test.
+vi.mock("@/lib/auth/permissions", () => ({
+  getOperator: vi.fn().mockResolvedValue({ user_id: "admin-1", role: "super_admin", capabilities: [] }),
+  can: () => true,
+}));
 vi.mock("@/lib/inngest/client", () => ({ inngest: { send: inngestSend } }));
 vi.mock("@/lib/data/track-results", () => ({ getCaseTrackResults: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/data/outcomes", () => ({ seedCaseOutcome: vi.fn().mockResolvedValue({ error: null }) }));
