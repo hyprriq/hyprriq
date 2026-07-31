@@ -164,6 +164,15 @@ export async function POST(req: Request) {
           : sub.status === "past_due" || sub.status === "unpaid"
             ? "past_due"
             : "cancelled";
+        // ── SUBSCRIBER TIER CHANGE (2026-07-30) — the price on the subscription is the truth.
+        // Before this, a plan switch made in the Stripe customer portal left clients.plan_type
+        // STALE forever (this handler only tracked status). Now the price id resolves through
+        // planForPriceId and plan identity follows it. CREDITS ARE DELIBERATELY UNTOUCHED here:
+        // no mid-cycle grant or clawback (UNRULED — flagged for the founder); the next renewal's
+        // invoice.paid subscription_cycle already rolls credits at the NEW plan's numbers via
+        // the existing rollover path. No new billing logic — mapping only. ──
+        const priceId = sub.items?.data?.[0]?.price?.id ?? null;
+        const newPlan = priceId ? planForPriceId(priceId) : null;
         // Read prior state first so we only log a Billing History row on an actual
         // transition (subscription.updated fires for many non-status changes).
         const { data: prior } = await supabaseAdmin
@@ -171,10 +180,24 @@ export async function POST(req: Request) {
           .select("id, billing_status, plan_type")
           .eq("stripe_subscription_id", sub.id)
           .maybeSingle();
+        const planChanged = newPlan !== null && prior !== null && prior.plan_type !== newPlan;
         await supabaseAdmin
           .from("clients")
-          .update({ billing_status: status, renewal_date: iso((sub as unknown as { current_period_end: number }).current_period_end) })
+          .update({
+            billing_status: status,
+            renewal_date: iso((sub as unknown as { current_period_end: number }).current_period_end),
+            ...(newPlan ? { plan_type: newPlan, plan_category: PLAN_CATEGORY[newPlan] } : {}),
+          })
           .eq("stripe_subscription_id", sub.id);
+        if (planChanged && prior) {
+          const rank: Record<string, number> = { single_99: 0, growth_279: 1, scale_499: 2 };
+          const up = (rank[newPlan as string] ?? 0) > (rank[prior.plan_type ?? ""] ?? 0);
+          await recordBillingEvent(prior.id, {
+            event: up ? "upgrade" : "downgrade",
+            oldPlan: prior.plan_type, newPlan, stripeEventId: event.id,
+            notes: "Plan switched via Stripe subscription update (credits adjust at next renewal)",
+          });
+        }
         if (prior && prior.billing_status !== status) {
           if (status === "cancelling") {
             await recordBillingEvent(prior.id, { event: "cancel", oldPlan: prior.plan_type, newPlan: prior.plan_type, stripeEventId: event.id, notes: "Scheduled cancellation at period end" });

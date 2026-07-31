@@ -12,6 +12,8 @@ import { inngest } from "@/lib/inngest/client";
 import { findLegalSignals } from "@/lib/research/legalSignals";
 import { sendAdminAlert } from "@/lib/email/notify";
 import { fileCountError } from "@/lib/constants/uploads";
+import { validateBrandAsins } from "@/lib/portal/asinIntake";
+import type { TrackContextWithIntake } from "@/lib/research/intakeExtras";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
 
@@ -84,6 +86,20 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+  // ── ASIN intake (tracker §1.3) — the CODE GUARD, pre-charge: one ASIN per brand, max the
+  // plan brand cap, valid format, Scale-only. The form hides the field on other tiers; this
+  // is the rule the form merely reflects. ──
+  let brandAsins: Record<string, string> | null = null;
+  try {
+    const rawAsins = JSON.parse(String(form.get("brand_asins") ?? "null"));
+    const check = validateBrandAsins(plan, brands, rawAsins);
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error, message: check.message }, { status: 400 });
+    }
+    brandAsins = check.clean;
+  } catch {
+    /* invalid JSON -> treated as none provided */
+  }
   const cost = creditsRequired(brands.length, plan);
 
   // ---- atomic credit deduction ----
@@ -128,6 +144,21 @@ export async function POST(req: Request) {
       { error: caseErr?.message ?? "Could not create case." },
       { status: 500 },
     );
+  }
+
+  // ── ASIN persistence — SEPARATE from the insert on purpose, loud-but-non-fatal (the H2
+  // OQ-2 pattern, same as persistSynthesisExtension pre-migration): the brand_asins column
+  // lands with a founder-run migration; until it runs, this update fails LOUDLY in the log
+  // while the submission proceeds — the ASINs still reach the pipeline via the enqueue
+  // payload below, so nothing downstream is lost. ──
+  if (brandAsins) {
+    const { error: asinErr } = await supabaseAdmin
+      .from("cases")
+      .update({ brand_asins: brandAsins })
+      .eq("id", created.id);
+    if (asinErr) {
+      console.error("[submit] brand_asins persist failed (migration pending?):", asinErr.message, { case_id: created.id });
+    }
   }
 
   // ---- TRIGGER 9 (BL fix gate, BL3 founder-ruled): legal/IP-notice detection in CLIENT INPUT.
@@ -176,17 +207,18 @@ export async function POST(req: Request) {
   // submission_failed (excluded from the client's case list), audit-logged. Pre-H2 this returned
   // ok:true and left a charged case wedged in pending_intake.
   try {
-    await inngest.send({
-      name: "pipeline/run-case",
-      data: {
-        case_id: created.id,
-        vendor_name: vendorName,
-        vendor_website: vendorWebsite,
-        brands_submitted: brands,
-        marketplace,
-        plan_type: plan,
-      },
-    });
+    // Typed as TrackContextWithIntake: brand_asins rides the payload into pipelineHandler's
+    // `...event.data` spread (frozen contracts.ts untouched — see lib/research/intakeExtras.ts).
+    const payload: TrackContextWithIntake = {
+      case_id: created.id,
+      vendor_name: vendorName,
+      vendor_website: vendorWebsite,
+      brands_submitted: brands,
+      marketplace,
+      plan_type: plan,
+      ...(brandAsins ? { brand_asins: brandAsins } : {}),
+    };
+    await inngest.send({ name: "pipeline/run-case", data: payload });
   } catch (e) {
     console.error("[submit] inngest enqueue failed:", e, { case_id: created.id });
     await supa.rpc("refund_client_credits", { p_client_id: userId, p_amount: cost });

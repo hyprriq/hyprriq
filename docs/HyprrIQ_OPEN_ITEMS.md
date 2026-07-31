@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-07-30
+**Last updated:** 2026-07-30 (final dev batch — see §4 fix block, 1.3/1.5/3.x, STOP rulings in 4.14/4.15)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -41,9 +41,9 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 |---|---|---|---|---|
 | 1.1 | **Client report — on-screen + PDF** | 🔴 | UX→FA | The gap carried by roadmaps v3 AND v4. Placeholder only today. |
 | 1.2 | **Client-projection layer** | 🔴 | FA | Named gate deliverable. One projection function — not string-by-string, or it leaks. Must strip `src_N`/evidence tags DEFENSIVELY (present in 021's narrative, absent in 022's). |
-| 1.3 | **ASIN intake field + one-brand cap** | 🔴 | FA | Real vertical slice: schema column + form + validation + code guard + `TrackContext` threading. 1 ASIN per brand; 5 brands / 5 ASINs max. Unblocks Keepa. |
+| 1.3 | **ASIN intake field + one-brand cap** | 🟡 | FA→F | **BUILT 2026-07-30 (dev batch), migration = founder ledger.** Code guard `lib/portal/asinIntake.ts` (1 ASIN/brand, ≤ plan cap, format, Scale-only; caps from `PLAN_BRAND_CAPS`, never the NULL DB column) + form (Scale-only progressive disclosure, "the ASIN you're actually planning to buy" copy, graceful at-cap line) + threading via `lib/research/intakeExtras.ts` (contracts.ts FROZEN — additive intersection type; value rides the Inngest payload). Persistence loud-but-non-fatal until the founder runs: `ALTER TABLE cases ADD COLUMN brand_asins jsonb;` (pre-verified ABSENT 2026-07-30). ASINs OPTIONAL at submit = UNRULED default. |
 | 1.4 | **Mobile layout** | 🔴 | UX→FA | Portal does not load on mobile. Broken surface. |
-| 1.5 | **Credits display (BUG-2)** | 🔴 | FA | "12 of 5 remaining" — top-up overflow. Money surface; trust issue. |
+| 1.5 | **Credits display (BUG-2)** | ✅ | FA | **FIXED 2026-07-30:** `lib/portal/creditsDisplay.ts` — ONE computation for all render sites (billing ×2, dashboard, sidebar). Balance and plan allotment stated as distinct quantities ("7 credits available · plan renews to 5/cycle · includes 2 extra"); bar hard-capped at 100. Test-locked: can never say "7 of 5". Visual redesign stays UX. |
 | 1.6 | **Legal pages** | 🔴 | F+PT | Terms · Privacy · Data policy · Refund/cancellation · Cookie policy **+ consent banner** (mandatory once pixels are added) · IP/claims · no-guarantee disclaimer. |
 | 1.7 | **Contact page** | 🔴 | UX | Plus a working inbound route. |
 | 1.8 | **Sample-report page** | 🔴 | UX | Highest-converting page not yet built — a $499 prospect wants to see the deliverable. |
@@ -72,7 +72,7 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 | 2.12 | Email capture / newsletter signup | 🔴 | UX |
 | 2.13 | **Go-live gate condition:** site must not go public advertising category flags unless built — **now satisfiable** (Track 6 is live) | 🟡 | F |
 | 2.14 | Copy edits marked PROPOSED at the banned-language gate: `help.ts` action line, `how-it-works.ts` negation | 🔴 | PT |
-| 2.15 | `SAAS_ARCHITECTURE.md:32` still shows retired $79/$197 | 🔴 | FA |
+| 2.15 | ~~`SAAS_ARCHITECTURE.md:32` still shows retired $79/$197~~ **fixed 2026-07-30** (marked retired, current `single_99` $99 named) | ✅ | FA |
 
 ---
 
@@ -82,15 +82,16 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 |---|---|---|---|
 | 3.1 | **Case output / report redo** — most important; what the client reads | 🔴 | UX→FA |
 | 3.2 | Portal page redesign | 🔴 | UX |
-| 3.3 | Credits section fix (BUG-2) | 🔴 | FA |
+| 3.3 | Credits section fix (BUG-2) — see 1.5, **fixed 2026-07-30** | ✅ | FA |
 | 3.4 | ~~Plan-upgrade button (missing)~~ **✅ VERIFIED BUILT** — "Upgrade to a subscription" card + Upgrade action live on the billing page | ✅ | — |
 | 3.5 | Billing overhaul — credit FAQs, per-case usage, top-up clarity | 🔴 | UX |
 | 3.6 | Latest-news section (Sanity posts) | 🔴 | UX |
-| 3.7 | **ASIN field + one-brand cap** (see 1.3) | 🔴 | FA |
+| 3.7 | **ASIN field + one-brand cap** (see 1.3) | 🟡 | FA→F |
 | 3.8 | Mobile (see 1.4) | 🔴 | UX→FA |
 | 3.9 | ~~Settings page — never built~~ **✅ VERIFIED BUILT** — real page (profile form, contact/billing/tax fields, `SettingsForm`). If v2 meant a richer scope, log the delta as a NEW item | ✅ | — |
-| 3.10 | Case status/progress view (client-facing, no method exposure) | 🔴 | UX |
-| 3.11 | Download-PDF action | 🔴 | FA |
+| 3.10 | Case status/progress view — **DATA+VIEW EXIST (source-verified 2026-07-30):** StatusBadge (14 statuses → 8 client labels; `research_failed` = "Delayed — under review"), Research Dimensions grid (5 rows, per-track pills), Timeline stepper, 4s refresh while researching. ⚠ FORK for the design pass: the dimensions grid names the five research dimensions with per-dimension status — founder rules whether that counts as "method exposure." Design pass remains | 🟡 | UX |
+| 3.11 | Download-PDF action — **stub placed 2026-07-30:** disabled "Download PDF (coming soon)" on the delivered client case view; generator = client-surface gate. NOTE: the named seam (`GET /api/admin/cases/[id]/report` over `buildVerdictViewModel`) is ADMIN-scoped; the client download needs its own client-scoped route in front of the same view-model — the gate rules that | 🟡 | FA |
+| 3.15 | **Subscriber tier switch (Growth ⇄ Scale)** — **webhook half BUILT 2026-07-30:** `customer.subscription.updated` derives plan identity from the subscription price (`planForPriceId`) → updates `plan_type`/`plan_category` + emits the (previously declared, never-emitted) `upgrade`/`downgrade` billing events. **Founder step:** enable "customers can switch plans" (Growth+Scale prices) in the Stripe Dashboard customer-portal config — the existing "Manage subscription" button then handles the rest. CREDITS mid-cycle deliberately untouched (UNRULED — next renewal grants the new plan's numbers via the existing rollover path) | 🟡 | FA→F |
 | 3.12 | Clarification / dispute request flow | 🔴 | UX |
 | 3.13 | ~~Submission form: drag-drop upload, conditional notes~~ **✅ VERIFIED BUILT** — drag-drop path shares validation with the button path; notes REQUIRED when no document uploaded (the conditional rule, live) | ✅ | — |
 | 3.14 | Client-facing checkpoint emails (OQ-3, currently gated — admin-digest only) | 🗄️ | PT |
@@ -140,7 +141,7 @@ founder-run scripts:** the probe template is now
 |---|---|---|---|---|
 | 4.1 | Admin redesign — output reading format | 🔴 | UX | Denser than client side by design |
 | 4.2 | **Rerun button + attempt-history versioning** (OQ-CASE-RERUN) | ✅ | FA | ~~Re-runs currently overwrite in place~~ **FALSE (source-verified 2026-07-30):** the rerun path already existed (review route `request_investigation`) and H1 appends attempts. Added `rerun`/`review_publish` capability gates + `AttemptHistory` (DELIVERED pin, LATEST marker; per-attempt verdict not stored — shown as markers, honestly). **Dispute-rerun button on DELIVERED cases added 2026-07-30** (surfaces the already-tested frozen-delivered API path; distinct styling, own confirm step, `rerun`-capability gated). |
-| 4.3 | **Operator-added material — Modes A & B** | 🔴 | FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. Forbidden: track-added material reaching the verdict without a re-run. On the client-surface gate ruling board (§1.1–1.3, §7b). |
+| 4.3 | **Operator-added material — Modes A & B** | 🔴 | F→FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. Forbidden: track-added material reaching the verdict without a re-run. **State confirmed 2026-07-30: ZERO code, ruling only** (closest existing: `additional_questions` CRUD, admin-only; `dispute_rerun` contract comment names Mode B as intended-unbuilt). **Build-thread recommendation: DESIGN PASS, not dev** — Mode A's note must RENDER in a report that doesn't exist yet, and Mode B's finding shape must enter a track contract surface (frozen) — both entangled with the client-surface gate. Founder rules. |
 | 4.4 | Live pipeline-progress tracker (UX-1) | ✅ | FA | `PipelineProgress` chips on review page over `track_0..6_status`; failed stages named. Diagnostic-grade; UX restyle stays under 4.1. |
 | 4.5 | **Super user — unlimited credits, run reports for direct clients** | ✅ | FA | Shipped as one feature with 4.7: `POST /api/admin/cases/run`, normal pipeline, `cases.origin='operator'` + `operator_meta` = one-query provenance, audit row per run, house row `operator-house` (0 credits, inert) for attribution. Super-admin seed **confirmed run 2026-07-30** (Option-B ruling above). Tier fork STOP-2 → 4.14. |
 | 4.6 | **Manual client creation** | 🔴 | FA | Attribution matters: reports must belong to a client for delivery + corpus. Interim: operator runs attribute to the `operator-house` row. |
@@ -151,8 +152,8 @@ founder-run scripts:** the probe template is now
 | 4.11 | Verify ⚖ LEGAL FLAG banner renders | 🔴 | F | Built, unverified |
 | 4.12 | Outcome panel refinement | 🔴 | UX | Recurring task, not a buried field |
 | 4.13 | Agency panel | 🔒 | — | Phase K |
-| 4.14 | **STOP-2 fork — operator-run case tier** | ⛔ | F | Built shape: per-run explicit `plan_type`, NO default. Options as presented: (A) always scale_499 (full engine incl. Track 6 — build-thread lean, intelligence value) · (B) operator picks per run (the built shape; corpus-honest) · (C) fixed lower tier (no case made). One-line change on ruling. |
-| 4.15 | **STOP-3 fork — refunds** | ⛔ | F | DESCRIBED ONLY, deliberately unbuilt: `stripe.refunds.create`, a `refund` capability, audit + credit-clawback decision. Build-thread recommendation: dashboard-only until Phase J. **NO refund write exists anywhere in the codebase.** |
+| 4.14 | ~~STOP-2 fork~~ **STOP-2 RULED (founder, 2026-07-30): Option B — the operator picks the tier per run, NO default.** The built shape stands as-is; no code change. | ✅ | — | Options were: (A) always scale_499 · (B) per-run pick (chosen) · (C) fixed lower tier. |
+| 4.15 | ~~STOP-3 fork~~ **STOP-3 RULED (founder, 2026-07-30): refunds stay DASHBOARD-ONLY until post-Phase-J.** Deliberately unbuilt: no `stripe.refunds.create`, no `refund` capability, no credit-clawback path. **NO refund write exists anywhere in the codebase** — that absence is now the ruled state, not a gap. | ✅ | — | Revisit at Phase J with the audit + clawback decision. |
 
 ---
 

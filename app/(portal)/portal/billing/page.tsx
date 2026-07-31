@@ -13,6 +13,7 @@ import {
   PLAN_TYPES,
   type PlanType,
 } from "@/lib/constants/plans";
+import { creditsView } from "@/lib/portal/creditsDisplay";
 
 // Credit top-up packs (one-time). Both subscription plans can buy either the
 // 3-credit ($99) or 6-credit ($179) pack — no reason to restrict by plan.
@@ -50,10 +51,10 @@ export default async function BillingPage() {
   const client = await requireOnboardedClient();
   const invoices = await getInvoices(client.stripe_customer_id);
   const plan = client.plan_type as PlanType | null;
-  const total = plan ? PLAN_CREDITS_PER_CYCLE[plan] : 0;
   const rollover = plan ? PLAN_ROLLOVER_LIMIT[plan] : 0;
   const renewDays = daysUntil(client.renewal_date);
-  const pct = total > 0 ? Math.min(100, Math.round((client.credits_available / total) * 100)) : 0;
+  // BUG-2 fix — held credits vs plan allotment are distinct quantities (lib/portal/creditsDisplay).
+  const cv = creditsView(client.credits_available, plan);
 
   return (
     <PortalShell client={client} active="billing" title="Billing & Credits">
@@ -89,9 +90,9 @@ export default async function BillingPage() {
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-line bg-base p-3">
-                  <div className="text-[12px] uppercase tracking-wide text-muted">Credits Left</div>
-                  <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{client.credits_available}</div>
-                  <div className="text-[12px] text-muted">of {total} this cycle</div>
+                  <div className="text-[12px] uppercase tracking-wide text-muted">Credits Available</div>
+                  <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{cv.available}</div>
+                  <div className="text-[12px] text-muted">{cv.perCycle > 0 ? `plan renews to ${cv.perCycle}/cycle` : "—"}</div>
                 </div>
                 <div className="rounded-lg border border-line bg-base p-3">
                   <div className="text-[12px] uppercase tracking-wide text-muted">Rollover</div>
@@ -105,9 +106,9 @@ export default async function BillingPage() {
                 </div>
               </div>
               <div className="mt-4">
-                <div className="mb-1.5 text-[12px] text-muted">{client.credits_available} of {total} credits remaining this cycle</div>
+                <div className="mb-1.5 text-[12px] text-muted">{cv.headline}{cv.detail ? ` · ${cv.detail}` : ""}</div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-subtle">
-                  <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+                  <div className="h-full rounded-full bg-brand" style={{ width: `${cv.pct}%` }} />
                 </div>
               </div>
               {client.plan_category === "subscription" && (

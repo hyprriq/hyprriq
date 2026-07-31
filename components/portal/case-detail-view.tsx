@@ -190,6 +190,22 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
         <div className="mt-2 flex items-center gap-3">
           <StatusBadge status={c.status} />
           <VerdictBadge verdict={c.verdict} />
+          {/* PDF SEAM STUB (2026-07-30) — deliberately disabled. The report generator is the
+              client-surface gate's deliverable; the named serialization seam is an admin route
+              (GET /api/admin/cases/[id]/report over buildVerdictViewModel), and the CLIENT
+              download will need its own client-scoped route in front of the same view-model —
+              that fork is the gate's to rule. This button exists so the affordance has a home;
+              it does nothing until the generator lands. */}
+          {(c.status === "delivered" || c.status === "complete") && (
+            <button
+              type="button"
+              disabled
+              title="Report download is coming — your report is available on-screen below."
+              className="cursor-not-allowed rounded-lg border border-line bg-subtle px-3 py-1.5 text-[13px] font-semibold text-muted"
+            >
+              Download PDF (coming soon)
+            </button>
+          )}
         </div>
       </div>
 

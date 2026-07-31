@@ -10,6 +10,7 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 import { brandHelper, brandHelperLearnMore, MARKETPLACES, estimatedCompletionLabel } from "@/lib/content/submit";
+import { planCollectsAsins, normalizeAsin, ASIN_RE, brandCapMessage } from "@/lib/portal/asinIntake";
 
 type Result = {
   case_id: string;
@@ -43,6 +44,7 @@ export function SubmitForm({
   const [website, setWebsite] = useState("");
   const [marketplace, setMarketplace] = useState("amazon_us");
   const [brands, setBrands] = useState<string[]>([]);
+  const [asins, setAsins] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState("");
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -58,7 +60,14 @@ export function SubmitForm({
   // so they become required (conditional requirement).
   const notesRequired = files.length === 0;
   const notesOk = files.length > 0 ? true : notes.trim().length > 0;
-  const canSubmit = vendor.trim() !== "" && brands.length > 0 && notesOk && remainingAfter >= 0;
+  // ASIN intake — Scale-only progressive disclosure; the field never renders on other tiers.
+  // ASINs are OPTIONAL (UNRULED default, flagged), but a non-empty value must be a valid ASIN.
+  const collectsAsins = planCollectsAsins(plan);
+  const badAsins = collectsAsins
+    ? brands.filter((b) => (asins[b] ?? "").trim() !== "" && !ASIN_RE.test(normalizeAsin(asins[b])))
+    : [];
+  const asinsOk = badAsins.length === 0;
+  const canSubmit = vendor.trim() !== "" && brands.length > 0 && notesOk && asinsOk && remainingAfter >= 0;
 
   // Multi-document intake (founder-ruled 2026-07-12): the framing stays optional with NO "up to N"
   // hints — the limit is a silent guardrail that surfaces only when a sixth file is attempted,
@@ -102,7 +111,15 @@ export function SubmitForm({
   }
 
   function removeBrand(i: number) {
+    const gone = brands[i];
     setBrands(brands.filter((_, idx) => idx !== i));
+    if (gone !== undefined) {
+      setAsins((prev) => {
+        const next = { ...prev };
+        delete next[gone];
+        return next;
+      });
+    }
   }
 
   async function submit() {
@@ -116,6 +133,12 @@ export function SubmitForm({
       fd.set("marketplace", marketplace);
       fd.set("client_notes", notes.trim());
       fd.set("brands", JSON.stringify(brands));
+      if (collectsAsins) {
+        const filled = Object.fromEntries(
+          brands.map((b) => [b, normalizeAsin(asins[b] ?? "")]).filter(([, a]) => a !== ""),
+        );
+        if (Object.keys(filled).length > 0) fd.set("brand_asins", JSON.stringify(filled));
+      }
       for (const f of files) fd.append("file", f);
 
       const res = await fetch("/api/cases/submit", { method: "POST", body: fd });
@@ -142,6 +165,7 @@ export function SubmitForm({
     setWebsite("");
     setMarketplace("amazon_us");
     setBrands([]);
+    setAsins({});
     setDraft("");
     setNotes("");
     setFiles([]);
@@ -312,6 +336,37 @@ export function SubmitForm({
               <div className="mt-1.5 text-[13px] text-muted">
                 {brands.length} of {cap} brands added ({plan ? `${PLAN_NAME[plan]} plan` : "plan"}: up to {cap} brands per credit)
               </div>
+              {/* Graceful at-cap explanation (tracker §1.3) — a sentence, never an error state. */}
+              {brands.length >= cap && (
+                <p className="mt-1 text-[13px] text-ink-2">{brandCapMessage(plan)}</p>
+              )}
+              {/* ASIN intake — Scale only (progressive disclosure). One ASIN per brand,
+                  structurally: one input per brand chip. Function-only; UI/UX restyles. */}
+              {collectsAsins && brands.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <span className="text-[14px] font-medium text-ink">
+                    ASINs <span className="font-normal text-muted">(optional — one per brand)</span>
+                  </span>
+                  <p className="text-[13px] text-ink-2">
+                    Enter the ASIN you&rsquo;re actually planning to buy from this supplier — the
+                    exact listing, not just any product of the brand.
+                  </p>
+                  {brands.map((b) => (
+                    <label key={b} className="flex items-center gap-2 text-[13px] text-ink-2">
+                      <span className="w-40 shrink-0 truncate font-medium text-ink">{b}</span>
+                      <input
+                        value={asins[b] ?? ""}
+                        onChange={(e) => setAsins((prev) => ({ ...prev, [b]: e.target.value }))}
+                        placeholder="e.g. B0ABC12345"
+                        className="w-44 rounded-lg border border-line bg-base px-2.5 py-1.5 font-mono text-[13px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                      />
+                      {(asins[b] ?? "").trim() !== "" && !ASIN_RE.test(normalizeAsin(asins[b])) && (
+                        <span className="text-[12px] text-deny-ink">10 letters/digits</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              )}
               {/* vendor-brand vetting expectation-setter (content file) */}
               <p className="mt-2 text-[13px] text-ink-2">
                 {brandHelper}{" "}
@@ -410,6 +465,15 @@ export function SubmitForm({
               {website && <Row label="Website" value={website} />}
               <Row label="Marketplace" value={MARKETPLACES.find((m) => m.value === marketplace)?.label ?? marketplace} />
               <Row label="Brands" value={brands.join(", ") || "—"} />
+              {collectsAsins && brands.some((b) => (asins[b] ?? "").trim() !== "") && (
+                <Row
+                  label="ASINs"
+                  value={brands
+                    .filter((b) => (asins[b] ?? "").trim() !== "")
+                    .map((b) => `${b}: ${normalizeAsin(asins[b])}`)
+                    .join(", ")}
+                />
+              )}
               {files.length > 0 && <Row label={files.length === 1 ? "Document" : "Documents"} value={files.map((f) => f.name).join(", ")} />}
               {notes && <Row label="Notes" value={notes} />}
             </dl>
@@ -436,7 +500,7 @@ export function SubmitForm({
         {step < 3 ? (
           <button
             type="button"
-            disabled={(step === 1 && vendor.trim() === "") || (step === 2 && (brands.length === 0 || !notesOk))}
+            disabled={(step === 1 && vendor.trim() === "") || (step === 2 && (brands.length === 0 || !notesOk || !asinsOk))}
             onClick={() => setStep((step + 1) as 2 | 3)}
             className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
           >

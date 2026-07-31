@@ -72,6 +72,14 @@ export async function POST(
   // nothing consumed). H1 makes the re-run safe: it writes a NEW attempt, never overwriting the
   // prior one. Enqueue FIRST — if the send fails, the status is untouched and the admin is told.
   if (action === "request_investigation") {
+    // ASIN threading (tracker §1.3) — best-effort SEPARATE select: the brand_asins column is
+    // founder-run-migration-gated; a combined select would 500 every rerun pre-migration.
+    let brandAsins: Record<string, string> | null = null;
+    {
+      const { data: bx, error: bxErr } = await supabaseAdmin
+        .from("cases").select("brand_asins").eq("id", id).maybeSingle();
+      if (!bxErr) brandAsins = (bx?.brand_asins as Record<string, string> | null) ?? null;
+    }
     try {
       await inngest.send({
         name: "pipeline/run-case",
@@ -79,6 +87,7 @@ export async function POST(
           case_id: id, vendor_name: c.vendor_name, vendor_website: c.vendor_website,
           brands_submitted: (c.brands_confirmed as string[] | null) ?? (c.brands_submitted as string[] | null) ?? [],
           marketplace: c.marketplace ?? "amazon_us", plan_type: c.plan_type,
+          ...(brandAsins ? { brand_asins: brandAsins } : {}),
         },
       });
     } catch (e) {

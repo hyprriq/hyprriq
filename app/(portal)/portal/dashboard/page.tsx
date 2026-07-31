@@ -3,6 +3,7 @@ import { getClientWithAccess } from "@/lib/data/access";
 import { getClientCases, isActive, type CaseRow } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { CaseTable } from "@/components/portal/case-table";
+import { creditsView } from "@/lib/portal/creditsDisplay";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
@@ -99,6 +100,7 @@ export default async function DashboardPage() {
   const cases = await getClientCases();
   const plan = client.plan_type as PlanType;
   const planTotal = PLAN_CREDITS_PER_CYCLE[plan];
+  const cv = creditsView(client.credits_available, plan);
 
   // Expired → read-only completed reports + reactivate.
   if (access.state === "expired") {
@@ -221,10 +223,11 @@ export default async function DashboardPage() {
               <div className="mt-0.5 text-[13px] text-muted">
                 {PLAN_PRICE_LABEL[plan]}/mo • {planTotal} credits/month • up to {PLAN_BRAND_CAPS[plan]} brands
               </div>
+              {/* BUG-2 fix — honest framing; a balance above the plan allotment never reads "7 of 5". */}
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-subtle">
-                <div className="h-full rounded-full bg-brand" style={{ width: `${planTotal > 0 ? Math.min(100, (client.credits_available / planTotal) * 100) : 0}%` }} />
+                <div className="h-full rounded-full bg-brand" style={{ width: `${cv.pct}%` }} />
               </div>
-              <div className="mt-1.5 text-[13px] text-muted">{client.credits_available} of {planTotal} credits remaining</div>
+              <div className="mt-1.5 text-[13px] text-muted">{cv.headline}{cv.detail ? ` · ${cv.detail}` : ""}</div>
               {plan !== "scale_499" && (
                 <Link href="/portal/billing" className="mt-3 block rounded-lg bg-brand px-3 py-2 text-center text-[14px] font-semibold text-white hover:bg-brand-hover">
                   Upgrade to Scale →

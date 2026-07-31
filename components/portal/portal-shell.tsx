@@ -4,9 +4,9 @@ import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
 import {
   PLAN_NAME,
-  PLAN_CREDITS_PER_CYCLE,
   type PlanType,
 } from "@/lib/constants/plans";
+import { creditsView } from "@/lib/portal/creditsDisplay";
 
 export type PortalNavKey =
   | "dashboard"
@@ -61,9 +61,8 @@ function daysUntil(iso: string | null): number | null {
 
 function CreditsWidget({ client }: { client: Client }) {
   const plan = client.plan_type as PlanType | null;
-  const total = plan ? PLAN_CREDITS_PER_CYCLE[plan] : 0;
-  const left = client.credits_available;
-  const pct = total > 0 ? Math.min(100, Math.round((left / total) * 100)) : 0;
+  // BUG-2 fix — shared honest framing (lib/portal/creditsDisplay); never "7 of 5".
+  const cv = creditsView(client.credits_available, plan);
   const renew = daysUntil(client.renewal_date);
 
   return (
@@ -77,14 +76,14 @@ function CreditsWidget({ client }: { client: Client }) {
         </Link>
       </div>
       <div className="mt-1 font-display text-3xl font-extrabold leading-none text-ink">
-        {left}
+        {cv.available}
       </div>
       <div className="mt-1 text-[12px] text-muted">
-        {total > 0 ? `of ${total} remaining` : "no active plan"}
+        {cv.detail ?? "no active plan"}
         {renew !== null ? ` • renews ${renew} day${renew === 1 ? "" : "s"}` : ""}
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-subtle">
-        <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-brand" style={{ width: `${cv.pct}%` }} />
       </div>
     </div>
   );
