@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-07-30 (four rulings recorded: Modes A/B → gate spec-first · ASIN optional · dimensions-grid deferred-with-lean · ADR-008 surfaced for founder reconciliation — see the ⚠ block above §1. §9/§10/5.6 refreshed; everything else source-verified at `c6c3ea2`)
+**Last updated:** 2026-08-02 (ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. Prior same-sitting rulings: Modes A/B → gate spec-first · ASIN optional · dimensions-grid deferred-with-lean · §9/§10/5.6 refresh. *Dating note: this sitting's entries span 2026-07-30 → 08-02 as one continuous working arc — some rows carry the 07-30 label.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -35,27 +35,10 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
-## ⚠ HIGHEST-PRIORITY RECONCILIATION — ADR-008 CORPUS CACHING (founder rules; surfaced 2026-07-30)
-
-**The disagreement:** HISTORY records corpus caching as a founder-ruled PRE-LAUNCH REQUIREMENT;
-the v2 tracker carries it NOWHERE (not §1, not §6). Either the promotion STANDS (→ add a §1
-launch-blocking line) or it was SUPERSEDED by the v2 merge (→ the drop must be NAMED per
-standing rule 6). Until ruled, this may be a launch-blocker that is currently invisible.
-
-**The HISTORY entry, verbatim:**
-
-> **Corpus caching (ADR-008, 90-day reuse) + G6 read-side — 🔼 PROMOTED TO PRE-LAUNCH REQUIREMENT (founder-ruled 2026-07-11, with Track 3 AT-7 numbers):** Track 3 marginal ≈ $0.111/case; whole-case +58% ($0.1525→$0.2415, no-veto figure; Track 0.5 identity LLM cost UNCAPTURED — the known per-case accounting gap, close it in this item); extrapolated full case (5 tracks, 3 brands, identity counted, one veto) $0.55–0.75; TD SYNNEX ≈ $2–5 of repeated research on one vendor. NOT a margin crisis (>99% vs $99) — promoted for the better reason: **caching converts the write-only corpus into a read-back asset (the 10th TD SYNNEX case reads frozen findings instead of re-buying them) — the moat's actual value, currently left on the table every re-run.** Confirms the architect review's "biggest margin lever" with numbers. (Original framing: TD Synnex researched 9+ times at full cost; every re-research = another drift chance.)
-
-**The entry condition, verbatim (Q4 ruled (b), founder 2026-07-16):**
-
-> **ENTRY CONDITION (Q4 ruled (b), founder 2026-07-16): synthesis memoization is DISABLED as of S-1 and returns ONLY at this gate, keyed on the FULL SYNTHESIS INPUT (`synthesis_input_hash` — additive column, founder-run migration), NEVER on `evidence_hash` alone — the hash covers only the accepted-evidence projection while the post-A1 synthesis input also carries rejections/unknowns/advisory; keying on it reuses reasoning across DIFFERENT inputs (the unsoundness Q4 closed — do not rebuild it by reading old code).**
-
-*(The same HISTORY entry also carries the F5 forward-flag — rollups keyed on adoption vs attempt
-completion — which belongs to the same gate whenever it opens.)*
-
-**Founder rules: STANDS (add to §1) or SUPERSEDED (name the drop).**
-
----
+> **✓ RESOLVED 2026-08-02 — ADR-008 corpus caching: founder ruled SUPERSEDED / DEMOTED to
+> post-launch, with the drop NAMED per standing rule 6.** Full ruling + reasoning: §6.13 and the
+> HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
+> `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
 ## 1. LAUNCH-BLOCKING — nothing ships without these
 
@@ -210,6 +193,7 @@ founder-run scripts:** the probe template is now
 | 6.10 | Opus 4.8 → Opus 5 | 🗄️ | Free capability upgrade, same price. **Post-launch recalibration gate** — re-run A5, re-rule thresholds, re-freeze. Do alongside G4 |
 | 6.11 | `max_brands_per_credit` is NULL on all client rows | 🔴 | Brand cap enforced from `PLAN_BRAND_CAPS` in code, not per-client. Resolve in the client-surface gate |
 | 6.12 | Track 4 signal flap (`soft_fail` → `n_a` between runs on 021) | 🟡 | Logged, not acted on. Watch if it recurs |
+| 6.13 | **ADR-008 corpus caching (90-day reuse) + synthesis memoization** | 🗄️ | **NAMED DROP (standing rule 6, founder-ruled 2026-08-02):** was founder-ruled a PRE-LAUNCH requirement 2026-07-11; **hereby DEMOTED to post-launch** — a decision, not a silent drop (closing the exact gap that made v2 carry it nowhere). WHY: the read-back CONSUMER (G6 read-side, 6.6) is itself deferred to ~50–100 delivered cases; caching feeds a capability not yet in use on a corpus not yet at volume; the value is real but FUTURE and accrues from whenever it's switched on with no penalty for waiting (write-side stays live; only re-run cost + read-back readiness change, neither pre-launch-critical) — while STANDS would put a migration + memoization build on the critical path at first-paying-client time (the depth-first trap the roadmaps flagged). Home: the post-launch scaling cluster with G4 (6.5), G6 (6.6), Keepa (6.1), relationship-records backfill (6.2) — "make the corpus smarter once there's volume." **ENTRY CONDITION:** build when re-run volume or G6 read-side work makes it worthwhile. **BINDING CONSTRAINT PRESERVED (Q4 ruled (b), 2026-07-16, verbatim in HISTORY):** memoization keys ONLY on `synthesis_input_hash` (full synthesis input, additive founder-run column), NEVER on `evidence_hash` alone — the unsoundness closed 2026-07-16 must not be rebuilt from old code. The F5 rollups-on-adoption flag travels with this item. |
 
 ---
 
@@ -264,7 +248,7 @@ founder-run scripts:** the probe template is now
 
 ## 10. CUT LINE (≈3-week window)
 
-**Must ship:** §1 in full (+ the ADR-008 line if the founder rules the promotion STANDS — see the ⚠ block above §1).
+**Must ship:** §1 in full. (ADR-008 caching ruled OUT of pre-launch 2026-08-02 — demoted to §6.13 with the drop named.)
 **Ship shortly after:** blog/SEO · admin redesign (4.1) · manual client creation (4.6) · invoice branding (4.9) · news section (3.6) · outcome panel refinement (4.12).
 **Post-launch:** email marketing · sub-user activation (mechanism built, 4.10) · agency panel · analytics depth · refunds tooling (post-Phase-J per STOP-3).
 *(Refreshed 2026-07-30: the old "cut the super-user/rerun/billing cluster" advice is retired — rerun button ✅, super-user runs ✅, billing reads + credit adjust ✅ all shipped in the admin batch.)*
