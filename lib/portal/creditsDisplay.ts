@@ -18,16 +18,22 @@ export interface CreditsView {
   detail: string | null; // honest second line, null when there is no plan
 }
 
-export function creditsView(available: number, plan: PlanType | null | undefined): CreditsView {
+// usedThisCycle comes from clients.credits_used_this_cycle (maintained by the deduct/refund
+// RPCs, reset at renewal) — NEVER inferred as (allotment − available), which lied on a fresh
+// upgrade ("7 of 12" implying 5 consumed that were never held; founder-ruled 2026-07-30).
+// Every number in the detail line is independently true.
+export function creditsView(available: number, plan: PlanType | null | undefined, usedThisCycle = 0): CreditsView {
   const perCycle = plan ? PLAN_CREDITS_PER_CYCLE[plan] : 0;
   const extra = Math.max(0, available - perCycle);
   const pct = perCycle > 0 ? Math.min(100, Math.max(0, Math.round((available / perCycle) * 100))) : 0;
   const headline = `${available} ${available === 1 ? "credit" : "credits"} available`;
+  const used = Math.max(0, usedThisCycle);
+  const usedSuffix = used > 0 ? ` · ${used} used this cycle` : "";
   const detail =
     perCycle === 0
       ? null
       : extra > 0
-        ? `plan renews to ${perCycle}/cycle · includes ${extra} extra (top-ups & rollover carry until used)`
-        : `of ${perCycle} included per cycle`;
+        ? `plan renews to ${perCycle}/cycle · includes ${extra} extra (top-ups & rollover carry until used)${usedSuffix}`
+        : `plan includes ${perCycle}/cycle${usedSuffix}`;
   return { available, perCycle, extra, pct, headline, detail };
 }

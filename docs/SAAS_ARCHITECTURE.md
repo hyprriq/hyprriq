@@ -170,13 +170,42 @@ for open work: `HyprrIQ_OPEN_ITEMS.md`; the WHY behind rulings: `HyprrIQ_OPEN_IT
   rides `...event.data` through the pipeline handler. Keepa reads it by typing against the
   intersection — contracts.ts stays byte-identical forever.
 
-## F. Subscriber tier switch (Growth ⇄ Scale)
+## F. Subscriber tier switch (Growth ⇄ Scale) — Option A RULED 2026-07-30
 
 - `customer.subscription.updated` derives plan identity from the subscription PRICE
   (`planForPriceId`) → updates `plan_type`/`plan_category`, emits `upgrade`/`downgrade`
   billing events. The switch UI is Stripe's own portal (founder enables plan-switching in the
-  Dashboard portal config). Mid-cycle CREDITS deliberately untouched (UNRULED); the next
-  renewal's `invoice.paid` rollover grants the new plan's numbers via the existing path.
+  Dashboard portal config).
+- **Upgrade credits (Option A):** raise `credits_available` UP TO the new allotment via the
+  atomic `raise_credits_to_allotment(client, floor)` RPC — `GREATEST(balance, floor)`,
+  idempotent by construction (replays no-op; never stacks; grants nothing at/above allotment).
+  A blind `+=` with read-then-write is exactly the H6 race the law forbids — the RPC is the
+  law-faithful shape.
+- **RIDER 1 (required — the farm killer):** at most ONE grant per billing period. Guard key:
+  a `billing_audit` `upgrade` row whose notes start with the grant prefix, since the
+  subscription's `current_period_start`. Without it, spend → downgrade → re-upgrade mints an
+  allotment per swing for pennies of proration; GREATEST alone cannot close this (spending
+  drops the balance below the floor). Fail-closed: missing period start or guard error = no
+  grant. Test-proven: a second same-cycle upgrade calls no RPC.
+- **RIDER 2:** downgrade = NO immediate clawback; the renewal rollover clamp
+  (`LEAST(held, cap) + grant`) applies unchanged — that clamp IS the delayed clawback, by
+  ruling, eyes-open.
+- **Edge-6 alignment:** checkout's `activatePlan` update path uses the SAME RPC (one
+  credit-raise semantic everywhere); new-client inserts seed the allotment directly;
+  pre-migration the update path falls back loudly to the legacy absolute SET.
+
+## H. Capability = the ACTIVE PLAN (Model 2, RULED 2026-07-30)
+
+- Every capability gate reads PLAN, never a credit attribute — and none could: credits are a
+  single integer (`clients.credits_available`); no per-credit rows/ledger/provenance exist.
+  Gates: submission cap + ASIN guard read the LIVE plan; the case STAMPS `plan_type` at
+  insert; run-time tracks gate on the stamped plan (`plan_gates`, Track 6 `CATEGORY_PLANS`);
+  reruns re-read the case row — an old Growth case reruns as Growth after an upgrade.
+- WHY Model 2: the plan defines the product, credits are quantity; per-credit capability would
+  require a ledger + spend-ordering + provenance subsystem to prevent an arbitrage that does
+  not exist (top-up packs cost identical dollars on both tiers); the submission-time stamp
+  already blocks the only real abuse (retroactive upgrades of old cases). Keepa inherits this
+  via the stamped plan + `brand_asins` threading — never a credit attribute.
 
 ## G. Two "N/A" renderings that are CORRECT BY DESIGN — do not "fix"
 

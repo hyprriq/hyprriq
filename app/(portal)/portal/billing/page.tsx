@@ -54,7 +54,7 @@ export default async function BillingPage() {
   const rollover = plan ? PLAN_ROLLOVER_LIMIT[plan] : 0;
   const renewDays = daysUntil(client.renewal_date);
   // BUG-2 fix — held credits vs plan allotment are distinct quantities (lib/portal/creditsDisplay).
-  const cv = creditsView(client.credits_available, plan);
+  const cv = creditsView(client.credits_available, plan, client.credits_used_this_cycle);
 
   return (
     <PortalShell client={client} active="billing" title="Billing & Credits">

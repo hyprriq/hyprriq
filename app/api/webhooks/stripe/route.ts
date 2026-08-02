@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
 import { addClientCredits, rolloverClientCredits } from "@/lib/data/credits";
+import { grantUpgradeCredits, isUpgrade } from "@/lib/billing/upgradeGrant";
 
 // Stripe webhook — the source of truth for plan/credit state. SCAFFOLDING:
 // signature verification, idempotency (stripe_events.stripe_event_id UNIQUE), and
@@ -22,10 +23,13 @@ async function activatePlan(clientId: string, plan: PlanType, opts: {
   renewalDate?: string | null;
   email?: string | null;
 }) {
+  // Edge-6 alignment (founder-ruled 2026-07-30): checkout uses the SAME credit-raise semantic
+  // as the upgrade path — GREATEST via raise_credits_to_allotment, never an absolute SET that
+  // could clobber a held balance. Insert path (brand-new client) still seeds the allotment
+  // directly (no prior balance for GREATEST to protect).
   const fields = {
     plan_type: plan,
     plan_category: PLAN_CATEGORY[plan],
-    credits_available: PLAN_CREDITS_PER_CYCLE[plan],
     billing_status: "active" as const,
     ...(opts.customerId ? { stripe_customer_id: opts.customerId } : {}),
     ...(opts.subscriptionId ? { stripe_subscription_id: opts.subscriptionId } : {}),
@@ -36,10 +40,22 @@ async function activatePlan(clientId: string, plan: PlanType, opts: {
     .update(fields)
     .eq("id", clientId)
     .select("id");
+  if (updated && updated.length > 0) {
+    const { error: raiseErr } = await supabaseAdmin.rpc("raise_credits_to_allotment", {
+      p_client_id: clientId,
+      p_floor: PLAN_CREDITS_PER_CYCLE[plan],
+    });
+    if (raiseErr) {
+      // Pre-migration fallback: the legacy absolute SET, so checkout keeps provisioning
+      // credits until the founder runs the RPC migration. Loud so the gap is visible.
+      console.error("[webhook] raise_credits_to_allotment unavailable — falling back to legacy SET:", raiseErr.message, { clientId });
+      await supabaseAdmin.from("clients").update({ credits_available: PLAN_CREDITS_PER_CYCLE[plan] }).eq("id", clientId);
+    }
+  }
   // Row may not exist yet if the user paid before their first portal load (lazy
   // provisioning hasn't run). Create it so payment is never lost.
   if (!updated || updated.length === 0) {
-    await supabaseAdmin.from("clients").insert({ id: clientId, email: opts.email ?? "", ...fields });
+    await supabaseAdmin.from("clients").insert({ id: clientId, email: opts.email ?? "", credits_available: PLAN_CREDITS_PER_CYCLE[plan], ...fields });
   }
 }
 
@@ -190,12 +206,24 @@ export async function POST(req: Request) {
           })
           .eq("stripe_subscription_id", sub.id);
         if (planChanged && prior) {
-          const rank: Record<string, number> = { single_99: 0, growth_279: 1, scale_499: 2 };
-          const up = (rank[newPlan as string] ?? 0) > (rank[prior.plan_type ?? ""] ?? 0);
+          const up = isUpgrade(prior.plan_type, newPlan as PlanType);
+          let notes: string;
+          if (up) {
+            // OPTION A (founder-ruled 2026-07-30): raise credits UP TO the new allotment,
+            // once per billing period (rider 1 — the guard lives in grantUpgradeCredits,
+            // keyed on billing_audit + current_period_start). The grant note becomes this
+            // event's notes: it starts with the guard prefix IFF credits were granted.
+            const periodStartIso = iso((sub as unknown as { current_period_start: number }).current_period_start);
+            const grant = await grantUpgradeCredits({ clientId: prior.id, newPlan: newPlan as PlanType, periodStartIso });
+            notes = grant.note;
+          } else {
+            // RIDER 2 (founder-ruled): no immediate clawback on downgrade; the renewal
+            // rollover clamp applies unchanged at the next cycle.
+            notes = "Plan switched (downgrade) — no immediate clawback; renewal rollover unchanged (rider 2)";
+          }
           await recordBillingEvent(prior.id, {
             event: up ? "upgrade" : "downgrade",
-            oldPlan: prior.plan_type, newPlan, stripeEventId: event.id,
-            notes: "Plan switched via Stripe subscription update (credits adjust at next renewal)",
+            oldPlan: prior.plan_type, newPlan, stripeEventId: event.id, notes,
           });
         }
         if (prior && prior.billing_status !== status) {

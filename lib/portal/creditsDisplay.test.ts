@@ -12,19 +12,32 @@ describe("creditsView — honest credits framing (BUG-2)", () => {
     expect(v.headline + (v.detail ?? "")).not.toMatch(/7 of 5/);
   });
 
-  it("under the allotment: plain 'of N per cycle' framing", () => {
-    const v = creditsView(3, "growth_279");
+  it("under the allotment with real usage: usage from the USED COLUMN, never inferred", () => {
+    const v = creditsView(3, "growth_279", 2);
     expect(v.headline).toBe("3 credits available");
-    expect(v.detail).toBe("of 5 included per cycle");
+    expect(v.detail).toBe("plan includes 5/cycle · 2 used this cycle");
     expect(v.pct).toBe(60);
     expect(v.extra).toBe(0);
+  });
+
+  it("THE POST-UPGRADE CASE (founder-ruled): 7 on a fresh 12/cycle plan, 0 used — never implies 5 consumed", () => {
+    const v = creditsView(7, "scale_499", 0);
+    expect(v.detail).toBe("plan includes 12/cycle");
+    const all = v.headline + v.detail;
+    expect(all).not.toMatch(/of 12/);      // the consumed-implying framing is gone
+    expect(all).not.toMatch(/used/);       // zero usage shows no usage claim at all
+  });
+
+  it("post-upgrade WITH prior usage: every number independently true (7 avail · 12/cycle · 3 used)", () => {
+    const v = creditsView(7, "scale_499", 3);
+    expect(v.detail).toBe("plan includes 12/cycle · 3 used this cycle");
   });
 
   it("exactly at the allotment: full bar, no phantom extra", () => {
     const v = creditsView(12, "scale_499");
     expect(v.pct).toBe(100);
     expect(v.extra).toBe(0);
-    expect(v.detail).toBe("of 12 included per cycle");
+    expect(v.detail).toBe("plan includes 12/cycle");
   });
 
   it("zero credits: honest zero, empty bar", () => {

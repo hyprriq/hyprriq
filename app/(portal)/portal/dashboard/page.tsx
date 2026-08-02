@@ -100,7 +100,7 @@ export default async function DashboardPage() {
   const cases = await getClientCases();
   const plan = client.plan_type as PlanType;
   const planTotal = PLAN_CREDITS_PER_CYCLE[plan];
-  const cv = creditsView(client.credits_available, plan);
+  const cv = creditsView(client.credits_available, plan, client.credits_used_this_cycle);
 
   // Expired → read-only completed reports + reactivate.
   if (access.state === "expired") {

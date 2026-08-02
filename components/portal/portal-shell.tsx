@@ -62,7 +62,7 @@ function daysUntil(iso: string | null): number | null {
 function CreditsWidget({ client }: { client: Client }) {
   const plan = client.plan_type as PlanType | null;
   // BUG-2 fix — shared honest framing (lib/portal/creditsDisplay); never "7 of 5".
-  const cv = creditsView(client.credits_available, plan);
+  const cv = creditsView(client.credits_available, plan, client.credits_used_this_cycle);
   const renew = daysUntil(client.renewal_date);
 
   return (
