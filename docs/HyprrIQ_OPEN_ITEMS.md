@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-07-30 (final dev batch — see §4 fix block, 1.3/1.5/3.x, STOP rulings in 4.14/4.15)
+**Last updated:** 2026-07-30 (four rulings recorded: Modes A/B → gate spec-first · ASIN optional · dimensions-grid deferred-with-lean · ADR-008 surfaced for founder reconciliation — see the ⚠ block above §1. §9/§10/5.6 refreshed; everything else source-verified at `c6c3ea2`)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -35,13 +35,35 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## ⚠ HIGHEST-PRIORITY RECONCILIATION — ADR-008 CORPUS CACHING (founder rules; surfaced 2026-07-30)
+
+**The disagreement:** HISTORY records corpus caching as a founder-ruled PRE-LAUNCH REQUIREMENT;
+the v2 tracker carries it NOWHERE (not §1, not §6). Either the promotion STANDS (→ add a §1
+launch-blocking line) or it was SUPERSEDED by the v2 merge (→ the drop must be NAMED per
+standing rule 6). Until ruled, this may be a launch-blocker that is currently invisible.
+
+**The HISTORY entry, verbatim:**
+
+> **Corpus caching (ADR-008, 90-day reuse) + G6 read-side — 🔼 PROMOTED TO PRE-LAUNCH REQUIREMENT (founder-ruled 2026-07-11, with Track 3 AT-7 numbers):** Track 3 marginal ≈ $0.111/case; whole-case +58% ($0.1525→$0.2415, no-veto figure; Track 0.5 identity LLM cost UNCAPTURED — the known per-case accounting gap, close it in this item); extrapolated full case (5 tracks, 3 brands, identity counted, one veto) $0.55–0.75; TD SYNNEX ≈ $2–5 of repeated research on one vendor. NOT a margin crisis (>99% vs $99) — promoted for the better reason: **caching converts the write-only corpus into a read-back asset (the 10th TD SYNNEX case reads frozen findings instead of re-buying them) — the moat's actual value, currently left on the table every re-run.** Confirms the architect review's "biggest margin lever" with numbers. (Original framing: TD Synnex researched 9+ times at full cost; every re-research = another drift chance.)
+
+**The entry condition, verbatim (Q4 ruled (b), founder 2026-07-16):**
+
+> **ENTRY CONDITION (Q4 ruled (b), founder 2026-07-16): synthesis memoization is DISABLED as of S-1 and returns ONLY at this gate, keyed on the FULL SYNTHESIS INPUT (`synthesis_input_hash` — additive column, founder-run migration), NEVER on `evidence_hash` alone — the hash covers only the accepted-evidence projection while the post-A1 synthesis input also carries rejections/unknowns/advisory; keying on it reuses reasoning across DIFFERENT inputs (the unsoundness Q4 closed — do not rebuild it by reading old code).**
+
+*(The same HISTORY entry also carries the F5 forward-flag — rollups keyed on adoption vs attempt
+completion — which belongs to the same gate whenever it opens.)*
+
+**Founder rules: STANDS (add to §1) or SUPERSEDED (name the drop).**
+
+---
+
 ## 1. LAUNCH-BLOCKING — nothing ships without these
 
 | # | Item | Status | Owner | Notes |
 |---|---|---|---|---|
 | 1.1 | **Client report — on-screen + PDF** | 🔴 | UX→FA | The gap carried by roadmaps v3 AND v4. Placeholder only today. |
 | 1.2 | **Client-projection layer** | 🔴 | FA | Named gate deliverable. One projection function — not string-by-string, or it leaks. Must strip `src_N`/evidence tags DEFENSIVELY (present in 021's narrative, absent in 022's). |
-| 1.3 | **ASIN intake field + one-brand cap** | ✅ | FA | **BUILT 2026-07-30 (dev batch) + MIGRATION APPLIED 2026-07-30.** Code guard `lib/portal/asinIntake.ts` (1 ASIN/brand, ≤ plan cap, format, Scale-only; caps from `PLAN_BRAND_CAPS`, never the NULL DB column) + form (Scale-only progressive disclosure, "the ASIN you're actually planning to buy" copy, graceful at-cap line) + threading via `lib/research/intakeExtras.ts` (contracts.ts FROZEN — additive intersection type). `cases.brand_asins jsonb` live (read-back verified: column present, 0 populated rows). **Executed via Supabase MCP on EXPLICIT one-time founder authorization (chat, 2026-07-30) — the founder-runs-prod law STANDS; this is not a precedent.** ASINs OPTIONAL at submit = UNRULED default. Keepa is unblocked. |
+| 1.3 | **ASIN intake field + one-brand cap** | ✅ | FA | **BUILT 2026-07-30 (dev batch) + MIGRATION APPLIED 2026-07-30.** Code guard `lib/portal/asinIntake.ts` (1 ASIN/brand, ≤ plan cap, format, Scale-only; caps from `PLAN_BRAND_CAPS`, never the NULL DB column) + form (Scale-only progressive disclosure, "the ASIN you're actually planning to buy" copy, graceful at-cap line) + threading via `lib/research/intakeExtras.ts` (contracts.ts FROZEN — additive intersection type). `cases.brand_asins jsonb` live (read-back verified: column present, 0 populated rows). **Executed via Supabase MCP on EXPLICIT one-time founder authorization (chat, 2026-07-30) — the founder-runs-prod law STANDS; this is not a precedent.** **ASIN-optional RULED (founder, 2026-07-30): optional as built; revisit when Keepa ships** (the `asinIntake.ts` header comment still says UNRULED — one-line cleanup rides the next code-touching pass). Keepa is unblocked. |
 | 1.4 | **Mobile layout** | 🔴 | UX→FA | Portal does not load on mobile. Broken surface. |
 | 1.5 | **Credits display (BUG-2)** | ✅ | FA | **FIXED 2026-07-30:** `lib/portal/creditsDisplay.ts` — ONE computation for all render sites (billing ×2, dashboard, sidebar). Balance and plan allotment stated as distinct quantities ("7 credits available · plan renews to 5/cycle · includes 2 extra"); bar hard-capped at 100. Test-locked: can never say "7 of 5". Visual redesign stays UX. |
 | 1.6 | **Legal pages** | 🔴 | F+PT | Terms · Privacy · Data policy · Refund/cancellation · Cookie policy **+ consent banner** (mandatory once pixels are added) · IP/claims · no-guarantee disclaimer. |
@@ -89,7 +111,7 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 | 3.7 | **ASIN field + one-brand cap** (see 1.3 — ✅ complete 2026-07-30, migration applied) | ✅ | FA |
 | 3.8 | Mobile (see 1.4) | 🔴 | UX→FA |
 | 3.9 | ~~Settings page — never built~~ **✅ VERIFIED BUILT** — real page (profile form, contact/billing/tax fields, `SettingsForm`). If v2 meant a richer scope, log the delta as a NEW item | ✅ | — |
-| 3.10 | Case status/progress view — **DATA+VIEW EXIST (source-verified 2026-07-30):** StatusBadge (14 statuses → 8 client labels; `research_failed` = "Delayed — under review"), Research Dimensions grid (5 rows, per-track pills), Timeline stepper, 4s refresh while researching. ⚠ FORK for the design pass: the dimensions grid names the five research dimensions with per-dimension status — founder rules whether that counts as "method exposure." Design pass remains | 🟡 | UX |
+| 3.10 | Case status/progress view — **DATA+VIEW EXIST (source-verified 2026-07-30):** StatusBadge (14 statuses → 8 client labels; `research_failed` = "Delayed — under review"), Research Dimensions grid (5 rows, per-track pills), Timeline stepper, 4s refresh while researching. **Method-exposure fork DEFERRED to the design pass (founder, 2026-07-30) with a LEAN ON RECORD: naming the five dimensions is fine (WHAT we assess); per-dimension live STATUS during research may cross the line. Rule with the real screen.** | 🟡 | UX |
 | 3.11 | Download-PDF action — **stub placed 2026-07-30:** disabled "Download PDF (coming soon)" on the delivered client case view; generator = client-surface gate. NOTE: the named seam (`GET /api/admin/cases/[id]/report` over `buildVerdictViewModel`) is ADMIN-scoped; the client download needs its own client-scoped route in front of the same view-model — the gate rules that | 🟡 | FA |
 | 3.15 | **Subscriber tier switch (Growth ⇄ Scale)** — **webhook half BUILT 2026-07-30** (price → `planForPriceId` → `plan_type`/`plan_category` + `upgrade`/`downgrade` events). **CREDIT RULINGS LOCKED 2026-07-30 (Option A + riders):** upgrade raises credits UP TO the new allotment via `raise_credits_to_allotment` RPC (GREATEST — atomic, idempotent, never stacks) · **RIDER 1:** at most ONE grant per billing period (guard: `billing_audit` `upgrade` rows with the grant-note prefix since `current_period_start` — kills the spend-then-re-upgrade farm; test-proven both ways) · **RIDER 2:** downgrade = NO immediate clawback; renewal rollover clamp unchanged · audit row per grant · **edge-6 alignment:** checkout `activatePlan` uses the same GREATEST semantic (legacy-SET fallback pre-migration, loud). **Founder steps remaining:** run the `raise_credits_to_allotment` migration + enable plan-switching in the Stripe portal config | 🟡 | FA→F |
 | 3.12 | Clarification / dispute request flow | 🔴 | UX |
@@ -141,7 +163,7 @@ founder-run scripts:** the probe template is now
 |---|---|---|---|---|
 | 4.1 | Admin redesign — output reading format | 🔴 | UX | Denser than client side by design |
 | 4.2 | **Rerun button + attempt-history versioning** (OQ-CASE-RERUN) | ✅ | FA | ~~Re-runs currently overwrite in place~~ **FALSE (source-verified 2026-07-30):** the rerun path already existed (review route `request_investigation`) and H1 appends attempts. Added `rerun`/`review_publish` capability gates + `AttemptHistory` (DELIVERED pin, LATEST marker; per-attempt verdict not stored — shown as markers, honestly). **Dispute-rerun button on DELIVERED cases added 2026-07-30** (surfaces the already-tested frozen-delivered API path; distinct styling, own confirm step, `rerun`-capability gated). |
-| 4.3 | **Operator-added material — Modes A & B** | 🔴 | F→FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. Forbidden: track-added material reaching the verdict without a re-run. **State confirmed 2026-07-30: ZERO code, ruling only** (closest existing: `additional_questions` CRUD, admin-only; `dispute_rerun` contract comment names Mode B as intended-unbuilt). **Build-thread recommendation: DESIGN PASS, not dev** — Mode A's note must RENDER in a report that doesn't exist yet, and Mode B's finding shape must enter a track contract surface (frozen) — both entangled with the client-surface gate. Founder rules. |
+| 4.3 | **Operator-added material — Modes A & B** | 🔴 | F→FA | A = note/links → report only, no verdict change. B = finding → track → **must trigger re-run**. **SEQUENCING RULED (founder, 2026-07-30): BOTH modes at the client-surface gate, SPEC-FIRST** — Mode A's value only materializes when the report renders it; Mode B's open questions (evidence shape, `source_type` with contracts.ts frozen, scanner treatment, weight ceiling) are already on the gate's ruling board — building either now would rule gate items out of band. **Mode B's MECHANISM is DONE and is the enforcement point by construction** (dispute-rerun → H1 append → `reinvestigation_pending`; a track addition without a re-run is structurally impossible — absence of any door, like the credit bypass). Remaining = intake surface + injection spec, both gate work. State 2026-07-30: ZERO intake code (closest existing: `additional_questions` CRUD, admin-only). |
 | 4.4 | Live pipeline-progress tracker (UX-1) | ✅ | FA | `PipelineProgress` chips on review page over `track_0..6_status`; failed stages named. Diagnostic-grade; UX restyle stays under 4.1. |
 | 4.5 | **Super user — unlimited credits, run reports for direct clients** | ✅ | FA | Shipped as one feature with 4.7: `POST /api/admin/cases/run`, normal pipeline, `cases.origin='operator'` + `operator_meta` = one-query provenance, audit row per run, house row `operator-house` (0 credits, inert) for attribution. Super-admin seed **confirmed run 2026-07-30** (Option-B ruling above). Tier fork STOP-2 → 4.14. |
 | 4.6 | **Manual client creation** | 🔴 | FA | Attribution matters: reports must belong to a client for delivery + corpus. Interim: operator runs attribute to the `operator-house` row. |
@@ -166,7 +188,8 @@ founder-run scripts:** the probe template is now
 | 5.3 | Sentry — not wired | 🔴 | FA |
 | 5.4 | UptimeRobot | 🔴 | F |
 | 5.5 | Support widget | 🔴 | F |
-| 5.6 | Credit-concurrency, gating-matrix, determinism test suites | 🔴 | FA |
+| 5.6a | Determinism suite — **EXISTS (split 2026-07-30):** the H1 determinism proof is the founder-run rejudge harness (`scripts/rejudge-case.ts`, AT-3, read-only re-derivation vs stored) + the lock tests | ✅ | FA |
+| 5.6b | Credit-concurrency + gating-matrix suites — genuinely ABSENT | 🔴 | FA |
 | 5.7 | Whole-platform audit (the bug hunt was seam-only) | 🗄️ | FA |
 
 ---
@@ -231,7 +254,7 @@ founder-run scripts:** the probe template is now
 ## 9. RULED SEQUENCE TO FIRST PAYING CLIENT
 
 1. ~~Founder hour — migration, re-runs, publish, test checkout~~ ✅ **DONE 2026-07-29**
-2. **Client-surface / PDF gate** — spec first; ASIN field + one-brand cap built once; client-projection layer as a named deliverable
+2. **Client-surface / PDF gate** — spec first; ~~ASIN field + one-brand cap~~ ✅ **done 2026-07-30 (pulled forward into the final dev batch; migration applied)**. Remaining gate scope: **report + projection layer + category projection + client wording** (incl. the Modes A/B spec per the 2026-07-30 sequencing ruling, the OQ-CC5/H4 embed choice, VERDICT_SENTENCES-as-rendering, §9.1 rephrase, brand_evidence_status render)
 3. **Env separation + RLS suite** — pulled ahead of Keepa (the DB is the least-hardened thing in the system)
 4. **Keepa gate**
 5. **$149 tier assembly**
@@ -241,11 +264,12 @@ founder-run scripts:** the probe template is now
 
 ## 10. CUT LINE (≈3-week window)
 
-**Must ship:** §1 in full.
-**Ship shortly after:** blog/SEO · admin redesign · rerun button · super user + manual client · billing controls · news section.
-**Post-launch:** email marketing · staff permissions · agency panel · analytics depth.
+**Must ship:** §1 in full (+ the ADR-008 line if the founder rules the promotion STANDS — see the ⚠ block above §1).
+**Ship shortly after:** blog/SEO · admin redesign (4.1) · manual client creation (4.6) · invoice branding (4.9) · news section (3.6) · outcome panel refinement (4.12).
+**Post-launch:** email marketing · sub-user activation (mechanism built, 4.10) · agency panel · analytics depth · refunds tooling (post-Phase-J per STOP-3).
+*(Refreshed 2026-07-30: the old "cut the super-user/rerun/billing cluster" advice is retired — rerun button ✅, super-user runs ✅, billing reads + credit adjust ✅ all shipped in the admin batch.)*
 
-**If the window compresses, cut the super-user / manual-client / billing-control cluster first** — genuinely useful, but operator convenience. It does not block a stranger paying you.
+**If the window compresses, cut first:** manual client creation (4.6) + invoice branding (4.9) + news section (3.6) — operator/marketing convenience; none blocks a stranger paying you. The uncuttable core is §1: report + projection, mobile, legal/contact/sample pages, env separation + RLS, Stripe live, staging→main.
 
 ---
 
