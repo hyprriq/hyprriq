@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile 1.4 — Direction B: Hamburger drawer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .drawer-scrim { position: absolute; inset: 0; background: rgba(26, 25, 23, 0.5); }
+  .drawer {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    width: 300px;
+    background: var(--surface);
+    box-shadow: 12px 0 40px rgba(26,25,23,.25);
+    display: flex; flex-direction: column;
+    padding: 46px 14px 20px;
+  }
+  .drawer .d-brand { padding: 0 8px 16px; }
+  .drawer .d-brand .wordmark { font-size: 19px; }
+  .drawer .d-plan { margin-top: 2px; font: 500 12px/1 var(--font-sans); color: var(--ink-2); }
+  .d-close {
+    position: absolute; top: 40px; right: 8px;
+    width: 44px; height: 44px; display: grid; place-items: center;
+    color: var(--ink-2); background: none; border: 0; border-radius: 12px;
+  }
+  .d-section { margin: 12px 8px 4px; font: 600 10.5px/1 var(--font-sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+  .d-item {
+    display: flex; align-items: center; gap: 11px;
+    min-height: 46px; padding: 0 10px;
+    border-radius: 10px;
+    font: 600 14.5px/1 var(--font-sans);
+    color: var(--ink-2); text-decoration: none;
+  }
+  .d-item svg { flex: none; }
+  .d-item.on { background: var(--brand-tint); color: var(--brand-ink); }
+  .d-item .d-badge { margin-left: auto; background: var(--verify-bg); color: var(--verify-ink); font: 700 11px/1 var(--font-sans); border-radius: 999px; padding: 3px 8px; }
+  .d-credits {
+    margin-top: auto;
+    border: 1px solid var(--line);
+    background: var(--base);
+    border-radius: var(--radius-card);
+    padding: 13px;
+  }
+  .d-credits .row { display: flex; align-items: center; justify-content: space-between; }
+  .d-credits .lab { font: 600 11px/1 var(--font-sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  .d-credits .add { font: 700 12.5px/1 var(--font-sans); color: var(--brand); text-decoration: none; }
+  .d-credits .val { margin-top: 6px; font: 800 26px/1 var(--font-display); color: var(--ink); }
+  .d-credits .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+
+<div class="mock-head">
+  <div class="kicker">HYPRRIQ · TRACKER 1.4 MOBILE · DIRECTION B OF 3 · LAYOUT PHASE (no app code)</div>
+  <h1>Direction B — Hamburger drawer (“same desk, smaller desk”)</h1>
+  <p class="lede">
+    The conservative move: the desktop sidebar becomes a slide-in drawer, structure untouched —
+    same groups, same order, same credits widget. A client who signed up at their desk finds the
+    identical mental map on their phone; nothing to re-learn, and one shell component serves both.
+    The cost is honesty about taps: every navigation is now two interactions (open, choose), and
+    the hamburger lives at the top — the hardest place to reach one-handed. Content patterns
+    (attention card, KPI 2×2, case cards) are shared with Direction A; only the chrome differs.
+  </p>
+</div>
+<div class="mock-nav">
+  <a href="direction-a-tabbar.html">A · Tab bar</a>
+  <a class="on" href="direction-b-drawer.html">B · Drawer</a>
+  <a href="direction-c-hub.html">C · Hub &amp; spoke</a>
+</div>
+
+<div class="frames">
+
+  <!-- ============ FRAME 1: HOME ============ -->
+  <div class="frame-col">
+    <div class="frame-label">1 · Home (dashboard)</div>
+    <p class="frame-sub">Top bar: menu · title · avatar. Content identical to Direction A — the comparison is pure chrome.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <button class="icon-btn" aria-label="Open menu">
+          <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="page-title">Dashboard</div>
+        <div class="head-spacer"></div>
+        <div class="avatar">G</div>
+      </header>
+
+      <div class="app-body">
+        <div class="greet">
+          <h2>Good day, Gautam</h2>
+          <p>Here’s what’s happening with your research today.</p>
+        </div>
+
+        <div class="attention">
+          <div class="a-row">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9a551f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <div>
+              <div class="a-title">Case HQ-2041 needs your confirmation</div>
+              <div class="a-body">Meridian Trade Supply — research is paused until you confirm the scope.</div>
+            </div>
+          </div>
+          <a class="a-cta" href="#">Review and confirm →</a>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="k-label">Credits Left</div><div class="k-value brand">3</div><div class="k-sub">Renews in 12 days</div></div>
+          <div class="kpi"><div class="k-label">Active Cases</div><div class="k-value">2</div><div class="k-sub">In progress</div></div>
+          <div class="kpi"><div class="k-label">Reports Ready</div><div class="k-value ok">1</div><div class="k-sub">Ready to view</div></div>
+          <div class="kpi"><div class="k-label">Needs Action</div><div class="k-value" style="color:var(--verify-ink)">1</div><div class="k-sub">Waiting on you</div></div>
+        </div>
+
+        <div class="sec"><h3>Recent cases</h3><a href="#">View all →</a></div>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span></div>
+        </a>
+
+        <a class="btn quiet block" href="#">＋ New research request</a>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>What the top bar keeps</h4>
+      <ul>
+        <li>Page title moves into the bar (like desktop’s Topbar), so the drawer pattern needs no second header row.</li>
+        <li>The credits chip is gone from the header — credits live in the drawer, exactly as in the desktop sidebar. That’s the parity trade: chrome consistency over glanceability.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 2: DRAWER OPEN ============ -->
+  <div class="frame-col">
+    <div class="frame-label">2 · Drawer open</div>
+    <p class="frame-sub">The desktop sidebar, verbatim: same groups, same order, same credits widget at the bottom.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <button class="icon-btn" aria-label="Open menu">
+          <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="page-title">Dashboard</div>
+        <div class="head-spacer"></div>
+        <div class="avatar">G</div>
+      </header>
+      <div class="app-body" style="opacity:.4">
+        <div class="greet"><h2>Good day, Gautam</h2><p>Here’s what’s happening…</p></div>
+      </div>
+
+      <div class="drawer-scrim"></div>
+      <aside class="drawer">
+        <button class="d-close" aria-label="Close menu">
+          <svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="d-brand">
+          <div class="wordmark">Hyprr<b>IQ</b></div>
+          <div class="d-plan">Growth Plan</div>
+        </div>
+
+        <a class="d-item on" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
+          Dashboard
+        </a>
+
+        <div class="d-section">Research</div>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          New Case
+        </a>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+          Active Cases
+          <span class="d-badge">1</span>
+        </a>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Completed Reports
+        </a>
+
+        <div class="d-section">Account</div>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          Billing &amp; Credits
+        </a>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          Settings
+        </a>
+
+        <div class="d-section">Support</div>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          Help Centre
+        </a>
+        <a class="d-item" href="#">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+          Contact Support
+        </a>
+
+        <div class="d-credits">
+          <div class="row"><span class="lab">Credits</span><a class="add" href="#">Add more</a></div>
+          <div class="val">3</div>
+          <div class="sub">plan includes 5/cycle • renews 12 days</div>
+          <div class="meter"><i style="width:60%"></i></div>
+        </div>
+      </aside>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Parity, itemized</h4>
+      <ul>
+        <li>Nav structure is byte-for-byte the desktop <code>NAV</code> array — one source of truth keeps active/blocked logic (plan gating) identical on both shells.</li>
+        <li>Credits sub-line uses the <code>creditsView</code> honest framing (“plan includes 5/cycle”), never re-derived.</li>
+        <li>Emoji icons from the current sidebar are replaced with stroked SVGs in all three directions — build-phase change, both shells.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 3: CASES ============ -->
+  <div class="frame-col">
+    <div class="frame-label">3 · Cases (chrome check)</div>
+    <p class="frame-sub">Same card system as Direction A. Full-height content — no tab bar reserving 70px.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <button class="icon-btn" aria-label="Open menu">
+          <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="page-title">My Cases</div>
+        <div class="head-spacer"></div>
+        <a class="btn small primary" href="#">＋ New</a>
+      </header>
+
+      <div class="app-body">
+        <div class="chips">
+          <a class="chip on" href="#">All</a>
+          <a class="chip" href="#">Active</a>
+          <a class="chip" href="#">Completed</a>
+          <a class="chip" href="#">Action Required <span class="count">1</span></a>
+        </div>
+
+        <a class="case-card attn" href="#">
+          <div class="c-top"><span class="c-id">HQ-2041</span><span class="pill s-attn">⚠ Action Needed</span></div>
+          <div class="c-vendor">Meridian Trade Supply LLC</div>
+          <div class="c-brands">Nordvik • Cleanline</div>
+          <div class="c-foot"><span class="c-sla warn">SLA Paused</span><span class="c-action btn small warn">Confirm →</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2029</span><span class="pill s-subtle">Completed</span></div>
+          <div class="c-vendor">Apex Global Traders</div>
+          <div class="c-brands">Lumenpeak</div>
+          <div class="c-foot"><span class="pill v-clear">Source Clear</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2025</span><span class="pill s-queued">Queued</span></div>
+          <div class="c-vendor">Harborline Imports</div>
+          <div class="c-brands">Fjellvann • Duskwood Home</div>
+          <div class="c-foot"><span class="c-sla">Queue #2</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2021</span><span class="pill s-attn">Delayed — under review</span></div>
+          <div class="c-vendor">Veltrona Supply Co.</div>
+          <div class="c-brands">Aurelia Home</div>
+          <div class="c-foot"><span class="c-sla">We’re looking into it</span></div>
+        </a>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Trade-offs to weigh (honest)</h4>
+      <ul>
+        <li><b>For:</b> zero re-learning between desktop and phone; more vertical space for content; smallest engineering delta (one shell, one breakpoint).</li>
+        <li><b>Against:</b> every nav move is two taps; hamburger is top-left — the worst one-thumb reach zone; nav destinations are invisible until opened (out of sight, out of mind for Billing top-ups).</li>
+        <li>“Delayed — under review” card shows the ruled H2 label rendering calmly — the neutral SLA line beside it is deliberate: our delay, no client blame, no alarm.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile 1.4 — Direction C: Hub &amp; spoke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .linklist { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+  .link-row {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 52px; padding: 0 14px;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none; color: var(--ink);
+    font: 600 14.5px/1 var(--font-sans);
+  }
+  .link-row:last-child { border-bottom: 0; }
+  .link-row .r-ico { width: 34px; height: 34px; border-radius: 10px; background: var(--subtle); display: grid; place-items: center; color: var(--ink-2); flex: none; }
+  .link-row .chev { margin-left: auto; color: var(--muted); font-size: 17px; }
+  .link-row .meta { margin-left: auto; font: 600 12.5px/1 var(--font-sans); color: var(--muted); }
+  .link-row .meta + .chev { margin-left: 8px; }
+
+  /* hub tiles — the KPI grid IS the navigation */
+  .kpi.tile { position: relative; display: block; text-decoration: none; }
+  .kpi.tile .go { position: absolute; top: 10px; right: 12px; color: var(--line-strong); }
+
+  .back-head { display: flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+
+<div class="mock-head">
+  <div class="kicker">HYPRRIQ · TRACKER 1.4 MOBILE · DIRECTION C OF 3 · LAYOUT PHASE (no app code)</div>
+  <h1>Direction C — Hub &amp; spoke (“the briefing”)</h1>
+  <p class="lede">
+    No persistent nav chrome at all. Home is the whole map: the attention card, then KPI tiles that
+    are themselves the links (tap “Reports Ready” → completed reports), then recent cases, then a
+    plain link list for everything else. Spokes get a back arrow, nothing more. This is the reading
+    the user-research lens suggests most strongly — a client opens the portal on their phone a few
+    times a week for ninety seconds, and a briefing serves that better than an app frame. The bet:
+    shallow hierarchy beats visible hierarchy. The risk: cross-navigation from deep pages always
+    routes through Home.
+  </p>
+</div>
+<div class="mock-nav">
+  <a href="direction-a-tabbar.html">A · Tab bar</a>
+  <a href="direction-b-drawer.html">B · Drawer</a>
+  <a class="on" href="direction-c-hub.html">C · Hub &amp; spoke</a>
+</div>
+
+<div class="frames">
+
+  <!-- ============ FRAME 1: HOME / HUB ============ -->
+  <div class="frame-col">
+    <div class="frame-label">1 · Home — the hub is the nav</div>
+    <p class="frame-sub">Every destination is on this screen. KPI tiles are links; the link list replaces sidebar groups.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="wordmark">Hyprr<b>IQ</b></div>
+        <div class="head-spacer"></div>
+        <a class="credits-chip" href="#">
+          <svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8.5 9.5h5a2 2 0 0 1 0 4h-3a2 2 0 0 0 0 4h5.5"/></svg>
+          3 credits
+        </a>
+        <div class="avatar">G</div>
+      </header>
+
+      <div class="app-body">
+        <div class="greet">
+          <h2>Good day, Gautam</h2>
+          <p>Here’s where your research stands.</p>
+        </div>
+
+        <div class="attention">
+          <div class="a-row">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9a551f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <div>
+              <div class="a-title">Case HQ-2041 needs your confirmation</div>
+              <div class="a-body">Meridian Trade Supply — research is paused until you confirm the scope.</div>
+            </div>
+          </div>
+          <a class="a-cta" href="#">Review and confirm →</a>
+        </div>
+
+        <div class="kpis">
+          <a class="kpi tile" href="#">
+            <span class="go">›</span>
+            <div class="k-label">Active Cases</div><div class="k-value">2</div><div class="k-sub">In progress</div>
+          </a>
+          <a class="kpi tile" href="#">
+            <span class="go">›</span>
+            <div class="k-label">Reports Ready</div><div class="k-value ok">1</div><div class="k-sub">Tap to view</div>
+          </a>
+        </div>
+
+        <div class="sec"><h3>Recent cases</h3><a href="#">All cases →</a></div>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span></div>
+        </a>
+
+        <a class="btn quiet block" href="#">＋ New research request</a>
+
+        <div class="linklist">
+          <a class="link-row" href="#">
+            <span class="r-ico"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+            Billing &amp; Credits
+            <span class="meta">3 credits</span><span class="chev">›</span>
+          </a>
+          <a class="link-row" href="#">
+            <span class="r-ico"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>
+            Settings
+            <span class="chev">›</span>
+          </a>
+          <a class="link-row" href="#">
+            <span class="r-ico"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></span>
+            Help Centre
+            <span class="chev">›</span>
+          </a>
+          <a class="link-row" href="#">
+            <span class="r-ico"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+            Contact Support
+            <span class="chev">›</span>
+          </a>
+        </div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Why the hub can carry it</h4>
+      <ul>
+        <li>The portal has exactly seven destinations — small enough to fit one calm screen without a junk-drawer feel.</li>
+        <li>KPI tiles double as nav (Active Cases → filtered list). Numbers become doors; nothing is display-only.</li>
+        <li>New Research is state-dependent: quiet while something needs attention (shown), solid brand when the attention slot is empty — one primary per screen, always.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 2: SPOKE — CASES ============ -->
+  <div class="frame-col">
+    <div class="frame-label">2 · Spoke — Cases</div>
+    <p class="frame-sub">Back arrow + title. No other chrome; the system back gesture does the same thing.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="back-head">
+          <button class="icon-btn" aria-label="Back to home">
+            <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7M5 12h14"/></svg>
+          </button>
+          <div class="page-title">My Cases</div>
+        </div>
+        <div class="head-spacer"></div>
+        <a class="btn small primary" href="#">＋ New</a>
+      </header>
+
+      <div class="app-body">
+        <div class="chips">
+          <a class="chip on" href="#">All</a>
+          <a class="chip" href="#">Active</a>
+          <a class="chip" href="#">Completed</a>
+          <a class="chip" href="#">Action Required <span class="count">1</span></a>
+        </div>
+
+        <a class="case-card attn" href="#">
+          <div class="c-top"><span class="c-id">HQ-2041</span><span class="pill s-attn">⚠ Action Needed</span></div>
+          <div class="c-vendor">Meridian Trade Supply LLC</div>
+          <div class="c-brands">Nordvik • Cleanline</div>
+          <div class="c-foot"><span class="c-sla warn">SLA Paused</span><span class="c-action btn small warn">Confirm →</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2029</span><span class="pill s-subtle">Completed</span></div>
+          <div class="c-vendor">Apex Global Traders</div>
+          <div class="c-brands">Lumenpeak</div>
+          <div class="c-foot"><span class="pill v-clear">Source Clear</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2025</span><span class="pill s-queued">Queued</span></div>
+          <div class="c-vendor">Harborline Imports</div>
+          <div class="c-brands">Fjellvann • Duskwood Home</div>
+          <div class="c-foot"><span class="c-sla">Queue #2</span></div>
+        </a>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Spoke rules</h4>
+      <ul>
+        <li>One level deep, always: Home → spoke → (case detail). Back never surprises.</li>
+        <li>The header stays 56px and sticky; filters scroll with content so reading space wins.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 3: SPOKE — CASE STATUS ============ -->
+  <div class="frame-col">
+    <div class="frame-label">3 · Spoke — case status (the 90-second check)</div>
+    <p class="frame-sub">What the anxious visit actually looks for: where is it, is anything needed, when is it due.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="back-head">
+          <button class="icon-btn" aria-label="Back to cases">
+            <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7M5 12h14"/></svg>
+          </button>
+          <div class="page-title" style="font-family:var(--font-mono);font-size:15px">HQ-2038</div>
+        </div>
+        <div class="head-spacer"></div>
+        <span class="pill s-queued">In Research</span>
+      </header>
+
+      <div class="app-body">
+        <div>
+          <h2 style="font:700 19px/1.3 var(--font-display);letter-spacing:-0.02em">Brightline Distribution</h2>
+          <div style="margin-top:4px;font-size:13px;color:var(--ink-2)">Oxbow Kitchen · Submitted 28 Jul 2026</div>
+        </div>
+
+        <div class="plan-card">
+          <div class="row" style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font:700 13px/1 var(--font-display);color:var(--ink)">Progress</span>
+            <span style="font:600 12.5px/1 var(--font-sans);color:var(--ink-2)">Due in 2 days</span>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center"><span style="width:22px;height:22px;border-radius:999px;background:var(--clear-bg);color:var(--clear-ink);display:grid;place-items:center;font-size:12px;font-weight:700">✓</span><span style="width:2px;flex:1;background:rgba(26,107,58,.35);min-height:18px"></span></div>
+              <div style="padding-bottom:16px"><div style="font:600 14px/1.3 var(--font-sans)">Submitted</div><div style="margin-top:2px;font-size:12.5px;color:var(--ink-2)">28 Jul, 14:20</div></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center"><span style="width:22px;height:22px;border-radius:999px;background:var(--clear-bg);color:var(--clear-ink);display:grid;place-items:center;font-size:12px;font-weight:700">✓</span><span style="width:2px;flex:1;background:rgba(26,107,58,.35);min-height:18px"></span></div>
+              <div style="padding-bottom:16px"><div style="font:600 14px/1.3 var(--font-sans)">Scope confirmed</div><div style="margin-top:2px;font-size:12.5px;color:var(--ink-2)">29 Jul, 09:05</div></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center"><span style="width:22px;height:22px;border-radius:999px;background:var(--brand-tint);color:var(--brand-ink);display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:999px;background:var(--brand)"></span></span><span style="width:2px;flex:1;background:var(--line);min-height:18px"></span></div>
+              <div style="padding-bottom:16px"><div style="font:600 14px/1.3 var(--font-sans);color:var(--brand-ink)">Research in progress</div><div style="margin-top:2px;font-size:12.5px;color:var(--ink-2)">Our analysts are working through the evidence</div></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center"><span style="width:22px;height:22px;border-radius:999px;background:var(--subtle);color:var(--muted);display:grid;place-items:center;font-size:11px">•</span></div>
+              <div><div style="font:600 14px/1.3 var(--font-sans);color:var(--muted)">Report delivered</div><div style="margin-top:2px;font-size:12.5px;color:var(--muted)">You’ll get an email the moment it’s ready</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="linklist">
+          <a class="link-row" href="#">What we research<span class="chev">›</span></a>
+          <a class="link-row" href="#">Request a change to this case<span class="chev">›</span></a>
+          <a class="link-row" href="#">Contact support about this case<span class="chev">›</span></a>
+        </div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Trade-offs to weigh (honest)</h4>
+      <ul>
+        <li><b>For:</b> most content per screen of all three; nothing to learn; matches the real usage pattern (brief, purposeful visits); no shell rework — mobile home is just a different dashboard composition.</li>
+        <li><b>Against:</b> cross-navigation (Cases → Billing) always routes via Home; no ambient nav means no persistent “where am I”; unusual — some clients may expect visible app chrome.</li>
+        <li>Timeline copy (“Our analysts are working through the evidence”) is PROPOSED — describes our process generically, no method exposure, no per-dimension status (law 6 stays with the founder). Founder rules exact strings; fixture same-commit at build.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

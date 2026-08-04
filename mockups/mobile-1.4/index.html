@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile 1.4 — Direction comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .cmp { max-width: 1000px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+  .cmp table { width: 100%; border-collapse: collapse; }
+  .cmp th, .cmp td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 13.5px; line-height: 1.5; vertical-align: top; }
+  .cmp th { background: var(--subtle); font: 700 12px/1 var(--font-sans); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); }
+  .cmp td:first-child { font-weight: 600; color: var(--ink); width: 180px; }
+  .cmp td { color: var(--ink-2); }
+  .shared-block { max-width: 1000px; margin: 28px auto 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 20px 24px; }
+  .shared-block h3 { font: 700 16px/1.2 var(--font-display); margin-bottom: 10px; }
+  .shared-block li { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); margin: 0 0 6px 16px; }
+</style>
+</head>
+<body>
+
+<div class="mock-head">
+  <div class="kicker">HYPRRIQ · TRACKER 1.4 MOBILE · LAYOUT PHASE · FOUNDER RULING NEEDED</div>
+  <h1>Mobile portal — three directions, one decision</h1>
+  <p class="lede">
+    The portal currently renders its fixed 248px desktop sidebar on phones — content gets ~130px
+    and the case table overflows: that is the 1.4 launch blocker. The responsive content system
+    (attention-first home, KPI 2×2, case cards replacing the table, 44px targets, 16px+ body) is
+    identical across all three directions and largely settled. The one genuine decision is the
+    navigation chrome. Open each direction below; same data everywhere, so the chrome is the
+    only variable.
+  </p>
+</div>
+<div class="mock-nav">
+  <a href="direction-a-tabbar.html">A · Tab bar</a>
+  <a href="direction-b-drawer.html">B · Drawer</a>
+  <a href="direction-c-hub.html">C · Hub &amp; spoke</a>
+</div>
+
+<div class="cmp">
+  <table>
+    <tr><th></th><th>A — Bottom tab bar</th><th>B — Hamburger drawer</th><th>C — Hub &amp; spoke</th></tr>
+    <tr><td>Feels like</td><td>An app they pay for</td><td>The desktop site, folded</td><td>A morning briefing</td></tr>
+    <tr><td>Status check (top job)</td><td>1 tap, thumb zone</td><td>0–2 taps, top reach</td><td>0 taps — home IS the check</td></tr>
+    <tr><td>Cross-navigation</td><td>1 tap anywhere</td><td>2 taps anywhere</td><td>Via Home (2 taps)</td></tr>
+    <tr><td>Screen space cost</td><td>~70px tab bar, every screen</td><td>None</td><td>None</td></tr>
+    <tr><td>Desktop parity</td><td>Different chrome per device</td><td>Highest — same nav model</td><td>Different home composition</td></tr>
+    <tr><td>Engineering delta</td><td>Medium — breakpoint chrome swap in PortalShell</td><td>Smallest — sidebar becomes a client-side drawer</td><td>Medium — mobile home composition + spoke headers</td></tr>
+    <tr><td>Main risk</td><td>Two nav grammars to maintain</td><td>Nav invisible until opened; worst thumb reach</td><td>Unconventional; deep-page hopping routes via Home</td></tr>
+  </table>
+</div>
+
+<div class="shared-block">
+  <h3>Shared across all three (not part of the ruling)</h3>
+  <ul>
+    <li><b>Case cards replace the CaseTable grid</b> below the desktop breakpoint — ID + status, supplier + brands, verdict pill on its own row, one action. Desktop table unchanged.</li>
+    <li><b>Attention-first home:</b> an awaiting-confirmation case outranks KPIs — it is the only client action that unblocks their own SLA.</li>
+    <li><b>All statuses, verdicts, and credit framings</b> are the ruled strings from <code>badges.tsx</code> / <code>creditsView</code> — restyled, never reworded. Proposed NEW strings are flagged in each mockup's notes and go to the banned-language fixture in the build commit.</li>
+    <li><b>Build-phase items regardless of direction:</b> replace emoji nav icons with stroked SVGs (both shells), content padding px-4 on mobile / px-7 desktop, billing <code>grid-cols-3</code> → stacked on mobile, invoice rows → cards, 16px inputs (kills iOS zoom), safe-area padding, <code>min-h-dvh</code> already correct.</li>
+  </ul>
+</div>
+
+<div class="shared-block">
+  <h3>Recommendation (yours to overrule)</h3>
+  <ul>
+    <li><b>C is the best fit for what mobile is for this product</b> — a 90-second reassurance visit, not an app they live in. It spends zero pixels on chrome and puts "does anything need me?" on screen before a single tap. It is also the least engineering risk after B.</li>
+    <li>If you want the portal to feel like a product they open daily (Growth/Scale retention play), <b>A</b> is the stronger identity — but it commits us to maintaining two navigation grammars.</li>
+    <li><b>B is the safe floor:</b> if you're unsure, B ships fastest and forecloses nothing — A or C can be layered on later without unwinding it.</li>
+  </ul>
+</div>
+
+</body>
+</html>

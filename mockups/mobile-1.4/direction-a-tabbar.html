@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile 1.4 — Direction A: Bottom tab bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+  /* "More" bottom sheet */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(26, 25, 23, 0.5); }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 16px 30px;
+    box-shadow: 0 -12px 40px rgba(26,25,23,.25);
+  }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line-strong); margin: 0 auto 12px; }
+  .sheet h4 { font: 700 15px/1 var(--font-display); margin: 4px 2px 10px; }
+  .sheet-row {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 52px; padding: 0 6px;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none; color: var(--ink);
+    font: 600 15px/1 var(--font-sans);
+  }
+  .sheet-row:last-child { border-bottom: 0; }
+  .sheet-row .sub { display: block; margin-top: 3px; font: 400 12.5px/1.3 var(--font-sans); color: var(--ink-2); }
+  .sheet-row .chev { margin-left: auto; color: var(--muted); }
+  .sheet-row .r-ico { width: 36px; height: 36px; border-radius: 10px; background: var(--subtle); display: grid; place-items: center; color: var(--ink-2); flex: none; }
+</style>
+</head>
+<body>
+
+<div class="mock-head">
+  <div class="kicker">HYPRRIQ · TRACKER 1.4 MOBILE · DIRECTION A OF 3 · LAYOUT PHASE (no app code)</div>
+  <h1>Direction A — Bottom tab bar (“the pocket app”)</h1>
+  <p class="lede">
+    Nav lives in the thumb zone. Four tabs — Home, Cases, Billing, More — cover every top-level
+    destination; Settings/Help/Support sit one tap away in a bottom sheet. The mobile session we
+    optimize for is the anxious status check: “is my report ready, does anything need me?” —
+    so Home leads with the one case that needs action, then the numbers, then recent cases.
+    New Research stays an in-page button (submitting with invoice uploads is a desk job; on the
+    phone it must be possible, not primary).
+  </p>
+</div>
+<div class="mock-nav">
+  <a class="on" href="direction-a-tabbar.html">A · Tab bar</a>
+  <a href="direction-b-drawer.html">B · Drawer</a>
+  <a href="direction-c-hub.html">C · Hub &amp; spoke</a>
+</div>
+
+<div class="frames">
+
+  <!-- ============ FRAME 1: HOME ============ -->
+  <div class="frame-col">
+    <div class="frame-label">1 · Home (dashboard)</div>
+    <p class="frame-sub">Attention card first — the SLA is paused until they act, so nothing outranks it. KPIs compress to 2×2.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="wordmark">Hyprr<b>IQ</b></div>
+        <div class="head-spacer"></div>
+        <a class="credits-chip" href="#">
+          <svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8.5 9.5h5a2 2 0 0 1 0 4h-3a2 2 0 0 0 0 4h5.5"/></svg>
+          3 credits
+        </a>
+        <div class="avatar">G</div>
+      </header>
+
+      <div class="app-body">
+        <div class="greet">
+          <h2>Good day, Gautam</h2>
+          <p>Here’s what’s happening with your research today.</p>
+        </div>
+
+        <div class="attention">
+          <div class="a-row">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9a551f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <div>
+              <div class="a-title">Case HQ-2041 needs your confirmation</div>
+              <div class="a-body">Meridian Trade Supply — research is paused until you confirm the scope.</div>
+            </div>
+          </div>
+          <a class="a-cta" href="#">Review and confirm →</a>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="k-label">Credits Left</div><div class="k-value brand">3</div><div class="k-sub">Renews in 12 days</div></div>
+          <div class="kpi"><div class="k-label">Active Cases</div><div class="k-value">2</div><div class="k-sub">In progress</div></div>
+          <div class="kpi"><div class="k-label">Reports Ready</div><div class="k-value ok">1</div><div class="k-sub">Ready to view</div></div>
+          <div class="kpi"><div class="k-label">Needs Action</div><div class="k-value" style="color:var(--verify-ink)">1</div><div class="k-sub">Waiting on you</div></div>
+        </div>
+
+        <div class="sec"><h3>Recent cases</h3><a href="#">View all →</a></div>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span></div>
+        </a>
+
+        <a class="btn quiet block" href="#">＋ New research request</a>
+      </div>
+
+      <nav class="tabbar">
+        <a class="tab on" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg></span>Home</a>
+        <a class="tab" href="#"><span class="t-ico badge-dot"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg></span>Cases</a>
+        <a class="tab" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Billing</a>
+        <a class="tab" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>More</a>
+      </nav>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Why this hierarchy</h4>
+      <ul>
+        <li>The paused-SLA confirmation outranks everything: it is the only thing the client can do that speeds up their own report.</li>
+        <li>“SLA Risk” KPI renamed to “Needs Action” on mobile — SLA is our internal word; “waiting on you” is theirs. (New string → banned-language fixture at build time.)</li>
+        <li>Verdict pill sits on its own row in the card — the loudest color moment keeps its air even at 390px.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 2: CASES ============ -->
+  <div class="frame-col">
+    <div class="frame-label">2 · Cases (the table, re-thought)</div>
+    <p class="frame-sub">The 6-column desktop grid becomes stacked cards: identity → status → verdict → the one action.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="page-title">My Cases</div>
+        <div class="head-spacer"></div>
+        <a class="btn small primary" href="#">＋ New</a>
+      </header>
+
+      <div class="app-body">
+        <div class="chips">
+          <a class="chip on" href="#">All</a>
+          <a class="chip" href="#">Active</a>
+          <a class="chip" href="#">Completed</a>
+          <a class="chip" href="#">Action Required <span class="count">1</span></a>
+        </div>
+
+        <a class="case-card attn" href="#">
+          <div class="c-top"><span class="c-id">HQ-2041</span><span class="pill s-attn">⚠ Action Needed</span></div>
+          <div class="c-vendor">Meridian Trade Supply LLC</div>
+          <div class="c-brands">Nordvik • Cleanline</div>
+          <div class="c-foot"><span class="c-sla warn">SLA Paused</span><span class="c-action btn small warn">Confirm →</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2038</span><span class="pill s-queued">In Research</span></div>
+          <div class="c-vendor">Brightline Distribution</div>
+          <div class="c-brands">Oxbow Kitchen</div>
+          <div class="c-foot"><span class="c-sla">Due in 2 days</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2033</span><span class="pill s-ready">✓ Ready</span></div>
+          <div class="c-vendor">Coastal Goods Wholesale</div>
+          <div class="c-brands">Thermaline • Bruvara • Stanmore</div>
+          <div class="c-foot"><span class="pill v-verify">Verify Before Purchase</span><span class="c-action btn small primary">View report</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2029</span><span class="pill s-subtle">Completed</span></div>
+          <div class="c-vendor">Apex Global Traders</div>
+          <div class="c-brands">Lumenpeak</div>
+          <div class="c-foot"><span class="pill v-clear">Source Clear</span><span class="c-action btn small quiet">View</span></div>
+        </a>
+
+        <a class="case-card" href="#">
+          <div class="c-top"><span class="c-id">HQ-2025</span><span class="pill s-queued">Queued</span></div>
+          <div class="c-vendor">Harborline Imports</div>
+          <div class="c-brands">Fjellvann • Duskwood Home</div>
+          <div class="c-foot"><span class="c-sla">Queue #2</span></div>
+        </a>
+      </div>
+
+      <nav class="tabbar">
+        <a class="tab" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg></span>Home</a>
+        <a class="tab on" href="#"><span class="t-ico badge-dot"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg></span>Cases</a>
+        <a class="tab" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Billing</a>
+        <a class="tab" href="#"><span class="t-ico"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>More</a>
+      </nav>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Card anatomy (replaces CaseTable on &lt; lg)</h4>
+      <ul>
+        <li>Row 1: case ID (mono) + status pill. Row 2–3: supplier + brands. Row 4: SLA/queue on the left, single action on the right.</li>
+        <li>Whole card is tappable; the action button is the same destination — a bigger target, not a second behavior.</li>
+        <li>Statuses/verdicts are the exact ruled client labels from <code>badges.tsx</code> — restyled, never reworded.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ FRAME 3: MORE SHEET ============ -->
+  <div class="frame-col">
+    <div class="frame-label">3 · “More” sheet (overflow destinations)</div>
+    <p class="frame-sub">Settings, Help, Support — needed rarely, never lost. One tap, thumb-reach, swipe to dismiss.</p>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="sb-icons">▮▮▮ ⏻</span></div>
+
+      <header class="app-head">
+        <div class="wordmark">Hyprr<b>IQ</b></div>
+        <div class="head-spacer"></div>
+        <a class="credits-chip" href="#">3 credits</a>
+        <div class="avatar">G</div>
+      </header>
+
+      <div class="app-body" style="opacity:.55">
+        <div class="greet">
+          <h2>Good day, Gautam</h2>
+          <p>Here’s what’s happening with your research today.</p>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k-label">Credits Left</div><div class="k-value brand">3</div><div class="k-sub">Renews in 12 days</div></div>
+          <div class="kpi"><div class="k-label">Active Cases</div><div class="k-value">2</div><div class="k-sub">In progress</div></div>
+        </div>
+      </div>
+
+      <div class="sheet-scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>More</h4>
+        <a class="sheet-row" href="#">
+          <span class="r-ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>
+          <span>Settings<span class="sub">Profile, contact and billing details</span></span>
+          <span class="chev">›</span>
+        </a>
+        <a class="sheet-row" href="#">
+          <span class="r-ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></span>
+          <span>Help Centre<span class="sub">How research and credits work</span></span>
+          <span class="chev">›</span>
+        </a>
+        <a class="sheet-row" href="#">
+          <span class="r-ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+          <span>Contact Support<span class="sub">We reply within one business day</span></span>
+          <span class="chev">›</span>
+        </a>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+
+    <div class="notes">
+      <h4>Trade-offs to weigh (honest)</h4>
+      <ul>
+        <li><b>For:</b> one-thumb status checks; the “app I paid for” feel; Cases badge = ambient awareness of pending action.</li>
+        <li><b>Against:</b> tab bar eats ~70px of every screen; desktop and mobile navigate differently (sidebar vs tabs); needs a real breakpoint switch in <code>PortalShell</code>.</li>
+        <li>Support line “We reply within one business day” is PROPOSED copy — founder rules it, fixture gets it, or it reverts to the existing string.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
