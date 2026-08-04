@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New case — HyprrIQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/base.css">
+<style>
+  .form-sec { margin-top: var(--s-7); }
+  .form-sec:first-child { margin-top: 0; }
+  .form-sec .fs-head { display: flex; align-items: baseline; gap: 10px; }
+  .form-sec .fs-num {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--muted);
+  }
+  .form-sec h3 { font-size: 17px; }
+  .form-sec .fs-sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; max-width: 60ch; }
+  .brand-row { display: flex; gap: 10px; align-items: flex-end; }
+  .brand-row .field { flex: 1; margin-top: var(--s-3); }
+  .brand-row .rm {
+    flex: none; width: 42px; height: 44px; margin-bottom: 1px;
+    display: grid; place-items: center;
+    background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+    color: var(--muted); cursor: pointer;
+  }
+  .brand-row .rm:hover { color: var(--v-rely); border-color: var(--line-strong); }
+  .cost-callout {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    background: var(--surface-sunk); border-radius: var(--radius);
+    padding: 16px 18px; margin-top: var(--s-7);
+  }
+  .cost-callout .cc-fee { font-weight: 700; font-size: 15px; }
+  .cost-callout .cc-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+  .cost-callout .btn { margin-left: auto; }
+  @media (max-width: 640px) {
+    .cost-callout .btn { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <nav class="shell-nav" aria-label="Portal">
+    <a class="wm" href="dashboard.html">Hyprr<b>IQ</b></a>
+    <div class="plan-tag"><span data-bind="plan-name">Growth</span> plan</div>
+    <a class="nav-item" href="dashboard.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>Dashboard</a>
+    <div class="nav-sec">Research</div>
+    <a class="nav-item" aria-current="page" href="submit.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New case</a>
+    <a class="nav-item" href="reports.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Reports<span class="count">1</span></a>
+    <div class="nav-sec">Account</div>
+    <a class="nav-item" href="billing.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing &amp; credits</a>
+    <a class="nav-item" href="settings.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
+    <div class="nav-sec">Support</div>
+    <a class="nav-item" href="help.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>Help &amp; support</a>
+    <a class="nav-item" href="faq.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>FAQ</a>
+    <a class="nav-item" href="wiki.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2ZM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7Z"/></svg>How-to guides</a>
+    <div class="nav-credits">
+      <div class="box">
+        <div class="row"><span class="lab">Credits</span><a class="add" href="billing.html">Add more</a></div>
+        <div class="val" data-bind="credits-available">3</div>
+        <div class="sub"><span data-bind="credits-detail">plan includes 5/cycle</span> · <span data-bind="credits-renews">renews in 12 days</span></div>
+        <div class="meter"><i data-bind-width="credits-pct" style="width:60%"></i></div>
+      </div>
+    </div>
+  </nav>
+  <button class="drawer-scrim" aria-label="Close menu" onclick="drawerClose()"></button>
+
+  <div class="shell-main">
+    <header class="topbar">
+      <button class="menu-btn" aria-label="Open menu" onclick="drawerOpen()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="title">New case</h1>
+      <span class="spacer"></span>
+      <span class="avatar" data-bind="account-initial">G</span>
+    </header>
+
+    <main class="content narrow">
+
+      <!-- ============ FORM VIEW ============ -->
+      <div id="submitView">
+        <div class="page-head">
+          <h2>Research a supplier</h2>
+          <p class="sub">One case covers one supplier and up to <span data-bind="plan-brands">5</span> brands,
+          for one credit. The more you can share, the more we can check against.</p>
+        </div>
+
+        <form id="submitForm" class="card pad-lg" novalidate>
+
+          <div class="form-sec">
+            <div class="fs-head"><span class="fs-num">01</span><h3>The supplier</h3></div>
+            <p class="fs-sub">Who are you planning to buy from?</p>
+            <div class="field">
+              <label for="supplierName">Supplier business name</label>
+              <input type="text" id="supplierName" placeholder="e.g. TD Synnex Corporation" autocomplete="organization" required>
+              <div class="error" hidden>Enter the supplier&rsquo;s business name to continue.</div>
+            </div>
+            <div class="field">
+              <label for="supplierSite">Supplier website <span class="opt">(optional)</span></label>
+              <input type="url" id="supplierSite" placeholder="https://" inputmode="url">
+              <div class="hint">If they gave you a storefront, portal, or catalog link, paste it here.</div>
+            </div>
+          </div>
+
+          <div class="form-sec">
+            <div class="fs-head"><span class="fs-num">02</span><h3>The brands</h3></div>
+            <p class="fs-sub" id="brandCap">Up to 5 brands per case on your plan — one credit covers them all.</p>
+            <div id="brandRows">
+              <div class="brand-row">
+                <div class="field">
+                  <label>Brand 1</label>
+                  <input type="text" placeholder="e.g. Bosch">
+                </div>
+                <button type="button" class="rm" aria-label="Remove this brand" hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn quiet sm" id="addBrand" style="margin-top:10px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Add another brand
+            </button>
+          </div>
+
+          <div class="form-sec">
+            <div class="fs-head"><span class="fs-num">03</span><h3>What they&rsquo;ve sent you <span class="opt" style="font-family:var(--font-sans);font-size:13px;font-weight:400">(optional)</span></h3></div>
+            <p class="fs-sub">An invoice, quote, or price list gives our review something concrete to check.
+            Nothing is shared with the supplier.</p>
+            <div class="field">
+              <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload documents">
+                <div class="dz-title">Drop files here, or tap to choose</div>
+                <div class="dz-hint">PDF, PNG, or JPG · invoices, quotes, catalogs</div>
+              </div>
+              <input type="file" id="fileInput" multiple hidden accept=".pdf,.png,.jpg,.jpeg">
+              <div id="fileList"></div>
+            </div>
+            <div class="field">
+              <label for="notes">Anything specific on your mind? <span class="opt">(optional)</span></label>
+              <textarea id="notes" rows="3" placeholder="e.g. They say they ship from a EU warehouse — the pricing feels low for this brand."></textarea>
+            </div>
+          </div>
+
+          <div class="cost-callout">
+            <div>
+              <div class="cc-fee">This case uses 1 credit</div>
+              <div class="cc-sub">
+                You have <span data-bind="credits-available">3</span> available ·
+                delivery within <span data-bind="plan-sla">5</span> business days.
+                If we can&rsquo;t research a supplier, the credit comes back.
+              </div>
+            </div>
+            <button type="submit" class="btn primary">Submit for research</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ============ CONFIRMATION STATE ============ -->
+      <div id="confirmView" hidden>
+        <div class="card empty" style="margin-top: var(--s-6)">
+          <div class="e-ico" style="background: var(--v-clear-bg); color: var(--v-clear)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <h3>Case submitted</h3>
+          <p>We&rsquo;ve started on <strong id="confirmSupplier">the supplier</strong>. You&rsquo;ll get an
+          email if anything needs your confirmation, and another the moment the report is ready —
+          within <span data-bind="plan-sla">5</span> business days.</p>
+          <div class="e-act">
+            <a class="btn primary" href="dashboard.html">Back to dashboard</a>
+            <a class="btn ghost" href="case-active.html">Track this case</a>
+          </div>
+        </div>
+        <div class="card pad" style="margin-top: var(--s-4)">
+          <div class="eyebrow">While research runs</div>
+          <p style="font-size:14px; color:var(--ink-2); margin-top:8px; max-width:62ch">
+            Hold off on wiring anything. When the report lands you&rsquo;ll have a clear read on what we
+            confirmed, what we couldn&rsquo;t, and the exact questions to put to the supplier first.
+          </p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<script src="../assets/app.js"></script>
+</body>
+</html>
