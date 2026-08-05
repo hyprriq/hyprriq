@@ -699,7 +699,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
   .crumb a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
   .crumb a:hover { color: var(--navy); }
 
-  .decision { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: var(--s-5); align-items: stretch; }
+  .decision { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: var(--s-5); align-items: start; }
   @media (max-width: 899px) { .decision { grid-template-columns: 1fr; } }
 
   /* identity panel — structured, labeled: "right report, right supplier, right products" at a glance */
@@ -748,7 +748,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
   .verdict-card .v-spec span.at { opacity: 1; outline: 2px solid var(--ink); outline-offset: 1px; }
   .verdict-card .v-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 6px; }
   .verdict-card .v-means { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-top: 12px; }
-  .verdict-card .v-act { margin-top: auto; padding-top: 16px; }
+  .verdict-card .v-act { margin-top: 16px; }
 
   .sumgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-5); margin-top: var(--s-5); }
   @media (max-width: 767px) { .sumgrid { grid-template-columns: 1fr; } }
