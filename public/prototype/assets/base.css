@@ -586,3 +586,23 @@ table.cases tbody tr:hover td { background: var(--paper); }
 @media (max-width: 640px) {
   .tip .tip-pop { left: auto; right: -8px; transform: none; }
 }
+
+/* quick actions — one restrained treatment: accent icons (matches the Credits KPI), labels stay ink */
+.qa-grid .btn svg { color: var(--accent); }
+.qa-grid .btn:hover { border-color: var(--accent); }
+
+/* mobile back affordance — drill-in pages (report, active case). Desktop keeps the
+   breadcrumb; below the drawer breakpoint the back button replaces the hamburger
+   (the parent list page still carries the drawer). */
+.back-btn { display: none; }
+@media (max-width: 899px) {
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 44px; padding: 0 12px 0 4px; margin-left: -8px;
+    font: 600 14px/1 var(--font-sans); color: var(--ink); text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+  .topbar.drill .menu-btn { display: none; }
+  /* nav.crumb outranks the page-local .crumb rule (specificity, not !important) */
+  nav.crumb { display: none; }
+}
