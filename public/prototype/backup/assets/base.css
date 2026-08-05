@@ -333,16 +333,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
 .kpi { padding: 15px 17px; }
 .kpi .k-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .kpi .k-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
-/* KPI icons — coloured with intent, tinted chips composed from tokens only:
-   credits=accent · active=navy · ready=v-clear · waiting-on-you=v-verify */
-.kpi .k-ico {
-  width: 30px; height: 30px; border-radius: 8px; flex: none;
-  display: grid; place-items: center; color: var(--muted);
-}
-.kpi .k-ico.acc { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-.kpi .k-ico.anchor { color: var(--navy); background: var(--navy-tint); }
-.kpi .k-ico.ok { color: var(--v-clear); background: var(--v-clear-bg); }
-.kpi .k-ico.warn { color: var(--v-verify); background: var(--v-verify-bg); }
+.kpi .k-ico { color: var(--muted); }
 .kpi .k-value { font-family: var(--font-display); font-size: 30px; font-weight: 600; margin-top: 8px; line-height: 1; }
 .kpi .k-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 5px; }
 

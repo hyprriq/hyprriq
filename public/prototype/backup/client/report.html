@@ -22,34 +22,8 @@
   .decision { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: var(--s-5); align-items: stretch; }
   @media (max-width: 899px) { .decision { grid-template-columns: 1fr; } }
 
-  /* identity panel — structured, labeled: "right report, right supplier, right products" at a glance */
-  .idpanel { overflow: hidden; }
-  .idpanel .id-head {
-    display: flex; align-items: center; gap: 10px;
-    padding: 11px 20px; background: var(--surface-sunk); border-bottom: 1px solid var(--line);
-  }
-  .idpanel .id-head .eyebrow { color: var(--ink-2); }
-  .idpanel .id-head .report-meta { margin-left: auto; }
-  .idpanel .id-grid { padding: 6px 20px 14px; }
-  .idpanel .id-row {
-    display: grid; grid-template-columns: 128px minmax(0, 1fr);
-    gap: 4px 18px; padding: 9px 0; border-bottom: 1px solid var(--line);
-    align-items: baseline;
-  }
-  .idpanel .id-row:last-child { border-bottom: 0; }
-  .idpanel .id-lab {
-    font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--ink-2);
-  }
-  .idpanel .id-val { font-size: 14.5px; font-weight: 600; color: var(--ink); min-width: 0; }
-  .idpanel .id-val.supplier { font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
-  .idpanel .id-val .mono { font-size: 12.5px; font-weight: 500; }
-  .idpanel .asin-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; font-size: 13.5px; }
-  .idpanel .asin-line + .asin-line { margin-top: 4px; }
-  .idpanel .asin-line .b { font-weight: 600; }
-  @media (max-width: 560px) {
-    .idpanel .id-row { grid-template-columns: 1fr; padding: 8px 0; }
-  }
+  .case-id-head h1 { font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.015em; }
+  .case-id-head .meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 13.5px; color: var(--ink-2); align-items: center; }
 
   .verdict-card { padding: 20px 22px; display: flex; flex-direction: column; }
   .verdict-card .v-row { display: flex; align-items: center; gap: 8px; }
@@ -147,10 +121,8 @@
     <div class="nav-sec">Research</div>
     <a class="nav-item" href="submit.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New case</a>
     <a class="nav-item" aria-current="page" href="reports.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Reports<span class="count">1</span></a>
-    <a class="nav-item" href="reports.html?filter=completed"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>Completed reports</a>
     <div class="nav-sec">Account</div>
     <a class="nav-item" href="billing.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing &amp; credits</a>
-    <a class="nav-item" href="invoices.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h5M8 17h3"/></svg>Invoices</a>
     <a class="nav-item" href="settings.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
     <div class="nav-sec">Support</div>
     <a class="nav-item" href="help.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>Help &amp; support</a>
@@ -192,35 +164,12 @@
       <!-- ============ ALWAYS VISIBLE · THE DECISION ============ -->
       <div class="decision">
         <div>
-          <div class="card idpanel">
-            <div class="id-head">
-              <span class="eyebrow">Research report</span>
-              <span class="report-meta">AWI-2607-022</span>
-            </div>
-            <div class="id-grid">
-              <div class="id-row">
-                <span class="id-lab">Supplier</span>
-                <h1 class="id-val supplier" style="margin:0">TD Synnex Corporation</h1>
-              </div>
-              <div class="id-row">
-                <span class="id-lab">Brands in scope</span>
-                <span class="id-val">Bosch · Lenovo</span>
-              </div>
-              <div class="id-row" id="asinRow" hidden>
-                <span class="id-lab">ASINs</span>
-                <span class="id-val" style="font-weight:400">
-                  <span class="asin-line"><span class="b">Bosch</span><span class="mono">B0C4KV1N8R</span></span>
-                  <span class="asin-line"><span class="b">Lenovo</span><span class="mono">B09XKWJ3ZL</span></span>
-                </span>
-              </div>
-              <div class="id-row">
-                <span class="id-lab">Report ID</span>
-                <span class="id-val mono" style="font-size:12.5px; font-weight:500">AWI-2607-022</span>
-              </div>
-              <div class="id-row">
-                <span class="id-lab">Delivered</span>
-                <span class="id-val mono" style="font-size:12.5px; font-weight:500">12 Aug 2026</span>
-              </div>
+          <div class="case-id-head">
+            <span class="eyebrow">Research report</span>
+            <h1 style="margin-top:6px">TD Synnex Corporation</h1>
+            <div class="meta">
+              <span style="font-weight:600; color:var(--ink)">Bosch · Lenovo</span>
+              <span class="report-meta">AWI-2607-022 · delivered 12 Aug 2026</span>
             </div>
           </div>
 
@@ -524,12 +473,6 @@
   });
   if (location.hash) openFromHash(location.hash);
 })();
-
-/* ASIN row: this sample case (Growth plan) has none, so the row is omitted —
-   ?asins=1 previews the Scale-plan variant with sample intake ASINs. */
-if (new URLSearchParams(location.search).get('asins') === '1') {
-  document.getElementById('asinRow').hidden = false;
-}
 </script>
 </body>
 </html>

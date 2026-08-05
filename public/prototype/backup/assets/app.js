@@ -30,7 +30,6 @@ const ACCOUNT = {
   const map = {
     "plan-name": p.name,
     "plan-price": p.price + p.cadence,
-    "plan-price-bare": p.price,
     "plan-credits": String(p.credits),
     "plan-brands": String(p.brands),
     "plan-sla": String(p.slaDays),
@@ -202,12 +201,6 @@ function initCaseFilters() {
     });
   });
   search?.addEventListener("input", apply);
-
-  // deep-link: /reports.html?filter=completed preselects the chip (Completed-reports nav)
-  const pre = new URLSearchParams(location.search).get("filter");
-  if (["active", "completed", "action"].includes(pre)) {
-    chipRow.querySelector('[data-filter="' + pre + '"]')?.click();
-  }
 }
 initCaseFilters();
 

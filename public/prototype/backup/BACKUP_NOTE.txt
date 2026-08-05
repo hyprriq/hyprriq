@@ -1,0 +1,4 @@
+PRE-POLISH SNAPSHOT - 2026-08-06
+State of the client-portal prototype BEFORE the consolidated polish/restore pass
+(report identity panel, coloured KPI icons, quick actions, completed-reports nav,
+invoices page). Browsable: open index.html. Do not edit; reference only.
