@@ -10,12 +10,10 @@
 <link rel="stylesheet" href="../assets/tokens.css">
 <link rel="stylesheet" href="../assets/base.css">
 <style>
-  /* ============ DIRECTION C+ — decision-first, depth-on-demand, sample-tuned ============
-     1 Decision layer: header + isolated verdict card · Summary + Key Points side by side
-     2 Case progress tracker (every case)
-     3 Five areas as a clean inline-chip list
-     4 Depth on demand (expandable sections; the 130-word block lives down here)
-     5 "How to read this report" — dismissible panel + tooltips (placeholder copy)     */
+  /* ============ THE REPORT — one authoritative reading (structure ADR in commit) ============
+     ALWAYS VISIBLE (the non-negotiable): decision layer (verdict card + summary/key points)
+     and the single most important risk, in full. Only supporting DEPTH is tabbed:
+     Findings · Could not confirm · Checklist · Notes. Print = flat document, all panels. */
 
   .crumb { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); margin-bottom: var(--s-4); }
   .crumb a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
@@ -27,7 +25,6 @@
   .case-id-head h1 { font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.015em; }
   .case-id-head .meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 13.5px; color: var(--ink-2); align-items: center; }
 
-  /* the verdict card — prominent, isolated, the single most important element */
   .verdict-card { padding: 20px 22px; display: flex; flex-direction: column; }
   .verdict-card .v-row { display: flex; align-items: center; gap: 8px; }
   .verdict-card .v-name {
@@ -57,10 +54,37 @@
   .keylist li { position: relative; padding: 5px 0 5px 22px; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
   .keylist li svg { position: absolute; left: 0; top: 8px; color: var(--v-clear); }
 
+  /* the always-visible risk — never inside a tab */
+  .risk-card { padding: clamp(18px, 3vw, 26px); border-left: 4px solid var(--v-verify); }
+  .risk-card h2 { font-size: 17px; margin-bottom: 10px; }
+
   .r-sec { margin-top: var(--s-6); }
   .r-sec > .eyebrow { display: block; margin-bottom: 10px; }
 
-  /* five areas — clean rows, inline chips (sample's Research Dimensions idiom) */
+  /* ---- depth tabs ---- */
+  .rtabs {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 0 0 2px; margin-bottom: var(--s-4);
+    scrollbar-width: none;
+  }
+  .rtabs::-webkit-scrollbar { display: none; }
+  .rtab {
+    flex: none; display: inline-flex; align-items: center; gap: 7px;
+    min-height: 42px; padding: 0 16px;
+    border-radius: var(--radius-pill);
+    background: var(--surface); border: 1px solid var(--line-strong);
+    font: 600 13.5px/1 var(--font-sans); color: var(--ink-2); cursor: pointer;
+  }
+  .rtab[aria-selected="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .rtab .n {
+    font-size: 10.5px; font-weight: 700; border-radius: var(--radius-pill); padding: 2px 7px;
+    background: var(--surface-sunk); color: var(--ink-2);
+  }
+  .rtab[aria-selected="true"] .n { background: rgba(255,255,255,.22); color: #fff; }
+
+  .tabpanel[hidden] { display: none; }
+  .panel-print-head { display: none; } /* section headings appear in print only */
+
   .area-row { display: flex; gap: 16px; align-items: flex-start; padding: 14px 20px; border-bottom: 1px solid var(--line); }
   .area-row:last-child { border-bottom: 0; }
   .area-row .a-main { min-width: 0; flex: 1; }
@@ -73,13 +97,18 @@
     .area-row .a-chip { padding-top: 0; }
   }
 
-  /* depth sections */
-  .depth summary { padding: 16px 20px; font-size: 15px; }
-  .depth summary .d-hint { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--muted); }
-  .depth summary .chev { margin-left: 12px; }
-  .depth .acc-body { padding: 2px 20px 18px; }
-
   .foot-meta { margin-top: var(--s-7); }
+
+  /* ---- print: the complete flat document, regardless of on-screen state ---- */
+  @media print {
+    .rtabs, .sumcard .jump { display: none !important; }
+    .tabpanel[hidden] { display: block !important; }
+    .panel-print-head {
+      display: block; font-family: var(--font-display); font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px;
+    }
+    .r-sec { break-inside: avoid-page; }
+  }
 </style>
 </head>
 <body>
@@ -132,7 +161,7 @@
         <span class="mono" style="font-size:12px">AWI-2607-022</span>
       </nav>
 
-      <!-- ============ 1 · DECISION LAYER ============ -->
+      <!-- ============ ALWAYS VISIBLE · THE DECISION ============ -->
       <div class="decision">
         <div>
           <div class="case-id-head">
@@ -151,7 +180,7 @@
               order until the items below are confirmed.</p>
               <p class="risk-line">The central item: a direct authorization link between TD Synnex and
               the brands in scope could not be independently confirmed.</p>
-              <a class="jump no-print" href="#depth-risk">Read the full risk detail ↓</a>
+              <a class="jump" href="#tab-checklist" data-open-tab="tab-checklist">What to verify first ↓</a>
             </div>
             <div class="card sumcard">
               <span class="eyebrow">Key points confirmed</span>
@@ -161,12 +190,11 @@
                 <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No negative reputation, fraud, or warning signals</li>
                 <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Both brands: active reseller environments, no enforcement signals against this profile</li>
               </ul>
-              <a class="jump no-print" href="#depth-honesty">See what we could not confirm ↓</a>
+              <a class="jump" href="#tab-honesty" data-open-tab="tab-honesty">See what we could not confirm ↓</a>
             </div>
           </div>
         </div>
 
-        <!-- the verdict card — isolated, prominent -->
         <div class="card verdict-card vrank verify">
           <div class="v-row">
             <span class="eyebrow" style="color:var(--v-verify)">Verdict</span>
@@ -194,6 +222,23 @@
         </div>
       </div>
 
+      <!-- ============ ALWAYS VISIBLE · THE SINGLE MOST IMPORTANT RISK ============ -->
+      <div class="r-sec">
+        <div class="card risk-card">
+          <h2>The single most important risk</h2>
+          <p class="risk-block" style="font-size:14.5px">A direct authorization link between TD Synnex
+          and the brands in scope could not be independently confirmed. TD Synnex is a verifiable,
+          large-scale technology distributor with a clear operating presence, and it is credible that it
+          carries these brands through established distribution channels. However, the research could
+          not locate independent confirmation — from the brands&rsquo; own reseller directories or from
+          documentation you supplied — that this specific distributor is an authorized channel for Bosch
+          and Lenovo goods sold onward to your account. This does not indicate the supplier is
+          illegitimate; it means the authorization chain the marketplace and the brand may later ask you
+          to evidence is, at this point, unconfirmed. Treat a first order as a test, and confirm the
+          items below before committing significant capital.</p>
+        </div>
+      </div>
+
       <!-- how to read — dismissible, on every report; copy is PLACEHOLDER -->
       <div class="r-sec no-print">
         <div class="howto" id="howtoPanel">
@@ -212,7 +257,7 @@
         <a href="#" id="howtoReopen" hidden style="font-size:12.5px; font-weight:600">How to read this report</a>
       </div>
 
-      <!-- ============ 2 · CASE PROGRESS (every case) ============ -->
+      <!-- ============ CASE PROGRESS (every case) ============ -->
       <div class="r-sec">
         <div class="card" style="padding: 18px 20px 16px">
           <div class="tracker">
@@ -238,136 +283,117 @@
         </div>
       </div>
 
-      <!-- ============ 3 · THE FIVE AREAS (inline-chip list) ============ -->
+      <!-- ============ DEPTH — TABBED (supporting detail only) ============ -->
       <div class="r-sec">
-        <span class="eyebrow">The five assessment areas</span>
-        <div class="card">
-          <div class="area-row">
-            <div class="a-main">
-              <div class="a-name">Supplier Legitimacy</div>
-              <p class="a-find">Established, independently verifiable wholesale distributor with a long,
-              continuous trading record and clear registration and operating footprint. No negative
-              reputation or warning signals found.</p>
-            </div>
-            <div class="a-chip">
-              <span class="chip-c verified"><span class="cdot"></span>Verified</span>
-              <span class="tip">
-                <button type="button" aria-label="What does Verified mean?">?</button>
-                <span class="tip-pop" role="tooltip">Independently corroborated by more than one source.
-                (Placeholder — label and copy are founder-TBD.)</span>
-              </span>
-            </div>
+        <span class="eyebrow">The full detail — everything here is also in the PDF</span>
+        <div data-tabs>
+          <div class="rtabs no-print" role="tablist" aria-label="Report detail">
+            <button class="rtab" role="tab" id="t1" aria-selected="true" aria-controls="tab-findings">Findings <span class="n">5 areas</span></button>
+            <button class="rtab" role="tab" id="t2" aria-selected="false" aria-controls="tab-honesty">Could not confirm</button>
+            <button class="rtab" role="tab" id="t3" aria-selected="false" aria-controls="tab-checklist">Checklist <span class="n">5</span></button>
+            <button class="rtab" role="tab" id="t4" aria-selected="false" aria-controls="tab-notes">Notes</button>
           </div>
-          <div class="area-row">
-            <div class="a-main">
-              <div class="a-name">Supply-Chain Relationship</div>
-              <p class="a-find">It is credible that the distributor carries the brands in scope through
-              normal distribution channels, but an independent authorization link specific to your
-              account could not be confirmed. This is the central item driving the verdict.</p>
-            </div>
-            <div class="a-chip">
-              <span class="chip-c inferred"><span class="cring"></span>Likely</span>
-              <span class="tip">
-                <button type="button" aria-label="What does Likely mean?">?</button>
-                <span class="tip-pop" role="tooltip">Reasoned from available signals, not independently
-                corroborated. (Placeholder — label and copy are founder-TBD.)</span>
-              </span>
-            </div>
-          </div>
-          <div class="area-row">
-            <div class="a-main">
-              <div class="a-name">Brand Risk</div>
-              <p class="a-find">Both brands operate controlled but active reseller environments. No
-              aggressive enforcement or IP-action signals found against resellers of this profile;
-              brand policies can change and should be monitored.</p>
-            </div>
-            <div class="a-chip">
-              <span class="chip-c inferred"><span class="cring"></span>Likely</span>
-              <span class="tip">
-                <button type="button" aria-label="What does Likely mean?">?</button>
-                <span class="tip-pop" role="tooltip">Reasoned from available signals, not independently
-                corroborated. (Placeholder — label and copy are founder-TBD.)</span>
-              </span>
-            </div>
-          </div>
-          <div class="area-row quiet">
-            <div class="a-main">
-              <div class="a-name">Documentation Review</div>
-              <p class="a-find">No documents were provided for review, so this area was not evaluated.
-              This is an absence, not a finding — it neither helps nor harms the verdict.</p>
-            </div>
-            <div class="a-chip"><span class="chip-c na">Not assessed</span></div>
-          </div>
-          <div class="area-row quiet">
-            <div class="a-main">
-              <div class="a-name">Sourcing Logic</div>
-              <p class="a-find">Consistency check — informational; does not affect the verdict. No
-              contradictions were found across the assessed areas.</p>
-            </div>
-            <div class="a-chip"><span class="chip-c info">Informational</span></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ============ 4 · DEPTH ON DEMAND ============ -->
-      <div class="r-sec">
-        <span class="eyebrow">The full detail — read as deep as you need</span>
-        <div class="card">
-          <details class="acc depth" id="depth-risk" open>
-            <summary>
-              The single most important risk — in full
-              <span class="d-hint">~1 min read</span>
-              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </summary>
-            <div class="acc-body">
-              <p class="risk-block" style="font-size:14.5px">A direct authorization link between TD
-              Synnex and the brands in scope could not be independently confirmed. TD Synnex is a
-              verifiable, large-scale technology distributor with a clear operating presence, and it is
-              credible that it carries these brands through established distribution channels. However,
-              the research could not locate independent confirmation — from the brands&rsquo; own
-              reseller directories or from documentation you supplied — that this specific distributor
-              is an authorized channel for Bosch and Lenovo goods sold onward to your account. This does
-              not indicate the supplier is illegitimate; it means the authorization chain the
-              marketplace and the brand may later ask you to evidence is, at this point, unconfirmed.
-              Treat a first order as a test, and confirm the items below before committing significant
-              capital.</p>
-            </div>
-          </details>
-
-          <details class="acc depth" id="depth-honesty">
-            <summary>
-              What we confirmed — and what we could not
-              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </summary>
-            <div class="acc-body">
-              <div class="honesty">
-                <div class="col confirmed">
-                  <h4>Confirmed</h4>
-                  <ul>
-                    <li>The supplier is an established, verifiable wholesale distributor.</li>
-                    <li>A long, continuous trading and registration record.</li>
-                    <li>No negative reputation, fraud, or warning signals.</li>
-                    <li>Both brands maintain active reseller environments with no enforcement signals against this profile.</li>
-                  </ul>
+          <!-- FINDINGS -->
+          <div class="tabpanel" id="tab-findings" role="tabpanel" aria-labelledby="t1">
+            <div class="panel-print-head">The five assessment areas</div>
+            <div class="card">
+              <div class="area-row">
+                <div class="a-main">
+                  <div class="a-name">Supplier Legitimacy</div>
+                  <p class="a-find">Established, independently verifiable wholesale distributor with a
+                  long, continuous trading record and clear registration and operating footprint. No
+                  negative reputation or warning signals found.</p>
                 </div>
-                <div class="col unconfirmed">
-                  <h4>Could not confirm</h4>
-                  <ul>
-                    <li>An independent authorization link between this distributor and your account for the brands in scope.</li>
-                    <li>That the specific goods you intend to buy originate through an authorized channel for your resale.</li>
-                  </ul>
+                <div class="a-chip">
+                  <span class="chip-c verified"><span class="cdot"></span>Verified</span>
+                  <span class="tip">
+                    <button type="button" aria-label="What does Verified mean?">?</button>
+                    <span class="tip-pop" role="tooltip">Independently corroborated by more than one
+                    source. (Placeholder — label and copy are founder-TBD.)</span>
+                  </span>
                 </div>
               </div>
+              <div class="area-row">
+                <div class="a-main">
+                  <div class="a-name">Supply-Chain Relationship</div>
+                  <p class="a-find">It is credible that the distributor carries the brands in scope
+                  through normal distribution channels, but an independent authorization link specific
+                  to your account could not be confirmed. This is the central item driving the verdict.</p>
+                </div>
+                <div class="a-chip">
+                  <span class="chip-c inferred"><span class="cring"></span>Likely</span>
+                  <span class="tip">
+                    <button type="button" aria-label="What does Likely mean?">?</button>
+                    <span class="tip-pop" role="tooltip">Reasoned from available signals, not
+                    independently corroborated. (Placeholder — label and copy are founder-TBD.)</span>
+                  </span>
+                </div>
+              </div>
+              <div class="area-row">
+                <div class="a-main">
+                  <div class="a-name">Brand Risk</div>
+                  <p class="a-find">Both brands operate controlled but active reseller environments. No
+                  aggressive enforcement or IP-action signals found against resellers of this profile;
+                  brand policies can change and should be monitored.</p>
+                </div>
+                <div class="a-chip">
+                  <span class="chip-c inferred"><span class="cring"></span>Likely</span>
+                  <span class="tip">
+                    <button type="button" aria-label="What does Likely mean?">?</button>
+                    <span class="tip-pop" role="tooltip">Reasoned from available signals, not
+                    independently corroborated. (Placeholder — label and copy are founder-TBD.)</span>
+                  </span>
+                </div>
+              </div>
+              <div class="area-row quiet">
+                <div class="a-main">
+                  <div class="a-name">Documentation Review</div>
+                  <p class="a-find">No documents were provided for review, so this area was not
+                  evaluated. This is an absence, not a finding — it neither helps nor harms the verdict.</p>
+                </div>
+                <div class="a-chip"><span class="chip-c na">Not assessed</span></div>
+              </div>
+              <div class="area-row quiet">
+                <div class="a-main">
+                  <div class="a-name">Sourcing Logic</div>
+                  <p class="a-find">Consistency check — informational; does not affect the verdict. No
+                  contradictions were found across the assessed areas.</p>
+                </div>
+                <div class="a-chip"><span class="chip-c info">Informational</span></div>
+              </div>
             </div>
-          </details>
+          </div>
 
-          <details class="acc depth" id="depth-checklist">
-            <summary>
-              Verify before you commit — the checklist
-              <span class="d-hint">5 items, priority order</span>
-              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </summary>
-            <div class="acc-body">
+          <!-- COULD NOT CONFIRM -->
+          <div class="tabpanel" id="tab-honesty" role="tabpanel" aria-labelledby="t2" hidden>
+            <div class="panel-print-head">What we confirmed — and what we could not</div>
+            <div class="honesty" style="background:var(--surface)">
+              <div class="col confirmed">
+                <h4>Confirmed</h4>
+                <ul>
+                  <li>The supplier is an established, verifiable wholesale distributor.</li>
+                  <li>A long, continuous trading and registration record.</li>
+                  <li>No negative reputation, fraud, or warning signals.</li>
+                  <li>Both brands maintain active reseller environments with no enforcement signals against this profile.</li>
+                </ul>
+              </div>
+              <div class="col unconfirmed">
+                <h4>Could not confirm</h4>
+                <ul>
+                  <li>An independent authorization link between this distributor and your account for the brands in scope.</li>
+                  <li>That the specific goods you intend to buy originate through an authorized channel for your resale.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHECKLIST -->
+          <div class="tabpanel" id="tab-checklist" role="tabpanel" aria-labelledby="t3" hidden>
+            <div class="panel-print-head">Verify before you commit</div>
+            <div class="card" style="padding: 8px 20px">
+              <p style="font-size:12.5px; color:var(--ink-2); padding: 10px 0 2px">The five that matter
+              most, in priority order.</p>
               <ol class="checklist">
                 <li>Ask the distributor to confirm, in writing, the channel through which the brands in scope are supplied to your account.</li>
                 <li>Request a recent invoice or order confirmation showing the brands in scope from this distributor.</li>
@@ -376,32 +402,24 @@
                 <li>Place a small test order and verify the goods and paperwork on arrival before scaling.</li>
               </ol>
             </div>
-          </details>
+          </div>
 
-          <details class="acc depth">
-            <summary>
-              Category requirements
-              <span class="d-hint">informational</span>
-              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </summary>
-            <div class="acc-body">
-              <p style="font-size:14px; color:var(--ink-2); max-width:66ch; line-height:1.6">Selling
-              these brands in their marketplace categories may require category approval or specific
-              documentation before listing. This is a marketplace requirement independent of this
-              report&rsquo;s verdict — confirm your category status before you commit.</p>
+          <!-- NOTES -->
+          <div class="tabpanel" id="tab-notes" role="tabpanel" aria-labelledby="t4" hidden>
+            <div class="panel-print-head">Category requirements &amp; analyst note</div>
+            <div class="card pad" style="margin-bottom: var(--s-4)">
+              <div class="eyebrow">Category requirements</div>
+              <p style="font-size:14px; color:var(--ink-2); margin-top:8px; max-width:66ch; line-height:1.6">
+              Selling these brands in their marketplace categories may require category approval or
+              specific documentation before listing. This is a marketplace requirement independent of
+              this report&rsquo;s verdict — confirm your category status before you commit.</p>
             </div>
-          </details>
-
-          <details class="acc depth">
-            <summary>
-              Analyst note
-              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </summary>
-            <div class="acc-body">
-              <p style="font-size:13px; color:var(--ink-2); font-style:italic">No analyst note was added
-              to this report.</p>
+            <div class="card pad">
+              <div class="eyebrow">Analyst note</div>
+              <p style="font-size:13px; color:var(--ink-2); font-style:italic; margin-top:8px">No
+              analyst note was added to this report.</p>
             </div>
-          </details>
+          </div>
         </div>
       </div>
 
@@ -420,5 +438,41 @@
   </div>
 </div>
 <script src="../assets/app.js"></script>
+<script>
+/* depth tabs: hash deep-links + jump links + arrow keys (page-local enhancement) */
+(function () {
+  const wrap = document.querySelector('[data-tabs]');
+  if (!wrap) return;
+  const tabs = [...wrap.querySelectorAll('[role="tab"]')];
+  const select = (tab, focus) => {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') select(tabs[(i + 1) % tabs.length], true);
+      if (e.key === 'ArrowLeft') select(tabs[(i - 1 + tabs.length) % tabs.length], true);
+    });
+  });
+  const openFromHash = (hash) => {
+    const tab = tabs.find((t) => '#' + t.getAttribute('aria-controls') === hash);
+    if (tab) { select(tab); return true; }
+    return false;
+  };
+  document.querySelectorAll('[data-open-tab]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openFromHash('#' + a.dataset.openTab);
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  if (location.hash) openFromHash(location.hash);
+})();
+</script>
 </body>
 </html>
