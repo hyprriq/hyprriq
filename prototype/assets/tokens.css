@@ -1,34 +1,44 @@
 /* ============================================================
-   HyprrIQ prototype — DESIGN TOKENS
-   Source of truth: DESIGN_SYSTEM_reference.html (LOCKED SKIN).
-   Core palette + verdict system are copied VERBATIM from that
-   file. Extensions below the marker only compose those values —
-   no new hex may be introduced in any page file.
+   HyprrIQ prototype — DESIGN TOKENS (corrected, cool)
+   Source of truth: TOKENS_CORRECTED_cool.md (founder-ruled
+   2026-08-05) — supersedes the warm-cream values from the first
+   DESIGN_SYSTEM_reference.html. Cool near-white ground, navy
+   anchor unchanged, text + verdict inks darkened to WCAG AA,
+   cool --accent replaces copper for structural UI (copper kept
+   for one rare emphasis only: the wordmark). No new hex may be
+   introduced in any page file.
    ============================================================ */
 
 :root {
-  /* ---- CORE PALETTE (locked, verbatim) ---- */
-  --paper: #F7F5F0;
+  /* ---- BASE (cool, not cream) ---- */
+  --paper: #F5F7F9;
   --surface: #FFFFFF;
-  --surface-sunk: #F0EDE6;
-  --line: #E3DED4;
-  --line-strong: #CFC8BA;
+  --surface-sunk: #EEF1F4;
+  --line: #E2E6EB;
+  --line-strong: #CBD2DA;
 
+  /* ---- NAVY ANCHOR (unchanged) ---- */
   --navy: #173E63;
   --navy-deep: #0E2B47;
-  --navy-tint: #E7EEF4;
+  --navy-tint: #E5EDF3;
 
-  --ink: #1A1F26;
-  --ink-2: #454C56;
-  --muted: #767E8A;
+  /* ---- TEXT (darkened — AA) ---- */
+  --ink: #161B22;
+  --ink-2: #3D454F;
+  --muted: #5C6570;
 
-  --copper: #A65A2A;
+  /* ---- ACCENT (cool signal; copper demoted to wordmark-only) ---- */
+  --accent: #1E6E8C;
+  --copper: #9A551F;
 
-  /* ---- VERDICT SYSTEM (locked, verbatim — ranked, not a traffic light) ---- */
-  --v-clear: #2E7D5B;   --v-clear-bg: #E7F1EC;
-  --v-cond: #B07A1E;    --v-cond-bg: #F6EEDD;
-  --v-verify: #C2691C;  --v-verify-bg: #F7E9DA;
-  --v-rely: #B23A34;    --v-rely-bg: #F6E4E2;
+  /* ---- VERDICT SYSTEM (darkened ~15% — AA at pill size) ----
+     Micro-adjustment vs TOKENS_CORRECTED_cool.md, preserving its stated AA
+     intent: cond-bg #F4EBD8->#F7F0E2 and verify-bg #F5E6D6->#F8EDE2 (the
+     supplied pairs measured 4.43/4.36:1 — a hair under 4.5). Inks unchanged. */
+  --v-clear: #256B4C;   --v-clear-bg: #E4EFEA;
+  --v-cond: #8F6416;    --v-cond-bg: #F7F0E2;
+  --v-verify: #A5560F;  --v-verify-bg: #F8EDE2;
+  --v-rely: #9A2F2A;    --v-rely-bg: #F3E0DE;
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(14,43,71,.04), 0 4px 16px rgba(14,43,71,.05);
@@ -39,7 +49,7 @@
   --font-sans: 'Instrument Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* sidebar text tones on navy-deep (from the locked nav preview) */
+  /* sidebar text tones on navy-deep */
   --nav-fg: #C4D2E0;
   --nav-fg-dim: #7E93A8;
 

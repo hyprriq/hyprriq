@@ -235,3 +235,37 @@ function initAuth() {
   });
 }
 initAuth();
+
+/* ---- C+ report: how-to panel dismiss (persists), tooltips, print-expand ---- */
+(function howto() {
+  const panel = document.getElementById('howtoPanel');
+  if (!panel) return;
+  const KEY = 'hyprriq-howto-dismissed';
+  const reopen = document.getElementById('howtoReopen');
+  const sync = () => {
+    const off = localStorage.getItem(KEY) === '1';
+    panel.hidden = off;
+    if (reopen) reopen.hidden = !off;
+  };
+  panel.querySelector('.h-close').addEventListener('click', () => { localStorage.setItem(KEY, '1'); sync(); });
+  reopen?.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem(KEY); sync(); });
+  sync();
+})();
+
+document.querySelectorAll('.tip > button').forEach((b) => {
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const t = b.closest('.tip');
+    document.querySelectorAll('.tip.open').forEach((o) => { if (o !== t) o.classList.remove('open'); });
+    t.classList.toggle('open');
+  });
+});
+document.addEventListener('click', () => document.querySelectorAll('.tip.open').forEach((t) => t.classList.remove('open')));
+
+/* the printed report is the full document: open every depth section for print */
+window.addEventListener('beforeprint', () => {
+  document.querySelectorAll('details').forEach((d) => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });
+});
+window.addEventListener('afterprint', () => {
+  document.querySelectorAll('details').forEach((d) => { d.open = d.dataset.wasOpen === '1'; });
+});
