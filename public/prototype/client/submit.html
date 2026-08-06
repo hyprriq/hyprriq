@@ -10,9 +10,44 @@
 <link rel="stylesheet" href="../assets/tokens.css?v=3">
 <link rel="stylesheet" href="../assets/base.css?v=3">
 <style>
-  /* each section is its own card — clear steps that breathe, still one page */
-  .form-sec { margin-top: var(--s-5); }
-  .form-sec:first-child { margin-top: 0; }
+  /* ============ SINGLE-PAGE STEPPER ============
+     One page, one persistent DOM — inputs are never destroyed, so navigation is
+     non-destructive by construction. The rail is fully clickable (free movement);
+     Next/Back advance; step 4 re-renders the review from live values on entry. */
+
+  .stepper { display: flex; margin-bottom: var(--s-6); }
+  .stepper .st { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px;
+    position: relative; min-width: 0; background: none; border: 0; cursor: pointer; padding: 0; }
+  .stepper .st::before, .stepper .st::after {
+    content: ""; position: absolute; top: 15px; height: 2px; background: var(--line); width: 50%;
+  }
+  .stepper .st::before { left: 0; }
+  .stepper .st::after { right: 0; }
+  .stepper .st:first-child::before, .stepper .st:last-child::after { display: none; }
+  .stepper .st.done::before, .stepper .st.done::after, .stepper .st.current::before { background: var(--navy); opacity: .35; }
+  .stepper .st-num {
+    width: 32px; height: 32px; border-radius: 50%; flex: none;
+    display: grid; place-items: center; position: relative; z-index: 1;
+    background: var(--surface-sunk); color: var(--ink-2);
+    border: 1.5px solid var(--line-strong);
+    font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+    transition: transform 140ms var(--ease-out), background-color 140ms ease, color 140ms ease;
+  }
+  .stepper .st.current .st-num { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .stepper .st.done .st-num { background: var(--navy-tint); border-color: transparent; color: var(--navy); }
+  .stepper .st:active .st-num { transform: scale(0.94); }
+  .stepper .st-lab { font: 600 12px/1.3 var(--font-sans); color: var(--ink-2); text-align: center; }
+  .stepper .st.current .st-lab { color: var(--navy); font-weight: 700; }
+  @media (max-width: 420px) { .stepper .st-lab { font-size: 11px; } }
+
+  .form-sec { display: none; }
+  .form-sec.step-active { display: block; animation: step-in 180ms var(--ease-out); }
+  @keyframes step-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .form-sec.step-active { animation: none; } }
+
   .form-sec .fs-head { display: flex; align-items: center; gap: 12px; }
   .form-sec .fs-num {
     width: 32px; height: 32px; border-radius: 50%; flex: none;
@@ -21,7 +56,16 @@
     font-family: var(--font-mono); font-size: 13px; font-weight: 500;
   }
   .form-sec h3 { font-size: 18px; }
-  .form-sec .fs-sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; max-width: 60ch; }
+  .fs-sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; max-width: 60ch; }
+
+  .step-nav { display: flex; gap: 10px; margin-top: var(--s-6); }
+  .step-nav .btn.next { margin-left: auto; min-width: 132px; }
+  @media (max-width: 560px) {
+    .step-nav { flex-direction: row; }
+    .step-nav .btn { flex: 1; }
+    .step-nav .btn.next { margin-left: 0; }
+  }
+
   .brand-row { display: flex; gap: 10px; align-items: flex-end; }
   .brand-row .field { flex: 1; margin-top: var(--s-3); }
   .brand-row .rm {
@@ -30,18 +74,28 @@
     background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
     color: var(--muted); cursor: pointer;
   }
-  .brand-row .rm:hover { color: var(--v-rely); border-color: var(--line-strong); }
-  .cost-callout {
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+
+  /* review step */
+  .rev-group { border-bottom: 1px solid var(--line); padding: 14px 0; }
+  .rev-group:last-of-type { border-bottom: 0; }
+  .rev-group .rg-head { display: flex; align-items: baseline; gap: 10px; }
+  .rev-group .rg-title { font: 700 12px/1 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+  .rev-group .rg-edit { margin-left: auto; font: 600 13px/1 var(--font-sans); color: var(--navy); background: none; border: 0; cursor: pointer; padding: 6px 8px; margin-right: -8px; border-radius: 6px; }
+  .rev-group .rg-body { margin-top: 8px; font-size: 14.5px; color: var(--ink); line-height: 1.6; }
+  .rev-group .rg-body .quiet { color: var(--ink-2); }
+  .rev-group .rg-body .brand-chip {
+    display: inline-flex; align-items: center;
+    background: var(--navy-tint); color: var(--navy);
+    font: 600 13px/1 var(--font-sans);
+    border-radius: var(--radius-pill); padding: 6px 12px; margin: 2px 6px 2px 0;
+  }
+  .rev-credit {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
     background: var(--surface-sunk); border-radius: var(--radius);
-    padding: 16px 18px; margin-top: var(--s-7);
+    padding: 16px 18px; margin-top: var(--s-5);
   }
-  .cost-callout .cc-fee { font-weight: 700; font-size: 15px; }
-  .cost-callout .cc-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
-  .cost-callout .btn { margin-left: auto; }
-  @media (max-width: 640px) {
-    .cost-callout .btn { margin-left: 0; width: 100%; }
-  }
+  .rev-credit .cc-fee { font-weight: 700; font-size: 15px; }
+  .rev-credit .cc-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
 </style>
 <link rel="stylesheet" href="../assets/mobile-type.css?v=3">
 </head>
@@ -66,7 +120,7 @@
     <a class="nav-item" href="wiki.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2ZM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7Z"/></svg>How-to guides</a>
     <div class="nav-credits">
       <div class="box">
-        <div class="row"><span class="lab">Credits</span><a class="add" href="billing.html">Add more</a></div>
+        <div class="row"><span class="lab">Credits</span><a class="add" href="billing.html#topup">Add more</a></div>
         <div class="val" data-bind="credits-available">3</div>
         <div class="sub"><span data-bind="credits-detail">plan includes 5/cycle</span> · <span data-bind="credits-renews">renews in 12 days</span></div>
         <div class="meter"><i data-bind-width="credits-pct" style="width:60%"></i></div>
@@ -92,12 +146,21 @@
         <div class="page-head">
           <h2>Research a supplier</h2>
           <p class="sub">One case covers one supplier and up to <span data-bind="plan-brands">5</span> brands,
-          for one credit. The more you can share, the more we can check against.</p>
+          for one credit. You&rsquo;ll review everything before it&rsquo;s submitted.</p>
+        </div>
+
+        <!-- functional step rail — every chip is a button; movement is always free -->
+        <div class="stepper" role="tablist" aria-label="Submission steps">
+          <button type="button" class="st current" data-goto="1" role="tab" aria-selected="true"><span class="st-num">01</span><span class="st-lab">Supplier</span></button>
+          <button type="button" class="st" data-goto="2" role="tab" aria-selected="false"><span class="st-num">02</span><span class="st-lab">Brands</span></button>
+          <button type="button" class="st" data-goto="3" role="tab" aria-selected="false"><span class="st-num">03</span><span class="st-lab">Documents</span></button>
+          <button type="button" class="st" data-goto="4" role="tab" aria-selected="false"><span class="st-num">04</span><span class="st-lab">Review</span></button>
         </div>
 
         <form id="submitForm" novalidate>
 
-          <div class="form-sec card pad-lg">
+          <!-- ======== STEP 1 · SUPPLIER ======== -->
+          <div class="form-sec card pad-lg step-active" data-step="1">
             <div class="fs-head"><span class="fs-num">01</span><h3>The supplier</h3></div>
             <p class="fs-sub">Who are you planning to buy from?</p>
             <div class="field">
@@ -115,9 +178,13 @@
               <select id="marketplace" data-options="marketplaces"></select>
               <div class="hint">The Amazon marketplace where you&rsquo;ll resell these goods.</div>
             </div>
+            <div class="step-nav">
+              <button type="button" class="btn primary next" data-goto="2">Next: Brands</button>
+            </div>
           </div>
 
-          <div class="form-sec card pad-lg">
+          <!-- ======== STEP 2 · BRANDS ======== -->
+          <div class="form-sec card pad-lg" data-step="2">
             <div class="fs-head"><span class="fs-num">02</span><h3>The brands</h3></div>
             <p class="fs-sub" id="brandCap">Up to 5 brands per case on your plan — one credit covers them all.</p>
             <div id="brandRows">
@@ -135,9 +202,14 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Add another brand
             </button>
+            <div class="step-nav">
+              <button type="button" class="btn ghost" data-goto="1">Back</button>
+              <button type="button" class="btn primary next" data-goto="3">Next: Documents</button>
+            </div>
           </div>
 
-          <div class="form-sec card pad-lg">
+          <!-- ======== STEP 3 · DOCUMENTS + NOTES ======== -->
+          <div class="form-sec card pad-lg" data-step="3">
             <div class="fs-head"><span class="fs-num">03</span><h3>What they&rsquo;ve sent you <span class="opt" style="font-family:var(--font-sans);font-size:13px;font-weight:400">(optional)</span></h3></div>
             <p class="fs-sub">An invoice, quote, or price list gives our review something concrete to check.
             Nothing is shared with the supplier.</p>
@@ -153,18 +225,46 @@
               <label for="notes">Anything specific on your mind? <span class="opt">(optional)</span></label>
               <textarea id="notes" rows="3" placeholder="e.g. They say they ship from a EU warehouse — the pricing feels low for this brand."></textarea>
             </div>
+            <div class="step-nav">
+              <button type="button" class="btn ghost" data-goto="2">Back</button>
+              <button type="button" class="btn primary next" data-goto="4">Next: Review</button>
+            </div>
           </div>
 
-          <div class="cost-callout" style="margin-top: var(--s-5)">
-            <div>
-              <div class="cc-fee">This case uses 1 credit</div>
-              <div class="cc-sub">
-                You have <span data-bind="credits-available">3</span> available ·
-                delivery within <span data-bind="plan-sla">5</span> business days.
-                If we can&rsquo;t research a supplier, the credit comes back.
+          <!-- ======== STEP 4 · REVIEW & SUBMIT ======== -->
+          <div class="form-sec card pad-lg" data-step="4">
+            <div class="fs-head"><span class="fs-num">04</span><h3>Review before it&rsquo;s submitted</h3></div>
+            <p class="fs-sub">A minute here protects the credit — check the supplier, brands, and
+            marketplace are exactly right, then submit.</p>
+
+            <div class="rev-group">
+              <div class="rg-head"><span class="rg-title">Supplier</span><button type="button" class="rg-edit" data-goto="1">Edit</button></div>
+              <div class="rg-body" id="revSupplier"></div>
+            </div>
+            <div class="rev-group">
+              <div class="rg-head"><span class="rg-title">Brands</span><button type="button" class="rg-edit" data-goto="2">Edit</button></div>
+              <div class="rg-body" id="revBrands"></div>
+            </div>
+            <div class="rev-group">
+              <div class="rg-head"><span class="rg-title">Documents &amp; notes</span><button type="button" class="rg-edit" data-goto="3">Edit</button></div>
+              <div class="rg-body" id="revDocs"></div>
+            </div>
+
+            <div class="rev-credit">
+              <div>
+                <div class="cc-fee">Submitting uses 1 credit</div>
+                <div class="cc-sub">
+                  You have <span data-bind="credits-available">3</span> available ·
+                  delivery within <span data-bind="plan-sla">5</span> business days.
+                  If we can&rsquo;t research a supplier, the credit comes back.
+                </div>
               </div>
             </div>
-            <button type="submit" class="btn primary">Submit for research</button>
+
+            <div class="step-nav">
+              <button type="button" class="btn ghost" data-goto="3">Back</button>
+              <button type="submit" class="btn primary next">Submit for research</button>
+            </div>
           </div>
         </form>
       </div>
@@ -197,5 +297,91 @@
   </div>
 </div>
 <script src="../assets/app.js?v=3"></script>
+<script>
+/* ============ stepper mechanics (page-local) ============
+   Free movement: rail chips, Back, Next, and review Edit buttons all route
+   through gotoStep(). Sections are hidden, never unmounted — data persists. */
+(function () {
+  const secs = [...document.querySelectorAll('.form-sec[data-step]')];
+  const rail = [...document.querySelectorAll('.stepper .st')];
+  const visited = new Set([1]);
+  let current = 1;
+
+  function labelFor(sel) {
+    const el = document.getElementById(sel);
+    return el && el.selectedIndex >= 0 ? el.options[el.selectedIndex].textContent : '';
+  }
+  function esc(s) {
+    const d = document.createElement('span'); d.textContent = s; return d.innerHTML;
+  }
+
+  function buildReview() {
+    const name = document.getElementById('supplierName').value.trim();
+    const site = document.getElementById('supplierSite').value.trim();
+    document.getElementById('revSupplier').innerHTML =
+      (name ? '<strong>' + esc(name) + '</strong>' : '<span class="quiet">No supplier name yet — add it before submitting.</span>') +
+      (site ? '<br><span class="quiet">' + esc(site) + '</span>' : '') +
+      '<br><span class="quiet">Selling on ' + esc(labelFor('marketplace')) + '</span>';
+
+    const brands = [...document.querySelectorAll('#brandRows input')].map(i => i.value.trim()).filter(Boolean);
+    document.getElementById('revBrands').innerHTML = brands.length
+      ? brands.map(b => '<span class="brand-chip">' + esc(b) + '</span>').join('')
+      : '<span class="quiet">No brands entered yet.</span>';
+
+    const files = [...document.querySelectorAll('#fileList .file-chip span:first-child')].map(s => s.textContent);
+    const notes = document.getElementById('notes').value.trim();
+    document.getElementById('revDocs').innerHTML =
+      (files.length ? esc(files.join(' · ')) : '<span class="quiet">No documents attached</span>') +
+      (notes ? '<br>&ldquo;' + esc(notes) + '&rdquo;' : '<br><span class="quiet">No notes</span>');
+  }
+
+  function gotoStep(n) {
+    current = n;
+    visited.add(n);
+    if (n === 4) buildReview();
+    secs.forEach(s => s.classList.toggle('step-active', +s.dataset.step === n));
+    rail.forEach((c, i) => {
+      const num = i + 1;
+      c.classList.toggle('current', num === n);
+      c.classList.toggle('done', num !== n && visited.has(num));
+      c.setAttribute('aria-selected', num === n ? 'true' : 'false');
+    });
+    document.querySelector('.stepper').scrollIntoView({ block: 'nearest' });
+    window.scrollTo({ top: 0 });
+  }
+
+  document.querySelectorAll('[data-goto]').forEach(b => {
+    b.addEventListener('click', () => {
+      // leaving step 1 forward requires the one required field
+      const target = +b.dataset.goto;
+      if (current === 1 && target > 1) {
+        const name = document.getElementById('supplierName');
+        const field = name.closest('.field');
+        if (!name.value.trim()) {
+          field.classList.add('invalid');
+          field.querySelector('.error').hidden = false;
+          name.focus();
+          return;
+        }
+        field.classList.remove('invalid');
+        field.querySelector('.error').hidden = true;
+      }
+      gotoStep(target);
+    });
+  });
+
+  // submit with an empty supplier: return the client to step 1, never dead-end
+  document.getElementById('submitForm').addEventListener('submit', (e) => {
+    if (!document.getElementById('supplierName').value.trim()) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      gotoStep(1);
+      const field = document.getElementById('supplierName').closest('.field');
+      field.classList.add('invalid');
+      field.querySelector('.error').hidden = false;
+      document.getElementById('supplierName').focus();
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>

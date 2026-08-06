@@ -158,7 +158,6 @@ button { font-family: inherit; }
   color: var(--nav-fg); text-decoration: none;
   margin: 1px 0;
 }
-.shell-nav a.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
 .shell-nav a.nav-item[aria-current="page"] { background: rgba(255,255,255,.10); color: #fff; font-weight: 600; }
 .shell-nav a.nav-item svg { flex: none; opacity: .85; }
 .shell-nav a.nav-item .count {
@@ -264,16 +263,14 @@ button { font-family: inherit; }
   padding: 10px 18px; min-height: 42px;
   border-radius: var(--radius-sm); border: 1px solid transparent;
   cursor: pointer; text-decoration: none;
-  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease,
+              transform 140ms var(--ease-out);
 }
+.btn:active { transform: scale(0.97); }
 .btn.primary { background: var(--navy); color: #fff; }
-.btn.primary:hover { background: var(--navy-deep); }
 .btn.ghost { background: var(--surface); color: var(--navy); border-color: var(--line-strong); }
-.btn.ghost:hover { border-color: var(--navy); }
 .btn.quiet { background: transparent; color: var(--ink-2); border-color: transparent; }
-.btn.quiet:hover { background: var(--surface-sunk); color: var(--ink); }
 .btn.danger-ghost { background: var(--surface); color: var(--v-rely); border-color: var(--line-strong); }
-.btn.danger-ghost:hover { border-color: var(--v-rely); }
 .btn.sm { min-height: 34px; padding: 6px 12px; font-size: 13px; }
 .btn.block { width: 100%; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -387,7 +384,6 @@ table.cases th {
 table.cases td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 table.cases tr:last-child td { border-bottom: 0; }
 table.cases tbody tr { cursor: pointer; }
-table.cases tbody tr:hover td { background: var(--paper); }
 .cell-id { font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; color: var(--navy); }
 .cell-main { font-weight: 600; font-size: 14px; color: var(--ink); }
 .cell-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
@@ -398,7 +394,9 @@ table.cases tbody tr:hover td { background: var(--paper); }
   display: block; text-decoration: none; color: inherit;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   box-shadow: var(--shadow); padding: 14px 15px;
+  transition: transform 140ms var(--ease-out), box-shadow 140ms ease, border-color 140ms ease;
 }
+.case-card:active { transform: scale(0.99); }
 .case-card .r1 { display: flex; align-items: center; gap: 8px; }
 .case-card .r1 .cell-id { flex: 1; }
 .case-card .name { font-weight: 600; font-size: 15px; margin-top: 8px; }
@@ -490,13 +488,12 @@ table.cases tbody tr:hover td { background: var(--paper); }
   text-decoration: none; color: var(--ink); font-weight: 600; font-size: 14.5px;
 }
 .link-row:last-child { border-bottom: 0; }
-.link-row:hover { background: var(--paper); }
 .link-row .lr-ico {
   width: 36px; height: 36px; border-radius: var(--radius-sm); flex: none;
   background: var(--navy-tint); color: var(--navy); display: grid; place-items: center;
 }
 .link-row .lr-sub { display: block; font-size: 12.5px; font-weight: 400; color: var(--ink-2); margin-top: 2px; }
-.link-row .chev { margin-left: auto; color: var(--muted); flex: none; }
+.link-row .chev { margin-left: auto; color: var(--muted); flex: none; transition: transform 140ms var(--ease-out), color 140ms ease; }
 
 /* ============ EMPTY STATES ============ */
 .empty {
@@ -649,7 +646,6 @@ table.cases tbody tr:hover td { background: var(--paper); }
   width: 32px; height: 32px; display: grid; place-items: center;
   background: none; border: 0; color: var(--ink-2); cursor: pointer; border-radius: 7px;
 }
-.howto .h-close:hover { background: var(--surface); }
 
 /* inline tooltip — tap/hover/focus; placeholder copy until the content pass */
 .tip { position: relative; display: inline-flex; }
@@ -674,7 +670,6 @@ table.cases tbody tr:hover td { background: var(--paper); }
 
 /* quick actions — one restrained treatment: accent icons (matches the Credits KPI), labels stay ink */
 .qa-grid .btn svg { color: var(--accent); }
-.qa-grid .btn:hover { border-color: var(--accent); }
 
 /* mobile back affordance — drill-in pages (report, active case). Desktop keeps the
    breadcrumb; below the drawer breakpoint the back button replaces the hamburger
@@ -692,6 +687,42 @@ table.cases tbody tr:hover td { background: var(--paper); }
   nav.crumb { display: none; }
 }
 
+/* ============ INTERACTION POLISH ============
+   All hover lives behind a precise-pointer gate (touch devices tap, they don't
+   hover — sticky hover states were a real bug on the founder's phone).
+   Liveliness is scoped to ACTION surfaces (quick actions, tappable cards);
+   the report, verdict card, and identity panel keep their calm — restraint
+   there is deliberate, not an omission. */
+@media (hover: hover) and (pointer: fine) {
+  .shell-nav a.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .btn.primary:hover { background: var(--navy-deep); }
+  .btn.ghost:hover { border-color: var(--navy); }
+  .btn.quiet:hover { background: var(--surface-sunk); color: var(--ink); }
+  .btn.danger-ghost:hover { border-color: var(--v-rely); }
+  table.cases tbody tr:hover td { background: var(--paper); }
+  .howto .h-close:hover { background: var(--surface); }
+  .rtab:hover { border-color: var(--navy); }
+  .inv-row .i-dl:hover { border-color: var(--navy); }
+  .crumb a:hover { color: var(--navy); }
+
+  /* dashboard action surfaces — alive, one accent voice */
+  .qa-grid .btn:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  }
+  .case-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+  }
+  .link-row:hover { background: var(--paper); }
+  .link-row:hover .chev { color: var(--navy); transform: translateX(2px); }
+}
+.rtab:active, .fchip:active { transform: scale(0.97); }
+.rtab, .fchip { transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform 140ms var(--ease-out); }
+.inv-row .i-dl:active { transform: scale(0.94); }
+.inv-row .i-dl { transition: border-color .15s ease, transform 140ms var(--ease-out); }
+
 </style>
 <style>
   /* ============ THE REPORT — one authoritative reading (structure ADR in commit) ============
@@ -701,7 +732,6 @@ table.cases tbody tr:hover td { background: var(--paper); }
 
   .crumb { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); margin-bottom: var(--s-4); }
   .crumb a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
-  .crumb a:hover { color: var(--navy); }
 
   .decision { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: var(--s-5); align-items: start; }
   @media (max-width: 899px) { .decision { grid-template-columns: 1fr; } }
@@ -798,7 +828,6 @@ table.cases tbody tr:hover td { background: var(--paper); }
   .rtab[aria-selected="true"] .n { background: rgba(255,255,255,.22); color: #fff; }
   /* the honesty tab carries a standing verify-orange marker — the trust feature stays findable */
   .rtab .hdot { width: 7px; height: 7px; border-radius: 50%; background: var(--v-verify); flex: none; }
-  .rtab:hover { border-color: var(--navy); }
 
   .tabpanel[hidden] { display: none; }
   .panel-print-head { display: none; } /* section headings appear in print only */
