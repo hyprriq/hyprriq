@@ -3,21 +3,19 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { recordCaseOutcome, OUTCOME_TYPES, type OutcomeType } from "@/lib/data/outcomes";
 import { getOperator } from "@/lib/auth/permissions";
+import { caseInScope } from "@/lib/auth/clientScope";
 
 // H6 — founder records what actually happened with a delivered case (the learning loop's raw
 // material). Update-only: the row exists iff the case was delivered (seeded by the review route).
 
-async function isAdmin(userId: string): Promise<boolean> {
-  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
-  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
-  return (await getOperator(userId)) !== null;
-}
-
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const op = await getOperator(userId);
+  if (!op) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const { id } = await params;
+  // CLIENT PARTITIONING (2026-08-02): scoped operators only record outcomes on assigned clients' cases.
+  if (!(await caseInScope(op, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   let body: { outcome_type?: string; outcome_notes?: string; prediction_correct?: boolean } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
   if (!body.outcome_type || !OUTCOME_TYPES.includes(body.outcome_type as OutcomeType)) {

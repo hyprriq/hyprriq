@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { AdditionalQuestion } from "@/lib/research/contracts";
 import { addQuestion, editQuestion, deleteQuestion } from "@/lib/portal/additional-questions";
 import { getOperator } from "@/lib/auth/permissions";
+import { caseInScope } from "@/lib/auth/clientScope";
 
 // ADR-T2-002 follow-up — analyst/review-team questions (cases.additional_questions). Create / Edit /
 // Delete, admin-only. The AI questions_to_ask (per-track) are NEVER touched here — this is a separate
@@ -14,10 +15,13 @@ const PRIORITIES = ["high", "medium", "low"] as const;
 type Priority = (typeof PRIORITIES)[number];
 const asPriority = (v: unknown): Priority | undefined => (PRIORITIES.includes(v as Priority) ? (v as Priority) : undefined);
 
-async function isAdmin(userId: string): Promise<boolean> {
+async function isAdmin(userId: string, caseId: string): Promise<boolean> {
   // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
-  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
-  return (await getOperator(userId)) !== null;
+  // disagree. CLIENT PARTITIONING (2026-08-02): scoped operators only touch assigned clients'
+  // cases (caseInScope resolves the owning client; super_admin/view_all_clients bypass).
+  const op = await getOperator(userId);
+  if (!op) return false;
+  return caseInScope(op, caseId);
 }
 
 async function readList(id: string): Promise<AdditionalQuestion[] | null> {
@@ -39,7 +43,7 @@ async function persist(id: string, list: AdditionalQuestion[], userId: string, o
 async function guard(id: string): Promise<{ userId: string } | NextResponse> {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!(await isAdmin(userId, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const list = await readList(id);
   if (list === null) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return { userId };

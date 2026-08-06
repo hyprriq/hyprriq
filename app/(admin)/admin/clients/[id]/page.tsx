@@ -45,6 +45,9 @@ export default async function AdminClientDetailPage({
 }) {
   const admin = await requireAdmin();
   const { id } = await params;
+  // CLIENT PARTITIONING — a scoped operator can't open an unassigned client's page (404, not 403:
+  // out-of-scope rows should not even be confirmed to exist).
+  if (admin.clientScope !== null && !admin.clientScope.includes(id)) notFound();
   const client = await getAdminClientDetail(id);
   if (!client) notFound();
 

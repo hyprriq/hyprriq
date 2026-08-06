@@ -13,7 +13,7 @@ function slaText(iso: string | null) {
 
 export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
-  const { kpis, reviewQueue, openSupport, recentClients } = await getAdminDashboard();
+  const { kpis, reviewQueue, openSupport, recentClients } = await getAdminDashboard(admin.clientScope);
 
   // BUG-1 fix — tile destinations live in the unit-locked presenter (lib/admin/dashboard-tiles):
   // publishing drops a case from the queue below, so the Delivered tile MUST route to the

@@ -12,7 +12,7 @@ const BILLING_CLS: Record<string, string> = {
 
 export default async function AdminClientsPage() {
   const admin = await requireAdmin();
-  const clients = await getAdminClients();
+  const clients = await getAdminClients(admin.clientScope);
 
   return (
     <AdminShell

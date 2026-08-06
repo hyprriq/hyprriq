@@ -39,6 +39,8 @@ export default async function CaseReviewPage({
   const { id } = await params;
   const c = await getAdminCase(id);
   if (!c) notFound();
+  // CLIENT PARTITIONING — same 404 rule as the client detail page for out-of-scope cases.
+  if (admin.clientScope !== null && !admin.clientScope.includes(c.client_id)) notFound();
 
   const trackRows = c.plan_type ? await getCaseTrackResults(c.id) : [];
   const intel = await getCaseIntelligence(c.id);

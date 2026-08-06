@@ -2,15 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getOperator } from "@/lib/auth/permissions";
+import { clientInScope } from "@/lib/auth/clientScope";
 
 // Admin-only: save the internal notes for a client (Item 2). Sets notes_updated_at
 // so the admin can see how stale the notes are. Never reachable by a client — the
 // client portal has no route that writes clients.internal_notes.
-async function isAdmin(userId: string): Promise<boolean> {
-  // ADMIN ACCESS FIX (2026-07-30): routed through getOperator so pages and APIs can never
-  // disagree (covers seeded operators with no clients row; legacy roles via the fallback).
-  return (await getOperator(userId)) !== null;
-}
 
 export async function PATCH(
   req: Request,
@@ -18,9 +14,12 @@ export async function PATCH(
 ) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const op = await getOperator(userId);
+  if (!op) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const { id } = await params;
+  // CLIENT PARTITIONING (2026-08-02): scoped operators only touch assigned clients.
+  if (!(await clientInScope(op, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   let body: { internal_notes?: string } = {};
   try {
     body = await req.json();

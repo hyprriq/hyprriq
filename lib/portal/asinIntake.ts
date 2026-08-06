@@ -16,9 +16,8 @@ export const ASIN_RE = /^[A-Z0-9]{10}$/;
 
 // Which plans COLLECT ASINs at intake (progressive disclosure — entry tiers never see the
 // field). Today that is Scale only; the future $149 tier joins this map when it exists as a
-// PlanType. UNRULED default flagged 2026-07-30: ASINs are OPTIONAL at submit even on Scale
-// (a client may not have chosen the exact listing yet) — flip to required is a one-line form
-// change if the founder rules otherwise.
+// PlanType. ASIN-optional RULED (founder, 2026-08-02): OPTIONAL at submit even on Scale (a
+// client may not have chosen the exact listing yet); revisit when Keepa ships.
 export const PLAN_COLLECTS_ASINS: Record<PlanType, boolean> = {
   single_99: false,
   growth_279: false,

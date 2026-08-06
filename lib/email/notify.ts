@@ -60,6 +60,29 @@ export async function sendAdminAlert(subject: string, html: string): Promise<{ s
   }
 }
 
+// ── ADMIN FOUNDATIONS (2026-08-02) — staff invitation email. Same gate, same key-safety: a
+// blocked or unsent email is non-fatal (the admin_invitations row is the durable record and the
+// API returns the sign-up link for manual sharing). ──
+export async function sendAdminInvitation(opts: {
+  to: string;
+  signUpUrl: string;
+  invitedByEmail: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "You're invited to the HyprrIQ operator console";
+  const html = `<p>${opts.invitedByEmail} invited you to the HyprrIQ operator console.</p>
+<p><a href="${opts.signUpUrl}">Create your login here</a> using this email address (${opts.to}) — your access is attached to it.</p>
+<p>This invitation expires in ${7} days. If you weren't expecting it, ignore this email.</p>`;
+  if ((await emailGate("admin_invitation", subject, [html])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
 export async function sendDualNotification(opts: {
   clientEmail: string | null;
   subject: string;

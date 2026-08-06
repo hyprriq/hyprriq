@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getOperator } from "@/lib/auth/permissions";
+import { getClientScope, type ClientScope } from "@/lib/auth/clientScope";
+import { claimAdminInvitation } from "@/lib/auth/invitations";
 import { type Role } from "@/lib/data/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
@@ -17,7 +19,14 @@ import type { AdditionalQuestion } from "@/lib/research/contracts";
 export async function requireAdmin() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const op = await getOperator(userId);
+  let op = await getOperator(userId);
+  // ── ADMIN FOUNDATIONS (2026-08-02) — invitation claim: a brand-new Clerk user with a pending
+  // invitation for their verified email materializes their sub_user row on FIRST admin visit
+  // (WordPress-style). Only runs on the null path — never a cost for existing operators. ──
+  if (!op) {
+    const claimed = await claimAdminInvitation(userId);
+    if (claimed) op = await getOperator(userId);
+  }
   if (!op) redirect("/portal/dashboard"); // plain clients (and unknowns) land at the portal
   // Display fields for the shell/header: the clients row when one exists (legacy identities),
   // else the admin_permissions email label (rows-only operators have no clients row by ruling).
@@ -29,7 +38,11 @@ export async function requireAdmin() {
       email = p?.email ?? "";
     } catch { /* pre-migration */ }
   }
-  return { ...op, email, full_name: c?.full_name ?? null };
+  // CLIENT PARTITIONING: null = unrestricted (super_admin / view_all_clients / legacy);
+  // string[] = assigned-only (fail-closed empty when none assigned). Pages pass this into the
+  // data reads; client-id routes call clientInScope directly.
+  const clientScope = await getClientScope(op);
+  return { ...op, email, full_name: c?.full_name ?? null, clientScope };
 }
 
 type AdminCaseRow = {
@@ -96,28 +109,34 @@ export type AdminDashboard = {
   recentClients: { id: string; full_name: string | null; plan_type: PlanType | null; credits_available: number }[];
 };
 
-export async function getAdminDashboard(): Promise<AdminDashboard> {
-  const [casesRes, supportRes, clientsRes] = await Promise.all([
-    supabaseAdmin
-      .from("cases")
-      .select("id, case_number, vendor_name, brands_submitted, status, verdict, plan_type, sla_deadline, created_at, delivered_at, credits_charged, clients(full_name, company_name)")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    supabaseAdmin
-      .from("support_requests")
-      .select("id, sr_number, type, subject, status, created_at, clients(full_name)")
-      .eq("status", "open")
-      .order("created_at", { ascending: false }),
-    // No limit here: MRR must aggregate ALL active subscribers. The "Active
-    // Clients" widget slices to 5 in JS below. (At scale, move MRR to a DB-side
-    // sum and paginate this list — see SESSION_F_PROGRESS.md.)
-    supabaseAdmin
-      .from("clients")
-      .select("id, full_name, plan_type, credits_available, billing_status")
-      .eq("billing_status", "active")
-      .is("deleted_at", null)
-      .order("last_active_at", { ascending: false, nullsFirst: false }),
-  ]);
+// scope (ADMIN FOUNDATIONS): null = unrestricted; string[] = restrict every client-owned read
+// to those client ids (an empty array legitimately shows an empty dashboard — fail closed).
+export async function getAdminDashboard(scope: ClientScope = null): Promise<AdminDashboard> {
+  let casesQ = supabaseAdmin
+    .from("cases")
+    .select("id, case_number, vendor_name, brands_submitted, status, verdict, plan_type, sla_deadline, created_at, delivered_at, credits_charged, clients(full_name, company_name)")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  let supportQ = supabaseAdmin
+    .from("support_requests")
+    .select("id, sr_number, type, subject, status, created_at, clients(full_name)")
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
+  // No limit here: MRR must aggregate ALL active subscribers. The "Active
+  // Clients" widget slices to 5 in JS below. (At scale, move MRR to a DB-side
+  // sum and paginate this list — see SESSION_F_PROGRESS.md.)
+  let clientsQ = supabaseAdmin
+    .from("clients")
+    .select("id, full_name, plan_type, credits_available, billing_status")
+    .eq("billing_status", "active")
+    .is("deleted_at", null)
+    .order("last_active_at", { ascending: false, nullsFirst: false });
+  if (scope !== null) {
+    casesQ = casesQ.in("client_id", scope);
+    supportQ = supportQ.in("client_id", scope);
+    clientsQ = clientsQ.in("id", scope);
+  }
+  const [casesRes, supportRes, clientsRes] = await Promise.all([casesQ, supportQ, clientsQ]);
 
   // PostgREST infers embedded to-one relations as arrays in its generated types,
   // but returns a single object at runtime for a many-to-one FK. Cast via unknown.
@@ -180,12 +199,14 @@ export async function getAdminCase(id: string): Promise<AdminCaseDetail | null> 
 // ---- All Cases (admin, cross-client) ----
 export type AdminCaseListFilter = "all" | "queue" | "delivered" | "action";
 
-export async function getAllCasesAdmin(filter: AdminCaseListFilter = "all"): Promise<AdminCaseRow[]> {
-  const { data } = await supabaseAdmin
+export async function getAllCasesAdmin(filter: AdminCaseListFilter = "all", scope: ClientScope = null): Promise<AdminCaseRow[]> {
+  let q = supabaseAdmin
     .from("cases")
     .select("id, case_number, vendor_name, brands_submitted, status, verdict, plan_type, sla_deadline, created_at, delivered_at, credits_charged, clients(full_name, company_name)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+  if (scope !== null) q = q.in("client_id", scope);
+  const { data } = await q;
   const rows = (data as unknown as AdminCaseRow[]) ?? [];
   switch (filter) {
     case "queue":
@@ -212,12 +233,14 @@ export type AdminClientRow = {
   created_at: string;
 };
 
-export async function getAdminClients(): Promise<AdminClientRow[]> {
-  const { data } = await supabaseAdmin
+export async function getAdminClients(scope: ClientScope = null): Promise<AdminClientRow[]> {
+  let q = supabaseAdmin
     .from("clients")
     .select("id, full_name, company_name, email, plan_type, billing_status, credits_available, role, created_at")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+  if (scope !== null) q = q.in("id", scope);
+  const { data } = await q;
   return (data as AdminClientRow[]) ?? [];
 }
 

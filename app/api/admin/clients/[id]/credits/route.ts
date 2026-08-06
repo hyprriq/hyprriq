@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getOperator, can } from "@/lib/auth/permissions";
+import { clientInScope } from "@/lib/auth/clientScope";
 
 // ── ADMIN BATCH — credit adjust (permission: adjust_credits). ALWAYS through the H6 atomic RPCs
 // (add_client_credits / deduct_client_credits) — never a raw UPDATE. Every adjustment writes an
@@ -13,6 +14,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const op = await getOperator(userId);
   if (!can(op, "adjust_credits")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const { id } = await params;
+  // CLIENT PARTITIONING (2026-08-02): a scoped operator adjusts only assigned clients' credits.
+  if (!(await clientInScope(op, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   let body: { delta?: number; reason?: string } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }

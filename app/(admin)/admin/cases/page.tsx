@@ -30,7 +30,7 @@ export default async function AdminCasesPage({
 }) {
   const admin = await requireAdmin();
   const filter = normalize((await searchParams).filter);
-  const cases = await getAllCasesAdmin(filter);
+  const cases = await getAllCasesAdmin(filter, admin.clientScope);
 
   return (
     <AdminShell

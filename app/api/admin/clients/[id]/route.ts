@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clientInScope } from "@/lib/auth/clientScope";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getOperator } from "@/lib/auth/permissions";
 
@@ -31,6 +32,11 @@ export async function DELETE(
 
   const { id } = await params;
   if (id === userId) return NextResponse.json({ error: "cannot_delete_self" }, { status: 400 });
+  // CLIENT PARTITIONING (2026-08-02): a scoped operator can never delete an unassigned client.
+  {
+    const op = await getOperator(userId);
+    if (op && !(await clientInScope(op, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
 
   let body: { confirm_email?: string; reason?: string } = {};
   try {
