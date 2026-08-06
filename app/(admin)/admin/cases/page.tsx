@@ -36,6 +36,8 @@ export default async function AdminCasesPage({
     <AdminShell
       active={navKeyFor(filter)}
       title="Cases"
+      operator={admin}
+      clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
     >
       <div className="mb-5 flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">

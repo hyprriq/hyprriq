@@ -59,6 +59,8 @@ export default async function CaseReviewPage({
     <AdminShell
       active="review"
       title={`Case ${c.case_number}`}
+      operator={admin}
+      clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
       topRight={
         <Link href="/admin/dashboard" className="text-[14px] font-semibold text-brand hover:text-brand-hover">

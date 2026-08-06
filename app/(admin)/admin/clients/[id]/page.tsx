@@ -66,6 +66,8 @@ export default async function AdminClientDetailPage({
     <AdminShell
       active="clients"
       title="Client detail"
+      operator={admin}
+      clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
     >
       <Link href="/admin/clients" className="text-[13px] font-medium text-muted hover:text-ink">

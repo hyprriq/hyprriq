@@ -24,6 +24,8 @@ export default async function AdminDashboardPage() {
     <AdminShell
       active="dashboard"
       title="Admin Dashboard"
+      operator={admin}
+      clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
       topRight={<span className="text-[13px] text-muted">Last 30 days</span>}
     >

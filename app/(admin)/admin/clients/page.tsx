@@ -18,6 +18,8 @@ export default async function AdminClientsPage() {
     <AdminShell
       active="clients"
       title="Clients"
+      operator={admin}
+      clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
     >
       {clients.length === 0 ? (

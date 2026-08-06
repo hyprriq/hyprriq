@@ -1,56 +1,21 @@
 import Link from "next/link";
 import { UserMenu } from "@/components/portal/user-menu";
+import { navFor, type AdminNavKey, type NavGroup } from "@/lib/admin/nav";
+import type { Operator } from "@/lib/auth/permissions";
+import type { ClientScope } from "@/lib/auth/clientScope";
+import { getOpenSupportCount } from "@/lib/data/adminSupport";
 
-export type AdminNavKey =
-  | "dashboard"
-  | "review"
-  | "delivered"
-  | "all"
-  | "clients"
-  | "support"
-  | "outcomes"
-  | "revenue"
-  | "prompts"
-  | "settings"
-  | "run"
-  | "users";
+// ── OPERATOR-AWARE SHELL (founder-ruled 2026-08-02): the nav model + visibility rules live in
+// lib/admin/nav.ts (SHARED capability source — the same can()/canManageUsers() the API gates
+// call). The badge derives from the ROLE, never hardcoded. Nav filtering is UX; the page/API
+// gates remain the security boundary. ──
 
-type Item = { key: AdminNavKey; label: string; icon: string; href: string; badge?: number };
+export type { AdminNavKey };
 
-const GROUPS: { section?: string; items: Item[] }[] = [
-  { items: [{ key: "dashboard", label: "Dashboard", icon: "▪", href: "/admin/dashboard" }] },
-  {
-    section: "Cases",
-    items: [
-      { key: "review", label: "Quality Review", icon: "🔍", href: "/admin/cases?filter=queue" },
-      { key: "delivered", label: "Delivered", icon: "✓", href: "/admin/cases?filter=delivered" },
-      { key: "all", label: "All Cases", icon: "▦", href: "/admin/cases" },
-      { key: "run", label: "Run a Case", icon: "▶", href: "/admin/cases/run" },
-    ],
-  },
-  {
-    section: "Management",
-    items: [
-      { key: "clients", label: "Clients", icon: "👥", href: "/admin/clients" },
-      { key: "support", label: "Support Queue", icon: "✉", href: "/admin/dashboard" },
-      { key: "outcomes", label: "Outcomes", icon: "📈", href: "/admin/outcomes" },
-      { key: "users", label: "Users", icon: "🔐", href: "/admin/users" },
-    ],
-  },
-  {
-    section: "System",
-    items: [
-      { key: "revenue", label: "Revenue", icon: "📊", href: "/admin/revenue" },
-      { key: "prompts", label: "Prompts", icon: "📄", href: "/admin/prompts" },
-      { key: "settings", label: "Settings", icon: "⚙", href: "/admin/settings" },
-    ],
-  },
-];
-
-function Nav({ active }: { active: AdminNavKey }) {
+function Nav({ groups, active }: { groups: NavGroup[]; active: AdminNavKey }) {
   return (
     <nav className="flex flex-col gap-0.5">
-      {GROUPS.map((g, i) => (
+      {groups.map((g, i) => (
         <div key={i} className="flex flex-col gap-0.5">
           {g.section && (
             <div className="mb-0.5 mt-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">
@@ -87,22 +52,40 @@ function Nav({ active }: { active: AdminNavKey }) {
   );
 }
 
-export function AdminShell({
+export async function AdminShell({
   active,
   title,
   topRight,
   user,
+  operator,
+  clientScope,
   children,
 }: {
   active: AdminNavKey;
   title: string;
   topRight?: React.ReactNode;
   user?: { initial: string; email: string };
+  operator: Pick<Operator, "role" | "capabilities" | "transitional">;
+  clientScope: ClientScope;
   children: React.ReactNode;
 }) {
   // Admin routes are already is_admin-guarded; the switcher just needs the
   // dev/staging gate (VERCEL_ENV, not NODE_ENV — see ADR-005).
   const showSwitcher = process.env.VERCEL_ENV !== "production";
+  // Badge derives from the role — never hardcoded (identity law, 2026-08-02).
+  const roleBadge = operator.role === "super_admin" ? "Founder" : "Staff";
+  // Support open-count badge: fetched only when the item is visible to this operator, and
+  // SCOPED like the list itself (an unscoped count leaks out-of-scope request existence).
+  let groups = navFor(operator);
+  if (groups.some((g) => g.items.some((i) => i.key === "support"))) {
+    const openCount = await getOpenSupportCount(clientScope);
+    if (openCount > 0) {
+      groups = groups.map((g) => ({
+        ...g,
+        items: g.items.map((i) => (i.key === "support" ? { ...i, badge: openCount } : i)),
+      }));
+    }
+  }
   return (
     <div className="flex min-h-dvh bg-base">
       <aside className="flex w-[248px] shrink-0 flex-col bg-ink px-4 py-5">
@@ -111,10 +94,10 @@ export function AdminShell({
             HyprrIQ <span className="text-white/50">Admin</span>
           </div>
           <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
-            Founder
+            {roleBadge}
           </span>
         </div>
-        <Nav active={active} />
+        <Nav groups={groups} active={active} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-7">
