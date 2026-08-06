@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { getOperator, canManageUsers } from "@/lib/auth/permissions";
-import { sanitizeCapabilities, INVITATION_TTL_DAYS } from "@/lib/auth/invitations";
-import { FULL_ACCESS } from "@/lib/auth/capabilities";
+import { getOperator, canManageStaff } from "@/lib/auth/permissions";
+import { INVITATION_TTL_DAYS } from "@/lib/auth/invitations";
+import { grantableBy, fullGrantBy } from "@/lib/auth/grants";
 import { sendAdminInvitation } from "@/lib/email/notify";
 
-// ── ADMIN FOUNDATIONS — staff invitations (WordPress-style). SUPER-ADMIN ONLY (manage-users is
-// the role, never a capability — same law as the users API). POST creates the invitation row +
-// sends the Resend email (key-safe, banned-language-gated; an unsent email is NON-FATAL — the
-// response carries the sign-up link for manual sharing). Claim happens at the invitee's first
-// admin visit (lib/auth/invitations.ts). Only sub_user access can ever be minted this way. ──
+// ── STAFF INVITATIONS (WordPress-style; hierarchy 2026-08-02). Super admin AND admins invite
+// STAFF; invited capabilities pass through the same grant core as direct creation (subset-of-
+// own; super-only pair never). The claim path mints sub_user ONLY — an invitation can never
+// produce an admin (containment rule b). POST creates the row + sends the Resend email
+// (key-safe, banned-language-gated; an unsent email is NON-FATAL — the response carries the
+// sign-up link for manual sharing). ──
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const op = await getOperator(userId);
-  if (!canManageUsers(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!canManageStaff(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const { data, error } = await supabaseAdmin
     .from("admin_invitations")
     .select("id, email, capabilities, invited_by, created_at, expires_at, accepted_at, accepted_user_id, revoked_at")
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const op = await getOperator(userId);
-  if (!canManageUsers(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!canManageStaff(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   let body: { email?: string; capabilities?: string[]; preset?: string } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: "valid email required" }, { status: 400 });
   }
-  const caps = body.preset === "full_access" ? [...FULL_ACCESS] : sanitizeCapabilities(body.capabilities);
+  // Same grant core as direct creation — containment rules (a) and (b) hold on the invite path.
+  const caps = body.preset === "full_access" ? fullGrantBy(op!) : grantableBy(op!, body.capabilities);
 
   // One OPEN invitation per address — revoke-then-reinvite is the edit path.
   const { data: existing } = await supabaseAdmin

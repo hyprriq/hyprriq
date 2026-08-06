@@ -158,7 +158,7 @@ founder-run scripts:** the probe template is now
 | 4.12 | Outcome panel refinement | 🔴 | UX | Recurring task, not a buried field |
 | 4.13 | Agency panel | 🔒 | — | Phase K |
 | 4.14 | ~~STOP-2 fork~~ **STOP-2 RULED (founder, 2026-07-30): Option B — the operator picks the tier per run, NO default.** The built shape stands as-is; no code change. | ✅ | — | Options were: (A) always scale_499 · (B) per-run pick (chosen) · (C) fixed lower tier. |
-| 4.15 | ~~STOP-3 fork~~ **STOP-3 RULED (founder, 2026-07-30): refunds stay DASHBOARD-ONLY until post-Phase-J.** Deliberately unbuilt: no `stripe.refunds.create`, no `refund` capability, no credit-clawback path. **NO refund write exists anywhere in the codebase** — that absence is now the ruled state, not a gap. | ✅ | — | Revisit at Phase J with the audit + clawback decision. |
+| 4.15 | ~~STOP-3 fork~~ **STOP-3 RULED (2026-07-30) + REFUND POLICY LOCKED (2026-08-02, build DEFERRED to the billing-section pass):** dashboard-only until then; NO refund write exists. Policy captured verbatim in `ADMIN_FOUNDATIONS.md` §9c (14-day window; undelivered single 100% + credit clawback; delivered single 30%; unused sub/top-up credits per-credit value + clawback; used credits 30%, reports stay; nothing after 14 days; window from delivery/charge). Constants live: `DELIVERY_SLA_HOURS = 1`, `REFUND_WINDOW_DAYS = 14`. ⚠ `PLAN_SLA_DAYS` (3–5 days) tension flagged for founder. | ✅ | — | Build at the billing-section pass. |
 
 ---
 

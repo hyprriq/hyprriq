@@ -12,13 +12,15 @@
 
 import { clerkClient } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
+import { GRANTABLE_CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
 
 export const INVITATION_TTL_DAYS = 7;
 
+// GRANTABLE only (hierarchy 2026-08-02): the claim path can never materialize the super-only
+// pair, even from a hand-edited invitation row — grant-time filtering is the other half.
 export function sanitizeCapabilities(input: unknown): Capability[] {
   if (!Array.isArray(input)) return [];
-  return input.filter((c): c is Capability => (CAPABILITIES as readonly string[]).includes(c as string));
+  return input.filter((c): c is Capability => (GRANTABLE_CAPABILITIES as readonly string[]).includes(c as string));
 }
 
 export function invitationOpen(inv: { accepted_at: string | null; revoked_at: string | null; expires_at: string }): boolean {

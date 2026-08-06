@@ -70,7 +70,7 @@ type SupportRow = {
   clients: { full_name: string | null } | null;
 };
 
-const MONTHLY_PRICE: Record<PlanType, number> = { single_99: 0, growth_279: 279, scale_499: 499 };
+export const MONTHLY_PRICE: Record<PlanType, number> = { single_99: 0, growth_279: 279, scale_499: 499 };
 
 // Statuses that require founder action in the review queue.
 //

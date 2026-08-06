@@ -1,10 +1,11 @@
 import { requireAdmin } from "@/lib/data/admin";
-import { canManageUsers } from "@/lib/auth/permissions";
+import { canManageStaff } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { UsersManager } from "@/components/admin/users-manager";
 
-// ── ADMIN ACCESS FIX — /admin/users. SUPER-ADMIN ONLY (the role, not a capability): sub-users
-// never see this page, matching the API they could not call anyway. ──
+// ── PERMISSION HIERARCHY (2026-08-02) — /admin/users. Staff managers only: the super admin
+// manages admins AND staff; admins manage staff (subset-of-own grants, enforced by the API's
+// grant core). Plain staff never reach this page, matching the APIs they cannot call. ──
 export default async function AdminUsersPage() {
   const op = await requireAdmin();
   const shellProps = {
@@ -12,18 +13,18 @@ export default async function AdminUsersPage() {
     clientScope: op.clientScope,
     user: { initial: (op.full_name || op.email || "?").charAt(0).toUpperCase(), email: op.email },
   } as const;
-  if (!canManageUsers(op)) {
+  if (!canManageStaff(op)) {
     return (
       <AdminShell active="users" title="Users" {...shellProps}>
         <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
-          User management is super-admin only.
+          User management requires an admin role.
         </p>
       </AdminShell>
     );
   }
   return (
     <AdminShell active="users" title="Users" {...shellProps}>
-      <UsersManager selfId={op.user_id} />
+      <UsersManager selfId={op.user_id} selfRole={op.role} selfCaps={[...op.capabilities]} />
     </AdminShell>
   );
 }

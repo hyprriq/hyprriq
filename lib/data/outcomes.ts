@@ -34,6 +34,40 @@ export async function recordCaseOutcome(caseId: string, o: {
   return { error: null };
 }
 
+// ── OUTCOMES AGGREGATE (2026-08-02) — the roll-up the placeholder promised. Capture is live on
+// every delivered review page; this is the read across cases. Scope-partitioned like every
+// admin read (fail closed: empty scope = zero rows, no query). ──
+export interface OutcomeAggregateRow {
+  verdict_at_delivery: string | null;
+  outcome_type: string | null;
+  prediction_correct: boolean | null;
+  outcome_reported_at: string | null;
+  cases: { case_number: string; vendor_name: string | null; client_id: string } | null;
+}
+
+export async function getOutcomesAggregate(scope: string[] | null): Promise<{
+  rows: OutcomeAggregateRow[];
+  totals: { delivered: number; recorded: number; byType: Record<string, number>; predictionCorrect: number; predictionWrong: number };
+}> {
+  const empty = { rows: [], totals: { delivered: 0, recorded: 0, byType: {}, predictionCorrect: 0, predictionWrong: 0 } };
+  if (scope !== null && scope.length === 0) return empty; // fail closed
+  let q = supabaseAdmin
+    .from("case_outcomes")
+    .select("verdict_at_delivery, outcome_type, prediction_correct, outcome_reported_at, cases!inner(case_number, vendor_name, client_id)")
+    .order("outcome_reported_at", { ascending: false, nullsFirst: false });
+  if (scope !== null) q = q.in("cases.client_id", scope);
+  const { data } = await q;
+  const rows = (data as unknown as OutcomeAggregateRow[]) ?? [];
+  const byType: Record<string, number> = {};
+  let predictionCorrect = 0, predictionWrong = 0, recorded = 0;
+  for (const r of rows) {
+    if (r.outcome_type) { recorded++; byType[r.outcome_type] = (byType[r.outcome_type] ?? 0) + 1; }
+    if (r.prediction_correct === true) predictionCorrect++;
+    if (r.prediction_correct === false) predictionWrong++;
+  }
+  return { rows, totals: { delivered: rows.length, recorded, byType, predictionCorrect, predictionWrong } };
+}
+
 export async function getCaseOutcome(caseId: string): Promise<CaseOutcome | null> {
   const { data } = await supabaseAdmin.from("case_outcomes")
     .select("outcome_type, outcome_notes, prediction_correct, outcome_reported_at, verdict_at_delivery, checkpoint_30_sent_at, checkpoint_90_sent_at")

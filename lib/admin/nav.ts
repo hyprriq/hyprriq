@@ -11,7 +11,7 @@
 // view_cases · Support → view_cases (client-scoped data, same class as cases) · Revenue →
 // view_billing · everything else → always.
 
-import { can, canManageUsers, type Operator } from "@/lib/auth/permissions";
+import { can, canManageUsers, canManageStaff, type Operator } from "@/lib/auth/permissions";
 import type { Capability } from "@/lib/auth/capabilities";
 
 export type AdminNavKey =
@@ -26,7 +26,11 @@ export type AdminNavKey =
   | "prompts"
   | "settings"
   | "run"
-  | "users";
+  | "users"
+  | "acquisition"
+  | "bulk"
+  | "brands"
+  | "suppliers";
 
 export type NavItem = {
   key: AdminNavKey;
@@ -34,7 +38,7 @@ export type NavItem = {
   icon: string;
   href: string;
   badge?: number;
-  requires?: { superAdminOnly: true } | { cap: Capability };
+  requires?: { superAdminOnly: true } | { staffManager: true } | { cap: Capability };
 };
 export type NavGroup = { section?: string; items: NavItem[] };
 
@@ -55,7 +59,25 @@ const GROUPS: NavGroup[] = [
       { key: "clients", label: "Clients", icon: "👥", href: "/admin/clients" },
       { key: "support", label: "Support Queue", icon: "✉", href: "/admin/support", requires: { cap: "view_cases" } },
       { key: "outcomes", label: "Outcomes", icon: "📈", href: "/admin/outcomes" },
-      { key: "users", label: "Users", icon: "🔐", href: "/admin/users", requires: { superAdminOnly: true } },
+      { key: "users", label: "Users", icon: "🔐", href: "/admin/users", requires: { staffManager: true } },
+    ],
+  },
+  {
+    // Intelligence DB shells (2026-08-02): read-only views over the existing corpus.
+    section: "Intelligence",
+    items: [
+      { key: "suppliers", label: "Supplier DB", icon: "▤", href: "/admin/suppliers", requires: { cap: "view_cases" } },
+      { key: "brands", label: "Brand DB", icon: "▥", href: "/admin/brands", requires: { cap: "view_cases" } },
+    ],
+  },
+  {
+    // Growth shells (2026-08-02): static until the deferred acquisition/bulk builds.
+    // UNRULED defaults, flagged: acquisition = super-admin only (coupons are money-adjacent);
+    // bulk = run_case (it drives case intake).
+    section: "Growth",
+    items: [
+      { key: "acquisition", label: "Acquisition", icon: "⬡", href: "/admin/acquisition", requires: { superAdminOnly: true } },
+      { key: "bulk", label: "Bulk Upload", icon: "≡", href: "/admin/bulk", requires: { cap: "run_case" } },
     ],
   },
   {
@@ -72,6 +94,7 @@ export function navItemVisible(op: Pick<Operator, "role" | "capabilities" | "tra
   if (!item.requires) return true;
   const asOperator = op as Operator;
   if ("superAdminOnly" in item.requires) return canManageUsers(asOperator);
+  if ("staffManager" in item.requires) return canManageStaff(asOperator);
   return can(asOperator, item.requires.cap);
 }
 

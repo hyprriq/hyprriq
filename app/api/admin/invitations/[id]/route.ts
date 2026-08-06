@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { getOperator, canManageUsers } from "@/lib/auth/permissions";
+import { getOperator, canManageStaff } from "@/lib/auth/permissions";
 
-// DELETE — revoke a pending invitation (super-admin only). Accepted invitations cannot be
-// revoked here — disable the resulting sub_user row via the users API instead (one door per act).
+// DELETE — revoke a pending invitation (staff managers: super admin + admins, hierarchy
+// 2026-08-02). Accepted invitations cannot be revoked here — disable the resulting sub_user
+// row via the users API instead (one door per act).
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const op = await getOperator(userId);
-  if (!canManageUsers(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!canManageStaff(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const { id } = await params;
 
   const { data: inv } = await supabaseAdmin

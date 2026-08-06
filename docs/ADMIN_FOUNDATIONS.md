@@ -161,6 +161,44 @@ docs → repo docs (the docs thread, next).
 500s loudly; scoped sub-users see empty lists (fail closed); the founder (super_admin) is
 entirely unaffected. There are no other operators today, so it can run at leisure.
 
+## 9b. PERMISSION HIERARCHY (founder-ruled 2026-08-02) — supersedes §3's two-tier model
+
+Three tiers: **super_admin > admin > sub_user (staff)**. Super admin creates/removes ADMINS;
+admins create STAFF and grant a subset of THEIR OWN held capabilities. Same mechanism
+(admin_permissions + the grant core), super admin sits above.
+
+- **Super-admin-ONLY, never grantable to or by admins:** managing admins (create/remove +
+  the granting power itself), `adjust_credits` (money), `view_all_clients` (the scope
+  elevation), and refund/billing controls when they exist. Money and the scope-breaker stay
+  at the top — exercised through the super_admin ROLE, held by nobody else (read-time strip
+  in getOperator makes even a hand-edited row inert).
+- **Admins may grant staff:** view_cases, review_publish, run_case, rerun, view_billing —
+  always a subset of what the admin holds.
+- **TWO CONTAINMENT RULES, STRUCTURAL (lib/auth/grants.ts, test-proven):** (a) never grant a
+  capability you do not hold (`grantableBy` intersects with the grantor's own set); (b) never
+  grant the granting power itself (user management is a ROLE — no capability string confers
+  it; `rolesCreatableBy` lets only super_admin mint admins; the invitation claim path mints
+  sub_user only). The two-move escalation is closed end-to-end in grants.test.ts.
+- Migration: `20260803000000` widens the role CHECK (founder-run; admin-creation fails loudly
+  until then, everything else unaffected).
+
+## 9c. DELIVERY SLA + REFUND POLICY (LOCKED 2026-08-02 — policy captured, build DEFERRED)
+
+- **`DELIVERY_SLA_HOURS = 1`** (lib/constants/plans.ts) — delivery is ~1 hour, hard max; the
+  client-facing promise and the refund logic both read this one constant. The
+  "undelivered / full-refund" state exists ONLY inside this window. ⚠ Flagged tension:
+  `PLAN_SLA_DAYS` (3–5 days) predates this ruling and still drives `cases.sla_deadline` +
+  est-completion display — founder reconciles which promise the client sees.
+- **REFUND POLICY (LOCKED; for the refund manual; `REFUND_WINDOW_DAYS = 14`):** window = 14
+  days (from delivery for single reports; from charge for subscriptions/top-ups) · single
+  report UNDELIVERED → 100% + claw the credit · single report DELIVERED → 30%
+  (chargeback-beating goodwill) · subscription/top-up UNUSED credits → per-credit value +
+  claw the credit · USED credits → 30% per-credit value, reports stay · nothing after 14
+  days. Refunding an unused credit MUST claw that credit back (money-vs-credit distinction —
+  the RPCs exist). Credit-clawback is the protection; the partial refund is cheaper than a
+  chargeback + fee + dispute mark. **Ready-to-build at the billing-section pass; NO refund
+  write exists today (STOP-3 stands until then).**
+
 ## 10. Architecture flags (spotted during the pass)
 
 1. **STOP-3 tension in the brief:** "credit-adjust/refund" listed as one grantable — refunds are

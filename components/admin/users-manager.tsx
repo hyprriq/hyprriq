@@ -1,24 +1,31 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
+import { GRANTABLE_CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
 
-// ── ADMIN ACCESS FIX — the thin user-management screen (function only; UI/UX thread restyles).
-// Calls the existing users APIs. The STRUCTURAL RULES are surfaced, not discovered as errors:
-// super_admin rows show "founder-managed (SQL)" with no controls; the caller's own row shows
-// "your row" with no controls; sub-user creation offers only the six capabilities + FULL ACCESS. ──
+// ── PERMISSION HIERARCHY (2026-08-02) — the thin user-management screen (function only; the
+// UI/UX thread restyles). Calls the users APIs; the STRUCTURAL RULES are surfaced, not
+// discovered as errors: super_admin rows show "founder-managed (SQL)"; admin rows show
+// controls only to the super admin; the caller's own row shows "your row"; the capability
+// checkboxes offer only what THIS grantor may grant (subset-of-own for admins; the super-only
+// money/scope pair for nobody — the API enforces the same rules via lib/auth/grants). ──
 
 interface AdminUserRow {
   user_id: string; email: string; role: string; capabilities: string[]; disabled: boolean; created_by: string | null;
 }
 
-export function UsersManager({ selfId }: { selfId: string }) {
+export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; selfRole: "super_admin" | "admin" | "sub_user"; selfCaps: string[] }) {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [newUserId, setNewUserId] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState<"admin" | "sub_user">("sub_user");
   const [newCaps, setNewCaps] = useState<Capability[]>([]);
+  // What THIS grantor's checkboxes may offer — mirrors grantableBy server-side.
+  const GRANTABLE = GRANTABLE_CAPABILITIES.filter(
+    (c) => selfRole === "super_admin" || selfCaps.includes(c),
+  );
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/users");
@@ -33,12 +40,13 @@ export function UsersManager({ selfId }: { selfId: string }) {
   async function create(preset: boolean) {
     if (busy || !newUserId.trim() || !newEmail.trim()) return;
     setBusy(true); setError(null);
+    const base = { user_id: newUserId, email: newEmail, role: newRole };
     const res = await fetch("/api/admin/users", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(preset ? { user_id: newUserId, email: newEmail, preset: "full_access" } : { user_id: newUserId, email: newEmail, capabilities: newCaps }),
+      body: JSON.stringify(preset ? { ...base, preset: "full_access" } : { ...base, capabilities: newCaps }),
     });
     if (!res.ok) setError((await res.json().catch(() => null))?.error ?? "create failed");
-    else { setNewUserId(""); setNewEmail(""); setNewCaps([]); await load(); }
+    else { setNewUserId(""); setNewEmail(""); setNewRole("sub_user"); setNewCaps([]); await load(); }
     setBusy(false);
   }
 
@@ -62,6 +70,8 @@ export function UsersManager({ selfId }: { selfId: string }) {
             {users.map((u) => {
               const isSelf = u.user_id === selfId;
               const isSuper = u.role === "super_admin";
+              // Tiered management: admin rows are editable by the super admin only.
+              const managable = !isSuper && !isSelf && (u.role === "sub_user" || selfRole === "super_admin");
               return (
                 <tr key={u.user_id} className="border-t border-line/60 first:border-t-0 align-top">
                   <td className="py-2 pr-3">
@@ -78,9 +88,11 @@ export function UsersManager({ selfId }: { selfId: string }) {
                       <span className="text-[11px] text-muted">founder-managed (SQL)</span>
                     ) : isSelf ? (
                       <span className="text-[11px] text-muted">your row</span>
+                    ) : !managable ? (
+                      <span className="text-[11px] text-muted">managed by the super admin</span>
                     ) : (
                       <div className="flex justify-end gap-2">
-                        {CAPABILITIES.map((cap) => (
+                        {GRANTABLE.map((cap) => (
                           <label key={cap} className="flex items-center gap-1 text-[11px] text-muted">
                             <input type="checkbox" checked={u.capabilities.includes(cap)} disabled={busy}
                               onChange={(e) => patch(u.user_id, { capabilities: e.target.checked ? [...u.capabilities, cap] : u.capabilities.filter((c) => c !== cap) })} />
@@ -103,9 +115,23 @@ export function UsersManager({ selfId }: { selfId: string }) {
       </div>
 
       <div className="rounded-card border border-line bg-surface p-4">
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Create sub-user</div>
-        <p className="mb-2 text-[12px] text-muted">Sub-users only — a super_admin row can only be seeded by the founder in SQL. You cannot edit your own row.</p>
+        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Create user</div>
+        <p className="mb-2 text-[12px] text-muted">
+          {selfRole === "super_admin"
+            ? "You can create admins (who manage staff) and staff. A super_admin row is founder-seeded SQL only. Money and all-clients scope stay with the super admin."
+            : "You can create staff and grant a subset of your own capabilities. Admins are created by the super admin."}
+          {" "}You cannot edit your own row.
+        </p>
         <div className="flex flex-wrap items-end gap-2">
+          {selfRole === "super_admin" && (
+            <label className="text-[12px] text-muted">Role<br />
+              <select value={newRole} onChange={(e) => setNewRole(e.target.value as "admin" | "sub_user")}
+                className="mt-1 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink">
+                <option value="sub_user">Staff (sub_user)</option>
+                <option value="admin">Admin (manages staff)</option>
+              </select>
+            </label>
+          )}
           <label className="text-[12px] text-muted">Clerk user id<br />
             <input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" placeholder="user_..." />
           </label>
@@ -114,7 +140,7 @@ export function UsersManager({ selfId }: { selfId: string }) {
           </label>
         </div>
         <div className="mt-2 flex flex-wrap gap-3">
-          {CAPABILITIES.map((cap) => (
+          {GRANTABLE.map((cap) => (
             <label key={cap} className="flex items-center gap-1 text-[12px] text-muted">
               <input type="checkbox" checked={newCaps.includes(cap)}
                 onChange={(e) => setNewCaps(e.target.checked ? [...newCaps, cap] : newCaps.filter((c) => c !== cap))} />

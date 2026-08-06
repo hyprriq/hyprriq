@@ -3,9 +3,9 @@ import { describe, it, expect } from "vitest";
 import { sanitizeCapabilities, invitationOpen } from "./invitations";
 
 describe("sanitizeCapabilities", () => {
-  it("keeps only real capabilities — unknown strings and escalation attempts drop", () => {
-    expect(sanitizeCapabilities(["view_cases", "manage_users", "bogus", "view_all_clients"]))
-      .toEqual(["view_cases", "view_all_clients"]); // manage_users is a ROLE, never a capability
+  it("keeps only GRANTABLE capabilities — unknown strings, escalation attempts, and the super-only pair all drop", () => {
+    expect(sanitizeCapabilities(["view_cases", "manage_users", "bogus", "view_all_clients", "adjust_credits"]))
+      .toEqual(["view_cases"]); // manage_users is a ROLE; the super-only pair stays at the top (hierarchy 2026-08-02)
     expect(sanitizeCapabilities("not-an-array")).toEqual([]);
     expect(sanitizeCapabilities(null)).toEqual([]);
   });

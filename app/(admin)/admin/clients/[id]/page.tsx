@@ -70,9 +70,14 @@ export default async function AdminClientDetailPage({
       clientScope={admin.clientScope}
       user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}
     >
-      <Link href="/admin/clients" className="text-[13px] font-medium text-muted hover:text-ink">
-        ← All clients
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/admin/clients" className="text-[13px] font-medium text-muted hover:text-ink">
+          ← All clients
+        </Link>
+        <Link href={`/admin/clients/${id}/accounting`} className="text-[13px] font-semibold text-brand hover:text-brand-hover">
+          Full accounting →
+        </Link>
+      </div>
 
       {/* Header */}
       <div className="mt-3 rounded-card border border-line bg-surface p-5">

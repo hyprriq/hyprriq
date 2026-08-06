@@ -13,7 +13,7 @@ vi.mock("@/lib/supabase/admin", () => {
   return { supabaseAdmin: { from: vi.fn((t: string) => (t === "admin_permissions" ? chain(permRow) : chain(clientRow))) } };
 });
 
-import { getOperator, can, canManageUsers, FULL_ACCESS, CAPABILITIES } from "./permissions";
+import { getOperator, can, canManageUsers, canManageStaff, FULL_ACCESS, CAPABILITIES, GRANTABLE_CAPABILITIES, SUPER_ADMIN_ONLY_CAPS } from "./permissions";
 
 beforeEach(() => {
   permRow.mockReset().mockResolvedValue({ data: null, error: null });
@@ -36,11 +36,30 @@ describe("the role hierarchy (checked capabilities, never ids)", () => {
     expect(canManageUsers(op)).toBe(false); // NO SELF-ESCALATION: the string grants nothing
   });
 
-  it("FULL ACCESS preset = every capability EXCEPT user management", async () => {
+  it("FULL ACCESS preset = every GRANTABLE capability; the super-only pair stays out (hierarchy 2026-08-02)", async () => {
     permRow.mockResolvedValue({ data: { user_id: "u1", role: "sub_user", capabilities: [...FULL_ACCESS], disabled: false }, error: null });
     const op = await getOperator("u1");
-    for (const cap of CAPABILITIES) expect(can(op, cap), cap).toBe(true);
+    for (const cap of GRANTABLE_CAPABILITIES) expect(can(op, cap), cap).toBe(true);
+    for (const cap of SUPER_ADMIN_ONLY_CAPS) expect(can(op, cap), cap).toBe(false);
     expect(canManageUsers(op)).toBe(false);
+  });
+
+  it("READ-TIME STRIP: a hand-edited sub_user row carrying the super-only pair still cannot exercise it", async () => {
+    permRow.mockResolvedValue({ data: { user_id: "u1", role: "sub_user", capabilities: ["view_cases", "adjust_credits", "view_all_clients"], disabled: false }, error: null });
+    const op = await getOperator("u1");
+    expect(can(op, "view_cases")).toBe(true);
+    expect(can(op, "adjust_credits")).toBe(false);   // money stays at the top
+    expect(can(op, "view_all_clients")).toBe(false); // scope-breaker stays at the top
+  });
+
+  it("the ADMIN role manages staff but not admins; capabilities stay checked like staff", async () => {
+    permRow.mockResolvedValue({ data: { user_id: "u1", role: "admin", capabilities: ["view_cases", "run_case"], disabled: false }, error: null });
+    const op = await getOperator("u1");
+    expect(op?.role).toBe("admin");
+    expect(canManageStaff(op)).toBe(true);
+    expect(canManageUsers(op)).toBe(false);
+    expect(can(op, "run_case")).toBe(true);
+    expect(can(op, "review_publish")).toBe(false);
   });
 
   it("the super admin can do everything including managing users", async () => {

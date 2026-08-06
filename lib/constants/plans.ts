@@ -56,6 +56,18 @@ export const PLAN_SLA_DAYS: Record<PlanType, number> = {
   scale_499: 3,
 };
 
+// ── DELIVERY SLA (founder-ruled 2026-08-02): delivery is ~1 hour, HARD MAX. The single named
+// constant both the client-facing promise and the (deferred) refund logic read — the
+// "undelivered / full-refund" state exists ONLY within this window; after delivery the
+// delivered-report refund path applies (policy captured in docs, build deferred to the
+// billing-section pass). ⚠ FLAGGED TENSION for the founder: PLAN_SLA_DAYS above (3–5 days)
+// predates this ruling and still drives cases.sla_deadline + the est-completion display —
+// reconcile which promise the client sees before the marketing/report copy locks. ──
+export const DELIVERY_SLA_HOURS = 1;
+// The refund window (days from delivery for single reports; from charge for subscriptions).
+// Captured with the LOCKED refund policy; the money-write build is deferred.
+export const REFUND_WINDOW_DAYS = 14;
+
 export const PLAN_ROLLOVER_LIMIT: Record<PlanType, number> = {
   single_99: 0,
   growth_279: 2,
