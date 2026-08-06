@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/tokens.css">
-<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/tokens.css?v=3">
+<link rel="stylesheet" href="assets/base.css?v=3">
 <style>
   .map { max-width: 880px; margin: 0 auto; padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 32px) 80px; }
   .map .masthead { border-bottom: 2px solid var(--navy-deep); padding-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
@@ -24,6 +24,7 @@
   .state h3 { font-size: 13px; font-weight: 700; font-family: var(--font-sans); margin-bottom: 8px; }
   .state li { font-size: 13px; color: var(--ink-2); line-height: 1.55; margin: 0 0 5px 16px; }
 </style>
+<link rel="stylesheet" href="assets/mobile-type.css?v=3">
 </head>
 <body>
 <div class="map">
@@ -54,6 +55,8 @@
         <li>Case-progress tracker on every case · how-to-read panel + tooltips on the report</li>
         <li>Quick actions on the dashboard · Completed reports + Invoices as nav destinations</li>
         <li>Case table becomes cards on mobile; 44px touch targets · mobile back on drill-in pages</li>
+        <li>Sticky depth tabs, all four visible on mobile · 16px mobile body floor · filters live-filter the list</li>
+        <li>Submit: three card-steps on one page + Marketplace selector (mirrors the real intake field)</li>
         <li>Mobile nav RULED: the drawer (right call at 10 nav items — tab-bar would force nesting)</li>
       </ul>
     </div>
@@ -62,6 +65,7 @@
       <ul>
         <li>Confidence-chip labels — &ldquo;Verified / Likely&rdquo; are placeholders</li>
         <li>All explanatory microcopy (how-to-read, tooltips) — placeholder until the content pass</li>
+        <li>Marketplace-localized research — backend decision (engine stores the field but does not vary research today)</li>
       </ul>
     </div>
   </div>

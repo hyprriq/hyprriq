@@ -1,0 +1,42 @@
+/* ============================================================
+   Mobile readability pass — 16px body floor below 900px.
+   Loaded AFTER each page's own <style> so equal-specificity
+   rules here win. Family unchanged (Instrument Sans) — sizing
+   only, per the founder's instruction.
+   ============================================================ */
+@media (max-width: 899px) {
+  body { font-size: 16px; }
+
+  /* reading text — 16px floor */
+  .risk-block { font-size: 16px; }
+  .checklist li { font-size: 16px; }
+  .cat-note { font-size: 16px; }
+  .acc-body { font-size: 15.5px; }
+  .page-head .sub, .greet p { font-size: 15.5px; }
+  .empty p { font-size: 15.5px; }
+
+  /* secondary text — proportional bump */
+  .area-row .a-find { font-size: 15px; }
+  .honesty li { font-size: 15px; }
+  .keylist li { font-size: 15px; }
+  .sumcard .risk-line { font-size: 15px; }
+  .sumcard .headline { font-size: 17.5px; }
+  .verdict-card .v-means { font-size: 14.5px; }
+  .attention .a-title { font-size: 15.5px; }
+  .attention .a-body { font-size: 15px; }
+  .step .s-sub { font-size: 14.5px; }
+  .field .hint { font-size: 13.5px; }
+  .link-row { font-size: 16px; }
+  .link-row .lr-sub { font-size: 13.5px; }
+  .case-card .name { font-size: 16px; }
+  .case-card .brands { font-size: 14px; }
+  .cell-sub { font-size: 13.5px; }
+  .kpi .k-sub { font-size: 13.5px; }
+  .ledger-row { font-size: 14.5px; }
+  .inv-row .i-id .desc { font-size: 13.5px; }
+  .disclaimer { font-size: 13.5px; }
+  .analyst-note-empty { font-size: 14px; }
+  .shell-nav a.nav-item { font-size: 15px; }
+  .acc summary { font-size: 15.5px; }
+  .fchip, .rtab { font-size: 14px; }
+}

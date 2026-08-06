@@ -89,6 +89,10 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* the hidden attribute must always win — author display rules (e.g. .case-card{display:block})
+   were beating the UA sheet, which is why mobile filter chips looked inert */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -386,7 +390,7 @@ table.cases tbody tr { cursor: pointer; }
 table.cases tbody tr:hover td { background: var(--paper); }
 .cell-id { font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; color: var(--navy); }
 .cell-main { font-weight: 600; font-size: 14px; color: var(--ink); }
-.cell-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+.cell-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
 .cell-date { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 
 .case-cards { display: none; flex-direction: column; gap: var(--s-3); }
@@ -398,7 +402,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
 .case-card .r1 { display: flex; align-items: center; gap: 8px; }
 .case-card .r1 .cell-id { flex: 1; }
 .case-card .name { font-weight: 600; font-size: 15px; margin-top: 8px; }
-.case-card .brands { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+.case-card .brands { font-size: 12.5px; color: var(--ink-2); margin-top: 4px; }
 .case-card .r2 { display: flex; align-items: center; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
 .case-card .r2 .right { margin-left: auto; }
 
@@ -768,12 +772,17 @@ table.cases tbody tr:hover td { background: var(--paper); }
   .r-sec > .eyebrow { display: block; margin-bottom: 10px; }
 
   /* ---- depth tabs ---- */
+  /* sticky depth tabs — reachable while reading any panel; every tab visible on mobile */
   .rtabs {
-    display: flex; gap: 8px; overflow-x: auto;
-    padding: 0 0 2px; margin-bottom: var(--s-4);
-    scrollbar-width: none;
+    display: flex; gap: 8px;
+    position: sticky; top: 60px; z-index: 15;
+    background: var(--paper);
+    padding: 8px 0 10px; margin-bottom: var(--s-3);
   }
-  .rtabs::-webkit-scrollbar { display: none; }
+  @media (max-width: 640px) {
+    .rtabs { display: grid; grid-template-columns: 1fr 1fr; }
+    .rtab { justify-content: center; min-height: 44px; padding: 0 10px; }
+  }
   .rtab {
     flex: none; display: inline-flex; align-items: center; gap: 7px;
     min-height: 42px; padding: 0 16px;
@@ -787,6 +796,9 @@ table.cases tbody tr:hover td { background: var(--paper); }
     background: var(--surface-sunk); color: var(--ink-2);
   }
   .rtab[aria-selected="true"] .n { background: rgba(255,255,255,.22); color: #fff; }
+  /* the honesty tab carries a standing verify-orange marker — the trust feature stays findable */
+  .rtab .hdot { width: 7px; height: 7px; border-radius: 50%; background: var(--v-verify); flex: none; }
+  .rtab:hover { border-color: var(--navy); }
 
   .tabpanel[hidden] { display: none; }
   .panel-print-head { display: none; } /* section headings appear in print only */
@@ -803,6 +815,9 @@ table.cases tbody tr:hover td { background: var(--paper); }
     .area-row .a-chip { padding-top: 0; }
   }
 
+  .cat-note { font-size: 14px; color: var(--ink-2); max-width: 66ch; line-height: 1.6; }
+  .analyst-note-empty { font-size: 13px; color: var(--ink-2); font-style: italic; margin-top: 8px; }
+  .checklist-intro { font-size: 12.5px; color: var(--ink-2); padding: 10px 0 2px; }
   .foot-meta { margin-top: var(--s-7); }
 
   /* ---- print: the complete flat document, regardless of on-screen state ---- */
@@ -815,6 +830,51 @@ table.cases tbody tr:hover td { background: var(--paper); }
     }
     .r-sec { break-inside: avoid-page; }
   }
+</style>
+<style>
+/* ============================================================
+   Mobile readability pass — 16px body floor below 900px.
+   Loaded AFTER each page's own <style> so equal-specificity
+   rules here win. Family unchanged (Instrument Sans) — sizing
+   only, per the founder's instruction.
+   ============================================================ */
+@media (max-width: 899px) {
+  body { font-size: 16px; }
+
+  /* reading text — 16px floor */
+  .risk-block { font-size: 16px; }
+  .checklist li { font-size: 16px; }
+  .cat-note { font-size: 16px; }
+  .acc-body { font-size: 15.5px; }
+  .page-head .sub, .greet p { font-size: 15.5px; }
+  .empty p { font-size: 15.5px; }
+
+  /* secondary text — proportional bump */
+  .area-row .a-find { font-size: 15px; }
+  .honesty li { font-size: 15px; }
+  .keylist li { font-size: 15px; }
+  .sumcard .risk-line { font-size: 15px; }
+  .sumcard .headline { font-size: 17.5px; }
+  .verdict-card .v-means { font-size: 14.5px; }
+  .attention .a-title { font-size: 15.5px; }
+  .attention .a-body { font-size: 15px; }
+  .step .s-sub { font-size: 14.5px; }
+  .field .hint { font-size: 13.5px; }
+  .link-row { font-size: 16px; }
+  .link-row .lr-sub { font-size: 13.5px; }
+  .case-card .name { font-size: 16px; }
+  .case-card .brands { font-size: 14px; }
+  .cell-sub { font-size: 13.5px; }
+  .kpi .k-sub { font-size: 13.5px; }
+  .ledger-row { font-size: 14.5px; }
+  .inv-row .i-id .desc { font-size: 13.5px; }
+  .disclaimer { font-size: 13.5px; }
+  .analyst-note-empty { font-size: 14px; }
+  .shell-nav a.nav-item { font-size: 15px; }
+  .acc summary { font-size: 15.5px; }
+  .fchip, .rtab { font-size: 14px; }
+}
+
 </style>
 </head>
 <body>
@@ -961,7 +1021,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
       <div class="r-sec">
         <div class="card risk-card">
           <h2>The single most important risk</h2>
-          <p class="risk-block" style="font-size:14.5px">A direct authorization link between TD Synnex
+          <p class="risk-block">A direct authorization link between TD Synnex
           and the brands in scope could not be independently confirmed. TD Synnex is a verifiable,
           large-scale technology distributor with a clear operating presence, and it is credible that it
           carries these brands through established distribution channels. However, the research could
@@ -1024,7 +1084,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
         <div data-tabs>
           <div class="rtabs no-print" role="tablist" aria-label="Report detail">
             <button class="rtab" role="tab" id="t1" aria-selected="true" aria-controls="tab-findings">Findings <span class="n">5 areas</span></button>
-            <button class="rtab" role="tab" id="t2" aria-selected="false" aria-controls="tab-honesty">Could not confirm</button>
+            <button class="rtab" role="tab" id="t2" aria-selected="false" aria-controls="tab-honesty"><span class="hdot"></span>Could not confirm</button>
             <button class="rtab" role="tab" id="t3" aria-selected="false" aria-controls="tab-checklist">Checklist <span class="n">5</span></button>
             <button class="rtab" role="tab" id="t4" aria-selected="false" aria-controls="tab-notes">Notes</button>
           </div>
@@ -1127,8 +1187,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
           <div class="tabpanel" id="tab-checklist" role="tabpanel" aria-labelledby="t3" hidden>
             <div class="panel-print-head">Verify before you commit</div>
             <div class="card" style="padding: 8px 20px">
-              <p style="font-size:12.5px; color:var(--ink-2); padding: 10px 0 2px">The five that matter
-              most, in priority order.</p>
+              <p class="checklist-intro">The five that matter most, in priority order.</p>
               <ol class="checklist">
                 <li>Ask the distributor to confirm, in writing, the channel through which the brands in scope are supplied to your account.</li>
                 <li>Request a recent invoice or order confirmation showing the brands in scope from this distributor.</li>
@@ -1151,8 +1210,7 @@ table.cases tbody tr:hover td { background: var(--paper); }
             </div>
             <div class="card pad">
               <div class="eyebrow">Analyst note</div>
-              <p style="font-size:13px; color:var(--ink-2); font-style:italic; margin-top:8px">No
-              analyst note was added to this report.</p>
+              <p class="analyst-note-empty">No analyst note was added to this report.</p>
             </div>
           </div>
         </div>
@@ -1186,6 +1244,16 @@ const PLANS = {
   growth_279: { name: "Growth",       price: "$279", cadence: "/mo",      credits: 5,  brands: 5, slaDays: 5 },
   scale_499: { name: "Scale",         price: "$499", cadence: "/mo",      credits: 12, brands: 5, slaDays: 3 },
 };
+
+/* Per-case Amazon locale picker — mirrors lib/content/submit.ts MARKETPLACES (real intake field;
+   the engine stores it today, research localization is a separate founder decision) */
+const MARKETPLACES = [
+  { value: "amazon_us", label: "Amazon US" },
+  { value: "amazon_uk", label: "Amazon UK" },
+  { value: "amazon_ca", label: "Amazon CA" },
+  { value: "amazon_de", label: "Amazon DE" },
+  { value: "amazon_au", label: "Amazon AU" },
+];
 
 /* The signed-in sample account (honest credits framing — never "7 of 5") */
 const ACCOUNT = {
@@ -1222,6 +1290,13 @@ const ACCOUNT = {
   });
   document.querySelectorAll("[data-bind-width='credits-pct']").forEach((el) => {
     el.style.width = pct + "%";
+  });
+  document.querySelectorAll("select[data-options='marketplaces']").forEach((sel) => {
+    MARKETPLACES.forEach((m) => {
+      const o = document.createElement("option");
+      o.value = m.value; o.textContent = m.label;
+      sel.appendChild(o);
+    });
   });
 })();
 

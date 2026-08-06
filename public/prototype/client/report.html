@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/tokens.css">
-<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/tokens.css?v=3">
+<link rel="stylesheet" href="../assets/base.css?v=3">
 <style>
   /* ============ THE REPORT — one authoritative reading (structure ADR in commit) ============
      ALWAYS VISIBLE (the non-negotiable): decision layer (verdict card + summary/key points)
@@ -88,12 +88,17 @@
   .r-sec > .eyebrow { display: block; margin-bottom: 10px; }
 
   /* ---- depth tabs ---- */
+  /* sticky depth tabs — reachable while reading any panel; every tab visible on mobile */
   .rtabs {
-    display: flex; gap: 8px; overflow-x: auto;
-    padding: 0 0 2px; margin-bottom: var(--s-4);
-    scrollbar-width: none;
+    display: flex; gap: 8px;
+    position: sticky; top: 60px; z-index: 15;
+    background: var(--paper);
+    padding: 8px 0 10px; margin-bottom: var(--s-3);
   }
-  .rtabs::-webkit-scrollbar { display: none; }
+  @media (max-width: 640px) {
+    .rtabs { display: grid; grid-template-columns: 1fr 1fr; }
+    .rtab { justify-content: center; min-height: 44px; padding: 0 10px; }
+  }
   .rtab {
     flex: none; display: inline-flex; align-items: center; gap: 7px;
     min-height: 42px; padding: 0 16px;
@@ -107,6 +112,9 @@
     background: var(--surface-sunk); color: var(--ink-2);
   }
   .rtab[aria-selected="true"] .n { background: rgba(255,255,255,.22); color: #fff; }
+  /* the honesty tab carries a standing verify-orange marker — the trust feature stays findable */
+  .rtab .hdot { width: 7px; height: 7px; border-radius: 50%; background: var(--v-verify); flex: none; }
+  .rtab:hover { border-color: var(--navy); }
 
   .tabpanel[hidden] { display: none; }
   .panel-print-head { display: none; } /* section headings appear in print only */
@@ -123,6 +131,9 @@
     .area-row .a-chip { padding-top: 0; }
   }
 
+  .cat-note { font-size: 14px; color: var(--ink-2); max-width: 66ch; line-height: 1.6; }
+  .analyst-note-empty { font-size: 13px; color: var(--ink-2); font-style: italic; margin-top: 8px; }
+  .checklist-intro { font-size: 12.5px; color: var(--ink-2); padding: 10px 0 2px; }
   .foot-meta { margin-top: var(--s-7); }
 
   /* ---- print: the complete flat document, regardless of on-screen state ---- */
@@ -136,6 +147,7 @@
     .r-sec { break-inside: avoid-page; }
   }
 </style>
+<link rel="stylesheet" href="../assets/mobile-type.css?v=3">
 </head>
 <body>
 <div class="shell">
@@ -281,7 +293,7 @@
       <div class="r-sec">
         <div class="card risk-card">
           <h2>The single most important risk</h2>
-          <p class="risk-block" style="font-size:14.5px">A direct authorization link between TD Synnex
+          <p class="risk-block">A direct authorization link between TD Synnex
           and the brands in scope could not be independently confirmed. TD Synnex is a verifiable,
           large-scale technology distributor with a clear operating presence, and it is credible that it
           carries these brands through established distribution channels. However, the research could
@@ -344,7 +356,7 @@
         <div data-tabs>
           <div class="rtabs no-print" role="tablist" aria-label="Report detail">
             <button class="rtab" role="tab" id="t1" aria-selected="true" aria-controls="tab-findings">Findings <span class="n">5 areas</span></button>
-            <button class="rtab" role="tab" id="t2" aria-selected="false" aria-controls="tab-honesty">Could not confirm</button>
+            <button class="rtab" role="tab" id="t2" aria-selected="false" aria-controls="tab-honesty"><span class="hdot"></span>Could not confirm</button>
             <button class="rtab" role="tab" id="t3" aria-selected="false" aria-controls="tab-checklist">Checklist <span class="n">5</span></button>
             <button class="rtab" role="tab" id="t4" aria-selected="false" aria-controls="tab-notes">Notes</button>
           </div>
@@ -447,8 +459,7 @@
           <div class="tabpanel" id="tab-checklist" role="tabpanel" aria-labelledby="t3" hidden>
             <div class="panel-print-head">Verify before you commit</div>
             <div class="card" style="padding: 8px 20px">
-              <p style="font-size:12.5px; color:var(--ink-2); padding: 10px 0 2px">The five that matter
-              most, in priority order.</p>
+              <p class="checklist-intro">The five that matter most, in priority order.</p>
               <ol class="checklist">
                 <li>Ask the distributor to confirm, in writing, the channel through which the brands in scope are supplied to your account.</li>
                 <li>Request a recent invoice or order confirmation showing the brands in scope from this distributor.</li>
@@ -471,8 +482,7 @@
             </div>
             <div class="card pad">
               <div class="eyebrow">Analyst note</div>
-              <p style="font-size:13px; color:var(--ink-2); font-style:italic; margin-top:8px">No
-              analyst note was added to this report.</p>
+              <p class="analyst-note-empty">No analyst note was added to this report.</p>
             </div>
           </div>
         </div>
@@ -492,7 +502,7 @@
     </main>
   </div>
 </div>
-<script src="../assets/app.js"></script>
+<script src="../assets/app.js?v=3"></script>
 <script>
 /* depth tabs: hash deep-links + jump links + arrow keys (page-local enhancement) */
 (function () {

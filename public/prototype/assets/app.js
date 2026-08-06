@@ -12,6 +12,16 @@ const PLANS = {
   scale_499: { name: "Scale",         price: "$499", cadence: "/mo",      credits: 12, brands: 5, slaDays: 3 },
 };
 
+/* Per-case Amazon locale picker — mirrors lib/content/submit.ts MARKETPLACES (real intake field;
+   the engine stores it today, research localization is a separate founder decision) */
+const MARKETPLACES = [
+  { value: "amazon_us", label: "Amazon US" },
+  { value: "amazon_uk", label: "Amazon UK" },
+  { value: "amazon_ca", label: "Amazon CA" },
+  { value: "amazon_de", label: "Amazon DE" },
+  { value: "amazon_au", label: "Amazon AU" },
+];
+
 /* The signed-in sample account (honest credits framing — never "7 of 5") */
 const ACCOUNT = {
   name: "Gautam",
@@ -47,6 +57,13 @@ const ACCOUNT = {
   });
   document.querySelectorAll("[data-bind-width='credits-pct']").forEach((el) => {
     el.style.width = pct + "%";
+  });
+  document.querySelectorAll("select[data-options='marketplaces']").forEach((sel) => {
+    MARKETPLACES.forEach((m) => {
+      const o = document.createElement("option");
+      o.value = m.value; o.textContent = m.label;
+      sel.appendChild(o);
+    });
   });
 })();
 
