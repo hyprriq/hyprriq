@@ -666,7 +666,12 @@ table.cases tbody tr { cursor: pointer; }
 }
 .tip.open .tip-pop, .tip > button:focus-visible + .tip-pop { display: block; }
 @media (max-width: 640px) {
-  .tip .tip-pop { left: auto; right: -8px; transform: none; }
+  /* on phones the tooltip is a fixed bottom note — always fully on-screen,
+     wherever its trigger sits (right-anchoring pushed left-side tips off-edge) */
+  .tip .tip-pop {
+    position: fixed; left: 12px; right: 12px; bottom: 16px; top: auto;
+    transform: none; width: auto; max-width: none;
+  }
 }
 
 /* quick actions — one restrained treatment: accent icons (matches the Credits KPI), labels stay ink */
@@ -850,6 +855,10 @@ table.cases tbody tr { cursor: pointer; }
   .cat-note { font-size: 14px; color: var(--ink-2); max-width: 66ch; line-height: 1.6; }
   .analyst-note-empty { font-size: 13px; color: var(--ink-2); font-style: italic; margin-top: 8px; }
   .checklist-intro { font-size: 12.5px; color: var(--ink-2); padding: 10px 0 2px; }
+  .howto .h-close-text {
+    width: auto; min-height: 32px; padding: 4px 10px;
+    font: 600 12.5px/1 var(--font-sans); color: var(--navy); white-space: nowrap;
+  }
   .foot-meta { margin-top: var(--s-7); }
 
   /* ---- print: the complete flat document, regardless of on-screen state ---- */
@@ -1027,9 +1036,10 @@ table.cases tbody tr { cursor: pointer; }
             <span class="eyebrow" style="color:var(--v-verify)">Verdict</span>
             <span class="tip">
               <button type="button" aria-label="What does this verdict mean?">?</button>
-              <span class="tip-pop" role="tooltip">Placeholder copy — content pass: what this level
-              means and what to do next. Level 3 of 4: do not place a large order; resolve the listed
-              items first, then re-submit for an updated review.</span>
+              <span class="tip-pop" role="tooltip">The verdict is one of four levels, strongest to weakest:
+              Source Clear, Usable With Conditions, Verify Before Purchase, Do Not Rely. It reflects
+              what the observable evidence supported at the time of research — not a guarantee. The
+              verdict is the recommendation.</span>
             </span>
           </div>
           <div class="v-name">Verify Before Purchase</div>
@@ -1066,20 +1076,23 @@ table.cases tbody tr { cursor: pointer; }
         </div>
       </div>
 
-      <!-- how to read — dismissible, on every report; copy is PLACEHOLDER -->
+      <!-- how to read — dismissible, on every report; final copy (founder, 2026-08-06) -->
       <div class="r-sec no-print">
         <div class="howto" id="howtoPanel">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
           <div class="h-body">
-            <b>How to read this report.</b> The verdict is a position on a four-level scale, not a
-            pass/fail. &ldquo;Could not confirm&rdquo; describes the limits of what public evidence
-            supports — it is not an accusation. Confidence chips show how each finding is supported:
-            tap any chip for what it means. <span style="color:var(--muted)">(Placeholder wording —
-            final copy lands in the content pass.)</span>
+            <b>How to read this report.</b> This report gives you one clear verdict, the single most
+            important risk in plain language, findings across five assessment areas, an honest split
+            between what we confirmed and what we could not, and a short checklist to run before you
+            commit. A few things worth knowing: the verdict is a position on a four-level scale, not a
+            pass/fail — it reflects what the observable evidence supported at the time of research;
+            &ldquo;could not confirm&rdquo; is not an accusation — it marks the limits of what public
+            evidence shows; &ldquo;not assessed&rdquo; means we did not evaluate that area (for
+            example, when no documents were provided) — it neither helps nor harms the verdict; the
+            decision stays yours — no report can guarantee an outcome, this one tells you what the
+            evidence supports.
           </div>
-          <button class="h-close" aria-label="Dismiss reading guidance">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
+          <button class="h-close h-close-text" aria-label="Dismiss reading guidance">Got it — hide this</button>
         </div>
         <a href="#" id="howtoReopen" hidden style="font-size:12.5px; font-weight:600">How to read this report</a>
       </div>
@@ -1127,7 +1140,7 @@ table.cases tbody tr { cursor: pointer; }
             <div class="card">
               <div class="area-row">
                 <div class="a-main">
-                  <div class="a-name">Supplier Legitimacy</div>
+                  <div class="a-name">Supplier Legitimacy <span class="tip"><button type="button" aria-label="What does Supplier Legitimacy cover?">?</button><span class="tip-pop" role="tooltip">Whether the supplier is a real, verifiable wholesale business.</span></span></div>
                   <p class="a-find">Established, independently verifiable wholesale distributor with a
                   long, continuous trading record and clear registration and operating footprint. No
                   negative reputation or warning signals found.</p>
@@ -1136,54 +1149,61 @@ table.cases tbody tr { cursor: pointer; }
                   <span class="chip-c verified"><span class="cdot"></span>Verified</span>
                   <span class="tip">
                     <button type="button" aria-label="What does Verified mean?">?</button>
-                    <span class="tip-pop" role="tooltip">Independently corroborated by more than one
-                    source. (Placeholder — label and copy are founder-TBD.)</span>
+                    <span class="tip-pop" role="tooltip">Independently corroborated — multiple independent
+                    sources confirm this.</span>
                   </span>
                 </div>
               </div>
               <div class="area-row">
                 <div class="a-main">
-                  <div class="a-name">Supply-Chain Relationship</div>
+                  <div class="a-name">Supply-Chain Relationship <span class="tip"><button type="button" aria-label="What does Supply-Chain Relationship cover?">?</button><span class="tip-pop" role="tooltip">Whether the supplier credibly sources the brands in scope, and whether an authorization link to your account could be confirmed.</span></span></div>
                   <p class="a-find">It is credible that the distributor carries the brands in scope
                   through normal distribution channels, but an independent authorization link specific
                   to your account could not be confirmed. This is the central item driving the verdict.</p>
                 </div>
                 <div class="a-chip">
-                  <span class="chip-c inferred"><span class="cring"></span>Likely</span>
+                  <span class="chip-c inferred"><span class="cring"></span>Assessed</span>
                   <span class="tip">
-                    <button type="button" aria-label="What does Likely mean?">?</button>
-                    <span class="tip-pop" role="tooltip">Reasoned from available signals, not
-                    independently corroborated. (Placeholder — label and copy are founder-TBD.)</span>
+                    <button type="button" aria-label="What does Assessed mean?">?</button>
+                    <span class="tip-pop" role="tooltip">We evaluated the available evidence and formed a view,
+                    but could not independently corroborate it. A reasoned read, not an independent
+                    confirmation.</span>
                   </span>
                 </div>
               </div>
               <div class="area-row">
                 <div class="a-main">
-                  <div class="a-name">Brand Risk</div>
+                  <div class="a-name">Brand Risk <span class="tip"><button type="button" aria-label="What does Brand Risk cover?">?</button><span class="tip-pop" role="tooltip">The brands&rsquo; reseller environment and any enforcement signals against resellers of this profile.</span></span></div>
                   <p class="a-find">Both brands operate controlled but active reseller environments. No
                   aggressive enforcement or IP-action signals found against resellers of this profile;
                   brand policies can change and should be monitored.</p>
                 </div>
                 <div class="a-chip">
-                  <span class="chip-c inferred"><span class="cring"></span>Likely</span>
+                  <span class="chip-c inferred"><span class="cring"></span>Assessed</span>
                   <span class="tip">
-                    <button type="button" aria-label="What does Likely mean?">?</button>
-                    <span class="tip-pop" role="tooltip">Reasoned from available signals, not
-                    independently corroborated. (Placeholder — label and copy are founder-TBD.)</span>
+                    <button type="button" aria-label="What does Assessed mean?">?</button>
+                    <span class="tip-pop" role="tooltip">We evaluated the available evidence and formed a view,
+                    but could not independently corroborate it. A reasoned read, not an independent
+                    confirmation.</span>
                   </span>
                 </div>
               </div>
               <div class="area-row quiet">
                 <div class="a-main">
-                  <div class="a-name">Documentation Review</div>
+                  <div class="a-name">Documentation Review <span class="tip"><button type="button" aria-label="What does Documentation Review cover?">?</button><span class="tip-pop" role="tooltip">What any documents you provided corroborate. Documents can add support but never raise the verdict above what the research on its own supports.</span></span></div>
                   <p class="a-find">No documents were provided for review, so this area was not
                   evaluated. This is an absence, not a finding — it neither helps nor harms the verdict.</p>
                 </div>
-                <div class="a-chip"><span class="chip-c na">Not assessed</span></div>
+                <div class="a-chip"><span class="chip-c na">Not assessed</span>
+              <span class="tip">
+                <button type="button" aria-label="What does Not assessed mean?">?</button>
+                <span class="tip-pop" role="tooltip">We did not evaluate this area — for example,
+                because no documents were provided. It neither raises nor lowers the verdict.</span>
+              </span></div>
               </div>
               <div class="area-row quiet">
                 <div class="a-main">
-                  <div class="a-name">Sourcing Logic</div>
+                  <div class="a-name">Sourcing Logic <span class="tip"><button type="button" aria-label="What does Sourcing Logic cover?">?</button><span class="tip-pop" role="tooltip">A consistency check across the assessed areas. Informational — it does not change the verdict.</span></span></div>
                   <p class="a-find">Consistency check — informational; does not affect the verdict. No
                   contradictions were found across the assessed areas.</p>
                 </div>
@@ -1206,7 +1226,14 @@ table.cases tbody tr { cursor: pointer; }
                 </ul>
               </div>
               <div class="col unconfirmed">
-                <h4>Could not confirm</h4>
+                <h4 style="display:flex; align-items:center; gap:8px">Could not confirm
+                  <span class="tip">
+                    <button type="button" aria-label="What does could not confirm mean?">?</button>
+                    <span class="tip-pop" role="tooltip">What we looked for but public evidence did
+                    not confirm. This marks the limits of the research — not a finding against the
+                    supplier. Absence of evidence is not evidence of a problem.</span>
+                  </span>
+                </h4>
                 <ul>
                   <li>An independent authorization link between this distributor and your account for the brands in scope.</li>
                   <li>That the specific goods you intend to buy originate through an authorized channel for your resale.</li>

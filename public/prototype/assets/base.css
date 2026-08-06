@@ -585,7 +585,12 @@ table.cases tbody tr { cursor: pointer; }
 }
 .tip.open .tip-pop, .tip > button:focus-visible + .tip-pop { display: block; }
 @media (max-width: 640px) {
-  .tip .tip-pop { left: auto; right: -8px; transform: none; }
+  /* on phones the tooltip is a fixed bottom note — always fully on-screen,
+     wherever its trigger sits (right-anchoring pushed left-side tips off-edge) */
+  .tip .tip-pop {
+    position: fixed; left: 12px; right: 12px; bottom: 16px; top: auto;
+    transform: none; width: auto; max-width: none;
+  }
 }
 
 /* quick actions — one restrained treatment: accent icons (matches the Credits KPI), labels stay ink */
