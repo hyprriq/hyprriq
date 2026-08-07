@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge, VerdictBadge, CertaintyBadge, type FindingCertainty } from "@/components/portal/badges";
@@ -73,8 +73,6 @@ function extractQuestions(findings: Finding[]): { text: string; why?: string }[]
 
 export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Finding[] }) {
   const [tab, setTab] = useState<TabKey>("overview");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   // Live progress: while research is running, re-fetch the server component every 4s so dimensions
@@ -85,35 +83,18 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
     return () => clearInterval(t);
   }, [c.status, router]);
 
-  const awaiting = c.status === "awaiting_client";
   // Interim client guard (until Phase H): only show raw research findings/questions once the case is
   // delivered; before that the client sees a placeholder so unreviewed raw output is never exposed.
+  // (The document-mismatch/scope-confirmation flow was REMOVED 2026-08-07, founder-ruled: the form
+  // is authoritative; documents corroborate entity/address only. brands_from_ocr was never written.)
   const showFindings = findingsVisibleToClient(c.status);
   const entered = c.brands_submitted ?? [];
-  const detected = c.brands_from_ocr ?? [];
-  const hasMismatch = detected.length > 0 && detected.join("|") !== entered.join("|");
   // Track 2 rich questions (with priority); fall back to legacy compiled_findings_json questions.
   // Gated by the interim client guard — hidden until the case is delivered (raw research output).
   const richQuestions = showFindings
     ? findings.flatMap((f) => f.questions_to_ask ?? []).sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
     : [];
   const legacyQuestions = showFindings ? extractQuestions(findings) : [];
-
-  function confirmScope(brands: string[]) {
-    setError(null);
-    startTransition(async () => {
-      const res = await fetch(`/api/cases/${c.id}/confirm-scope`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brands }),
-      });
-      if (!res.ok) {
-        setError("Could not confirm scope. Please refresh and try again.");
-        return;
-      }
-      router.refresh();
-    });
-  }
 
   return (
     <div>
@@ -122,57 +103,6 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
         <span>/</span>
         <span className="font-mono">{c.case_number}</span>
       </nav>
-
-      {awaiting && (
-        <div className="mb-6 flex gap-3 rounded-card border border-verify-ink/40 bg-verify-bg p-4">
-          <div className="text-lg text-verify-ink" aria-hidden>⚠</div>
-          <div className="flex-1">
-            <div className="text-sm font-bold text-verify-ink">
-              Action Required — {hasMismatch ? "Brand Mismatch Detected" : "Scope Confirmation Needed"}
-            </div>
-            <p className="mt-1 text-[14px] text-ink-2">
-              {hasMismatch
-                ? "We found a difference between the brands you entered and the brands detected in your uploaded document. Please confirm which brands to research."
-                : "Please confirm the brand scope so we can begin research."}
-            </p>
-            {hasMismatch && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 text-[14px]">
-                <div>
-                  <div className="text-[12px] uppercase tracking-wide text-muted">You entered</div>
-                  <div className="font-semibold text-ink">{entered.join(" • ") || "—"}</div>
-                </div>
-                <span className="text-muted" aria-hidden>→</span>
-                <div>
-                  <div className="text-[12px] uppercase tracking-wide text-muted">Document detected</div>
-                  <div className="font-semibold text-ink">{detected.join(" • ") || "—"}</div>
-                </div>
-              </div>
-            )}
-            {error && <p className="mt-3 text-[14px] text-deny-ink">{error}</p>}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => confirmScope(entered)}
-                className="rounded-lg bg-clear-ink px-3.5 py-2 text-[14px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
-              >
-                {pending ? "Confirming…" : `✓ Confirm ${entered.join(" & ") || "scope"} (original)`}
-              </button>
-              {hasMismatch && (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => confirmScope(detected)}
-                  className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle disabled:opacity-60"
-                >
-                  Use document list ({detected.join(" & ")})
-                </button>
-              )}
-            </div>
-            <div className="mt-3 text-[13px] text-muted">⏱ SLA timer paused • Restarts once you confirm</div>
-          </div>
-        </div>
-      )}
 
       <div className="mb-5">
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink">{c.vendor_name ?? "—"}</h2>
@@ -235,12 +165,7 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               <div className="mt-0.5 text-[13px] text-ink-2">{c.supplier_identity.identity_discrepancy.client_note}</div>
             </div>
           )}
-          {awaiting ? (
-            <div className="mb-5 rounded-lg border border-brand/30 bg-brand-tint px-4 py-3">
-              <div className="text-[14px] font-semibold text-brand-ink">🔍 Research queued — confirm scope above to begin</div>
-              <div className="mt-0.5 text-[13px] text-ink-2">All 5 dimensions will be researched once you confirm the brand list.</div>
-            </div>
-          ) : c.status === "delivered" || c.status === "complete" ? (
+          {c.status === "delivered" || c.status === "complete" ? (
             <div className="mb-5 rounded-lg border border-clear-ink/30 bg-clear-bg px-4 py-3">
               <div className="text-[14px] font-semibold text-clear-ink">
                 ✓ Report delivered{c.delivered_at ? ` on ${fmt(c.delivered_at)}` : ""}.
@@ -290,7 +215,7 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
             findings.map((f) => {
               const { title, detail } = findingText(f);
               const notes = findingNotes(f);
-              const cert = (f.finding_certainty ?? "unknown") as FindingCertainty;
+              const cert = (f.finding_certainty ?? "assessed") as FindingCertainty;
               return (
                 <div key={f.id} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
                   <div className="flex-1">
@@ -368,9 +293,6 @@ function Timeline({ c }: { c: CaseDetail }) {
     { title: "Case submitted", time: fmt(c.created_at), done: true },
     { title: "Intake check complete", time: c.status === "pending_intake" ? "Pending" : fmt(c.created_at), done: c.status !== "pending_intake" },
   ];
-  if (c.status === "awaiting_client") {
-    steps.push({ title: "Scope confirmation requested", time: "SLA paused", done: false, active: true });
-  }
   steps.push(
     { title: "Research", time: c.status === "research_running" ? "In progress" : c.delivered_at ? "Complete" : "Pending", done: !!c.delivered_at, active: c.status === "research_running" },
     { title: "Founder review", time: c.delivered_at ? "Complete" : "Pending", done: !!c.delivered_at },

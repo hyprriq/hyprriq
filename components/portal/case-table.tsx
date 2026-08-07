@@ -11,7 +11,6 @@ function slaLabel(c: CaseRow): { text: string; tone: "ok" | "warn" | "muted" } {
   if (c.status === "delivered" || c.status === "complete") {
     return { text: "Delivered", tone: "muted" };
   }
-  if (c.status === "awaiting_client") return { text: "SLA Paused", tone: "warn" };
   if (c.status === "cancelled") return { text: "—", tone: "muted" };
   if (!c.sla_deadline) return { text: "Queued", tone: "muted" };
   const days = Math.ceil((new Date(c.sla_deadline).getTime() - Date.now()) / 86_400_000);
@@ -20,16 +19,6 @@ function slaLabel(c: CaseRow): { text: string; tone: "ok" | "warn" | "muted" } {
 }
 
 function RowAction({ c }: { c: CaseRow }) {
-  if (c.status === "awaiting_client") {
-    return (
-      <Link
-        href={`/portal/cases/${c.id}`}
-        className="rounded-md bg-verify-ink px-2.5 py-1 text-[12px] font-bold text-white hover:opacity-90"
-      >
-        Confirm →
-      </Link>
-    );
-  }
   if (c.status === "delivered") {
     return (
       <Link

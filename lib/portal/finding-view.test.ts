@@ -4,8 +4,8 @@ import type { Finding } from "@/lib/data/cases";
 
 // H5 — the client Finding type carries compiled findings only (no raw model output, no internal notes).
 const mk = (track: string, j: Record<string, unknown> | null): Finding => ({
-  id: "f1", track, track_key: track.replace("track_", "t"), finding_certainty: "unknown",
-  confidence_band: null, compiled_findings_json: j, questions_to_ask: null,
+  id: "f1", track, track_key: track.replace("track_", "t"), finding_certainty: "assessed",
+  compiled_findings_json: j, questions_to_ask: null,
 });
 
 describe("findingText / findingNotes (ADR-T2-002 Evidence rendering)", () => {

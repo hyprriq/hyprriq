@@ -67,17 +67,18 @@ export function VerdictBadge({ verdict }: { verdict: Verdict | null }) {
   return <span className={`${PILL} ${m.cls}`}>{m.label}</span>;
 }
 
-// Finding certainty pill — verified / inferred / unknown (Master Research
-// Prompts v2.0 §0.2). Used in the Case Detail Evidence tab + PDF report.
-export type FindingCertainty = "verified" | "inferred" | "unknown";
+// Finding certainty pill — the RULED two-value client vocabulary (founder, 2026-08-07):
+// Verified (at least one attached evidence item is LLM-certainty "verified") or Assessed
+// (everything else — including absence, which is never doubt). "Unconfirmed"/"Inferred"
+// no longer exist on client surfaces. Derivation: lib/portal/certainty.ts.
+export type FindingCertainty = "verified" | "assessed";
 
 const CERTAINTY_META: Record<FindingCertainty, { label: string; cls: string }> = {
   verified: { label: "Verified", cls: "bg-clear-bg text-clear-ink" },
-  inferred: { label: "Inferred", cls: "bg-conditional-bg text-conditional-ink" },
-  unknown: { label: "Unconfirmed", cls: "bg-subtle text-muted" },
+  assessed: { label: "Assessed", cls: "bg-subtle text-ink-2" },
 };
 
 export function CertaintyBadge({ certainty }: { certainty: FindingCertainty }) {
-  const m = CERTAINTY_META[certainty] ?? CERTAINTY_META.unknown;
+  const m = CERTAINTY_META[certainty] ?? CERTAINTY_META.assessed;
   return <span className={`${PILL} ${m.cls}`}>{m.label}</span>;
 }

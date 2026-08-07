@@ -49,7 +49,7 @@ function Kpi({
 function activityFor(cases: CaseRow[]) {
   return cases.slice(0, 5).map((c) => {
     if (c.status === "delivered") return { tone: "ok" as const, text: `Report ${c.case_number} is ready to download` };
-    if (c.status === "awaiting_client") return { tone: "warn" as const, text: `Case ${c.case_number} — scope confirmation needed` };
+    if (c.status === "awaiting_client") return { tone: "warn" as const, text: `Case ${c.case_number} — needs your attention` };
     return { tone: "info" as const, text: `Case ${c.case_number} submitted` };
   });
 }

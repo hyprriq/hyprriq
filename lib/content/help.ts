@@ -88,14 +88,9 @@ export const faqs: Faq[] = [
     a: "No. The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows. Vendor documents usually carry the vendor's own item codes rather than brand names, so a brand missing from a document is expected and never counts against the vendor. Documents help us confirm the vendor's entity and address; the brand-level findings come from independent research.",
   },
   {
-    id: "scope-confirmation",
-    q: "What happens if my submission is flagged for scope confirmation?",
-    a: "If our intake check detects a mismatch between the brands you entered and the brands in your uploaded document, we pause the case and ask you to confirm. Your SLA pauses during this time and restarts once you confirm.",
-  },
-  {
     id: "certainty-levels",
-    q: "What do Verified, Inferred, and No Public Signal mean?",
-    a: "Verified: we found direct evidence in an official source. Inferred: we found indirect signals that support the conclusion. No Public Signal: we searched and found nothing — this doesn't mean the relationship doesn't exist, just that we couldn't confirm it externally.",
+    q: "What do Verified and Assessed mean?",
+    a: "Verified: at least one piece of evidence behind the finding comes from a source we could confirm directly. Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is.",
   },
   {
     id: "upgrade-midmonth",

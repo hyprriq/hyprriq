@@ -11,6 +11,13 @@ import type { PlanType } from "@/lib/constants/plans";
 export const MAX_CASE_DOCUMENTS = 2;
 export const FILE_LIMIT_MESSAGE = "Maximum 2 files — contact support if you need more.";
 
+// Per-file limits — ONE constant + ONE message each, shared by the intake form (UX) and the
+// submit route (the rule; server-side since 2026-08-07 — type by CONTENT SNIFFING, never
+// extension or client-claimed contentType).
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+export const FILE_SIZE_MESSAGE = "File must be 10MB or smaller.";
+export const FILE_TYPE_MESSAGE = "Only PDF, JPG, or PNG files are accepted.";
+
 export function fileCountError(count: number): string | null {
   return count > MAX_CASE_DOCUMENTS ? FILE_LIMIT_MESSAGE : null;
 }

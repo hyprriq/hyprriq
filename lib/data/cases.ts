@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
+import { deriveClientCertainty } from "@/lib/portal/certainty";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
@@ -68,7 +69,8 @@ type TrackStatus = "complete" | "failed" | "skipped" | "manual_required" | "pend
 export type CaseDetail = CaseRow & {
   client_id: string;
   vendor_website: string | null;
-  brands_from_ocr: string[] | null;
+  // brands_from_ocr removed from the client payload 2026-08-07 (dead document-matching flow
+  // excised; the DB column stays pending a founder schema ruling).
   client_notes: string | null;
   marketplace: string | null;
   credits_required: number | null;
@@ -109,7 +111,7 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
   const { data } = await supa
     .from("cases")
     .select(
-      `${LIST_COLUMNS}, client_id, vendor_website, brands_from_ocr, client_notes, marketplace, credits_required, credits_charged, confidence_score, submission_type, plan_type, track_1_status, track_2_status, track_3_status, track_4_status, track_5_status, supplier_identity`,
+      `${LIST_COLUMNS}, client_id, vendor_website, client_notes, marketplace, credits_required, credits_charged, confidence_score, submission_type, plan_type, track_1_status, track_2_status, track_3_status, track_4_status, track_5_status, supplier_identity`,
     )
     .eq("id", id)
     .eq("client_id", userId)
@@ -124,12 +126,16 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
 // H5 — the CLIENT-facing finding shape. Deliberately excludes ai_output_json (raw model output —
 // internal/IP) and manual_notes (internal reviewer notes): the client query never selects them,
 // so they can never reach a browser payload.
+// VERIFIED/ASSESSED (founder-ruled 2026-08-07): finding_certainty here is the RULED two-value
+// client derivation (lib/portal/certainty — from per-evidence certainty, computed server-side),
+// NOT the stored column (which every frozen write site hardcodes "unknown"). confidence_band is
+// deliberately ABSENT from this type: it is score-derived with a value literally named
+// "verified" — a term collision that must never feed a client certainty label.
 export type Finding = {
   id: string;
   track: string;
   track_key: string;
-  finding_certainty: "verified" | "inferred" | "unknown" | null;
-  confidence_band: "low" | "moderate" | "high" | "verified" | null;
+  finding_certainty: "verified" | "assessed";
   compiled_findings_json: Record<string, unknown> | null;
   questions_to_ask: QuestionToAsk[] | null; // Phase 5.1c — Track 2 client-facing questions
 };
@@ -153,15 +159,18 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   // delivered. (The component's render guard remains as belt-and-braces only.)
   const { status, delivered_attempt } = owned as { status: string; delivered_attempt?: number | null };
   if (!findingsVisibleToClient(status)) return [];
+  // evidence_items is selected SERVER-SIDE ONLY to run the ruled Verified/Assessed derivation —
+  // it is stripped below and never crosses the RSC boundary (the H5 exclusion law holds).
   const { data } = await supa
     .from("case_track_results")
-    .select("id, track, track_key, finding_certainty, confidence_band, compiled_findings_json, questions_to_ask, attempt_number")
+    .select("id, track, track_key, evidence_items, compiled_findings_json, questions_to_ask, attempt_number")
     .eq("case_id", caseId)
     .gte("track_number", 1)
     .is("deleted_at", null)
     .order("track_number", { ascending: true });
-  const rows = (data as (Finding & { attempt_number: number | null })[]) ?? [];
-  if (rows.length === 0) return rows;
+  type Row = { id: string; track: string; track_key: string; evidence_items: { certainty?: string | null }[] | null; compiled_findings_json: Record<string, unknown> | null; questions_to_ask: QuestionToAsk[] | null; attempt_number: number | null };
+  const rows = (data as Row[]) ?? [];
+  if (rows.length === 0) return [];
   // H1 — the client always sees the DELIVERED attempt once delivered; latest attempt before that.
   const chosen = delivered_attempt ?? Math.max(...rows.map((r) => r.attempt_number ?? 1));
   // ── F2 (founder-approved 2026-07-14, the PG-1 pattern applied to findings) — the delivered
@@ -181,14 +190,23 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   ] as const;
   return rows
     .filter((r) => (r.attempt_number ?? 1) === chosen)
-    .map((r) => {
+    .map((r): Finding => {
       const cf = r.compiled_findings_json;
-      if (!cf) return r;
       const projected: Record<string, unknown> = {};
-      for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
-      // OQ-D summary rule (founder-ruled 2026-07-14) — read-side defense in depth stays: a track_5
-      // summary is ALWAYS the ruled neutral string, whatever the stored row carries.
-      if (r.track_key === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_CLIENT_SUMMARY;
-      return { ...r, compiled_findings_json: projected };
+      if (cf) {
+        for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
+        // OQ-D summary rule (founder-ruled 2026-07-14) — read-side defense in depth stays: a track_5
+        // summary is ALWAYS the ruled neutral string, whatever the stored row carries.
+        if (r.track_key === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_CLIENT_SUMMARY;
+      }
+      return {
+        id: r.id,
+        track: r.track,
+        track_key: r.track_key,
+        // The ruled two-value derivation — evidence_items consumed here, never returned.
+        finding_certainty: deriveClientCertainty(r.evidence_items),
+        compiled_findings_json: cf ? projected : null,
+        questions_to_ask: r.questions_to_ask,
+      };
     });
 }

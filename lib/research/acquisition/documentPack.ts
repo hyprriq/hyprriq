@@ -3,9 +3,11 @@ import { finalizePack } from "./pack";
 import type { EvidencePack, RawSource, AcquisitionMetric } from "./types";
 
 // Track 4 (SO-A3, founder-signed 2026-07-11) — the document-pack builder: a new acquisition MODE on
-// the same frozen-pack spine. Documents self-delete at 12 months (uploaded_files.delete_after), so
-// the frozen Evidence Pack carries the EXTRACTED CONTENT, never a pointer — judgment, rejudge, and
-// replay survive the file's deletion (H1's freeze-the-evidence-not-the-reference, for documents).
+// the same frozen-pack spine. COMMENT CORRECTED 2026-08-07: uploaded_files.delete_after is SET
+// (12 months, by trigger) but NOTHING consumes it — no cron/cleanup exists, files persist until
+// a retention mechanism is founder-ruled (legal-pages item). The design intent stands either
+// way: the frozen Evidence Pack carries the EXTRACTED CONTENT, never a pointer — judgment,
+// rejudge, and replay survive any future deletion (H1's freeze-the-evidence-not-the-reference).
 //
 // Rules (all founder-ruled):
 // - OQ-A2(b): 'clean' AND 'pending' files are read (virus scanning is schema-only today — logged to

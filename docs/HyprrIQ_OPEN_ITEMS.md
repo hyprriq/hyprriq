@@ -102,6 +102,7 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 | 3.14 | Client-facing checkpoint emails (OQ-3, currently gated — admin-digest only) | 🗄️ | PT |
 
 ### Report content rules (carry into design)
+- **Verified/Assessed RULED + WIRED (2026-08-07):** client certainty = the two-value derivation in `lib/portal/certainty.ts` (Verified iff ≥1 attached evidence item is LLM-certainty "verified"; else Assessed; absence = Assessed, never doubt), computed READ-SIDE in the client projection because every `finding_certainty` WRITE site is frozen (pipeline.steps ×6, categoryStep ×1 — all hardcode "unknown"; the write-side fix is a separate founder-run engine pass). NEVER derive from `confidence_band` (term collision). "Unconfirmed"/"Inferred" no longer exist on client surfaces. Old delivered rows render correctly via the derivation — no backfill required for display.
 - Remove "Dimension N" labels · scrub `src_N` and evidence tags (`(A1, E2)`, `(A10, RG-02)`)
 - Rewrite engine headers into plain client language · hide operator states and "informational; does not affect verdict" notes
 - Render `documentation_review` etc. as human labels, never raw snake_case

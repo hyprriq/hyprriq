@@ -11,19 +11,13 @@ import {
 import { inngest } from "@/lib/inngest/client";
 import { findLegalSignals } from "@/lib/research/legalSignals";
 import { sendAdminAlert } from "@/lib/email/notify";
-import { fileCountError, planAcceptsUploads } from "@/lib/constants/uploads";
+import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 import { PLAN_PRICE_LABEL } from "@/lib/constants/plans";
+import { sniffFileType, type SniffedFile } from "@/lib/utils/fileSniff";
 import { validateBrandAsins } from "@/lib/portal/asinIntake";
 import type { TrackContextWithIntake } from "@/lib/research/intakeExtras";
 
 const ALLOWED_MARKETPLACES = ["amazon_us", "amazon_uk", "amazon_ca", "amazon_de", "amazon_au"];
-
-function fileType(name: string): "invoice_pdf" | "invoice_image" | "other" {
-  const ext = name.toLowerCase().split(".").pop();
-  if (ext === "pdf") return "invoice_pdf";
-  if (ext === "jpg" || ext === "jpeg" || ext === "png") return "invoice_image";
-  return "other";
-}
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -51,6 +45,21 @@ export async function POST(req: Request) {
   const countErr = fileCountError(files.length);
   if (countErr) {
     return NextResponse.json({ error: countErr }, { status: 400 });
+  }
+  // ── UPLOAD SECURITY (founder-ruled 2026-08-07) — SERVER-SIDE size + content-sniffed type,
+  // rejected BEFORE any storage write and BEFORE charge. The client's extension filter and
+  // claimed contentType are UX, never the rule; the sniffed MIME is what storage receives. ──
+  const vetted: { file: File; name: string; buffer: Buffer; sniffed: SniffedFile }[] = [];
+  for (const f of files) {
+    if (f.size > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: "file_too_large", message: FILE_SIZE_MESSAGE }, { status: 400 });
+    }
+    const buffer = Buffer.from(await f.arrayBuffer());
+    const sniffed = sniffFileType(new Uint8Array(buffer));
+    if (!sniffed) {
+      return NextResponse.json({ error: "file_type_not_accepted", message: FILE_TYPE_MESSAGE }, { status: 400 });
+    }
+    vetted.push({ file: f, name: "name" in f ? String((f as File).name) : "upload", buffer, sniffed });
   }
   if (!vendorName) {
     return NextResponse.json({ error: "Supplier name is required." }, { status: 400 });
@@ -186,24 +195,23 @@ export async function POST(req: Request) {
     } catch { /* the alert is a pager, never a gate — submission continues regardless */ }
   }
 
-  // ---- optional file uploads (non-fatal, per file; count validated pre-charge above) ----
-  for (const [idx, f] of files.entries()) {
+  // ---- optional file uploads (non-fatal, per file; count/size/type all vetted pre-charge) ----
+  for (const [idx, v] of vetted.entries()) {
     try {
-      const name = "name" in f ? String((f as File).name) : "upload";
-      // idx in the path keeps same-millisecond uploads collision-free.
-      const path = `${userId}/${created.id}/${Date.now()}-${idx}-${name}`;
-      const buffer = Buffer.from(await f.arrayBuffer());
+      // idx in the path keeps same-millisecond uploads collision-free. contentType is the
+      // SNIFFED mime — never the client-claimed one (upload security, 2026-08-07).
+      const path = `${userId}/${created.id}/${Date.now()}-${idx}-${v.name}`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("case-documents")
-        .upload(path, buffer, { contentType: f.type || "application/octet-stream" });
+        .upload(path, v.buffer, { contentType: v.sniffed.mime });
       if (!upErr) {
         await supabaseAdmin.from("uploaded_files").insert({
           case_id: created.id,
           client_id: userId,
-          file_name: name,
-          file_type: fileType(name),
+          file_name: v.name,
+          file_type: v.sniffed.kind === "pdf" ? "invoice_pdf" : "invoice_image",
           storage_path: path,
-          file_size_bytes: f.size,
+          file_size_bytes: v.file.size,
         });
       }
     } catch {

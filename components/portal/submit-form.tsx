@@ -20,13 +20,13 @@ type Result = {
   remaining_balance: number;
 };
 
-import { fileCountError, planAcceptsUploads } from "@/lib/constants/uploads";
+import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
-// Shared validation for both the button and drag-drop paths.
+// Shared validation for both the button and drag-drop paths — UX ONLY. The SERVER re-validates
+// size and sniffs the type from content (lib/utils/fileSniff) before any storage write/charge.
 function validateFile(f: File): string | null {
-  if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) return "Only PDF, JPG, or PNG files are accepted.";
-  if (f.size > MAX_FILE_BYTES) return "File must be 10MB or smaller.";
+  if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) return FILE_TYPE_MESSAGE;
+  if (f.size > MAX_FILE_BYTES) return FILE_SIZE_MESSAGE;
   return null;
 }
 

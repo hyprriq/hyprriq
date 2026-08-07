@@ -197,12 +197,18 @@ describe("H5 — getCaseFindings is server-gated by status (the N4 payload leak)
   it("returns findings for a delivered case, pinned to delivered_attempt, WITHOUT ai_output_json or manual_notes", async () => {
     maybeSingle.mockResolvedValue({ data: { id: "c1", status: "delivered", delivered_attempt: 1 } });
     rowsResult.mockResolvedValueOnce({ data: [
-      { track: "track_1", attempt_number: 1, compiled_findings_json: { signal: "pass" } },
-      { track: "track_1", attempt_number: 2, compiled_findings_json: { signal: "flag" } },
+      { track: "track_1", attempt_number: 1, evidence_items: [{ certainty: "verified" }], compiled_findings_json: { signal: "pass" } },
+      { track: "track_1", attempt_number: 2, evidence_items: [], compiled_findings_json: { signal: "flag" } },
     ]});
     const rows = await getCaseFindings("c1");
     expect(rows).toHaveLength(1);
-    expect((rows[0] as { attempt_number?: number }).attempt_number).toBe(1); // delivered pin (H1)
+    // The delivered pin (H1): only the attempt-1 row survives — provable by its derived
+    // certainty (attempt 1 carries a verified evidence item; attempt 2 does not).
+    expect(rows[0].finding_certainty).toBe("verified");
+    // The tightened projection returns the exact client Finding shape — internal fields
+    // (attempt_number, evidence_items) never cross the RSC boundary.
+    expect("attempt_number" in rows[0]).toBe(false);
+    expect("evidence_items" in rows[0]).toBe(false);
     const findingsSelect = selectCalls[1];
     expect(findingsSelect).not.toContain("ai_output_json");
     expect(findingsSelect).not.toContain("manual_notes");

@@ -29,7 +29,8 @@ const submit = (fileCount: number) => {
   form.set("brands", JSON.stringify(["Petzl"]));
   form.set("marketplace", "amazon_us");
   for (let i = 0; i < fileCount; i++) {
-    form.append("file", new File([new Uint8Array([37, 80, 68, 70])], `doc${i + 1}.pdf`, { type: "application/pdf" }));
+    // A REAL %PDF- header — the server sniffs content (2026-08-07); a truncated magic is rejected.
+    form.append("file", new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34])], `doc${i + 1}.pdf`, { type: "application/pdf" }));
   }
   return POST(new Request("http://test/api/cases/submit", { method: "POST", body: form }));
 };

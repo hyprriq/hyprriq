@@ -67,6 +67,12 @@ const MUST_PASS: [string, string][] = [
   ["$149 tier name", "Complete Report"],
   ["how-it-works doc-review body", "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty."],
   ["unconfirmed-brands FAQ (corrected)", "The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows."],
+  // — Verified/Assessed vocabulary (founder-ruled 2026-08-07) + upload-security messages —
+  ["certainty chip: Assessed", "Assessed"],
+  ["verified/assessed FAQ", "Verified: at least one piece of evidence behind the finding comes from a source we could confirm directly. Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is."],
+  ["file size message", "File must be 10MB or smaller."],
+  ["file type message", "Only PDF, JPG, or PNG files are accepted."],
+  ["dashboard attention line", "needs your attention"],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],
