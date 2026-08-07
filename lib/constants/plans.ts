@@ -52,8 +52,8 @@ export const PLAN_CADENCE: Record<PlanType, string> = {
 
 export const PLAN_NAME: Record<PlanType, string> = {
   single_99: "Single Report",
-  // UNRULED placeholder name (2026-08-07) — the founder rules the client-facing tier name
-  // before marketing copy locks; changing it is a one-line edit here.
+  // FOUNDER-RULED 2026-08-08: "Complete Report" IS the client-facing tier name (placeholder
+  // promoted; pre-design batch). Still a one-line edit here if ever re-ruled.
   single_149: "Complete Report",
   growth_279: "Growth",
   scale_499: "Scale",

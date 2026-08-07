@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-02 (ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. Prior same-sitting rulings: Modes A/B → gate spec-first · ASIN optional · dimensions-grid deferred-with-lean · §9/§10/5.6 refresh. *Dating note: this sitting's entries span 2026-07-30 → 08-02 as one continuous working arc — some rows carry the 07-30 label.*)
+**Last updated:** 2026-08-08 (PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -39,6 +39,19 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > post-launch, with the drop NAMED per standing rule 6.** Full ruling + reasoning: §6.13 and the
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
+
+> **⚡ PRE-DESIGN BATCH OPENED (founder-ruled 2026-08-08)** — the founder chose the recommended
+> ~1-day pre-design dev batch over opening the design lane directly. Scope = the six
+> BLOCKS-DESIGN items from the 2026-08-07 gap audit (preserved in full in
+> `HANDOVER_DEV_COMPLETE.md` §5): change-request entry point · delivery email · billing rebuy
+> hardcode · Growth→Scale dead-end · dead client-facing husks · marketing-vs-ladder copy.
+> Plan: `docs/superpowers/plans/2026-08-07-pre-design-batch.md`. **Rulings taken this sitting:**
+> (1) **Emails: delivery notification ONLY this batch** — submission-confirm, payment-failed,
+> cancel-confirm stay on the ledger; Resend account + `RESEND_API_KEY`/`RESEND_FROM` env remain
+> the founder's setup step (code ships gated, degrades soft). (2) **`single_149` display name
+> RULED: "Complete Report"** — the placeholder is promoted; §6.4's UNRULED marker is closed.
+> (3) **Dead links REMOVED** (footer About/Terms/Privacy, `/sample-report.pdf`) — they return
+> when the legal-pages ruling (1.6) lands; nothing fake ships meanwhile.
 
 ## 1. LAUNCH-BLOCKING — nothing ships without these
 
@@ -185,7 +198,7 @@ founder-run scripts:** the probe template is now
 | 6.1 | **Keepa gate** | 🗄️ | Needs ASIN field. Plugin, scenario intelligence, NEVER a verdict input (Q-K1). Remove the 3 dormant weight keys. Reporting law: brand enforcement = brand-wide (Track 3); seller dynamics = per-ASIN (Keepa) |
 | 6.2 | vendor×brand relationship records | 🗄️ | Never built; lost in the G007 reshape. **Backfillable** at G6 from `intelligence_events.brands_normalized` + `case_outcomes` |
 | 6.3 | Degraded-write tripwire | ✅ | Built + registered (`degradedWrites.ts`, daily cron, three families, silent on clean days) |
-| 6.4 | **$149 tier assembly** | 🟡 | **BUILT 2026-08-07 (founder-ruled spec):** `single_149` = 1 credit · 3 brands · all 5 areas · category compliance YES (`CATEGORY_PLANS`; growth DELIBERATELY excluded) · uploads 2 · standard SLA · no rollover/top-ups · ASIN only when `KEEPA_LIVE`. Full ladder re-ruled same date: caps 3/3/5/5; uploads 0/2/2/2 ($99 upload field DISABLED-with-upsell, server-enforced); `KEEPA_LIVE=false` gates all ASIN collection (nothing renders anywhere until the flag flips). **Migration `20260807` APPLIED 2026-08-07 via MCP on explicit founder authorization** — triple-verified: MCP read-back (both plan_type CHECKs carry all four values; live rows untouched: growth/scale/single_99), CLI probe via the app's own creds (all live values within the four-plan set; compiled caps 3/3/5/5), Vercel deploy of `687b70a` READY on staging. **ONE FOUNDER STEP remains: create the Stripe price (one-time $149, metadata plan_type=single_149 / billing_type=one_time / credits_granted=1) and set `STRIPE_PRICE_SINGLE_149` in Vercel + .env.local.** Until then: tier visible, checkout 503s cleanly. Tier NAME "Complete Report" = UNRULED placeholder. |
+| 6.4 | **$149 tier assembly** | 🟡 | **BUILT 2026-08-07 (founder-ruled spec):** `single_149` = 1 credit · 3 brands · all 5 areas · category compliance YES (`CATEGORY_PLANS`; growth DELIBERATELY excluded) · uploads 2 · standard SLA · no rollover/top-ups · ASIN only when `KEEPA_LIVE`. Full ladder re-ruled same date: caps 3/3/5/5; uploads 0/2/2/2 ($99 upload field DISABLED-with-upsell, server-enforced); `KEEPA_LIVE=false` gates all ASIN collection (nothing renders anywhere until the flag flips). **Migration `20260807` APPLIED 2026-08-07 via MCP on explicit founder authorization** — triple-verified: MCP read-back (both plan_type CHECKs carry all four values; live rows untouched: growth/scale/single_99), CLI probe via the app's own creds (all live values within the four-plan set; compiled caps 3/3/5/5), Vercel deploy of `687b70a` READY on staging. **ONE FOUNDER STEP remains: create the Stripe price (one-time $149, metadata plan_type=single_149 / billing_type=one_time / credits_granted=1) and set `STRIPE_PRICE_SINGLE_149` in Vercel + .env.local.** Until then: tier visible, checkout 503s cleanly. ~~Tier NAME "Complete Report" = UNRULED placeholder~~ **NAME RULED 2026-08-08: "Complete Report"** (pre-design batch block above). |
 | 6.5 | G4 threshold recalibration | 🗄️ | Against the outcome corpus. **Entry conditions (recorded at the S-1 freeze):** k-term noise dominance in the gap axis · degenerate cost axis (59/66 low, 0 severe) · A6 per-hypothesis scoring vs H1 immutability (the write path is G4's design problem) |
 | 6.6 | G6 Institutional Memory read-side | 🔒 | ~50–100 delivered cases. **Heavy gate** — as specced it reopens the frozen verdict engine. Alternative to weigh: scenario-intelligence-only (Keepa pattern) |
 | 6.7 | Category Compliance V2 (ASIN-level) | 🗄️ | `scope` field is the upgrade hinge |
