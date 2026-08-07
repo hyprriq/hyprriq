@@ -7,6 +7,7 @@ import {
   PLAN_NAME,
   brandCapForPlan,
   creditsRequired,
+  PLAN_PRICE_LABEL,
   type PlanType,
 } from "@/lib/constants/plans";
 import { brandHelper, brandHelperLearnMore, MARKETPLACES, estimatedCompletionLabel } from "@/lib/content/submit";
@@ -19,7 +20,7 @@ type Result = {
   remaining_balance: number;
 };
 
-import { fileCountError } from "@/lib/constants/uploads";
+import { fileCountError, planAcceptsUploads } from "@/lib/constants/uploads";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Shared validation for both the button and drag-drop paths.
@@ -63,6 +64,8 @@ export function SubmitForm({
   // ASIN intake — Scale-only progressive disclosure; the field never renders on other tiers.
   // ASINs are OPTIONAL (UNRULED default, flagged), but a non-empty value must be a valid ASIN.
   const collectsAsins = planCollectsAsins(plan);
+  // $99 takes no uploads (founder-ruled 2026-08-07) — server enforces the same predicate.
+  const uploadsAllowed = planAcceptsUploads(plan);
   const badAsins = collectsAsins
     ? brands.filter((b) => (asins[b] ?? "").trim() !== "" && !ASIN_RE.test(normalizeAsin(asins[b])))
     : [];
@@ -382,7 +385,27 @@ export function SubmitForm({
             </div>
 
             <div>
-              <span className="text-[14px] font-medium text-ink">Upload supplier invoice or LOA <span className="font-normal text-muted">(optional but recommended)</span></span>
+              <span className="text-[14px] font-medium text-ink">Upload supplier document <span className="font-normal text-muted">(optional)</span></span>
+              {/* $99 gate (founder-ruled 2026-08-07): DISABLED with a reason, not removed — a
+                  missing field teaches nothing; a locked field with a reason converts. The
+                  server enforces the same rule (planAcceptsUploads); this is presentation. */}
+              {!uploadsAllowed ? (
+                <div className="mt-1 rounded-lg border border-dashed border-line-strong bg-subtle p-4">
+                  <label className="cursor-not-allowed rounded-md bg-subtle px-3.5 py-2 text-[13px] font-semibold text-muted" aria-disabled="true">
+                    Choose file
+                  </label>
+                  <p className="mt-2 text-[13px] text-ink-2">
+                    Document review is included from the {PLAN_PRICE_LABEL.single_149} report up.
+                  </p>
+                </div>
+              ) : (
+              <>
+              {/* Document copy (founder-ruled 2026-08-07): the FORM is authoritative — research
+                  runs on the entered vendor + brands, never on names parsed from a document. */}
+              <p className="mt-1 text-[13px] text-ink-2">
+                Optional. A PO or letterhead helps us confirm the vendor&rsquo;s entity and address.
+                The brands and vendor you enter above are what we research.
+              </p>
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -426,6 +449,8 @@ export function SubmitForm({
                 </ul>
               )}
               {fileError && <p className="mt-1 text-[13px] text-deny-ink">{fileError}</p>}
+              </>
+              )}
             </div>
 
             <label className="block">

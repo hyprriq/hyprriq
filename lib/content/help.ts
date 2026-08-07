@@ -57,7 +57,7 @@ export const dimensions = [
   { icon: "🏢", name: "Supplier Identity", desc: "We verify the supplier is a real, operating business — registration, address, web presence, domain age, contact consistency." },
   { icon: "🔗", name: "Supply Chain Relationship", desc: "We surface any observable connection between the supplier and the brands you're sourcing — distributor listings, brand references, marketplace history." },
   { icon: "🛡", name: "Brand Risk Assessment", desc: "We assess the brand's enforcement posture — how aggressively they pursue IP complaints and whether their distribution model creates risk." },
-  { icon: "📄", name: "Documentation Review", desc: "If you upload an invoice or LOA, we check it against 14 fields Amazon evaluates — buyer name, address, product specificity, formatting, and more." },
+  { icon: "📄", name: "Documentation Review", desc: "We check that the paperwork's entity and address line up with what our other research found independently. Documents usually cannot confirm the brands you plan to buy — that comes from the research areas above." },
   { icon: "🧠", name: "Sourcing Logic", desc: "We assess whether the entire picture makes commercial sense — category risks, scenario coherence, and B2B archetype analysis." },
 ];
 
@@ -84,8 +84,8 @@ export const faqs: Faq[] = [
   },
   {
     id: "unconfirmed-brands",
-    q: "What if I want to research a brand that isn't on my uploaded invoice?",
-    a: "You can — but be aware of how we evaluate it. HyprrIQ's core research validates the vendor relationship first. Brands that appear on your uploaded invoice or document are treated as vendor-confirmed evidence. Brands you add that aren't on the document are still fully researched, but your report will show them as unconfirmed against this specific vendor unless we find independent public evidence linking them. This isn't a limitation — it's an honest answer to the real question: can you trust this vendor for this brand. If you're investigating a brand from a different vendor relationship, that's a separate submission for a more accurate result.",
+    q: "Do the brands I enter need to appear on my uploaded document?",
+    a: "No. The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows. Vendor documents usually carry the vendor's own item codes rather than brand names, so a brand missing from a document is expected and never counts against the vendor. Documents help us confirm the vendor's entity and address; the brand-level findings come from independent research.",
   },
   {
     id: "scope-confirmation",

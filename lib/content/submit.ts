@@ -3,11 +3,13 @@
 
 import { PLAN_SLA_DAYS, type PlanType } from "@/lib/constants/plans";
 
-// Vendor-brand vetting expectation-setter, shown under the brand-tags input.
-// This is the in-form half of the mechanism; the full explanation lives in the
-// Help Centre FAQ (see lib/content/help.ts -> "unconfirmed-brands").
+// Vendor-brand expectation-setter, shown under the brand-tags input.
+// CORRECTED 2026-08-07 (form-is-authoritative ruling): the previous wording promised the report
+// would "flag brands as unconfirmed against this vendor" — NO code implements that flagging
+// (B1/B2 report, 2026-08-07), and brand-absence-in-documents is expected, never a signal.
+// The copy now states what actually happens.
 export const brandHelper =
-  "Brands not shown on your uploaded document will still be researched, but the report will flag them as unconfirmed against this vendor.";
+  "The brands and vendor you enter here are what we research. An uploaded document helps confirm the vendor's entity and address — it is not expected to list your brands.";
 
 export const brandHelperLearnMore = {
   label: "Learn more →",

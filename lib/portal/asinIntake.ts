@@ -8,24 +8,26 @@
 // (see lib/research/intakeExtras.ts for how it rides TrackContext without touching the
 // frozen contracts.ts).
 
-import { PLAN_BRAND_CAPS, brandCapForPlan, type PlanType } from "@/lib/constants/plans";
+import { PLAN_BRAND_CAPS, brandCapForPlan, KEEPA_LIVE, type PlanType } from "@/lib/constants/plans";
 
 // Amazon ASINs are 10 chars, alphanumeric uppercase (modern ones start B0; legacy ASINs are
 // ISBN-10s, so we accept the general 10-char form rather than hardcoding the B0 prefix).
 export const ASIN_RE = /^[A-Z0-9]{10}$/;
 
-// Which plans COLLECT ASINs at intake (progressive disclosure — entry tiers never see the
-// field). Today that is Scale only; the future $149 tier joins this map when it exists as a
-// PlanType. ASIN-optional RULED (founder, 2026-08-02): OPTIONAL at submit even on Scale (a
-// client may not have chosen the exact listing yet); revisit when Keepa ships.
-export const PLAN_COLLECTS_ASINS: Record<PlanType, boolean> = {
+// ── ASIN GATING (founder-ruled 2026-08-07): the field is gated on KEEPA_LIVE, NOT on plan
+// alone. Keepa is scheduled but does not exist — while KEEPA_LIVE is false, NO ASIN field
+// renders anywhere on any plan, so the form can never quietly collect a field nothing consumes
+// (the exact failure removed from $99 uploads). When the flag flips, collection lights up for
+// the ELIGIBLE plans below (one ASIN per brand). ASIN-optional RULED 2026-08-02 stands. ──
+export const PLAN_ASIN_ELIGIBLE: Record<PlanType, boolean> = {
   single_99: false,
+  single_149: true,
   growth_279: false,
   scale_499: true,
 };
 
 export function planCollectsAsins(plan: PlanType | null | undefined): boolean {
-  return plan ? PLAN_COLLECTS_ASINS[plan] : false;
+  return KEEPA_LIVE && !!plan && PLAN_ASIN_ELIGIBLE[plan];
 }
 
 export function normalizeAsin(raw: string): string {

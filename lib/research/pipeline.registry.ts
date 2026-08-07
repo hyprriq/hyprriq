@@ -19,8 +19,11 @@ export interface TrackRegistryEntry {
   available: boolean;       // false → skipped gracefully (reserved for future tracks 6, 7…)
 }
 
-const ALL: PlanType[] = ["single_99", "growth_279", "scale_499"];
-const GROWTH_SCALE: PlanType[] = ["growth_279", "scale_499"];
+// single_149 added 2026-08-07 (founder-ordered tier assembly; NAMED frozen-surface edit —
+// these two arrays only, consistency with TRACK_CONFIG test-locked): the $149 tier runs all
+// five areas, so it joins BOTH gates.
+const ALL: PlanType[] = ["single_99", "single_149", "growth_279", "scale_499"];
+const GROWTH_SCALE: PlanType[] = ["single_149", "growth_279", "scale_499"];
 
 // Tracks 1–4 = parallel group 1 (execution_order 1). Track 5 (sourcing-logic arbitrator) =
 // execution_order 2: it waits for 1–4 because it arbitrates across their outputs.

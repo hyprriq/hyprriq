@@ -25,8 +25,10 @@ export function trackByNumber(n: number): TrackDef {
 }
 
 // Which tracks run per plan (brief §3.4). track_0 (intake) always runs.
+// single_149 (founder-ruled 2026-08-07): ALL five areas — the "try the full engine once" tier.
 export const TRACK_CONFIG: Record<PlanType, { tracks: number[] }> = {
   single_99: { tracks: [0, 1, 3, 5] },
+  single_149: { tracks: [0, 1, 2, 3, 4, 5] },
   growth_279: { tracks: [0, 1, 2, 3, 4, 5] },
   scale_499: { tracks: [0, 1, 2, 3, 4, 5] },
 };

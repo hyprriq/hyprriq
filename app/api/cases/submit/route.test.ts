@@ -39,18 +39,18 @@ beforeEach(() => {
   rpc.mockClear(); inngestSend.mockClear();
 });
 
-describe("F6 — submit route: the 5-file cap rejects BEFORE any credit charge", () => {
-  it("SIX files → 400 with the cap message, and deduct_client_credits is NEVER called", async () => {
-    const res = await submit(6);
+describe("F6 — submit route: the file cap (2, ruled 2026-08-07) rejects BEFORE any credit charge", () => {
+  it("THREE files → 400 with the cap message, and deduct_client_credits is NEVER called", async () => {
+    const res = await submit(3);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(String(json.error)).toMatch(/5/); // the ONE constant's message names the cap
+    expect(String(json.error)).toMatch(/2/); // the ONE constant's message names the cap
     expect(rpc).not.toHaveBeenCalled();      // no charge on a rejected submission — the money-path lock
     expect(inngestSend).not.toHaveBeenCalled();
   });
 
-  it("FIVE files pass the cap (the silent guardrail's boundary) and no charge happens before the client lookup", async () => {
-    const res = await submit(5);
+  it("TWO files pass the cap (the silent guardrail's boundary) and no charge happens before the client lookup", async () => {
+    const res = await submit(2);
     expect(res.status).toBe(404); // client lookup (mocked null) — proves the cap passed, flow stopped pre-charge
     expect(rpc).not.toHaveBeenCalled();
   });

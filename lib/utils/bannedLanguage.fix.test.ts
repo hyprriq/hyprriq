@@ -57,6 +57,16 @@ const MUST_BLOCK: [string, string][] = [
 
 // ═══ SIDE 2 — THE MUST-PASS SET (BL5, founder-ruled 2026-07-24) ═══
 const MUST_PASS: [string, string][] = [
+  // — pricing-ladder / intake strings (2026-08-07 pass — standing rule 8: same commit) —
+  ["upload upsell ($99 gate)", "Document review is included from the $149 report up."],
+  ["upload authority copy", "Optional. A PO or letterhead helps us confirm the vendor's entity and address. The brands and vendor you enter above are what we research."],
+  ["uploads_not_included server message", "Document upload is not part of the $99 report — document review is included from the $149 report up."],
+  ["file limit message (2)", "Maximum 2 files — contact support if you need more."],
+  ["doc-review description (entity/address)", "We check that the paperwork's entity and address line up with what our other research found independently. Documents usually cannot confirm the brands you plan to buy — that comes from the research areas above."],
+  ["brand helper (corrected)", "The brands and vendor you enter here are what we research. An uploaded document helps confirm the vendor's entity and address — it is not expected to list your brands."],
+  ["$149 tier name", "Complete Report"],
+  ["how-it-works doc-review body", "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty."],
+  ["unconfirmed-brands FAQ (corrected)", "The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows."],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],

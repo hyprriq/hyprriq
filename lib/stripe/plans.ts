@@ -6,6 +6,7 @@ import type { PlanType } from "@/lib/constants/plans";
 // Until a given var is set, checkout for that item returns 503 (never a broken flow).
 export const PLAN_PRICE_ENV: Record<PlanType, string> = {
   single_99: "STRIPE_PRICE_SINGLE_99",
+  single_149: "STRIPE_PRICE_SINGLE_149", // founder creates the price + sets the env (2026-08-07 tier)
   growth_279: "STRIPE_PRICE_GROWTH_279",
   scale_499: "STRIPE_PRICE_SCALE_499",
 };

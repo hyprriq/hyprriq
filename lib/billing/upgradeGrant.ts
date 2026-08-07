@@ -18,7 +18,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
 
-export const PLAN_RANK: Record<PlanType, number> = { single_99: 0, growth_279: 1, scale_499: 2 };
+export const PLAN_RANK: Record<PlanType, number> = { single_99: 0, single_149: 0, growth_279: 1, scale_499: 2 };
 
 export function isUpgrade(oldPlan: string | null | undefined, newPlan: PlanType): boolean {
   return (PLAN_RANK[newPlan] ?? 0) > (PLAN_RANK[(oldPlan ?? "") as PlanType] ?? 0);

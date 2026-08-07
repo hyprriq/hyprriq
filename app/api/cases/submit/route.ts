@@ -11,7 +11,8 @@ import {
 import { inngest } from "@/lib/inngest/client";
 import { findLegalSignals } from "@/lib/research/legalSignals";
 import { sendAdminAlert } from "@/lib/email/notify";
-import { fileCountError } from "@/lib/constants/uploads";
+import { fileCountError, planAcceptsUploads } from "@/lib/constants/uploads";
+import { PLAN_PRICE_LABEL } from "@/lib/constants/plans";
 import { validateBrandAsins } from "@/lib/portal/asinIntake";
 import type { TrackContextWithIntake } from "@/lib/research/intakeExtras";
 
@@ -76,6 +77,16 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "no_plan", message: "You need an active plan to submit research." },
       { status: 402 },
+    );
+  }
+
+  // ── $99 takes no uploads (founder-ruled 2026-08-07): Documentation Review never runs on
+  // single_99, so accepting files would falsely imply review. SERVER-SIDE rule (the form's
+  // disabled field is presentation) — rejected pre-charge. ──
+  if (files.length > 0 && !planAcceptsUploads(plan)) {
+    return NextResponse.json(
+      { error: "uploads_not_included", message: `Document upload is not part of the ${PLAN_PRICE_LABEL.single_99} report — document review is included from the ${PLAN_PRICE_LABEL.single_149} report up.` },
+      { status: 400 },
     );
   }
 

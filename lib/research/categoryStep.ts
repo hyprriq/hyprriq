@@ -25,9 +25,11 @@ import { runModel } from "@/lib/ai/runModel";
 export const CATEGORY_CLIENT_SUMMARY =
   "Category compliance assessment recorded. Details are reviewed with your report.";
 
-// The plans that run category compliance. single_149 joins WHEN THE TIER EXISTS (no PlanType is
-// created before then — founder-ruled); the gate widens here, in the step, never in the registry.
-const CATEGORY_PLANS = new Set<string>(["scale_499"]);
+// The plans that run category compliance — FOUNDER-RULED 2026-08-07, stated in full so nobody
+// re-derives it: category compliance runs for single_149 AND scale_499 ONLY; growth_279 is
+// DELIBERATELY EXCLUDED (it is a tier differentiator, not a depth default). The gate widens
+// here, in the step, never in the registry.
+const CATEGORY_PLANS = new Set<string>(["scale_499", "single_149"]);
 
 // Live Hop-1 model adapter (mechanical — no frozen touches): proposes categories per brand from
 // the gathered sources, with the table's non-brand-keyed rows as the CATEGORY-DEFINITION AID.

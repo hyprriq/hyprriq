@@ -37,7 +37,7 @@ export const dimensions = [
   },
   {
     name: "Document Review",
-    body: "If you upload an invoice or LOA, we check it against 14 wholesale documentation standards and give you a correction list if anything's off. Only runs when a document is provided.",
+    body: "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty.",
   },
   {
     name: "Sourcing Logic Review",
