@@ -46,10 +46,10 @@ function Kpi({
   );
 }
 
+// awaiting_client branch EXCISED 2026-08-08 (gap audit §5.5): the status has no writer.
 function activityFor(cases: CaseRow[]) {
   return cases.slice(0, 5).map((c) => {
     if (c.status === "delivered") return { tone: "ok" as const, text: `Report ${c.case_number} is ready to download` };
-    if (c.status === "awaiting_client") return { tone: "warn" as const, text: `Case ${c.case_number} — needs your attention` };
     return { tone: "info" as const, text: `Case ${c.case_number} submitted` };
   });
 }
@@ -125,10 +125,10 @@ export default async function DashboardPage() {
   // Active → full dashboard.
   const activeCount = cases.filter(isActive).length;
   const readyCount = cases.filter((c) => c.status === "delivered").length;
-  const slaRisk = cases.filter((c) => isActive(c) && c.status !== "awaiting_client" && c.sla_deadline && daysUntil(c.sla_deadline)! <= 1).length;
+  const slaRisk = cases.filter((c) => isActive(c) && c.sla_deadline && daysUntil(c.sla_deadline)! <= 1).length;
   const renew = daysUntil(client.renewal_date);
   const deadlines = cases
-    .filter((c) => isActive(c) && c.status !== "awaiting_client" && c.sla_deadline)
+    .filter((c) => isActive(c) && c.sla_deadline)
     .sort((a, b) => new Date(a.sla_deadline!).getTime() - new Date(b.sla_deadline!).getTime())
     .slice(0, 3);
   const activity = activityFor(cases);
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
             ) : (
               activity.map((a, i) => (
                 <div key={i} className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${a.tone === "ok" ? "bg-clear-ink" : a.tone === "warn" ? "bg-verify-ink" : "bg-brand"}`} />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${a.tone === "ok" ? "bg-clear-ink" : "bg-brand"}`} />
                   <span className="flex-1 text-[14px] text-ink-2">{a.text}</span>
                 </div>
               ))

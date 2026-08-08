@@ -25,14 +25,12 @@ export type Verdict =
   | "do_not_rely"
   | "pending";
 
-export function isActionRequired(status: CaseStatus): boolean {
-  return status === "awaiting_client";
-}
-
 const STATUS_META: Record<CaseStatus, { label: string; cls: string }> = {
   pending_intake: { label: "Submitted", cls: "bg-subtle text-ink-2" },
   intake_complete: { label: "Submitted", cls: "bg-subtle text-ink-2" },
   queued: { label: "Queued", cls: "bg-brand-tint text-brand-ink" },
+  // awaiting_client: DB-legal, no writer (2026-08-08 husk excision) — inert mapping kept for
+  // Record completeness; all reachable Action-Required UI was removed (isActionRequired with it).
   awaiting_client: { label: "⚠ Action Needed", cls: "bg-verify-bg text-verify-ink" },
   research_running: { label: "In Research", cls: "bg-brand-tint text-brand-ink" },
   awaiting_review: { label: "In Review", cls: "bg-subtle text-ink-2" },

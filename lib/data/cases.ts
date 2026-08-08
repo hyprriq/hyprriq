@@ -6,6 +6,9 @@ import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 
+// queue_position EXCISED from the client payload 2026-08-08 (gap audit §5.5): the column has no
+// writer — the "Queue #N" pill was a dead husk. The DB column stays pending the founder's
+// unused-schema ruling; admin reads are unaffected (lib/data/admin.ts selects its own columns).
 export type CaseRow = {
   id: string;
   case_number: string;
@@ -18,16 +21,17 @@ export type CaseRow = {
   delivered_at: string | null;
   change_request_deadline: string | null;
   change_request_used: boolean;
-  queue_position: number | null;
   created_at: string;
 };
 
 const LIST_COLUMNS =
-  "id, case_number, vendor_name, brands_submitted, brands_confirmed, status, verdict, sla_deadline, delivered_at, change_request_deadline, change_request_used, queue_position, created_at";
+  "id, case_number, vendor_name, brands_submitted, brands_confirmed, status, verdict, sla_deadline, delivered_at, change_request_deadline, change_request_used, created_at";
 
 const DONE: CaseStatus[] = ["delivered", "complete", "cancelled"];
 
-export type CaseFilter = "all" | "active" | "completed" | "action";
+// "action" filter EXCISED 2026-08-08 (gap audit §5.5): awaiting_client has no writer — the
+// Action Required tab was structurally always empty.
+export type CaseFilter = "all" | "active" | "completed";
 
 export function isActive(c: Pick<CaseRow, "status">): boolean {
   return !DONE.includes(c.status);
@@ -57,8 +61,6 @@ export function filterCases(cases: CaseRow[], filter: CaseFilter): CaseRow[] {
       return cases.filter(isActive);
     case "completed":
       return cases.filter((c) => c.status === "delivered" || c.status === "complete");
-    case "action":
-      return cases.filter((c) => c.status === "awaiting_client");
     default:
       return cases;
   }

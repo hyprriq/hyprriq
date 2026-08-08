@@ -51,26 +51,6 @@ function fmt(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function extractQuestions(findings: Finding[]): { text: string; why?: string }[] {
-  const out: { text: string; why?: string }[] = [];
-  for (const f of findings) {
-    // H5 — compiled findings only: the client Finding type no longer carries raw model output.
-    const j = (f.compiled_findings_json ?? {}) as Record<string, unknown>;
-    const qs = j.questions;
-    if (Array.isArray(qs)) {
-      for (const q of qs) {
-        if (typeof q === "string") out.push({ text: q });
-        else if (q && typeof q === "object") {
-          const obj = q as Record<string, unknown>;
-          if (typeof obj.text === "string") out.push({ text: obj.text, why: typeof obj.why === "string" ? obj.why : undefined });
-          else if (typeof obj.question === "string") out.push({ text: obj.question, why: typeof obj.reason === "string" ? obj.reason : undefined });
-        }
-      }
-    }
-  }
-  return out;
-}
-
 export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Finding[] }) {
   const [tab, setTab] = useState<TabKey>("overview");
   const router = useRouter();
@@ -89,12 +69,13 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
   // is authoritative; documents corroborate entity/address only. brands_from_ocr was never written.)
   const showFindings = findingsVisibleToClient(c.status);
   const entered = c.brands_submitted ?? [];
-  // Track 2 rich questions (with priority); fall back to legacy compiled_findings_json questions.
-  // Gated by the interim client guard — hidden until the case is delivered (raw research output).
+  // Track 2 rich questions (with priority), gated by the interim client guard — hidden until the
+  // case is delivered (raw research output). The legacy compiled_findings_json fallback was
+  // EXCISED 2026-08-08 (gap audit §5.5): the client allowlist strips the `questions` key, so the
+  // legacy extraction was structurally always empty.
   const richQuestions = showFindings
     ? findings.flatMap((f) => f.questions_to_ask ?? []).sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
     : [];
-  const legacyQuestions = showFindings ? extractQuestions(findings) : [];
 
   return (
     <div>
@@ -259,23 +240,9 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
                 </div>
               ))}
             </div>
-          ) : legacyQuestions.length === 0 ? (
+          ) : (
             <div className="rounded-card border border-line bg-surface p-10 text-center text-sm text-muted">
               Supplier questions will appear here once research completes.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-card border border-line bg-surface">
-              {legacyQuestions.map((q, i) => (
-                <div key={i} className="flex items-start gap-3 border-b border-line p-4 last:border-b-0">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[13px] font-bold text-brand-ink">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <div className="text-[14px] font-medium text-ink">{q.text}</div>
-                    {q.why && <div className="mt-0.5 text-[13px] text-muted">{q.why}</div>}
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>

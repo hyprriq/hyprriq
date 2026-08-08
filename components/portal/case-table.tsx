@@ -29,13 +29,6 @@ function RowAction({ c }: { c: CaseRow }) {
       </Link>
     );
   }
-  if (c.queue_position != null && c.status !== "complete") {
-    return (
-      <span className="rounded-md bg-subtle px-2 py-1 text-[12px] font-semibold text-ink-2">
-        Queue #{c.queue_position}
-      </span>
-    );
-  }
   return (
     <Link
       href={`/portal/cases/${c.id}`}
@@ -84,9 +77,7 @@ export function CaseTable({
         return (
           <div
             key={c.id}
-            className={`grid ${cols} items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 ${
-              c.status === "awaiting_client" ? "bg-verify-bg/60" : ""
-            }`}
+            className={`grid ${cols} items-center gap-3 border-b border-line px-4 py-3 last:border-b-0`}
           >
             <Link href={`/portal/cases/${c.id}`} className="font-mono text-[13px] font-semibold text-brand hover:underline">
               {c.case_number}

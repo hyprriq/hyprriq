@@ -5,15 +5,15 @@ import { getClientCases, filterCases, type CaseFilter } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { CaseTable } from "@/components/portal/case-table";
 
+// Action Required tab EXCISED 2026-08-08 (gap audit §5.5): awaiting_client has no writer.
 const TABS: { key: CaseFilter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "active", label: "Active" },
   { key: "completed", label: "Completed" },
-  { key: "action", label: "Action Required" },
 ];
 
 function normalize(raw: string | undefined): CaseFilter {
-  if (raw === "active" || raw === "completed" || raw === "action") return raw;
+  if (raw === "active" || raw === "completed") return raw;
   return "all";
 }
 
@@ -30,7 +30,6 @@ export default async function CasesPage({
   // Expired = read-only Completed only; force the filter regardless of the query.
   const active: CaseFilter = access.canViewActive ? normalize(filter) : "completed";
   const cases = await getClientCases();
-  const actionCount = cases.filter((c) => c.status === "awaiting_client").length;
   const shown = filterCases(cases, active);
 
   return (
@@ -54,15 +53,6 @@ export default async function CasesPage({
               }`}
             >
               {t.label}
-              {t.key === "action" && actionCount > 0 && (
-                <span
-                  className={`rounded-full px-1.5 text-[11px] font-bold ${
-                    isOn ? "bg-white/25 text-white" : "bg-deny-bg text-deny-ink"
-                  }`}
-                >
-                  {actionCount}
-                </span>
-              )}
             </Link>
           );
         })}
@@ -73,11 +63,9 @@ export default async function CasesPage({
         cases={shown}
         showAction={access.canViewActive}
         emptyLabel={
-          active === "action"
-            ? "Nothing needs your attention right now."
-            : active === "completed"
-              ? "No completed reports yet."
-              : "No cases yet — submit your first research request."
+          active === "completed"
+            ? "No completed reports yet."
+            : "No cases yet — submit your first research request."
         }
       />
     </PortalShell>
