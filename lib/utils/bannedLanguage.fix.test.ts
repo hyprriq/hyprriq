@@ -73,6 +73,8 @@ const MUST_PASS: [string, string][] = [
   ["file size message", "File must be 10MB or smaller."],
   ["file type message", "Only PDF, JPG, or PNG files are accepted."],
   ["dashboard attention line", "needs your attention"],
+  // — pre-design batch (2026-08-08 — standing rule 8: same commit) —
+  ["change-request entry link", "Spotted something off? Request a change (one included, 7-day window)"],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],

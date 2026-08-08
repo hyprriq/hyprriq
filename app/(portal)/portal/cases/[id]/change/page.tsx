@@ -4,6 +4,7 @@ import { getClientWithAccess } from "@/lib/data/access";
 import { getCaseById } from "@/lib/data/cases";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { ChangeRequestForm } from "@/components/portal/change-request-form";
+import { changeRequestOpen } from "@/lib/portal/changeRequest";
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -12,9 +13,6 @@ function fmt(iso: string | null) {
 
 // Date math kept out of the component body (React purity rule disallows calling
 // the impure Date.now() directly during render).
-function isDeadlineOpen(iso: string | null): boolean {
-  return !!iso && new Date(iso).getTime() > Date.now();
-}
 function daysLeftUntil(iso: string | null): number {
   if (!iso) return 0;
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
@@ -32,8 +30,8 @@ export default async function ChangeRequestPage({
   if (!c) notFound();
 
   const delivered = c.status === "delivered" || c.status === "complete";
-  const eligible =
-    access.canRequestChange && delivered && isDeadlineOpen(c.change_request_deadline) && !c.change_request_used;
+  // DRY 2026-08-08: same eligibility read as the delivered-view entry link (gap audit 5.1).
+  const eligible = access.canRequestChange && changeRequestOpen(c);
   const daysLeft = daysLeftUntil(c.change_request_deadline);
 
   return (

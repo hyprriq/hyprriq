@@ -7,6 +7,7 @@ import { StatusBadge, VerdictBadge, CertaintyBadge, type FindingCertainty } from
 import type { CaseDetail, Finding } from "@/lib/data/cases";
 import { findingText, findingNotes } from "@/lib/portal/finding-view";
 import { isResearchInProgress, findingsVisibleToClient } from "@/lib/portal/case-status";
+import { changeRequestOpen } from "@/lib/portal/changeRequest";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -154,6 +155,15 @@ export function CaseDetailView({ c, findings }: { c: CaseDetail; findings: Findi
               <div className="mt-0.5 text-[13px] text-ink-2">
                 Your full verdict and evidence are below. Downloadable PDF export is coming soon.
               </div>
+              {/* Gap audit 5.1 (2026-08-08): the built change-request flow finally has a door. */}
+              {changeRequestOpen(c) && (
+                <Link
+                  href={`/portal/cases/${c.id}/change`}
+                  className="mt-1.5 inline-block text-[13px] font-semibold text-brand hover:underline"
+                >
+                  Spotted something off? Request a change (one included, 7-day window) →
+                </Link>
+              )}
             </div>
           ) : null}
           <h3 className="mb-3 font-display text-sm font-bold text-ink">Research Dimensions</h3>
