@@ -40,6 +40,23 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ GAP-CLOSE BATCH LANDED 2026-08-10 (founder-ordered, four items)** — 1146/1146 unpiped
+> exit 0 · tsc 0 · eslint 0 errors · build clean · frozen engine untouched:
+> **(1) Submission confirmation email** `1c2cac2` — the SECOND of the two ruled transactional
+> emails (corrects the 08-08 delivery-only ruling record). Gated notify helper; LOCKED content
+> machine-checked in tests (no verdict/finding/risk/guarantee language, no delivery-time
+> promise); sent only after successful enqueue; idempotent via a per-case audit-row check; a
+> failed send records `skipped:*`, never "sent". Delivery-email misroute also closed: operator
+> house-row cases skip as `skipped:operator_house` (the `operator@hyprriq.internal` placeholder
+> is never mailed).
+> **(2) Checkout state guard** `4f0b43a` — pulled forward from CAN-FOLLOW: `/api/checkout/session`
+> fails closed pre-Stripe (pure `checkoutStateError`, 10 TDD cases). Live subscriber → 409 on any
+> plan purchase (second-subscription + plan_type-clobber traps closed); cancelled subscriber
+> keeps reactivation; top-ups now require a live subscription server-side.
+> **(3) Tier NAME RE-RULED** `2ca75c1` — `single_149` = **"Single Deep Report"** (matches the
+> Stripe product; supersedes 08-08 "Complete Report"). All display sites reconciled.
+> **(4)** Both email templates reported verbatim to the founder in-chat, content rules confirmed.
+>
 > **✓ PRE-DESIGN BATCH CLOSED 2026-08-10 — all six blocks-design items LANDED** (1125/1125
 > unpiped exit 0 · tsc 0 · eslint 0 errors · build clean · ZERO frozen-engine files touched):
 > husks excised `ffc77c4` · change-request entry `dab6515` · delivery email `f41d880` (gated
