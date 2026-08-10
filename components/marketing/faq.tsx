@@ -17,7 +17,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "How do credits work?",
-    a: "One credit = one complete report — one supplier and up to 5 brands, across all five dimensions. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
+    a: "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
   },
   {
     q: "How long does a report take?",
@@ -29,7 +29,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I try it before subscribing?",
-    a: "Yes. Buy a single report for $99 to see the depth before committing to a monthly plan.",
+    a: "Yes. Buy a Single Report for $99, or the Complete Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan.",
   },
 ];
 

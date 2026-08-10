@@ -4,6 +4,7 @@ import { VERDICT_SENTENCES } from "@/lib/research/synthesisEngine";
 import { CATEGORY_CLIENT_SUMMARY } from "@/lib/research/categoryStep";
 import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/research/categoryFlagsTable";
 import { clientNote } from "@/lib/research/websiteAnchor";
+import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
 
 // ── BANNED-LANGUAGE FIX GATE (spec 2026-07-24, ALL SIX OQs founder-ruled) — the new HARD rules
 // H10–H15 + the H4 negation carve-out, TWO-SIDED BY LAW.
@@ -80,6 +81,16 @@ const MUST_PASS: [string, string][] = [
   ["delivery email body line 2", "View your report — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal."],
   ["delivery email body line 3", "Questions about the report? Use the support page in your portal and we'll pick it up."],
   ["plan-change card copy", "Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans."],
+  // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
+  ["pricing hero title", pricingHero.title],
+  ["pricing hero subtitle", pricingHero.subtitle],
+  ["credit explainer", creditExplainer],
+  ...[...subscriptionPlans, ...oneTimePlans].flatMap((p) =>
+    p.points.map((pt): [string, string] => [`pricing point (${p.id})`, pt]),
+  ),
+  ...comparison.map((r): [string, string] => [`comparison row: ${r.feature}`, `${r.feature}: ${r.values.join(" / ")}`]),
+  ["FAQ credits answer (2026-08-08)", "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own."],
+  ["FAQ try-first answer (2026-08-08)", "Yes. Buy a Single Report for $99, or the Complete Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan."],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],

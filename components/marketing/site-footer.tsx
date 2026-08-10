@@ -11,17 +11,9 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
   },
   {
     heading: "Company",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Contact", href: "mailto:hello@hyprriq.com" },
-    ],
-  },
-  {
-    heading: "Legal",
-    links: [
-      { label: "Terms", href: "#" },
-      { label: "Privacy", href: "#" },
-    ],
+    // About/Terms/Privacy REMOVED 2026-08-08 (founder-ruled: no dead href="#" links) — they
+    // return with the legal-pages ruling (tracker 1.6) and the About page (2.7).
+    links: [{ label: "Contact", href: "mailto:hello@hyprriq.com" }],
   },
 ];
 

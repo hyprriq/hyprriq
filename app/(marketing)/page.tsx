@@ -116,7 +116,7 @@ const PLANS = [
     price: "$499",
     cadence: "/mo",
     credits: "12 reports a month",
-    points: ["Everything in Growth", "Deep analysis + Keepa data", "3-business-day priority SLA"],
+    points: ["Everything in Growth", "Category compliance + deep analysis", "3-business-day priority SLA"],
     popular: true,
   },
 ];
@@ -427,13 +427,8 @@ export default function Home() {
                 <p className="mt-3 text-center text-sm text-muted">
                   A real Source Intelligence Report — anonymized.
                 </p>
-                <a
-                  href="/sample-report.pdf"
-                  className="mt-4 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
-                >
-                  <FileText size={18} aria-hidden="true" />
-                  Download the sample report
-                </a>
+                {/* /sample-report.pdf download REMOVED 2026-08-08 (founder-ruled: no dead links;
+                    the file 404'd). Returns with the sample-report page (tracker 1.8). */}
               </div>
             </Reveal>
           </div>
@@ -577,7 +572,7 @@ export default function Home() {
               <FileText size={17} className="text-muted" aria-hidden="true" />
               Not ready to subscribe?{" "}
               <Link href="/pricing" className="font-semibold text-brand hover:text-brand-hover">
-                Try a single report — $99
+                Single reports from $99
               </Link>
             </p>
           </Reveal>
