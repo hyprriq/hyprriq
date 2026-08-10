@@ -6,14 +6,14 @@ export const clerkAppearance = {
   variables: {
     // Must mirror --color-brand in globals.css (Clerk needs a literal; it does
     // color math it can't do on a CSS var).
-    colorPrimary: "#1b4b8a",
+    colorPrimary: "#173e63",
     colorText: "#1a1917",
     colorTextSecondary: "#56544e",
     colorBackground: "#ffffff",
     colorInputBackground: "#ffffff",
     colorInputText: "#1a1917",
     borderRadius: "0.625rem",
-    fontFamily: "var(--font-hanken), system-ui, sans-serif",
+    fontFamily: "var(--font-instrument), system-ui, sans-serif",
   },
   elements: {
     rootBox: "w-full",

@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
-import { Schibsted_Grotesk, Hanken_Grotesk, Geist_Mono } from "next/font/google";
+import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-// Display / headlines — news-grade authority, distinctive (anti-slop).
-const schibsted = Schibsted_Grotesk({
-  variable: "--font-schibsted",
+// Display / headlines — Fraunces: research-firm gravitas (ruled skin, 2026-08-05).
+// Variable with optical sizing so small headings stay crisp and large ones gain ink.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  axes: ["opsz"],
 });
 
-// Body / UI — humanist, warm, highly readable.
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
+// Body / UI — Instrument Sans: clean humanist, explicitly not Inter.
+const instrument = Instrument_Sans({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 // Data — case IDs, figures, tabular numerals.
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${schibsted.variable} ${hanken.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${instrument.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

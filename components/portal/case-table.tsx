@@ -61,42 +61,73 @@ export function CaseTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-card border border-line bg-surface">
-      <div className={`grid ${cols} gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted`}>
-        <span>Case ID</span>
-        <span>Supplier / Brands</span>
-        <span>Status</span>
-        <span>Verdict</span>
-        <span>SLA</span>
-        {showAction && <span>Action</span>}
-      </div>
-      {cases.map((c) => {
-        const sla = slaLabel(c);
-        const slaTone =
-          sla.tone === "warn" ? "text-verify-ink" : sla.tone === "ok" ? "text-ink-2" : "text-muted";
-        return (
-          <div
-            key={c.id}
-            className={`grid ${cols} items-center gap-3 border-b border-line px-4 py-3 last:border-b-0`}
-          >
-            <Link href={`/portal/cases/${c.id}`} className="font-mono text-[13px] font-semibold text-brand hover:underline">
-              {c.case_number}
-            </Link>
-            <div className="min-w-0">
-              <div className="truncate text-[14px] font-semibold text-ink">
-                {c.vendor_name ?? "—"}
+    <>
+      {/* desktop: the dense grid (unchanged) */}
+      <div className="hidden overflow-hidden rounded-card border border-line bg-surface md:block">
+        <div className={`grid ${cols} gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted`}>
+          <span>Case ID</span>
+          <span>Supplier / Brands</span>
+          <span>Status</span>
+          <span>Verdict</span>
+          <span>SLA</span>
+          {showAction && <span>Action</span>}
+        </div>
+        {cases.map((c) => {
+          const sla = slaLabel(c);
+          const slaTone =
+            sla.tone === "warn" ? "text-verify-ink" : sla.tone === "ok" ? "text-ink-2" : "text-muted";
+          return (
+            <div
+              key={c.id}
+              className={`grid ${cols} items-center gap-3 border-b border-line px-4 py-3 last:border-b-0`}
+            >
+              <Link href={`/portal/cases/${c.id}`} className="font-mono text-[13px] font-semibold text-brand hover:underline">
+                {c.case_number}
+              </Link>
+              <div className="min-w-0">
+                <div className="truncate text-[14px] font-semibold text-ink">
+                  {c.vendor_name ?? "—"}
+                </div>
+                <div className="truncate text-[12px] text-muted">{brandsLabel(c.brands_submitted)}</div>
               </div>
-              <div className="truncate text-[12px] text-muted">{brandsLabel(c.brands_submitted)}</div>
+              <div><StatusBadge status={c.status} /></div>
+              <div><VerdictBadge verdict={c.verdict} /></div>
+              <div className={`text-[12px] font-semibold ${slaTone}`}>{sla.text}</div>
+              {showAction && (
+                <div><RowAction c={c} /></div>
+              )}
             </div>
-            <div><StatusBadge status={c.status} /></div>
-            <div><VerdictBadge verdict={c.verdict} /></div>
-            <div className={`text-[12px] font-semibold ${slaTone}`}>{sla.text}</div>
-            {showAction && (
-              <div><RowAction c={c} /></div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+
+      {/* mobile: the same rows as tappable cards — the ruled 1.4 card system.
+          Same data, same destinations; the fixed-width grid never renders below md. */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {cases.map((c) => {
+          const sla = slaLabel(c);
+          const slaTone =
+            sla.tone === "warn" ? "text-verify-ink" : sla.tone === "ok" ? "text-ink-2" : "text-muted";
+          return (
+            <Link
+              key={c.id}
+              href={`/portal/cases/${c.id}`}
+              className="block rounded-card border border-line bg-surface p-4"
+            >
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate font-mono text-[12px] font-semibold text-brand">{c.case_number}</span>
+                <StatusBadge status={c.status} />
+              </div>
+              <div className="mt-2 text-[15px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
+              <div className="mt-0.5 truncate text-[13px] text-ink-2">{brandsLabel(c.brands_submitted)}</div>
+              <div className="mt-2.5 flex items-center gap-2">
+                <VerdictBadge verdict={c.verdict} />
+                <span className={`ml-auto text-[12.5px] font-semibold ${slaTone}`}>{sla.text}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </>
   );
 }

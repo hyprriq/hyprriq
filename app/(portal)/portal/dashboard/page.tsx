@@ -30,7 +30,7 @@ function Kpi({
   label: string;
   value: number | string;
   sub: string;
-  icon: string;
+  icon: React.ReactNode;
   chip: string;
   valueCls?: string;
 }) {
@@ -60,7 +60,9 @@ function activityFor(cases: CaseRow[]) {
 function NoPlanDashboard() {
   return (
     <div className="mx-auto mt-6 max-w-xl rounded-card border border-line bg-surface p-10 text-center">
-      <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-tint text-2xl">🔍</div>
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-tint text-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+      </div>
       <h2 className="mt-5 font-display text-2xl font-bold tracking-tight text-ink">
         Choose a plan to start vetting suppliers
       </h2>
@@ -150,10 +152,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi label="Credits Left" value={client.credits_available} sub={renew !== null ? `Renews in ${renew} days` : "—"} icon="🪙" chip="bg-brand-tint text-brand" valueCls="text-brand" />
-        <Kpi label="Active Cases" value={activeCount} sub="In progress" icon="🗂" chip="bg-accent-data-tint text-accent-data" />
-        <Kpi label="Reports Ready" value={readyCount} sub="Ready to download" icon="✓" chip="bg-clear-bg text-clear-ink" valueCls="text-clear-ink" />
-        <Kpi label="SLA Risk" value={slaRisk} sub={slaRisk === 0 ? "No cases at risk" : "Due soon"} icon="⏱" chip={slaRisk > 0 ? "bg-verify-bg text-verify-ink" : "bg-subtle text-muted"} valueCls={slaRisk > 0 ? "text-verify-ink" : "text-ink"} />
+        <Kpi label="Credits Left" value={client.credits_available} sub={renew !== null ? `Renews in ${renew} days` : "—"} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 7v10M8.5 9.5h5a2 2 0 0 1 0 4h-3a2 2 0 0 0 0 4h5.5" /></svg>} chip="bg-brand-tint text-brand" valueCls="text-brand" />
+        <Kpi label="Active Cases" value={activeCount} sub="In progress" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" /></svg>} chip="bg-accent-data-tint text-accent-data" />
+        <Kpi label="Reports Ready" value={readyCount} sub="Ready to download" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M20 6 9 17l-5-5" /></svg>} chip="bg-clear-bg text-clear-ink" valueCls="text-clear-ink" />
+        <Kpi label="SLA Risk" value={slaRisk} sub={slaRisk === 0 ? "No cases at risk" : "Due soon"} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>} chip={slaRisk > 0 ? "bg-verify-bg text-verify-ink" : "bg-subtle text-muted"} valueCls={slaRisk > 0 ? "text-verify-ink" : "text-ink"} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
@@ -205,13 +207,16 @@ export default async function DashboardPage() {
           <div className="rounded-card border border-line bg-surface">
             <div className="border-b border-line px-4 py-3 font-display text-sm font-bold text-ink">Quick Actions</div>
             <div className="grid grid-cols-2 gap-2 p-3">
-              {[
-                { label: "＋ New Research", href: "/portal/submit" },
-                { label: "💳 Buy Credits", href: "/portal/billing" },
-                { label: "🗎 View Reports", href: "/portal/cases?filter=completed" },
-                { label: "💬 Get Help", href: "/portal/help" },
-              ].map((q) => (
-                <Link key={q.label} href={q.href} className="rounded-lg border border-line bg-base px-3 py-2.5 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
+              {([
+                { label: "New Research", href: "/portal/submit", d: "M12 5v14M5 12h14" },
+                { label: "Buy Credits", href: "/portal/billing", d: "M2 10h20M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" },
+                { label: "View Reports", href: "/portal/cases?filter=completed", d: "M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6ZM14 2v6h6" },
+                { label: "Get Help", href: "/portal/help", d: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" },
+              ] as const).map((q) => (
+                <Link key={q.label} href={q.href} className="flex items-center justify-start gap-2 rounded-lg border border-line bg-base px-3 py-2.5 text-[13px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
+                  <span aria-hidden className="text-accent-data">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={q.d} /></svg>
+                  </span>
                   {q.label}
                 </Link>
               ))}

@@ -4,48 +4,53 @@
    Light-first, warm-neutral base; deep-blue brand; verdict colors are the
    loudest moment on any screen. */
 @theme {
-  /* Base — warm-neutral, never cream, never stark white */
-  --color-base: #faf9f7;
+  /* CLIENT SKIN PORT (2026-08-11) — ruled cool tokens from public/prototype/assets/tokens.css.
+     Utility NAMES unchanged (bg-base, text-ink, verdict tokens…) so every component re-skins
+     without edits; only VALUES move. One token layer — admin + marketing share it by design. */
+
+  /* Base — cool near-white, never cream, never stark white */
+  --color-base: #f5f7f9;
   --color-surface: #ffffff;
-  --color-subtle: #f2f1ed;
-  --color-ink: #1a1917;
-  --color-ink-2: #56544e;
-  --color-muted: #8a887f;
-  --color-line: #e6e4de;
-  --color-line-strong: #d6d3cb;
+  --color-subtle: #eef1f4;
+  --color-ink: #161b22;
+  --color-ink-2: #3d454f;
+  --color-muted: #5c6570;   /* 5.5:1 on base — fixes the old 3.5:1 AA failure */
+  --color-line: #e2e6eb;
+  --color-line-strong: #cbd2da;
 
-  /* Brand — deep confident blue (between electric #2563EB and navy #1B4B8A) */
-  /* Brand blue — prototype values (final, single source of truth). Any literal
-     blue elsewhere (Clerk colorPrimary) must mirror these. */
-  --color-brand: #1b4b8a;
-  --color-brand-hover: #2a6acc;
-  --color-brand-ink: #0f2a4e;
-  --color-brand-tint: #e8f0fb;
-  --color-accent-warm: #b8731a;
-  /* Tightly-scoped neutral data accent — process/neutral data only, never
-     adjacent to a verdict color (see DESIGN.md v2 decisions). */
-  --color-accent-data: #2f6f6a;
-  --color-accent-data-tint: #e9f2f1;
+  /* Brand — trust navy (ruled; supersedes #1b4b8a). Clerk colorPrimary mirrors this. */
+  --color-brand: #173e63;
+  --color-brand-hover: #0e2b47;
+  --color-brand-ink: #0e2b47;
+  --color-brand-tint: #e5edf3;
+  --color-accent-warm: #9a551f;  /* copper, demoted — wordmark-only emphasis */
+  /* Cool signal accent — structural UI emphasis (quick actions, counts) */
+  --color-accent-data: #1e6e8c;
+  --color-accent-data-tint: color-mix(in srgb, #1e6e8c 10%, white);
 
-  /* Verdict semantics — bg fill + ink text. The reveal the product builds to. */
-  --color-clear-bg: #eaf6ef;
-  --color-clear-ink: #1a6b3a;
-  --color-conditional-bg: #f7f1dc;
-  --color-conditional-ink: #846412;
-  --color-verify-bg: #faeedf;
-  --color-verify-ink: #9a551f;
-  --color-deny-bg: #f8e9e6;
-  --color-deny-ink: #9a332c;
+  /* Verdict semantics — ranked spectrum, AA at pill size (verified 4.6–5.9:1) */
+  --color-clear-bg: #e4efea;
+  --color-clear-ink: #256b4c;
+  --color-conditional-bg: #f7f0e2;
+  --color-conditional-ink: #8f6416;
+  --color-verify-bg: #f8ede2;
+  --color-verify-ink: #a5560f;
+  --color-deny-bg: #f3e0de;
+  --color-deny-ink: #9a2f2a;
 
-  --radius-card: 14px;
+  /* sidebar text tones on brand-hover(navy-deep) surfaces */
+  --color-nav-fg: #c4d2e0;
+  --color-nav-fg-dim: #7e93a8;
+
+  --radius-card: 10px;
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --font-display: var(--font-schibsted);
-  --font-sans: var(--font-hanken);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-instrument);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 :root {
@@ -65,8 +70,8 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-display), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.01em; /* Fraunces is a serif — the grotesk's tight tracking read cramped */
   text-wrap: balance;
 }
 
