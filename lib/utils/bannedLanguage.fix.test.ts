@@ -79,6 +79,7 @@ const MUST_PASS: [string, string][] = [
   ["delivery email body line 1", "Your source intelligence report for Acme Distribution (case AWI-2607-022) has been delivered."],
   ["delivery email body line 2", "View your report — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal."],
   ["delivery email body line 3", "Questions about the report? Use the support page in your portal and we'll pick it up."],
+  ["plan-change card copy", "Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans."],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],

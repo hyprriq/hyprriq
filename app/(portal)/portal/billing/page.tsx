@@ -166,6 +166,23 @@ export default async function BillingPage() {
           </Card>
         )}
 
+        {/* Gap audit 5.4 (2026-08-08): the dashboard's "Upgrade to Scale" CTA used to dead-end
+            here with no subscriber upgrade control. The real switch mechanism is the Stripe
+            portal — say so and hand over the button. ⚠ Founder ledger: portal plan-switch
+            config is UNVERIFIED — confirm in Stripe before announcing to clients. */}
+        {plan === "growth_279" && (
+          <Card title="Change Plan">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-md text-[14px] text-ink-2">
+                Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans.
+              </p>
+              <StripePortalButton className="shrink-0 rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover">
+                Change plan in Stripe →
+              </StripePortalButton>
+            </div>
+          </Card>
+        )}
+
         {plan && client.plan_category === "one_time" && (
           <Card title="Upgrade to a subscription">
             <p className="mb-3 text-[14px] text-ink-2">
