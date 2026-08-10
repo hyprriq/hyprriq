@@ -80,8 +80,11 @@ export default async function BillingPage() {
                     Manage subscription →
                   </StripePortalButton>
                 ) : (
+                  /* Gap audit 5.3 (2026-08-08): rebuy the client's OWN one-time tier — the
+                     hardcoded single_99 charged a Complete Report ($149) client $99 AND
+                     activatePlan downgraded their plan_type. */
                   <CheckoutButton
-                    plan="single_99"
+                    plan={plan}
                     className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle"
                   >
                     Buy another report →

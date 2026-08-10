@@ -7,6 +7,8 @@ import { creditsView } from "@/lib/portal/creditsDisplay";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
+  PLAN_CADENCE,
+  PLAN_CATEGORY,
   PLAN_CREDITS_PER_CYCLE,
   PLAN_BRAND_CAPS,
   type PlanType,
@@ -220,8 +222,14 @@ export default async function DashboardPage() {
             <div className="border-b border-line px-4 py-3 font-display text-sm font-bold text-ink">Current Plan</div>
             <div className="p-4">
               <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[plan]} Plan</div>
+              {/* Gap audit 5.3 (2026-08-08): cadence-aware — a one-time buyer never reads
+                  "/mo • 1 credits/month". */}
               <div className="mt-0.5 text-[13px] text-muted">
-                {PLAN_PRICE_LABEL[plan]}/mo • {planTotal} credits/month • up to {PLAN_BRAND_CAPS[plan]} brands
+                {PLAN_PRICE_LABEL[plan]} {PLAN_CADENCE[plan]} •{" "}
+                {PLAN_CATEGORY[plan] === "one_time"
+                  ? `${planTotal} report${planTotal === 1 ? "" : "s"}`
+                  : `${planTotal} credits/month`}{" "}
+                • up to {PLAN_BRAND_CAPS[plan]} brands
               </div>
               {/* BUG-2 fix — honest framing; a balance above the plan allotment never reads "7 of 5". */}
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-subtle">
