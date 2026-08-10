@@ -75,6 +75,10 @@ const MUST_PASS: [string, string][] = [
   ["dashboard attention line", "needs your attention"],
   // — pre-design batch (2026-08-08 — standing rule 8: same commit) —
   ["change-request entry link", "Spotted something off? Request a change (one included, 7-day window)"],
+  ["delivery email subject", "Your HyprrIQ report AWI-2607-022 is ready"],
+  ["delivery email body line 1", "Your source intelligence report for Acme Distribution (case AWI-2607-022) has been delivered."],
+  ["delivery email body line 2", "View your report — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal."],
+  ["delivery email body line 3", "Questions about the report? Use the support page in your portal and we'll pick it up."],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],

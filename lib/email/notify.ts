@@ -83,6 +83,33 @@ export async function sendAdminInvitation(opts: {
   }
 }
 
+// ── PRE-DESIGN BATCH (2026-08-08, gap audit 5.2, founder-ruled delivery-only): the delivery
+// notification. Same gate, same key-safety as every sibling: a skipped send is non-fatal — the
+// delivered case row is the durable record and the portal shows the report either way. The
+// caller audit-logs {sent/reason}. Resend account + RESEND_API_KEY/RESEND_FROM env are the
+// founder's setup step; until then this returns {sent:false, reason:"no_api_key"} silently. ──
+export async function sendDeliveryNotification(opts: {
+  to: string | null;
+  caseNumber: string;
+  vendorName: string | null;
+  caseUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = `Your HyprrIQ report ${opts.caseNumber} is ready`;
+  const html = `<p>Your source intelligence report${opts.vendorName ? ` for ${opts.vendorName}` : ""} (case ${opts.caseNumber}) has been delivered.</p>
+<p><a href="${opts.caseUrl}">View your report</a> — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal.</p>
+<p>Questions about the report? Use the support page in your portal and we&rsquo;ll pick it up.</p>`;
+  if ((await emailGate("delivery_notification", subject, [html])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
 export async function sendDualNotification(opts: {
   clientEmail: string | null;
   subject: string;

@@ -9,6 +9,7 @@ import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
+import { sendDeliveryNotification } from "@/lib/email/notify";
 
 // Phase 4 — Founder Decision. The Intelligence Engine reaches report-ready autonomously; review is
 // OPTIONAL, never required. This route records the founder's decision on the engine's output:
@@ -63,7 +64,7 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity")
+    .select("id, case_number, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity, client_id")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -172,6 +173,26 @@ export async function POST(
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_outcomes", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin", new_value: { outcome_seed_failed: seeded.error },
+    });
+  }
+
+  // PRE-DESIGN BATCH (2026-08-08, gap audit 5.2): delivery notification — the marketing promise
+  // ("delivered to your email") gets a sender. Non-fatal like every notify path: delivery already
+  // happened; the outcome (sent / skip reason) is audit-logged, never surfaced as an error.
+  {
+    const { data: owner } = await supabaseAdmin
+      .from("clients").select("email").eq("id", c.client_id).maybeSingle();
+    const origin = new URL(req.url).origin;
+    const notified = await sendDeliveryNotification({
+      to: (owner?.email as string | undefined) ?? null,
+      caseNumber: c.case_number,
+      vendorName: c.vendor_name,
+      caseUrl: `${origin}/portal/cases/${id}`,
+    });
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "cases", record_id: id, action: "UPDATE",
+      actor_id: userId, actor_type: "admin",
+      new_value: { delivery_email: notified.sent ? "sent" : `skipped:${notified.reason ?? "unknown"}` },
     });
   }
 
