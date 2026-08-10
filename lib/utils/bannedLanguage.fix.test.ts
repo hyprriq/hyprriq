@@ -81,6 +81,11 @@ const MUST_PASS: [string, string][] = [
   ["delivery email body line 2", "View your report — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal."],
   ["delivery email body line 3", "Questions about the report? Use the support page in your portal and we'll pick it up."],
   ["plan-change card copy", "Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans."],
+  // — submission confirmation email (2026-08-10 gap-close — standing rule 8: same commit) —
+  ["submission email subject", "We received your case AWI-2608-030"],
+  ["submission email body line 1", "Your research request for Acme Distribution (case AWI-2608-030) has been submitted and is now in the queue."],
+  ["submission email body line 2", "Track your case in your portal — its status updates as the work progresses."],
+  ["submission email body line 3", "You'll get another email when your report is delivered. Questions in the meantime? Use the support page in your portal."],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],

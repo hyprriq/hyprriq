@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/plans";
 import { inngest } from "@/lib/inngest/client";
 import { findLegalSignals } from "@/lib/research/legalSignals";
-import { sendAdminAlert } from "@/lib/email/notify";
+import { sendAdminAlert, sendSubmissionConfirmation } from "@/lib/email/notify";
 import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 import { PLAN_PRICE_LABEL } from "@/lib/constants/plans";
 import { sniffFileType, type SniffedFile } from "@/lib/utils/fileSniff";
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   const supa = createServerClient();
   const { data: client } = await supa
     .from("clients")
-    .select("plan_type, credits_available")
+    .select("plan_type, credits_available, email")
     .eq("id", userId)
     .maybeSingle();
 
@@ -251,6 +251,37 @@ export async function POST(req: Request) {
       { error: "enqueue_failed", message: "Submission could not start — your credit was refunded. Please try again." },
       { status: 502 },
     );
+  }
+
+  // ── GAP-CLOSE (2026-08-10, founder-ruled): submission confirmation email — sent ONLY after a
+  // successful enqueue (a submission_failed case must never receive a "submitted" email; that
+  // path refunded and returned 502 above). NON-FATAL: submission already succeeded; the outcome
+  // is audit-logged and a failed send is recorded as skipped, never "sent". IDEMPOTENT: a prior
+  // submission_email audit row for this case suppresses any second send (each POST creates its
+  // own case, so this guard is belt-and-braces against replays/retries of the same case). ──
+  {
+    const { data: priorSend } = await supabaseAdmin
+      .from("audit_log")
+      .select("id")
+      .eq("table_name", "cases")
+      .eq("record_id", created.id)
+      .not("new_value->submission_email", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (!priorSend) {
+      const origin = new URL(req.url).origin;
+      const notified = await sendSubmissionConfirmation({
+        to: (client.email as string | undefined) ?? null,
+        caseNumber: created.case_number,
+        vendorName,
+        caseUrl: `${origin}/portal/cases/${created.id}`,
+      });
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "cases", record_id: created.id, action: "UPDATE",
+        actor_id: "system", actor_type: "system",
+        new_value: { submission_email: notified.sent ? "sent" : `skipped:${notified.reason ?? "unknown"}` },
+      });
+    }
   }
 
   return NextResponse.json({

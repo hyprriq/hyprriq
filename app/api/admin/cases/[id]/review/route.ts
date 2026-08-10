@@ -10,6 +10,7 @@ import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 import { sendDeliveryNotification } from "@/lib/email/notify";
+import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 
 // Phase 4 — Founder Decision. The Intelligence Engine reaches report-ready autonomously; review is
 // OPTIONAL, never required. This route records the founder's decision on the engine's output:
@@ -180,15 +181,22 @@ export async function POST(
   // ("delivered to your email") gets a sender. Non-fatal like every notify path: delivery already
   // happened; the outcome (sent / skip reason) is audit-logged, never surfaced as an error.
   {
-    const { data: owner } = await supabaseAdmin
-      .from("clients").select("email").eq("id", c.client_id).maybeSingle();
+    // GAP-CLOSE (2026-08-10): operator-run cases attribute to the house row, whose email is the
+    // undeliverable operator@hyprriq.internal placeholder — never send there; the skip is
+    // audit-logged as skipped:operator_house so the record can't read "sent".
+    const isHouse = c.client_id === OPERATOR_HOUSE_CLIENT_ID;
+    const { data: owner } = isHouse
+      ? { data: null }
+      : await supabaseAdmin.from("clients").select("email").eq("id", c.client_id).maybeSingle();
     const origin = new URL(req.url).origin;
-    const notified = await sendDeliveryNotification({
-      to: (owner?.email as string | undefined) ?? null,
-      caseNumber: c.case_number,
-      vendorName: c.vendor_name,
-      caseUrl: `${origin}/portal/cases/${id}`,
-    });
+    const notified = isHouse
+      ? { sent: false as const, reason: "operator_house" }
+      : await sendDeliveryNotification({
+          to: (owner?.email as string | undefined) ?? null,
+          caseNumber: c.case_number,
+          vendorName: c.vendor_name,
+          caseUrl: `${origin}/portal/cases/${id}`,
+        });
     await supabaseAdmin.from("audit_log").insert({
       table_name: "cases", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin",

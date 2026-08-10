@@ -110,6 +110,34 @@ export async function sendDeliveryNotification(opts: {
   }
 }
 
+// ── GAP-CLOSE BATCH (2026-08-10, founder-ruled: TWO transactional emails — delivery above and
+// THIS submission confirmation). LOCKED content rules (founder): no report content, no verdict,
+// no findings/risk language, NO delivery-time promise; links to the portal. The content lock is
+// machine-checked in notify.test.ts. Same gate + key-safety as every sibling; the caller
+// audit-logs {sent/reason} and NEVER records a failed send as sent. Idempotency lives at the
+// caller (submit route: one audit-checked send per case). ──
+export async function sendSubmissionConfirmation(opts: {
+  to: string | null;
+  caseNumber: string;
+  vendorName: string | null;
+  caseUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = `We received your case ${opts.caseNumber}`;
+  const html = `<p>Your research request${opts.vendorName ? ` for ${opts.vendorName}` : ""} (case ${opts.caseNumber}) has been submitted and is now in the queue.</p>
+<p><a href="${opts.caseUrl}">Track your case</a> in your portal — its status updates as the work progresses.</p>
+<p>You&rsquo;ll get another email when your report is delivered. Questions in the meantime? Use the support page in your portal.</p>`;
+  if ((await emailGate("submission_confirmation", subject, [html])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
 export async function sendDualNotification(opts: {
   clientEmail: string | null;
   subject: string;

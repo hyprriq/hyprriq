@@ -16,7 +16,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   supabaseAdmin: { from: vi.fn(() => ({ insert: auditInsert })) },
 }));
 
-import { sendAdminAlert, sendDualNotification, sendDeliveryNotification } from "./notify";
+import { sendAdminAlert, sendDualNotification, sendDeliveryNotification, sendSubmissionConfirmation } from "./notify";
 
 beforeEach(() => {
   sendMock.mockClear();
@@ -113,6 +113,46 @@ describe("delivery notification (2026-08-08 pre-design batch — gap audit 5.2, 
 
   it("no recipient on file → {sent:false, no_recipient}", async () => {
     const r = await sendDeliveryNotification({ ...base, to: null });
+    expect(r).toEqual({ sent: false, reason: "no_recipient" });
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("submission confirmation (2026-08-10 gap-close — founder ruled two emails; this is the second)", () => {
+  const base = { to: "client@example.com", caseNumber: "AWI-2608-030", vendorName: "Acme Distribution", caseUrl: "https://hyprriq.com/portal/cases/xyz" };
+
+  it("a clean submission confirmation sends to the client", async () => {
+    const r = await sendSubmissionConfirmation(base);
+    expect(r.sent).toBe(true);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock.mock.calls[0][0].to).toBe("client@example.com");
+    expect(sendMock.mock.calls[0][0].subject).toContain("AWI-2608-030");
+  });
+
+  it("LOCKED content rule: no verdict/findings/risk language and no delivery-time promise", async () => {
+    await sendSubmissionConfirmation(base);
+    const { subject, html } = sendMock.mock.calls[0][0];
+    const text = `${subject} ${html}`;
+    expect(text).not.toMatch(/verdict|finding|risk|guarantee/i);
+    expect(text).not.toMatch(/\b\d+\s*(business\s+)?(day|hour|week)s?\b/i);
+    expect(text).not.toMatch(/\bwithin\b|\bby (tomorrow|tonight|end of)\b/i);
+    expect(html).toContain(base.caseUrl); // links to the portal
+  });
+
+  it("a banned-language vendor name blocks the send", async () => {
+    const r = await sendSubmissionConfirmation({ ...base, vendorName: "Suspension-Proof Wholesale" });
+    expect(r).toEqual({ sent: false, reason: "banned_language" });
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("no API key → {sent:false, no_api_key} — never throws", async () => {
+    delete process.env.RESEND_API_KEY;
+    const r = await sendSubmissionConfirmation(base);
+    expect(r).toEqual({ sent: false, reason: "no_api_key" });
+  });
+
+  it("no recipient on file → {sent:false, no_recipient}", async () => {
+    const r = await sendSubmissionConfirmation({ ...base, to: null });
     expect(r).toEqual({ sent: false, reason: "no_recipient" });
     expect(sendMock).not.toHaveBeenCalled();
   });
