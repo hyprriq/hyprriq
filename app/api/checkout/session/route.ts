@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import { priceIdForPlan, topupPriceId, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_TYPES, type PlanType } from "@/lib/constants/plans";
+import { checkoutStateError } from "@/lib/billing/checkoutGuard";
 
 // Creates a Stripe Checkout Session for a plan purchase or a credit top-up and
 // returns its URL for the browser to redirect to. SCAFFOLDING: fully wired except
@@ -48,9 +49,21 @@ export async function POST(req: Request) {
   const supa = createServerClient();
   const { data: client } = await supa
     .from("clients")
-    .select("email, stripe_customer_id")
+    .select("email, stripe_customer_id, plan_category, billing_status")
     .eq("id", userId)
     .maybeSingle();
+
+  // ── STATE GUARD (gap-close 2026-08-10) — fail closed BEFORE Stripe: an active subscriber
+  // POSTing directly must never create a second subscription or clobber plan_type with a
+  // one-time purchase; top-ups are a subscription feature. Rule + tests: lib/billing/checkoutGuard. ──
+  const blocked = checkoutStateError({
+    kind: isTopup ? "topup" : "plan",
+    planCategory: (client?.plan_category as "one_time" | "subscription" | null) ?? null,
+    billingStatus: (client?.billing_status as string | null) ?? null,
+  });
+  if (blocked) {
+    return NextResponse.json({ error: blocked.error, message: blocked.message }, { status: blocked.status });
+  }
 
   const origin = new URL(req.url).origin;
   // Subscriptions for the monthly plans; one-time payment for Single Report + top-ups.

@@ -86,6 +86,9 @@ const MUST_PASS: [string, string][] = [
   ["submission email body line 1", "Your research request for Acme Distribution (case AWI-2608-030) has been submitted and is now in the queue."],
   ["submission email body line 2", "Track your case in your portal — its status updates as the work progresses."],
   ["submission email body line 3", "You'll get another email when your report is delivered. Questions in the meantime? Use the support page in your portal."],
+  // — checkout state-guard messages (2026-08-10 gap-close) —
+  ["checkout guard: already subscribed", "You already have a subscription. Plan changes and payment updates are handled in Stripe — use Manage subscription on the Billing page."],
+  ["checkout guard: topup requires subscription", "Top-up packs are part of the subscription plans. On a one-time plan, buy another report instead."],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],
