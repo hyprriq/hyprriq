@@ -81,7 +81,7 @@ export default async function BillingPage() {
                   </StripePortalButton>
                 ) : (
                   /* Gap audit 5.3 (2026-08-08): rebuy the client's OWN one-time tier — the
-                     hardcoded single_99 charged a Complete Report ($149) client $99 AND
+                     hardcoded single_99 charged a Single Deep Report ($149) client $99 AND
                      activatePlan downgraded their plan_type. */
                   <CheckoutButton
                     plan={plan}

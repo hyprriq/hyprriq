@@ -52,9 +52,9 @@ export const PLAN_CADENCE: Record<PlanType, string> = {
 
 export const PLAN_NAME: Record<PlanType, string> = {
   single_99: "Single Report",
-  // FOUNDER-RULED 2026-08-08: "Complete Report" IS the client-facing tier name (placeholder
-  // promoted; pre-design batch). Still a one-line edit here if ever re-ruled.
-  single_149: "Complete Report",
+  // FOUNDER RE-RULED 2026-08-10 (gap-close batch): "Single Deep Report" — matches the Stripe
+  // product name; supersedes the 08-08 "Complete Report" ruling. One-line edit if ever re-ruled.
+  single_149: "Single Deep Report",
   growth_279: "Growth",
   scale_499: "Scale",
 };

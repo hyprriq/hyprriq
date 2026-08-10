@@ -29,7 +29,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I try it before subscribing?",
-    a: "Yes. Buy a Single Report for $99, or the Complete Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan.",
+    a: "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan.",
   },
 ];
 

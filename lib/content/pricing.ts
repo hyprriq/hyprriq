@@ -1,6 +1,6 @@
 // Marketing copy lives here, not hardcoded in JSX (ADR-004). UI labels stay in
 // the components. Pricing ladder (founder-ruled 2026-08-07/08): Single $99 one-time
-// (3 brands, 3 dimensions) · Complete Report $149 one-time (3 brands, all 5
+// (3 brands, 3 dimensions) · Single Deep Report $149 one-time (3 brands, all 5
 // dimensions + category compliance, document review) · Growth $279/mo (5 brands,
 // 5/mo) · Scale $499/mo (5 brands, 12/mo, + category compliance). Upload caps
 // NEVER appear in pricing copy (standing law). Keepa lines removed while
@@ -75,7 +75,8 @@ export const oneTimePlans: Plan[] = [
   },
   {
     id: "single_149",
-    name: "Complete Report",
+    // FOUNDER RE-RULED 2026-08-10: matches the Stripe product name.
+    name: "Single Deep Report",
     price: "$149",
     cadence: "one-time",
     meta: "1 complete report",
@@ -93,7 +94,7 @@ export const oneTimePlans: Plan[] = [
 export const creditExplainer =
   "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Credits are just how many reports you can run.";
 
-export const comparisonColumns = ["Single Report", "Complete Report", "Growth", "Scale"] as const;
+export const comparisonColumns = ["Single Report", "Single Deep Report", "Growth", "Scale"] as const;
 
 export const comparison: {
   feature: string;

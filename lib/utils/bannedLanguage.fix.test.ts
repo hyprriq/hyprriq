@@ -65,7 +65,7 @@ const MUST_PASS: [string, string][] = [
   ["file limit message (2)", "Maximum 2 files — contact support if you need more."],
   ["doc-review description (entity/address)", "We check that the paperwork's entity and address line up with what our other research found independently. Documents usually cannot confirm the brands you plan to buy — that comes from the research areas above."],
   ["brand helper (corrected)", "The brands and vendor you enter here are what we research. An uploaded document helps confirm the vendor's entity and address — it is not expected to list your brands."],
-  ["$149 tier name", "Complete Report"],
+  ["$149 tier name (re-ruled 2026-08-10)", "Single Deep Report"],
   ["how-it-works doc-review body", "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty."],
   ["unconfirmed-brands FAQ (corrected)", "The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows."],
   // — Verified/Assessed vocabulary (founder-ruled 2026-08-07) + upload-security messages —
@@ -90,7 +90,7 @@ const MUST_PASS: [string, string][] = [
   ),
   ...comparison.map((r): [string, string] => [`comparison row: ${r.feature}`, `${r.feature}: ${r.values.join(" / ")}`]),
   ["FAQ credits answer (2026-08-08)", "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own."],
-  ["FAQ try-first answer (2026-08-08)", "Yes. Buy a Single Report for $99, or the Complete Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan."],
+  ["FAQ try-first answer (re-ruled name 2026-08-10)", "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan."],
   // — the spec §6 explicit denials —
   ["ungating denial", "We do not provide ungating services."],
   ["confirm-authorization denial", "We could not confirm authorization."],
