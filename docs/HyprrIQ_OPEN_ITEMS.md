@@ -40,6 +40,17 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ PRE-DESIGN BATCH CLOSED 2026-08-10 — all six blocks-design items LANDED** (1125/1125
+> unpiped exit 0 · tsc 0 · eslint 0 errors · build clean · ZERO frozen-engine files touched):
+> husks excised `ffc77c4` · change-request entry `dab6515` · delivery email `f41d880` (gated
+> soft — sends nothing until Resend env exists) · billing rebuy + plan card `ae88441` ·
+> Growth→Scale path `63ca32f` · marketing reconciled + dead links removed `43b789e`.
+> **The design lane is CLEAR.** Ledger keeps: Resend account + `RESEND_API_KEY`/`RESEND_FROM`/
+> `SUPPORT_INBOX` env (F) · the 3 remaining transactional emails (submission-confirm,
+> payment-failed, cancel-confirm) · Stripe portal plan-switch VERIFY (F — the new Change Plan
+> card depends on it) · live Stripe Scale product description still carries Keepa language
+> (F, describe-and-stop) · legal pages (1.6) · sample-report page (1.8).
+>
 > **⚡ PRE-DESIGN BATCH OPENED (founder-ruled 2026-08-08)** — the founder chose the recommended
 > ~1-day pre-design dev batch over opening the design lane directly. Scope = the six
 > BLOCKS-DESIGN items from the 2026-08-07 gap audit (preserved in full in
