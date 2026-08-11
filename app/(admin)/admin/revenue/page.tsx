@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/data/admin";
+import { can } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getRevenueSummary } from "@/lib/data/revenue";
 import { PLAN_NAME, type PlanType } from "@/lib/constants/plans";
@@ -14,6 +15,16 @@ function fmt(iso: string) {
 
 export default async function AdminRevenuePage() {
   const admin = await requireAdmin();
+  // PAGE GATE (2026-08-11, close-out item 7): money numbers need view_billing — nav-only was UX.
+  if (!can(admin, "view_billing")) {
+    return (
+      <AdminShell active="revenue" title="Revenue" operator={admin} clientScope={admin.clientScope} user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}>
+        <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
+          Revenue requires the <span className="font-semibold">Can view billing</span> permission.
+        </p>
+      </AdminShell>
+    );
+  }
   const s = await getRevenueSummary(admin.clientScope);
   return (
     <AdminShell active="revenue" title="Revenue" operator={admin} clientScope={admin.clientScope} user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}>

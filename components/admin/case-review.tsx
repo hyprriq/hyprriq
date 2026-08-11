@@ -86,6 +86,7 @@ export function CaseReview({
   additionalQuestions = [],
   supplierIdentity = null,
   canRerun = false,
+  canPublish = false,
 }: {
   caseId: string;
   caseNumber: string;
@@ -95,6 +96,7 @@ export function CaseReview({
   additionalQuestions?: AdditionalQuestion[];
   supplierIdentity?: SupplierIdentity | null;
   canRerun?: boolean;
+  canPublish?: boolean;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"idle" | "override" | "investigate" | "dispute">("idle");
@@ -618,30 +620,42 @@ export function CaseReview({
           </div>
         ) : (
           <>
+            {/* CLOSE-OUT item 7 (2026-08-11): never render an action the API will 403 —
+                publish/override need review_publish; investigation needs rerun (the same split
+                the review route enforces). Visible-but-refusing is the forbidden pattern. */}
             {mode === "idle" && (
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => send("publish")}
-                  disabled={busy !== null}
-                  className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
-                >
-                  {busy === "publish" ? "Delivering…" : "Publish report"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMode("override"); setError(null); }}
-                  className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
-                >
-                  Override verdict
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMode("investigate"); setError(null); }}
-                  className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
-                >
-                  Request further investigation
-                </button>
+                {canPublish && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => send("publish")}
+                      disabled={busy !== null}
+                      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+                    >
+                      {busy === "publish" ? "Delivering…" : "Publish report"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setMode("override"); setError(null); }}
+                      className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+                    >
+                      Override verdict
+                    </button>
+                  </>
+                )}
+                {canRerun && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode("investigate"); setError(null); }}
+                    className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+                  >
+                    Request further investigation
+                  </button>
+                )}
+                {!canPublish && !canRerun && (
+                  <p className="text-[13px] text-muted">Your role can review this case but not act on it — publishing needs the publish-reports permission; investigation needs the re-run permission.</p>
+                )}
               </div>
             )}
 

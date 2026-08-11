@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin, getAllCasesAdmin, type AdminCaseListFilter } from "@/lib/data/admin";
+import { can } from "@/lib/auth/permissions";
 import { AdminShell, type AdminNavKey } from "@/components/admin/admin-shell";
 import { StatusBadge, VerdictBadge } from "@/components/portal/badges";
 import { PLAN_NAME } from "@/lib/constants/plans";
@@ -30,6 +31,16 @@ export default async function AdminCasesPage({
 }) {
   const admin = await requireAdmin();
   const filter = normalize((await searchParams).filter);
+  // PAGE GATE (2026-08-11, close-out item 7): nav filtering is UX; this is the rule.
+  if (!can(admin, "view_cases")) {
+    return (
+      <AdminShell active={navKeyFor(filter)} title="Cases" operator={admin} clientScope={admin.clientScope} user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}>
+        <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
+          Viewing cases requires the <span className="font-semibold">Can view cases</span> permission.
+        </p>
+      </AdminShell>
+    );
+  }
   const cases = await getAllCasesAdmin(filter, admin.clientScope);
 
   return (

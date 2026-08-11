@@ -37,6 +37,17 @@ export default async function CaseReviewPage({
 }) {
   const admin = await requireAdmin();
   const { id } = await params;
+  // PAGE GATE (2026-08-11, close-out item 7): the review page is case material — view_cases is
+  // the rule here, not just in the nav.
+  if (!can(admin, "view_cases")) {
+    return (
+      <AdminShell active="review" title="Case Review" operator={admin} clientScope={admin.clientScope} user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}>
+        <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
+          Viewing cases requires the <span className="font-semibold">Can view cases</span> permission.
+        </p>
+      </AdminShell>
+    );
+  }
   const c = await getAdminCase(id);
   if (!c) notFound();
   // CLIENT PARTITIONING — same 404 rule as the client detail page for out-of-scope cases.
@@ -109,7 +120,7 @@ export default async function CaseReviewPage({
           )}
         </div>
 
-        <CaseReview caseId={c.id} caseNumber={c.case_number} vendorName={c.vendor_name} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} canRerun={can(admin, "rerun")} />
+        <CaseReview caseId={c.id} caseNumber={c.case_number} vendorName={c.vendor_name} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} canRerun={can(admin, "rerun")} canPublish={can(admin, "review_publish")} />
       </div>
     </AdminShell>
   );

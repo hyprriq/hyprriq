@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/data/admin";
+import { can } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getAdminSupportRequests } from "@/lib/data/adminSupport";
 
@@ -20,6 +21,17 @@ const STATUS_CLS: Record<string, string> = {
 
 export default async function AdminSupportPage() {
   const admin = await requireAdmin();
+  // PAGE GATE (2026-08-11, close-out item 7): support rows are client case material — same
+  // capability as cases; nav filtering is UX, this is the rule.
+  if (!can(admin, "view_cases")) {
+    return (
+      <AdminShell active="support" title="Support Queue" operator={admin} clientScope={admin.clientScope} user={{ initial: (admin.full_name || admin.email || "?").charAt(0).toUpperCase(), email: admin.email }}>
+        <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
+          Viewing the support queue requires the <span className="font-semibold">Can view cases</span> permission.
+        </p>
+      </AdminShell>
+    );
+  }
   const requests = await getAdminSupportRequests(admin.clientScope);
   return (
     <AdminShell
