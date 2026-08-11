@@ -26,6 +26,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const rpc = delta > 0 ? "add_client_credits" : "deduct_client_credits";
   const { data: balance, error } = await supabaseAdmin.rpc(rpc, { p_client_id: id, p_amount: Math.abs(delta) });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // ── MONEY INTEGRITY (2026-08-11, close-out item 6): deduct_client_credits returns NULL when
+  // the client lacks the balance — the RPC changed NOTHING. This used to fall through to ok:true
+  // plus an audit row for an adjustment that never happened. Fail loud, audit nothing. ──
+  if (balance === null) {
+    return NextResponse.json(
+      { error: "insufficient_credits", message: "The client does not have that many credits — nothing was deducted." },
+      { status: 409 },
+    );
+  }
 
   await supabaseAdmin.from("audit_log").insert({
     table_name: "clients", record_id: id, action: "UPDATE",
