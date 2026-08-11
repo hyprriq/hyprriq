@@ -40,6 +40,18 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ THREE-ITEM BATCH LANDED 2026-08-12** — 1153/1153 unpiped exit 0 · tsc 0 · eslint 0 · build clean:
+> **(1) SLA ruled 24h** `d3a6f88` — `CASE_SLA_HOURS=24`, `sla_deadline` stamped at submission on
+> BOTH intake paths; all displays fill automatically; `DELIVERY_SLA_HOURS` retired; ruling locked
+> in `sla.lock.test.ts`. PLAN_SLA_DAYS + client copy untouched (separate ruling).
+> **(2) Settings placeholder** `6a6fb3c` — now states the truth, names no invented settings.
+> **(3) Credit/usage semantics RULED + LOCKED** `3e284a1` — four cases stated as LAW in
+> SAAS_ARCHITECTURE §I + ADMIN_FOUNDATIONS §5 (refund formula's basis, never re-derived from
+> code). Adjust route → `adjust_client_credits` (balance-only), fails closed 503 until the
+> ⛔ **FOUNDER-RUN migration `20260812000000_credit_semantics_adjust_rpc.sql`** is applied
+> (NOT applied, not via MCP — describe-and-stop honored). Live audit_log check: zero past admin
+> adjustments → no inflated-usage rows exist, no corrective SQL needed.
+>
 > **✓ ADMIN DEV CLOSE-OUT LANDED 2026-08-11 (founder-ordered, 9 items)** — 1150/1150 unpiped
 > exit 0 · tsc 0 · eslint 0 errors · build clean · frozen diff empty (16 files, all admin/data/auth):
 > **(1+2) Run-a-case** `b290a88` — single_149 in the tier dropdown; document upload on the
