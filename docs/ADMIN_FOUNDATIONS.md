@@ -82,8 +82,15 @@ for the accounting section. It reorganizes existing plumbing only: credits held 
 (clients row) · per-case usage (`cases.credits_charged`) · credit adjustments (the audited
 credit-adjust rows) · plan events (`billing_audit`: new/upgrade/downgrade/cancel/resume +
 Option-A grant notes) · invoices/payments (read-only Stripe views). Writes stay where they are:
-adjust = `/api/admin/clients/[id]/credits` (H6 RPCs, reason required) · refunds = STOP-3,
+adjust = `/api/admin/clients/[id]/credits` (reason required) · refunds = STOP-3,
 Stripe-dashboard-only, NO write exists.
+
+**CREDIT/USAGE SEMANTICS (FOUNDER-RULED 2026-08-12 — LOCKED):** the four rules live in
+`docs/SAAS_ARCHITECTURE.md` §I and are STATED LAW, never re-derived from code. Ops summary:
+only case consumption increments `credits_used_this_cycle`; an admin adjustment corrects
+`credits_available` ONLY (RPC `adjust_client_credits`, migration `20260812000000` founder-run —
+the adjust route fails closed 503 until it runs); an unused-credit refund claws back the credit
+without touching usage; a delivered-report refund is money-only — credit stays consumed.
 
 ## 6. Audit coverage (confirmed + extended)
 

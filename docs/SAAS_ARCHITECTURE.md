@@ -207,6 +207,30 @@ for open work: `HyprrIQ_OPEN_ITEMS.md`; the WHY behind rulings: `HyprrIQ_OPEN_IT
   already blocks the only real abuse (retroactive upgrades of old cases). Keepa inherits this
   via the stamped plan + `brand_asins` threading — never a credit attribute.
 
+## I. CREDIT & USAGE SEMANTICS (FOUNDER-RULED 2026-08-12 — LOCKED, four cases, no others)
+
+These are STATED RULES, not descriptions of code. They are the basis of the refund formula
+and must never be re-derived from the implementation later. `credits_used_this_cycle` is the
+refund formula's input; anything that corrupts it corrupts money.
+
+1. **(a) A case consuming a credit** → `credits_available` −1, `credits_used_this_cycle` +1.
+   **This is the ONLY thing that increments usage.** RPC: `deduct_client_credits` (unchanged),
+   called ONLY by the consumption path (client submit).
+2. **(b) Admin adjustment, either direction** → changes `credits_available` ONLY. **Never
+   touches usage.** An adjustment is a correction, not consumption. RPC:
+   `adjust_client_credits` (migration `20260812000000`, founder-run; the credits route fails
+   closed 503 until it exists). History: pre-ruling, negative adjustments misused
+   `deduct_client_credits` and inflated usage permanently — that path is dead.
+3. **(c) Refund of an UNUSED credit** → claws `credits_available` back by 1. Usage untouched.
+   (No in-app refund flow yet — Stripe-dashboard-only; when built it uses rule-(b) mechanics.)
+4. **(d) Refund on a DELIVERED report** → money only. The credit stays consumed and usage
+   stays incremented — the client keeps the report. No credit RPC is involved, by rule.
+
+**System reversal (the inverse of (a), NOT an admin act):** when a charged submission FAILS
+before entering the pipeline, `refund_client_credits` (unchanged) restores `credits_available`
++N and decrements usage −N — the consumption never happened. `add_client_credits` (unchanged)
+serves purchases/top-ups/renewal grants: available-only, already rule-clean.
+
 ## G. Two "N/A" renderings that are CORRECT BY DESIGN — do not "fix"
 
 - **Track 5 (Sourcing Logic): `n_a` is structural.** Non-voting arbitration layer (sub-gate B,
