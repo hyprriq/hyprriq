@@ -26,7 +26,20 @@ export interface OperatorRunInput {
   company_name: string | null;
 }
 
-export async function runOperatorCase(input: OperatorRunInput): Promise<{ case_id: string | null; case_number: string | null; error: string | null }> {
+// ── ADMIN CLOSE-OUT (2026-08-11) — operator document upload. PRE-VETTED by the route (count cap,
+// size, magic-byte sniff — the same fileSniff rules as client submit; this module never trusts a
+// claimed type). Storage is IDENTICAL to the client path: same case-documents bucket, same
+// uploaded_files table, attribution = the house row (matches cases.client_id). documentPack reads
+// by case_id only, so Documentation Review consumes operator uploads exactly like client uploads. ──
+export interface OperatorRunDocument {
+  name: string;
+  buffer: Buffer;
+  mime: string;                        // SNIFFED mime — never client-claimed
+  kind: "pdf" | "image";
+  size: number;
+}
+
+export async function runOperatorCase(input: OperatorRunInput, documents: OperatorRunDocument[] = []): Promise<{ case_id: string | null; case_number: string | null; error: string | null }> {
   if (!input.vendor_name.trim()) return { case_id: null, case_number: null, error: "vendor_name required" };
   if (input.brands.length === 0) return { case_id: null, case_number: null, error: "at least one brand required" };
   if (input.brands.length > PLAN_BRAND_CAPS[input.plan_type]) {
@@ -66,6 +79,29 @@ export async function runOperatorCase(input: OperatorRunInput): Promise<{ case_i
       client_name: input.client_name, company_name: input.company_name, at: new Date().toISOString(),
     },
   });
+
+  // Documents BEFORE enqueue (same order as client submit) — the pipeline's documentPack must
+  // never race an empty upload set. Best-effort per file; the case proceeds regardless.
+  for (const [idx, d] of documents.entries()) {
+    try {
+      const path = `${OPERATOR_HOUSE_CLIENT_ID}/${created.id}/${Date.now()}-${idx}-${d.name}`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("case-documents")
+        .upload(path, d.buffer, { contentType: d.mime });
+      if (!upErr) {
+        await supabaseAdmin.from("uploaded_files").insert({
+          case_id: created.id,
+          client_id: OPERATOR_HOUSE_CLIENT_ID,
+          file_name: d.name,
+          file_type: d.kind === "pdf" ? "invoice_pdf" : "invoice_image",
+          storage_path: path,
+          file_size_bytes: d.size,
+        });
+      }
+    } catch {
+      /* per-file best effort — never blocks the run */
+    }
+  }
 
   // Downstream unchanged — the SAME durable pipeline event the client submit sends.
   try {

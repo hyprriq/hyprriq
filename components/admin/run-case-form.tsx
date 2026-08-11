@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 const PLANS = [
   { id: "scale_499", label: "Scale ($499 tier behavior — all tracks incl. Category Compliance)" },
   { id: "growth_279", label: "Growth ($279 tier behavior)" },
-  { id: "single_99", label: "Single ($99 tier behavior)" },
+  { id: "single_149", label: "Single Deep Report ($149 tier behavior — all 5 dimensions incl. Category Compliance, document review)" },
+  { id: "single_99", label: "Single ($99 tier behavior — no document review)" },
 ];
 
 export function RunCaseForm() {
@@ -23,23 +24,30 @@ export function RunCaseForm() {
   const [notes, setNotes] = useState("");
   const [clientName, setClientName] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ case_number: string; case_id: string } | null>(null);
 
+  // single_99 takes no documents (same server rule as client submit) — the disabled input below
+  // is presentation; the route enforces it.
+  const acceptsUploads = plan !== "" && plan !== "single_99";
+
   async function submit() {
     if (busy) return;
     setBusy(true); setError(null);
-    const res = await fetch("/api/admin/cases/run", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        plan_type: plan, vendor_name: vendor, vendor_website: website || undefined,
-        brands: brands.split(",").map((b) => b.trim()).filter(Boolean),
-        notes: notes || undefined, client_name: clientName || undefined, company_name: companyName || undefined,
-      }),
-    });
+    const fd = new FormData();
+    fd.set("plan_type", plan);
+    fd.set("vendor_name", vendor);
+    if (website) fd.set("vendor_website", website);
+    fd.set("brands", JSON.stringify(brands.split(",").map((b) => b.trim()).filter(Boolean)));
+    if (notes) fd.set("notes", notes);
+    if (clientName) fd.set("client_name", clientName);
+    if (companyName) fd.set("company_name", companyName);
+    if (acceptsUploads) for (const f of files) fd.append("file", f);
+    const res = await fetch("/api/admin/cases/run", { method: "POST", body: fd });
     const json = await res.json().catch(() => null);
-    if (!res.ok) setError(json?.error ?? "run failed");
+    if (!res.ok) setError(json?.message ?? json?.error ?? "run failed");
     else setDone({ case_number: json.case_number, case_id: json.case_id });
     setBusy(false);
   }
@@ -87,7 +95,17 @@ export function RunCaseForm() {
       <label className="block text-[12px] font-semibold text-muted">Notes (optional)<br />
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={field} />
       </label>
-      <p className="text-[12px] text-muted">Documents: upload after creation via the case screen (same as client uploads). No credit is deducted on this path.</p>
+      <label className="block text-[12px] font-semibold text-muted">Client documents (optional{plan === "single_99" ? " — the $99 tier takes no documents" : ""})<br />
+        <input
+          type="file"
+          multiple
+          accept=".pdf,.jpg,.jpeg,.png"
+          disabled={!acceptsUploads}
+          onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+          className={`${field} disabled:opacity-50`}
+        />
+      </label>
+      <p className="text-[12px] text-muted">Documents feed Documentation Review exactly like client uploads (same size and type rules). No credit is deducted on this path.</p>
       <button type="button" disabled={busy || !plan || !vendor.trim() || !brands.trim()} onClick={submit}
         className="rounded-lg bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
         {busy ? "Submitting…" : "Run case (no credit)"}
