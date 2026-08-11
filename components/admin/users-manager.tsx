@@ -1,36 +1,84 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { GRANTABLE_CAPABILITIES, type Capability } from "@/lib/auth/capabilities";
+import { useRouter } from "next/navigation";
+import { GRANTABLE_CAPABILITIES, CAPABILITY_LABELS, type Capability } from "@/lib/auth/capabilities";
 
 // ── PERMISSION HIERARCHY (2026-08-02) — the thin user-management screen (function only; the
 // UI/UX thread restyles). Calls the users APIs; the STRUCTURAL RULES are surfaced, not
 // discovered as errors: super_admin rows show "founder-managed (SQL)"; admin rows show
 // controls only to the super admin; the caller's own row shows "your row"; the capability
 // checkboxes offer only what THIS grantor may grant (subset-of-own for admins; the super-only
-// money/scope pair for nobody — the API enforces the same rules via lib/auth/grants). ──
+// money/scope pair for nobody — the API enforces the same rules via lib/auth/grants).
+// CLOSE-OUT item 5 (2026-08-11): invitations wired in (invite by email, pending/claimed/expired/
+// revoked, revoke), client assignment (super admin only, via the existing assignments API), and
+// every capability renders its plain-English label — internal names never reach an operator. ──
 
 interface AdminUserRow {
   user_id: string; email: string; role: string; capabilities: string[]; disabled: boolean; created_by: string | null;
 }
 
-export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; selfRole: "super_admin" | "admin" | "sub_user"; selfCaps: string[] }) {
+interface InvitationRow {
+  id: number | string; email: string; capabilities: string[]; created_at: string; expires_at: string;
+  accepted_at: string | null; accepted_user_id: string | null; revoked_at: string | null;
+}
+
+function invitationStatus(inv: InvitationRow): "pending" | "claimed" | "expired" | "revoked" {
+  if (inv.accepted_at) return "claimed";
+  if (inv.revoked_at) return "revoked";
+  if (new Date(inv.expires_at).getTime() <= Date.now()) return "expired";
+  return "pending";
+}
+
+const INVITE_STATUS_CLS: Record<string, string> = {
+  pending: "bg-conditional-bg text-conditional-ink",
+  claimed: "bg-clear-bg text-clear-ink",
+  expired: "bg-subtle text-muted",
+  revoked: "bg-deny-bg text-deny-ink",
+};
+
+const label = (c: string) => CAPABILITY_LABELS[c as Capability] ?? c;
+
+export function UsersManager({
+  selfId,
+  selfRole,
+  selfCaps,
+  assignableClients = [],
+  assignments = [],
+}: {
+  selfId: string;
+  selfRole: "super_admin" | "admin" | "sub_user";
+  selfCaps: string[];
+  assignableClients?: { id: string; label: string }[];
+  assignments?: { admin_user_id: string; client_id: string }[];
+}) {
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [newUserId, setNewUserId] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "sub_user">("sub_user");
   const [newCaps, setNewCaps] = useState<Capability[]>([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteCaps, setInviteCaps] = useState<Capability[]>([]);
+  const [assignPick, setAssignPick] = useState<Record<string, string>>({});
   // What THIS grantor's checkboxes may offer — mirrors grantableBy server-side.
   const GRANTABLE = GRANTABLE_CAPABILITIES.filter(
     (c) => selfRole === "super_admin" || selfCaps.includes(c),
   );
+  const canAssign = selfRole === "super_admin"; // assignment is user management — API-enforced too
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/users");
-    if (!res.ok) { setError((await res.json().catch(() => null))?.error ?? "load failed"); return; }
-    setUsers((await res.json()).users ?? []);
+    const [uRes, iRes] = await Promise.all([
+      fetch("/api/admin/users"),
+      fetch("/api/admin/invitations"),
+    ]);
+    if (!uRes.ok) { setError((await uRes.json().catch(() => null))?.error ?? "load failed"); return; }
+    setUsers((await uRes.json()).users ?? []);
+    if (iRes.ok) setInvites((await iRes.json()).invitations ?? []);
   }, []);
   // Initial fetch from the external API — the setState happens after the network await, but the
   // react-hooks heuristic flags it; the fetch-on-mount is intentional for this functional screen.
@@ -59,9 +107,63 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
     setBusy(false);
   }
 
+  async function invite(preset: boolean) {
+    if (busy || !inviteEmail.trim()) return;
+    setBusy(true); setError(null); setNotice(null);
+    const res = await fetch("/api/admin/invitations", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preset ? { email: inviteEmail, preset: "full_access" } : { email: inviteEmail, capabilities: inviteCaps }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) setError(json?.error ?? "invite failed");
+    else {
+      setInviteEmail(""); setInviteCaps([]);
+      if (!json?.email_sent) setNotice(`Invitation created but the email was not sent (${json?.email_skip_reason ?? "unknown"}) — share the sign-up link directly: ${json?.share_link ?? "/sign-up"}`);
+      await load();
+    }
+    setBusy(false);
+  }
+
+  async function revoke(id: InvitationRow["id"]) {
+    if (busy) return;
+    setBusy(true); setError(null);
+    const res = await fetch(`/api/admin/invitations/${id}`, { method: "DELETE" });
+    if (!res.ok) setError((await res.json().catch(() => null))?.error ?? "revoke failed");
+    else await load();
+    setBusy(false);
+  }
+
+  async function assign(staffId: string) {
+    const clientId = assignPick[staffId];
+    if (busy || !clientId) return;
+    setBusy(true); setError(null);
+    const res = await fetch(`/api/admin/clients/${clientId}/assignments`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ admin_user_id: staffId }),
+    });
+    if (!res.ok) setError((await res.json().catch(() => null))?.error ?? "assign failed");
+    else router.refresh(); // assignments arrive as server props
+    setBusy(false);
+  }
+
+  async function unassign(staffId: string, clientId: string) {
+    if (busy) return;
+    setBusy(true); setError(null);
+    const res = await fetch(`/api/admin/clients/${clientId}/assignments`, {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ admin_user_id: staffId }),
+    });
+    if (!res.ok) setError((await res.json().catch(() => null))?.error ?? "unassign failed");
+    else router.refresh();
+    setBusy(false);
+  }
+
+  const clientLabel = (id: string) => assignableClients.find((c) => c.id === id)?.label ?? id;
+
   return (
     <div className="space-y-5">
       {error && <p className="rounded-lg bg-deny-bg px-3 py-2 text-[13px] text-deny-ink">{error}</p>}
+      {notice && <p className="rounded-lg bg-conditional-bg px-3 py-2 text-[13px] text-conditional-ink">{notice}</p>}
 
       <div className="rounded-card border border-line bg-surface p-4">
         <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Admin users</div>
@@ -72,6 +174,8 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
               const isSuper = u.role === "super_admin";
               // Tiered management: admin rows are editable by the super admin only.
               const managable = !isSuper && !isSelf && (u.role === "sub_user" || selfRole === "super_admin");
+              const assigned = assignments.filter((a) => a.admin_user_id === u.user_id).map((a) => a.client_id);
+              const unassigned = assignableClients.filter((c) => !assigned.includes(c.id));
               return (
                 <tr key={u.user_id} className="border-t border-line/60 first:border-t-0 align-top">
                   <td className="py-2 pr-3">
@@ -79,10 +183,47 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
                     <div className="text-[11px] text-muted">{u.user_id}</div>
                   </td>
                   <td className="py-2 pr-3">
-                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-muted"}`}>{u.role}</span>
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-muted"}`}>{u.role === "super_admin" ? "Founder" : u.role === "admin" ? "Admin" : "Staff"}</span>
                     {u.disabled && <span className="ml-1 rounded bg-deny-bg px-1.5 py-0.5 text-[11px] font-semibold text-deny-ink">disabled</span>}
                   </td>
-                  <td className="py-2 pr-3 text-muted">{isSuper ? "all capabilities" : (u.capabilities.join(", ") || "none")}</td>
+                  <td className="py-2 pr-3 text-muted">
+                    {isSuper ? "All permissions" : (u.capabilities.map(label).join(", ") || "No permissions")}
+                    {canAssign && !isSuper && (
+                      <div className="mt-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Client access</div>
+                        {assigned.length === 0 ? (
+                          <p className="mt-1 text-[12px] text-muted">
+                            {u.capabilities.includes("view_all_clients") ? "Sees all clients (permission)." : "No clients assigned — this person sees an empty product until one is."}
+                          </p>
+                        ) : (
+                          <ul className="mt-1 space-y-1">
+                            {assigned.map((cid) => (
+                              <li key={cid} className="flex items-center gap-2 text-[12px] text-ink-2">
+                                {clientLabel(cid)}
+                                <button type="button" disabled={busy} onClick={() => unassign(u.user_id, cid)}
+                                  className="rounded border border-line px-1.5 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle">
+                                  remove
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {unassigned.length > 0 && (
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <select value={assignPick[u.user_id] ?? ""} onChange={(e) => setAssignPick({ ...assignPick, [u.user_id]: e.target.value })}
+                              className="rounded-lg border border-line bg-base px-2 py-1 text-[12px] text-ink">
+                              <option value="">Choose a client…</option>
+                              {unassigned.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                            </select>
+                            <button type="button" disabled={busy || !assignPick[u.user_id]} onClick={() => assign(u.user_id)}
+                              className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
+                              Assign
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
                   <td className="py-2 text-right">
                     {isSuper ? (
                       <span className="text-[11px] text-muted">founder-managed (SQL)</span>
@@ -91,12 +232,12 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
                     ) : !managable ? (
                       <span className="text-[11px] text-muted">managed by the super admin</span>
                     ) : (
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-2">
                         {GRANTABLE.map((cap) => (
                           <label key={cap} className="flex items-center gap-1 text-[11px] text-muted">
                             <input type="checkbox" checked={u.capabilities.includes(cap)} disabled={busy}
                               onChange={(e) => patch(u.user_id, { capabilities: e.target.checked ? [...u.capabilities, cap] : u.capabilities.filter((c) => c !== cap) })} />
-                            {cap}
+                            {label(cap)}
                           </label>
                         ))}
                         <button type="button" disabled={busy} onClick={() => patch(u.user_id, { disabled: !u.disabled })}
@@ -115,19 +256,76 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
       </div>
 
       <div className="rounded-card border border-line bg-surface p-4">
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Create user</div>
+        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Invite by email</div>
+        <p className="mb-2 text-[12px] text-muted">
+          The invited person signs up with this email address; on their first admin visit their staff access
+          activates with the permissions below. Invitations expire after 7 days and can be revoked while pending.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-[12px] text-muted">Email<br />
+            <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
+          </label>
+          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(false)}
+            className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
+            Invite with selected permissions
+          </button>
+          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(true)}
+            className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
+            Invite with full access
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-3">
+          {GRANTABLE.map((cap) => (
+            <label key={cap} className="flex items-center gap-1 text-[12px] text-muted">
+              <input type="checkbox" checked={inviteCaps.includes(cap)}
+                onChange={(e) => setInviteCaps(e.target.checked ? [...inviteCaps, cap] : inviteCaps.filter((c) => c !== cap))} />
+              {label(cap)}
+            </label>
+          ))}
+        </div>
+        {invites.length > 0 && (
+          <table className="mt-3 w-full text-[13px]">
+            <tbody>
+              {invites.map((inv) => {
+                const st = invitationStatus(inv);
+                return (
+                  <tr key={String(inv.id)} className="border-t border-line/60 align-top">
+                    <td className="py-2 pr-3 font-medium text-ink">{inv.email}</td>
+                    <td className="py-2 pr-3">
+                      <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${INVITE_STATUS_CLS[st]}`}>{st}</span>
+                    </td>
+                    <td className="py-2 pr-3 text-muted">{(inv.capabilities ?? []).map(label).join(", ") || "No permissions"}</td>
+                    <td className="py-2 pr-3 text-[12px] text-muted">expires {new Date(inv.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                    <td className="py-2 text-right">
+                      {st === "pending" && (
+                        <button type="button" disabled={busy} onClick={() => revoke(inv.id)}
+                          className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle">
+                          revoke
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="rounded-card border border-line bg-surface p-4">
+        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Add by Clerk user id (already signed up)</div>
         <p className="mb-2 text-[12px] text-muted">
           {selfRole === "super_admin"
             ? "You can create admins (who manage staff) and staff. A super_admin row is founder-seeded SQL only. Money and all-clients scope stay with the super admin."
-            : "You can create staff and grant a subset of your own capabilities. Admins are created by the super admin."}
-          {" "}You cannot edit your own row.
+            : "You can create staff and grant a subset of your own permissions. Admins are created by the super admin."}
+          {" "}You cannot edit your own row. For someone who has not signed up yet, use Invite by email above.
         </p>
         <div className="flex flex-wrap items-end gap-2">
           {selfRole === "super_admin" && (
             <label className="text-[12px] text-muted">Role<br />
               <select value={newRole} onChange={(e) => setNewRole(e.target.value as "admin" | "sub_user")}
                 className="mt-1 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink">
-                <option value="sub_user">Staff (sub_user)</option>
+                <option value="sub_user">Staff (works cases)</option>
                 <option value="admin">Admin (manages staff)</option>
               </select>
             </label>
@@ -144,18 +342,18 @@ export function UsersManager({ selfId, selfRole, selfCaps }: { selfId: string; s
             <label key={cap} className="flex items-center gap-1 text-[12px] text-muted">
               <input type="checkbox" checked={newCaps.includes(cap)}
                 onChange={(e) => setNewCaps(e.target.checked ? [...newCaps, cap] : newCaps.filter((c) => c !== cap))} />
-              {cap}
+              {label(cap)}
             </label>
           ))}
         </div>
         <div className="mt-3 flex gap-2">
           <button type="button" disabled={busy} onClick={() => create(false)}
             className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
-            Create with selected capabilities
+            Create with selected permissions
           </button>
           <button type="button" disabled={busy} onClick={() => create(true)}
             className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
-            Create with FULL ACCESS
+            Create with full access
           </button>
         </div>
       </div>

@@ -28,3 +28,15 @@ export const GRANTABLE_CAPABILITIES: readonly Capability[] = CAPABILITIES.filter
 // FULL ACCESS preset = every GRANTABLE capability (never user management — that is a ROLE; and
 // never the super-only pair — that is the super_admin role too, by the 2026-08-02 hierarchy).
 export const FULL_ACCESS: readonly Capability[] = GRANTABLE_CAPABILITIES;
+
+// ── CLOSE-OUT item 5 (2026-08-11): plain-English labels for every operator-facing surface.
+// Internal capability names stay in code, APIs, and audit rows — operators never read them. ──
+export const CAPABILITY_LABELS: Record<Capability, string> = {
+  view_cases: "Can view cases",
+  review_publish: "Can publish reports",
+  run_case: "Can run cases",
+  rerun: "Can re-run research",
+  adjust_credits: "Can adjust credits",
+  view_billing: "Can view billing",
+  view_all_clients: "Can see all clients",
+};

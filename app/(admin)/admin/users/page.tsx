@@ -1,5 +1,5 @@
-import { requireAdmin } from "@/lib/data/admin";
-import { canManageStaff } from "@/lib/auth/permissions";
+import { requireAdmin, getAdminClients, getAllStaffAssignments } from "@/lib/data/admin";
+import { canManageStaff, canManageUsers } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { UsersManager } from "@/components/admin/users-manager";
 
@@ -22,9 +22,23 @@ export default async function AdminUsersPage() {
       </AdminShell>
     );
   }
+  // CLOSE-OUT item 5 (2026-08-11): client assignment is user management — super admin only (the
+  // assignments API enforces the same). Data comes server-side; mutations go through the API and
+  // the client calls router.refresh() to re-read.
+  const isSuper = canManageUsers(op);
+  const assignableClients = isSuper
+    ? (await getAdminClients(null)).map((c) => ({ id: c.id, label: c.full_name || c.company_name || c.email }))
+    : [];
+  const assignments = isSuper ? await getAllStaffAssignments() : [];
   return (
     <AdminShell active="users" title="Users" {...shellProps}>
-      <UsersManager selfId={op.user_id} selfRole={op.role} selfCaps={[...op.capabilities]} />
+      <UsersManager
+        selfId={op.user_id}
+        selfRole={op.role}
+        selfCaps={[...op.capabilities]}
+        assignableClients={assignableClients}
+        assignments={assignments}
+      />
     </AdminShell>
   );
 }

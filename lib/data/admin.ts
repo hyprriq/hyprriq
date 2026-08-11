@@ -316,6 +316,20 @@ export async function getCasesForClient(id: string): Promise<AdminCaseRow[]> {
   return (data as unknown as AdminCaseRow[]) ?? [];
 }
 
+// ── CLOSE-OUT item 5 (2026-08-11): the assignment read for the Users screen. The whole table is
+// small (staff × assigned clients); the Users page is super-admin-territory anyway (writes go
+// through the existing assignments API, which is canManageUsers-gated). ──
+export type StaffAssignmentRow = { admin_user_id: string; client_id: string };
+
+export async function getAllStaffAssignments(): Promise<StaffAssignmentRow[]> {
+  try {
+    const { data } = await supabaseAdmin.from("staff_client_assignments").select("admin_user_id, client_id");
+    return (data as StaffAssignmentRow[]) ?? [];
+  } catch {
+    return []; // pre-migration: no table yet
+  }
+}
+
 // Billing History (Item 5). Reads billing_audit; empty until the Stripe webhook
 // starts writing rows (Item 5 build) — the panel renders an empty state.
 export type BillingAuditRow = {
