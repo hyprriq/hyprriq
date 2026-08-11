@@ -73,17 +73,13 @@ export const PLAN_SLA_DAYS: Record<PlanType, number> = {
   scale_499: 3,
 };
 
-// ── DELIVERY SLA (founder-ruled 2026-08-02): delivery is ~1 hour, HARD MAX. The single named
-// constant both the client-facing promise and the (deferred) refund logic read — the
-// "undelivered / full-refund" state exists ONLY within this window; after delivery the
-// delivered-report refund path applies (policy captured in docs, build deferred to the
-// billing-section pass). ⚠ FLAGGED TENSION for the founder (UNRESOLVED as of 2026-08-07):
-// PLAN_SLA_DAYS above (3–5 days) drives the est-completion label + onboarding copy, vs this
-// 1-hour value (currently declaration-only — zero consumers). CORRECTION 2026-08-07: an earlier
-// version of this comment claimed PLAN_SLA_DAYS drives cases.sla_deadline — FALSE; nothing
-// sets sla_deadline anywhere (it is NULL on every case; B4 report). Reconcile which promise
-// the client sees before marketing/report copy locks. ──
-export const DELIVERY_SLA_HOURS = 1;
+// ── CASE SLA (FOUNDER-RULED 2026-08-12: 24 HOURS): cases.sla_deadline = submitted_at + 24h,
+// stamped at submission by BOTH intake paths (client submit route + operator run). THE single
+// named constant every SLA display and risk count reads. Supersedes DELIVERY_SLA_HOURS
+// (1h, zero consumers — retired same ruling). PLAN_SLA_DAYS above is deliberately UNTOUCHED:
+// it drives client-facing est-completion copy, which pends a SEPARATE copy ruling — this
+// constant is the operational deadline, not the client promise. ──
+export const CASE_SLA_HOURS = 24;
 // The refund window (days from delivery for single reports; from charge for subscriptions).
 // Captured with the LOCKED refund policy; the money-write build is deferred.
 export const REFUND_WINDOW_DAYS = 14;

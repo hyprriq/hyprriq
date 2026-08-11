@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   brandCapForPlan,
   creditsRequired,
+  CASE_SLA_HOURS,
   PLAN_CATEGORY,
   type PlanType,
 } from "@/lib/constants/plans";
@@ -153,6 +154,8 @@ export async function POST(req: Request) {
       credits_required: cost,
       credits_charged: cost,
       status: "pending_intake",
+      // SLA (founder-ruled 2026-08-12): submitted_at + 24h, stamped at submission.
+      sla_deadline: new Date(Date.now() + CASE_SLA_HOURS * 3_600_000).toISOString(),
     })
     .select("id, case_number")
     .single();

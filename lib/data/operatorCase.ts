@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
-import { PLAN_CATEGORY, PLAN_BRAND_CAPS, type PlanType } from "@/lib/constants/plans";
+import { CASE_SLA_HOURS, PLAN_CATEGORY, PLAN_BRAND_CAPS, type PlanType } from "@/lib/constants/plans";
 
 // ── ADMIN BATCH — "RUN A CASE": the operator-run intake path. A DISTINCT code path from client
 // submission by construction: this module is imported ONLY by the admin run route (permission
@@ -63,6 +63,9 @@ export async function runOperatorCase(input: OperatorRunInput, documents: Operat
       client_notes: input.notes,
       credits_required: 0, credits_charged: 0,   // provenance: no credit moved, truthfully recorded
       status: "pending_intake",
+      // SLA (2026-08-12): operator-run cases carry the same 24h deadline — the queue risk view
+      // must cover every case the team owes, credit-bypassed or not.
+      sla_deadline: new Date(Date.now() + CASE_SLA_HOURS * 3_600_000).toISOString(),
       origin: "operator",
       operator_meta: { operator_id: input.operator_id, client_name: input.client_name, company_name: input.company_name },
     })
