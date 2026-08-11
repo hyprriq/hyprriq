@@ -40,6 +40,28 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ ADMIN DEV CLOSE-OUT LANDED 2026-08-11 (founder-ordered, 9 items)** — 1150/1150 unpiped
+> exit 0 · tsc 0 · eslint 0 errors · build clean · frozen diff empty (16 files, all admin/data/auth):
+> **(1+2) Run-a-case** `b290a88` — single_149 in the tier dropdown; document upload on the
+> operator path (multipart route, same fileSniff rules as client submit, house-prefix storage,
+> uploads BEFORE enqueue — Documentation Review no longer silently starves on operator cases).
+> **(3) House row out of the money** `d194035` — MRR corrected $1,277 → **$778 (live-verified
+> vs founder figure)**; excluded from revenue summary, plan/billing-status counts, Active
+> Clients, and the client list via `neq(OPERATOR_HOUSE_CLIENT_ID)`; case attribution untouched.
+> **(4) last_active_at** `d194035` — now written on every client-authenticated portal load
+> (15-min throttle, non-fatal); Active Clients ordering is truthful.
+> **(5) Users screen** `a33c08e` — invitations wired (invite-by-email, pending/claimed/expired/
+> revoked, revoke, share-link fallback), super-admin client assignment per staff row, plain-
+> English capability labels everywhere. Containment rules untouched.
+> **(6) Credit adjust** `277ed02` — over-deduction now 409s loudly, no audit row for a no-op.
+> FINDING: negative admin adjustments count as client usage (deduct RPC), positive ones don't
+> reverse it — asymmetry pends a founder ruling (RPC change = migration).
+> **(7) Page gates** `7d8ee63` — view_cases on /admin/cases + review + support; view_billing on
+> /admin/revenue; Publish/Override need review_publish, Investigate needs rerun — no
+> visible-but-refusing buttons remain.
+> **(8) SLA — NOT BUILT** (no founder confirmation of 24h on record): nothing changed; removal
+> impact reported in-chat. **(9)** Billing-discoverability + settings reports delivered in-chat.
+>
 > **✓ GAP-CLOSE BATCH LANDED 2026-08-10 (founder-ordered, four items)** — 1146/1146 unpiped
 > exit 0 · tsc 0 · eslint 0 errors · build clean · frozen engine untouched:
 > **(1) Submission confirmation email** `1c2cac2` — the SECOND of the two ruled transactional
