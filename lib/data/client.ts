@@ -27,7 +27,18 @@ export type Client = {
   stripe_customer_id: string | null;
   onboarding_completed: boolean;
   role: Role;
+  last_active_at: string | null;
 };
+
+// ── DATA HONESTY (2026-08-11, admin close-out item 4): last_active_at was written ONCE at row
+// creation and never again, so "Active Clients" ordering was meaningless. It now refreshes on a
+// REAL signal — every client-authenticated portal load — throttled so a browsing session writes
+// at most once per window, and non-fatal (a failed touch never breaks a page). ──
+const LAST_ACTIVE_THROTTLE_MS = 15 * 60_000;
+
+function lastActiveStale(last: string | null): boolean {
+  return !last || Date.now() - new Date(last).getTime() > LAST_ACTIVE_THROTTLE_MS;
+}
 
 // Lazy idempotent provisioning. There is no Clerk user.created webhook, so the
 // clients row is created on first authenticated portal load. Idempotent on the
@@ -38,13 +49,19 @@ export async function getOrCreateClient(): Promise<Client | null> {
   if (!userId) return null;
 
   const supa = createServerClient();
-  const select = "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role";
+  const select = "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role, last_active_at";
 
   let { data } = await supa
     .from("clients")
     .select(select)
     .eq("id", userId)
     .maybeSingle();
+
+  if (data && lastActiveStale((data as { last_active_at?: string | null }).last_active_at ?? null)) {
+    try {
+      await supa.from("clients").update({ last_active_at: new Date().toISOString() }).eq("id", userId);
+    } catch { /* the touch is telemetry, never a gate */ }
+  }
 
   if (!data) {
     const user = await currentUser();
@@ -134,7 +151,7 @@ export async function getCurrentClient(): Promise<Client | null> {
   const { data } = await supa
     .from("clients")
     .select(
-      "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role",
+      "id, email, full_name, company_name, plan_type, plan_category, credits_available, credits_used_this_cycle, renewal_date, billing_status, stripe_customer_id, onboarding_completed, role, last_active_at",
     )
     .eq("id", userId)
     .maybeSingle();

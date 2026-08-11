@@ -5,6 +5,7 @@ import { getClientScope, type ClientScope } from "@/lib/auth/clientScope";
 import { claimAdminInvitation } from "@/lib/auth/invitations";
 import { type Role } from "@/lib/data/client";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
 import type { AdditionalQuestion } from "@/lib/research/contracts";
@@ -125,10 +126,15 @@ export async function getAdminDashboard(scope: ClientScope = null): Promise<Admi
   // No limit here: MRR must aggregate ALL active subscribers. The "Active
   // Clients" widget slices to 5 in JS below. (At scale, move MRR to a DB-side
   // sum and paginate this list — see SESSION_F_PROGRESS.md.)
+  // ── DATA HONESTY (2026-08-11): the operator house row is NOT a client — it carries
+  // scale_499/active only so operator cases can attribute somewhere. Left in, it inflated MRR by
+  // $499 and sat in Active Clients as a fake subscriber. Excluded from every money/list read;
+  // kept wherever it is legitimately the case OWNER (case attribution is untouched). ──
   let clientsQ = supabaseAdmin
     .from("clients")
     .select("id, full_name, plan_type, credits_available, billing_status")
     .eq("billing_status", "active")
+    .neq("id", OPERATOR_HOUSE_CLIENT_ID)
     .is("deleted_at", null)
     .order("last_active_at", { ascending: false, nullsFirst: false });
   if (scope !== null) {
@@ -237,6 +243,7 @@ export async function getAdminClients(scope: ClientScope = null): Promise<AdminC
   let q = supabaseAdmin
     .from("clients")
     .select("id, full_name, company_name, email, plan_type, billing_status, credits_available, role, created_at")
+    .neq("id", OPERATOR_HOUSE_CLIENT_ID) // data honesty 2026-08-11 — the house row is not a client
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (scope !== null) q = q.in("id", scope);

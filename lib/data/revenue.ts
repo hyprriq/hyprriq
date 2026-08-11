@@ -5,6 +5,7 @@
 // (flagged as the conservative default; business-wide totals are a super/view-all read).
 
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 import type { ClientScope } from "@/lib/auth/clientScope";
 import { MONTHLY_PRICE } from "@/lib/data/admin";
 import type { PlanType } from "@/lib/constants/plans";
@@ -22,9 +23,12 @@ export async function getRevenueSummary(scope: ClientScope): Promise<RevenueSumm
   const empty: RevenueSummary = { mrr: 0, activeSubscribers: 0, planCounts: {}, billingStatusCounts: {}, recentBillingEvents: [], eventCounts: {} };
   if (scope !== null && scope.length === 0) return empty; // fail closed
 
+  // Data honesty 2026-08-11: the operator house row (fake scale_499/active, exists only for case
+  // attribution) must never count toward MRR, plan distribution, or billing-status counts.
   let clientsQ = supabaseAdmin
     .from("clients")
     .select("id, plan_type, billing_status")
+    .neq("id", OPERATOR_HOUSE_CLIENT_ID)
     .is("deleted_at", null);
   let eventsQ = supabaseAdmin
     .from("billing_audit")
