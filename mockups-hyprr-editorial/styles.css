@@ -1,0 +1,565 @@
+/* ==========================================================================
+   HYPRR — editorial documentary mockup
+   One stylesheet. Tokens first, then chapters in reading order.
+   ========================================================================== */
+
+:root {
+  /* palette — founder-ruled */
+  --ivory: #F7F5F2;
+  --linen: #EFE9E2;
+  --graphite: #262626;
+  --graphite-2: #5C5850;   /* secondary text on ivory — 6.4:1 */
+  --navy: #132033;
+  --navy-2: #0D1826;
+  --copper: #B87333;       /* large display + rules only on light bg */
+  --copper-deep: #8A5527;  /* small copper text on light bg — 5.5:1 */
+  --copper-lift: #C98F55;  /* copper on navy */
+  --forest: #30594A;
+  --gold: #B89A5D;
+  --hairline: rgba(38, 38, 38, 0.14);
+  --hairline-strong: rgba(38, 38, 38, 0.32);
+  --navy-hairline: rgba(247, 245, 242, 0.18);
+  --ink-on-navy: #F2EFEA;
+  --muted-on-navy: #B9C2CE;
+
+  /* type */
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* rhythm */
+  --chapter-pad: clamp(6rem, 16vh, 11rem);
+  --measure: 38rem;
+  --frame: min(1200px, calc(100vw - clamp(2.5rem, 7vw, 7rem)));
+}
+
+/* --------------------------------------------------------------------------
+   Reset / base
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+/* anchor jumps must clear the fixed masthead */
+section, .opening-still { scroll-margin-top: 5rem; }
+
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--graphite);
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; display: block; }
+
+h1, h2, h3 {
+  font-family: var(--serif);
+  font-weight: 480;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p { margin: 0 0 1.4em; max-width: var(--measure); text-wrap: pretty; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--copper-deep);
+  outline-offset: 4px;
+  border-radius: 1px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem; top: -4rem;
+  background: var(--navy); color: var(--ivory);
+  padding: 0.6rem 1rem;
+  font-family: var(--mono); font-size: 0.8125rem;
+  text-decoration: none;
+  z-index: 40;
+  transition: top 150ms ease-out;
+}
+.skip-link:focus { top: 1rem; }
+
+/* documentary caption — the one repeating typographic device, used only
+   under photographs and figures, never as section scaffolding */
+.still-caption {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: var(--graphite-2);
+  max-width: 46rem;
+  margin-top: 0.85rem;
+}
+
+/* --------------------------------------------------------------------------
+   Masthead
+   -------------------------------------------------------------------------- */
+.masthead {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 30;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.1rem clamp(1.25rem, 3.5vw, 3.5rem);
+  background: color-mix(in srgb, var(--ivory) 88%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 300ms ease-out;
+}
+.masthead.is-scrolled { border-bottom-color: var(--hairline); }
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+.wordmark span { color: var(--copper-deep); }
+
+.masthead nav {
+  display: flex;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+.masthead nav a {
+  text-decoration: none;
+  color: var(--graphite-2);
+  /* generous vertical padding = comfortable tap target inside a thin bar */
+  padding: 0.85rem 0 2px;
+  margin-top: -0.85rem;
+  border-bottom: 1px solid transparent;
+  transition: color 200ms ease-out, border-color 200ms ease-out;
+}
+.masthead nav a:hover { color: var(--graphite); border-bottom-color: var(--copper); }
+
+/* --------------------------------------------------------------------------
+   Chapter I — opening. Almost nothing.
+   -------------------------------------------------------------------------- */
+.opening {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(7rem, 18vh, 12rem) 1.5rem 4rem;
+  row-gap: 2.5rem;
+}
+
+.dateline {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  color: var(--graphite-2);
+}
+
+.opening h1 {
+  font-size: clamp(2.6rem, 7.2vw, 5.4rem);
+  max-width: 16ch;
+  font-weight: 440;
+}
+.opening h1 em {
+  font-style: italic;
+  font-weight: 460;
+  color: var(--copper-deep);
+}
+
+.opening .standfirst {
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  color: var(--graphite-2);
+  max-width: 34ch;
+  margin: 0;
+}
+
+.begin {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  color: var(--graphite);
+  text-decoration: none;
+  display: inline-grid;
+  justify-items: center;
+  row-gap: 0.9rem;
+}
+.begin::after {
+  content: "";
+  width: 1px;
+  height: 3.25rem;
+  background: var(--hairline-strong);
+  transition: height 300ms ease-out, background 300ms ease-out;
+}
+.begin:hover::after { height: 4.5rem; background: var(--copper); }
+
+/* the one opening image */
+.opening-still {
+  width: var(--frame);
+  margin: 0 auto;
+  padding-bottom: var(--chapter-pad);
+}
+.opening-still img {
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  object-fit: cover;
+  filter: sepia(0.22) saturate(0.72) contrast(1.03);
+}
+
+/* --------------------------------------------------------------------------
+   Chapter II — why Hyprr exists. Prose + the ledger.
+   -------------------------------------------------------------------------- */
+.why {
+  background: var(--linen);
+  padding: var(--chapter-pad) 0;
+}
+.why .inner {
+  width: var(--frame);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(3rem, 7vw, 7rem);
+  align-items: start;
+}
+
+.why h2 {
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  max-width: 14ch;
+  margin-bottom: 2.2rem;
+}
+
+.pull {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  line-height: 1.35;
+  color: var(--copper-deep);
+  border: 0;
+  margin: 2.6rem 0;
+  padding: 0;
+  max-width: 24ch;
+}
+
+/* the ledger — an invoice that assembles as you read */
+.ledger {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  background: var(--ivory);
+  border: 1px solid var(--hairline);
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  position: sticky;
+  top: 6rem;
+}
+.ledger-head {
+  display: flex;
+  justify-content: space-between;
+  color: var(--graphite-2);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--hairline-strong);
+  margin-bottom: 0.4rem;
+}
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.72rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.ledger-row dt { margin: 0; color: var(--graphite-2); }
+.ledger-row dd { margin: 0; font-variant-numeric: tabular-nums; }
+.ledger-row.is-out dd { color: var(--graphite-2); }
+
+.ledger-row.is-margin {
+  border-bottom: 0;
+  border-top: 1px solid var(--hairline-strong);
+  margin-top: 0.4rem;
+  padding-top: 1rem;
+  font-weight: 500;
+}
+.ledger-row.is-margin dt { color: var(--graphite); }
+.ledger-row.is-margin dd { color: var(--copper-deep); }
+
+.ledger-note {
+  font-size: 0.72rem;
+  color: var(--graphite-2);
+  margin: 1.1rem 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   Chapter III — choose your journey
+   -------------------------------------------------------------------------- */
+.journeys {
+  padding: var(--chapter-pad) 0;
+}
+.journeys .inner { width: var(--frame); margin: 0 auto; }
+
+.journeys h2 {
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  margin-bottom: clamp(2.5rem, 6vh, 4.5rem);
+}
+
+.journey-list { list-style: none; margin: 0; padding: 0; }
+
+.journey {
+  border-top: 1px solid var(--hairline);
+}
+.journey:last-child { border-bottom: 1px solid var(--hairline); }
+
+.journey a {
+  display: block;
+  text-decoration: none;
+  padding: clamp(1.6rem, 3.5vh, 2.4rem) 0;
+}
+
+.journey-line {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(1.25rem, 4vw, 3rem);
+}
+.journey-title {
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 3.8vw, 2.9rem);
+  font-weight: 460;
+  letter-spacing: -0.01em;
+  transition: color 250ms ease-out;
+}
+.journey-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+  transform-origin: left;
+  transition: background 300ms ease-out;
+}
+.journey-arrow {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  transform: translateX(0);
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), color 250ms ease-out;
+}
+
+.journey-sense {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.journey-sense > p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--graphite-2);
+  font-size: 1rem;
+  max-width: 52ch;
+}
+.journey-sense > p > span { display: block; padding-top: 0.9rem; }
+
+.journey a:hover .journey-title,
+.journey a:focus-visible .journey-title { color: var(--copper-deep); }
+.journey a:hover .journey-rule,
+.journey a:focus-visible .journey-rule { background: var(--copper); }
+.journey a:hover .journey-arrow,
+.journey a:focus-visible .journey-arrow { transform: translateX(0.5rem); color: var(--copper-deep); }
+.journey a:hover .journey-sense,
+.journey a:focus-visible .journey-sense { grid-template-rows: 1fr; }
+
+/* --------------------------------------------------------------------------
+   Chapter IV — the founder. Navy, full-bleed, four stills.
+   -------------------------------------------------------------------------- */
+.founder {
+  background: var(--navy);
+  color: var(--ink-on-navy);
+  padding: var(--chapter-pad) 0;
+}
+.founder .inner { width: var(--frame); margin: 0 auto; }
+
+.founder h2 {
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  line-height: 1.12;
+  max-width: 18ch;
+  margin-bottom: 1.6rem;
+}
+.founder h2 em { font-style: italic; color: var(--copper-lift); }
+
+.founder .lede {
+  color: var(--muted-on-navy);
+  max-width: 44ch;
+  margin-bottom: clamp(3rem, 8vh, 5.5rem);
+}
+
+.stills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 2.5vw, 2rem);
+  margin-bottom: clamp(3rem, 8vh, 5rem);
+}
+.still { margin: 0; }
+.still img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  filter: grayscale(0.35) sepia(0.12) contrast(1.05) brightness(0.94);
+}
+.still:nth-child(even) { transform: translateY(clamp(0px, 3vw, 2.25rem)); }
+
+.still figcaption {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--muted-on-navy);
+  margin-top: 0.85rem;
+}
+.still figcaption strong {
+  display: block;
+  font-weight: 500;
+  color: var(--ink-on-navy);
+}
+
+.founder-close {
+  border-top: 1px solid var(--navy-hairline);
+  padding-top: 2.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 4rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.founder-close p { color: var(--muted-on-navy); margin: 0; max-width: 46ch; }
+
+.quiet-link {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--ink-on-navy);
+  text-decoration: none;
+  border-bottom: 1px solid var(--copper-lift);
+  padding-bottom: 3px;
+  white-space: nowrap;
+  transition: color 200ms ease-out, border-color 200ms ease-out;
+}
+.quiet-link:hover { color: var(--copper-lift); }
+
+/* --------------------------------------------------------------------------
+   Chapter V — the invitation
+   -------------------------------------------------------------------------- */
+.invitation {
+  padding: var(--chapter-pad) 0 clamp(4rem, 10vh, 7rem);
+}
+.invitation .inner { width: var(--frame); margin: 0 auto; }
+
+.invitation-still img {
+  width: 100%;
+  aspect-ratio: 5 / 2;
+  object-fit: cover;
+  filter: sepia(0.18) saturate(0.8) contrast(1.02);
+}
+
+.invitation-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding-top: clamp(3rem, 8vh, 5rem);
+  align-items: start;
+}
+.invitation h2 {
+  font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+  max-width: 12ch;
+}
+.invitation-body p { color: var(--graphite-2); }
+
+.invite-action {
+  display: inline-block;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-style: italic;
+  color: var(--graphite);
+  text-decoration: none;
+  border-bottom: 2px solid var(--copper);
+  padding-bottom: 4px;
+  margin-top: 0.75rem;
+  transition: color 200ms ease-out, border-color 200ms ease-out;
+}
+.invite-action:hover { color: var(--copper-deep); }
+
+.no-hurry {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--graphite-2);
+  margin-top: 2rem;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+footer {
+  border-top: 1px solid var(--hairline);
+  padding: 3rem 0 3.5rem;
+}
+footer .inner {
+  width: var(--frame);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem 4rem;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--graphite-2);
+}
+footer nav { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+footer a { color: var(--graphite-2); text-decoration: none; border-bottom: 1px solid transparent; }
+footer a:hover { color: var(--graphite); border-bottom-color: var(--hairline-strong); }
+footer .colophon { font-family: var(--mono); font-size: 0.72rem; }
+
+/* --------------------------------------------------------------------------
+   Scroll reveals — enhancement only; content is visible without JS.
+   -------------------------------------------------------------------------- */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition: opacity 650ms ease-out, transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.js .reveal.in-view { opacity: 1; transform: none; }
+
+.js .ledger .ledger-row {
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: opacity 500ms ease-out, transform 500ms ease-out;
+}
+.js .ledger.in-view .ledger-row { opacity: 1; transform: none; }
+.js .ledger.in-view .ledger-row:nth-child(2) { transition-delay: 90ms; }
+.js .ledger.in-view .ledger-row:nth-child(3) { transition-delay: 180ms; }
+.js .ledger.in-view .ledger-row:nth-child(4) { transition-delay: 270ms; }
+.js .ledger.in-view .ledger-row:nth-child(5) { transition-delay: 360ms; }
+.js .ledger.in-view .ledger-row:nth-child(6) { transition-delay: 450ms; }
+.js .ledger.in-view .ledger-row.is-margin { transition-delay: 620ms; }
+
+/* --------------------------------------------------------------------------
+   Small screens
+   -------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .why .inner { grid-template-columns: 1fr; }
+  .ledger { position: static; }
+  .invitation-body { grid-template-columns: 1fr; }
+  .still:nth-child(even) { transform: none; }
+
+  /* journeys: sentences always visible — hover is not a mobile affordance */
+  .journey-sense { grid-template-rows: 1fr; }
+  .journey-arrow { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — everything lands instantly
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .js .reveal, .js .ledger .ledger-row { opacity: 1; transform: none; }
+}
