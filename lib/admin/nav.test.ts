@@ -16,10 +16,10 @@ const minimalStaff: Operator = { user_id: "s2", role: "sub_user", capabilities: 
 const legacyFounder: Operator = { user_id: "f1", role: "super_admin", capabilities: CAPABILITIES, transitional: true };
 
 describe("navFor — ruled visibility, absent not disabled", () => {
-  it("super_admin sees the FULL nav (all 16 items)", () => {
+  it("super_admin sees the FULL nav (all 17 items — Billing added 2026-08-12, cap view_billing)", () => {
     expect(keys(superAdmin)).toEqual([
       "dashboard", "review", "delivered", "all", "run",
-      "clients", "support", "outcomes", "users",
+      "clients", "billing", "support", "outcomes", "users",
       "suppliers", "brands",
       "acquisition", "bulk",
       "revenue", "prompts", "settings",

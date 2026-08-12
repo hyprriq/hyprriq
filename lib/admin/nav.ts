@@ -20,6 +20,7 @@ export type AdminNavKey =
   | "delivered"
   | "all"
   | "clients"
+  | "billing"
   | "support"
   | "outcomes"
   | "revenue"
@@ -57,6 +58,9 @@ const GROUPS: NavGroup[] = [
     section: "Management",
     items: [
       { key: "clients", label: "Clients", icon: "👥", href: "/admin/clients" },
+      // Billing section (admin design pass 2026-08-12): per-client accounting existed behind a
+      // single client-detail link — this gives it a front door. Same cap as Revenue.
+      { key: "billing", label: "Billing", icon: "▦", href: "/admin/billing", requires: { cap: "view_billing" } },
       { key: "support", label: "Support Queue", icon: "✉", href: "/admin/support", requires: { cap: "view_cases" } },
       { key: "outcomes", label: "Outcomes", icon: "📈", href: "/admin/outcomes" },
       { key: "users", label: "Users", icon: "🔐", href: "/admin/users", requires: { staffManager: true } },

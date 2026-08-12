@@ -12,6 +12,29 @@ import { getOpenSupportCount } from "@/lib/data/adminSupport";
 
 export type { AdminNavKey };
 
+// One SVG icon family (admin design pass 2026-08-12) — replaces the glyph strings from
+// nav.ts (its `icon` field is now decorative-legacy; capability rules there are untouched).
+// 16px, stroke 2 — one step tighter than the client portal's 17px: density is a feature.
+const NAV_ICONS: Record<AdminNavKey, React.ReactNode> = {
+  dashboard: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M9 22V12h6v10" /></svg>,
+  review: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>,
+  delivered: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 5-5" /></svg>,
+  all: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>,
+  run: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m6 4 14 8-14 8V4Z" /></svg>,
+  clients: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+  billing: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>,
+  support: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>,
+  outcomes: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 3v18h18" /><path d="m7 14 4-4 3 3 5-6" /></svg>,
+  users: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+  suppliers: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>,
+  brands: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m12 2 3 6.3 7 .7-5 4.8 1.5 6.9L12 17l-6.5 3.7L7 13.8 2 9l7-.7L12 2Z" /></svg>,
+  acquisition: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /><circle cx="12" cy="12" r="5" /></svg>,
+  bulk: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M4 6h16M4 12h16M4 18h10" /></svg>,
+  revenue: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 7v10M8.5 9.5h5a2 2 0 0 1 0 4h-3a2 2 0 0 0 0 4h5.5" /></svg>,
+  prompts: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m7 8-4 4 4 4M17 8l4 4-4 4M14 4l-4 16" /></svg>,
+  settings: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1" /></svg>,
+};
+
 function Nav({ groups, active }: { groups: NavGroup[]; active: AdminNavKey }) {
   return (
     <nav className="flex flex-col gap-0.5">
@@ -24,10 +47,10 @@ function Nav({ groups, active }: { groups: NavGroup[]; active: AdminNavKey }) {
           )}
           {g.items.map((item) => {
             const isActive = item.key === active;
-            const base = "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors";
+            const base = "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13.5px] font-medium transition-colors";
             const content = (
               <>
-                <span aria-hidden className="w-4 text-center text-xs">{item.icon}</span>
+                <span aria-hidden className="opacity-80">{NAV_ICONS[item.key]}</span>
                 <span>{item.label}</span>
                 {item.badge ? (
                   <span className="ml-auto rounded-full bg-verify-ink px-1.5 py-0.5 text-[11px] font-bold text-white">{item.badge}</span>
@@ -88,10 +111,10 @@ export async function AdminShell({
   }
   return (
     <div className="flex min-h-dvh bg-base">
-      <aside className="flex w-[248px] shrink-0 flex-col bg-ink px-4 py-5">
+      <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 py-5">
         <div className="mb-4 flex items-center justify-between px-1">
-          <div className="font-display text-base font-extrabold tracking-tight text-white">
-            HyprrIQ <span className="text-white/50">Admin</span>
+          <div className="font-display text-base font-semibold tracking-tight text-white">
+            Hyprr<span className="text-accent-warm">IQ</span> <span className="text-white/50">Admin</span>
           </div>
           <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
             {roleBadge}
@@ -100,8 +123,8 @@ export async function AdminShell({
         <Nav groups={groups} active={active} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-7">
-          <h1 className="font-display text-xl font-bold tracking-tight text-ink">{title}</h1>
+        <header className="flex h-14 items-center justify-between border-b border-line bg-surface px-6">
+          <h1 className="font-display text-lg font-semibold tracking-tight text-ink">{title}</h1>
           <div className="flex items-center gap-3">
             {topRight}
             {user && (
@@ -113,7 +136,7 @@ export async function AdminShell({
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto px-7 py-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-6 py-5">{children}</main>
       </div>
     </div>
   );
