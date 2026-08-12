@@ -23,7 +23,7 @@ export default async function AdminAcquisitionPage() {
     <AdminShell active="acquisition" title="Acquisition" {...shellProps}>
       <AdminPlaceholder
         title="Acquisition — invite links, coupons, affiliate"
-        blurb="One redeemable-grant mechanism, two delivery modes: invite links (auto-apply, zero friction) and coupon codes (broadcastable). Create-and-track lives here when the deferred backend builds; the grants/redemptions data model is design-final in ADMIN_FOUNDATIONS section 7a, tables land with that build."
+        blurb="Invite links and coupon codes — create a grant, share it, and see who redeemed it. Nothing here works yet; this section is planned but not functional."
       />
     </AdminShell>
   );

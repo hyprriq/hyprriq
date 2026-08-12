@@ -52,22 +52,29 @@ export default async function AdminBillingPage() {
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div className="rounded-card border border-line bg-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Paying clients</div>
-          <div className="mt-1 font-mono text-2xl font-medium text-ink">{clients.filter((c) => c.plan_type).length}</div>
-          <div className="mt-0.5 text-[12px] text-ink-2">{subscribers.length} on subscriptions</div>
+          <div className="mt-1.5 font-mono text-[28px] font-semibold leading-none text-brand">{clients.filter((c) => c.plan_type).length}</div>
+          <div className="mt-1.5 text-[12px] text-ink-2">{subscribers.length} on subscriptions</div>
         </div>
         <div className="rounded-card border border-line bg-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Credits held</div>
-          <div className="mt-1 font-mono text-2xl font-medium text-ink">
+          <div className="mt-1.5 font-mono text-[28px] font-semibold leading-none text-brand">
             {clients.reduce((n, c) => n + c.credits_available, 0)}
           </div>
-          <div className="mt-0.5 text-[12px] text-ink-2">across all clients in scope</div>
+          <div className="mt-1.5 text-[12px] text-ink-2">across all clients in scope</div>
         </div>
-        <div className="rounded-card border border-line bg-surface px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Running low</div>
-          <div className={`mt-1 font-mono text-2xl font-medium ${lowCredit.length > 0 ? "text-verify-ink" : "text-ink"}`}>
+        {/* item 3 — the one tile that demands action gets a STATE: calm at zero, warn above it */}
+        <div className={`rounded-card border px-4 py-3 ${
+          lowCredit.length > 0 ? "border-verify-ink/40 bg-verify-bg" : "border-line bg-surface"
+        }`}>
+          <div className={`text-[11px] font-semibold uppercase tracking-wide ${lowCredit.length > 0 ? "text-verify-ink" : "text-muted"}`}>
+            Running low
+          </div>
+          <div className={`mt-1.5 font-mono text-[28px] font-semibold leading-none ${lowCredit.length > 0 ? "text-verify-ink" : "text-ink"}`}>
             {lowCredit.length}
           </div>
-          <div className="mt-0.5 text-[12px] text-ink-2">subscribers at ≤1 credit</div>
+          <div className={`mt-1.5 text-[12px] ${lowCredit.length > 0 ? "text-verify-ink" : "text-ink-2"}`}>
+            subscribers at ≤1 credit
+          </div>
         </div>
       </div>
 
@@ -94,10 +101,10 @@ export default async function AdminBillingPage() {
                 className="grid grid-cols-[minmax(180px,1.4fr)_120px_110px_90px_110px_90px] items-center gap-3 border-b border-line px-4 py-2 last:border-b-0"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-[13px] font-semibold text-ink">
+                  <div className="truncate text-[13.5px] font-semibold text-ink">
                     {c.full_name || c.company_name || "—"}
                   </div>
-                  <div className="truncate font-mono text-[11px] text-muted">{c.email}</div>
+                  <div className="mt-0.5 truncate font-mono text-[11px] text-muted">{c.email}</div>
                 </div>
                 <span className="text-[12.5px] font-medium text-ink-2">{plan ? PLAN_NAME[plan] : "No plan"}</span>
                 <span className="text-[12px] text-ink-2">{c.billing_status ?? "—"}</span>
@@ -107,7 +114,7 @@ export default async function AdminBillingPage() {
                 <span className="text-right font-mono text-[11.5px] text-muted">{fmt(c.created_at)}</span>
                 <Link
                   href={`/admin/clients/${c.id}/accounting`}
-                  className="justify-self-end rounded-md border border-line bg-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 hover:bg-line"
+                  className="justify-self-end rounded-md border border-line px-2.5 py-1 text-[11.5px] font-semibold text-ink-2 hover:bg-subtle"
                 >
                   Accounting
                 </Link>
@@ -117,14 +124,12 @@ export default async function AdminBillingPage() {
         </div>
       )}
 
-      {/* honest boundary — nothing invented to fill the space */}
-      <p className="mt-4 max-w-[72ch] text-[12.5px] leading-relaxed text-muted">
-        Cycle usage, payments, plan events, and adjustments live on each client&rsquo;s accounting page —
-        a cross-client feed needs a data pass that hasn&rsquo;t been built. Dollar-accurate revenue totals
-        and churn need Stripe-side data the app doesn&rsquo;t hold; see Revenue for what&rsquo;s real today.
-        Refunds will be actioned from the per-client page when the refund pass lands: money and credit
-        move together, with a reason recorded, and a partial refund shows its resolved amount before
-        confirmation.
+      {/* honest boundary — the console's voice, not the build log's */}
+      <p className="mt-4 max-w-[72ch] text-[12.5px] leading-relaxed text-ink-2">
+        Each client&rsquo;s full history — payments, plan events, adjustments, and which report used which
+        credit — is under Accounting on their row. Refunds will be issued there too, money and credit
+        together, with a reason on record. Dollar-accurate revenue and churn live in Stripe; this screen
+        shows what the app itself records.
       </p>
     </AdminShell>
   );
