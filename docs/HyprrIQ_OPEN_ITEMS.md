@@ -40,6 +40,15 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ SLA COPY RULING LANDED 2026-08-12** `470c184` — client promise = 24h, matching
+> CASE_SLA_HOURS; PLAN_SLA_DAYS retired (absence locked); every delivery statement derives from
+> the one constant (submit estimate, onboarding ×2, pricing bullets + comparison row, FAQ,
+> marketing page ×3, how-it-works); Scale priority framing removed everywhere; all new strings in
+> MUST_PASS. Debug sweep fixed the 24h-broken day math: portal SLA Risk (was every-active-case),
+> case table, deadline chips, admin queue — all hour-granularity now.
+> ⚠ UNRULED for founder: `SLA_RISK_WINDOW_HOURS = 6` (the "at risk" window — my constant).
+> 1165/1165 exit 0 · tsc 0 · eslint 0 · build clean.
+>
 > **✓ THREE-ITEM BATCH LANDED 2026-08-12** — 1153/1153 unpiped exit 0 · tsc 0 · eslint 0 · build clean:
 > **(1) SLA ruled 24h** `d3a6f88` — `CASE_SLA_HOURS=24`, `sla_deadline` stamped at submission on
 > BOTH intake paths; all displays fill automatically; `DELIVERY_SLA_HOURS` retired; ruling locked
