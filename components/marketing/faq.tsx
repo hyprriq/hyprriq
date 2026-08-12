@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 
 // Native <details> disclosure — keyboard-accessible, works without JS, and the
 // Q&A text is crawlable for SEO (paired with FAQPage JSON-LD on the page).
@@ -21,7 +22,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "How long does a report take?",
-    a: "Five business days on standard plans, three on Scale. Every report is reviewed and approved by the founder before it reaches you.",
+    a: `Within ${CASE_SLA_HOURS} hours on every plan. Every report is reviewed and approved by the founder before it reaches you.`,
   },
   {
     q: "Is this just an AI tool?",

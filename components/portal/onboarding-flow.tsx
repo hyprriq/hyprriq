@@ -11,7 +11,7 @@ import {
   PLAN_CADENCE,
   PLAN_CREDITS_PER_CYCLE,
   PLAN_BRAND_CAPS,
-  PLAN_SLA_DAYS,
+  CASE_SLA_HOURS,
   PLAN_ROLLOVER_LIMIT,
   PLAN_TYPES,
   type PlanType,
@@ -25,7 +25,7 @@ function planBullets(plan: PlanType): string[] {
     `Up to ${PLAN_BRAND_CAPS[plan]} brands per report`,
     "Full 5-dimension research",
     "14-field document review if uploaded",
-    `${PLAN_SLA_DAYS[plan]} business day delivery`,
+    `Delivered within ${CASE_SLA_HOURS} hours`,
     ...(PLAN_ROLLOVER_LIMIT[plan] > 0
       ? [`Up to ${PLAN_ROLLOVER_LIMIT[plan]} credits roll over each month`]
       : []),
@@ -440,7 +440,7 @@ export function OnboardingFlow({
             </h2>
             <p className="mt-2 text-sm text-ink-2">
               Submit your first request and receive a structured verdict on your
-              supplier within {plan ? PLAN_SLA_DAYS[plan] : 5} business days.
+              supplier within {CASE_SLA_HOURS} hours.
             </p>
             <div className="mt-5 rounded-card border border-line bg-base p-5">
               <div className="text-[14px] font-semibold text-ink">

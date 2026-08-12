@@ -66,20 +66,20 @@ export const PLAN_CATEGORY: Record<PlanType, "one_time" | "subscription"> = {
   scale_499: "subscription",
 };
 
-export const PLAN_SLA_DAYS: Record<PlanType, number> = {
-  single_99: 5,
-  single_149: 5, // STANDARD SLA by ruling — priority stays Scale-exclusive
-  growth_279: 5,
-  scale_499: 3,
-};
-
 // ── CASE SLA (FOUNDER-RULED 2026-08-12: 24 HOURS): cases.sla_deadline = submitted_at + 24h,
 // stamped at submission by BOTH intake paths (client submit route + operator run). THE single
-// named constant every SLA display and risk count reads. Supersedes DELIVERY_SLA_HOURS
-// (1h, zero consumers — retired same ruling). PLAN_SLA_DAYS above is deliberately UNTOUCHED:
-// it drives client-facing est-completion copy, which pends a SEPARATE copy ruling — this
-// constant is the operational deadline, not the client promise. ──
+// named constant every SLA display, risk count, AND client-facing delivery statement reads.
+// COPY RULING (same day, second ruling): the client promise IS 24 hours — "within 24 hours",
+// no "typically"/"up to", no per-plan variation. PLAN_SLA_DAYS (5/5/5/3 days) RETIRED with it;
+// the Scale "priority turnaround" framing is dead everywhere. Supersedes DELIVERY_SLA_HOURS
+// (1h, zero consumers — retired 2026-08-12 morning). ──
 export const CASE_SLA_HOURS = 24;
+
+// ⚠ UNRULED (my constant, flagged per the laws-get-named rule — needs a founder ruling): the
+// "at risk" window for SLA risk counts/badges. With a 24h SLA, the old day-granularity check
+// (deadline within 1 day) flagged EVERY active case from the moment of submission — meaningless.
+// 6h = the last quarter of the window. Change the number here; every risk read derives from it.
+export const SLA_RISK_WINDOW_HOURS = 6;
 // The refund window (days from delivery for single reports; from charge for subscriptions).
 // Captured with the LOCKED refund policy; the money-write build is deferred.
 export const REFUND_WINDOW_DAYS = 14;

@@ -1,5 +1,6 @@
 // Marketing copy (ADR-004). No "Track 0–5" language anywhere client-facing
 // (ADR-005) — client dimension names only.
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 
 export const hero = {
   title: "Before you commit capital, we research what matters.",
@@ -18,7 +19,7 @@ export const layers = [
   },
   {
     title: "Delivery",
-    body: "A one-page Decision Snapshot — a plain-English verdict, the evidence behind it, and the questions to ask your vendor. Five business days.",
+    body: `A one-page Decision Snapshot — a plain-English verdict, the evidence behind it, and the questions to ask your vendor. Delivered within ${CASE_SLA_HOURS} hours.`,
   },
 ];
 

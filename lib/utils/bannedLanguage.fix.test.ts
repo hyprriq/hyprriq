@@ -89,6 +89,19 @@ const MUST_PASS: [string, string][] = [
   // — checkout state-guard messages (2026-08-10 gap-close) —
   ["checkout guard: already subscribed", "You already have a subscription. Plan changes and payment updates are handled in Stripe — use Manage subscription on the Billing page."],
   ["checkout guard: topup requires subscription", "Top-up packs are part of the subscription plans. On a one-time plan, buy another report instead."],
+  // — 24h SLA copy ruling (2026-08-12): every client-facing delivery statement, as rendered —
+  ["submit estimated completion", "Within 24 hours"],
+  ["onboarding plan bullet", "Delivered within 24 hours"],
+  ["onboarding ready screen", "Submit your first request and receive a structured verdict on your supplier within 24 hours."],
+  ["pricing one-time bullet", "Ready in your portal within 24 hours"],
+  ["pricing comparison delivery value", "24 hours"],
+  ["marketing FAQ delivery answer", "Within 24 hours on every plan. Every report is reviewed and approved by the founder before it reaches you."],
+  ["marketing checking-first card", "One report. Delivered within 24 hours. A clear verdict and the questions to ask — before a dollar moves."],
+  ["marketing how-it-works heading", "Three steps. 24 hours. One clear answer."],
+  ["how-it-works snapshot body", "A one-page Decision Snapshot — a plain-English verdict, the evidence behind it, and the questions to ask your vendor. Delivered within 24 hours."],
+  ["billing upgrade nudge (priority framing retired)", "Ready for more? Move to a monthly plan for recurring reports and credit rollover."],
+  ["case table SLA countdown", "Due in 3h"],
+  ["case table SLA due", "Due now"],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],

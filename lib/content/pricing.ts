@@ -7,6 +7,10 @@
 // KEEPA_LIVE=false (lib/constants/plans.ts). Every string here is locked into the
 // banned-language MUST_PASS fixture by IMPORT (standing rule 8 — cannot drift).
 
+// COPY RULING 2026-08-12: every delivery statement derives from CASE_SLA_HOURS — 24 hours on
+// every plan, no per-plan variation, no "typically"/"up to", priority framing retired.
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
+
 export const pricingHero = {
   title: "Costs less than one bad buy.",
   subtitle:
@@ -51,7 +55,7 @@ export const subscriptionPlans: Plan[] = [
       "Everything in Growth",
       "Category compliance review",
       "Deep analysis + contradiction checks",
-      "3-business-day priority SLA",
+      `Delivered within ${CASE_SLA_HOURS} hours`,
       "Credit rollover (up to 4)",
     ],
     popular: true,
@@ -69,7 +73,7 @@ export const oneTimePlans: Plan[] = [
       "Up to 3 brands",
       "Three research dimensions: supplier identity, brand risk, sourcing logic",
       "Supplier questions checklist",
-      "Ready in your portal in 5 business days",
+      `Ready in your portal within ${CASE_SLA_HOURS} hours`,
     ],
     popular: false,
   },
@@ -85,7 +89,7 @@ export const oneTimePlans: Plan[] = [
       "All five research dimensions",
       "Category compliance review",
       "Document review included",
-      "Ready in your portal in 5 business days",
+      `Ready in your portal within ${CASE_SLA_HOURS} hours`,
     ],
     popular: true,
   },
@@ -106,7 +110,7 @@ export const comparison: {
   { feature: "Category compliance review", values: ["—", "Yes", "—", "Yes"] },
   { feature: "Document review", values: ["—", "Yes", "Yes", "Yes"] },
   { feature: "Deep analysis + contradiction", values: ["—", "—", "—", "Yes"] },
-  { feature: "Delivery SLA", values: ["5 days", "5 days", "5 days", "3 days"] },
+  { feature: "Delivery", values: [`${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`] },
   { feature: "Credit rollover", values: ["—", "—", "Up to 2", "Up to 4"] },
   // Stripe-verified 2026-07-23: the top-up price IDs charge $99/$179 — the portal billing page
   // was right, this table was wrong. Retired figures locked out by retiredPricing.lock.test.ts.

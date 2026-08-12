@@ -24,6 +24,7 @@ const TRUST_TOPICS = [
   { icon: Activity, label: "Account Health", color: "text-clear-ink" },
   { icon: Gavel, label: "Brand Enforcement", color: "text-deny-ink" },
 ];
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 import { Reveal } from "@/components/marketing/reveal";
 import { Counter } from "@/components/marketing/counter";
 import { DecisionSnapshot } from "@/components/marketing/decision-snapshot";
@@ -116,7 +117,7 @@ const PLANS = [
     price: "$499",
     cadence: "/mo",
     credits: "12 reports a month",
-    points: ["Everything in Growth", "Category compliance + deep analysis", "3-business-day priority SLA"],
+    points: ["Everything in Growth", "Category compliance + deep analysis", `Delivered within ${CASE_SLA_HOURS} hours`],
     popular: true,
   },
 ];
@@ -321,8 +322,8 @@ export default function Home() {
                 </p>
                 <p className="mt-3 font-display text-3xl font-bold text-ink">From $99</p>
                 <p className="mt-2 text-[15px] text-ink-2">
-                  One report. Five business days. A clear verdict and the
-                  questions to ask — before a dollar moves.
+                  One report. Delivered within {CASE_SLA_HOURS} hours. A clear
+                  verdict and the questions to ask — before a dollar moves.
                 </p>
               </div>
             </Reveal>
@@ -375,7 +376,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
           <Reveal>
             <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Three steps. Five business days. One clear answer.
+              Three steps. {CASE_SLA_HOURS} hours. One clear answer.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
               Watch a case go from a vendor name to a verdict.

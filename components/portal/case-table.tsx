@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CaseRow } from "@/lib/data/cases";
+import { SLA_RISK_WINDOW_HOURS } from "@/lib/constants/plans";
 import { StatusBadge, VerdictBadge } from "@/components/portal/badges";
 
 function brandsLabel(brands: string[] | null): string {
@@ -7,15 +8,17 @@ function brandsLabel(brands: string[] | null): string {
   return brands.join(" • ");
 }
 
+// HOUR granularity since the 24h SLA ruling (2026-08-12): day math rendered "1 day" for the
+// whole window and then flipped — meaningless against a 24-hour promise.
 function slaLabel(c: CaseRow): { text: string; tone: "ok" | "warn" | "muted" } {
   if (c.status === "delivered" || c.status === "complete") {
     return { text: "Delivered", tone: "muted" };
   }
   if (c.status === "cancelled") return { text: "—", tone: "muted" };
   if (!c.sla_deadline) return { text: "Queued", tone: "muted" };
-  const days = Math.ceil((new Date(c.sla_deadline).getTime() - Date.now()) / 86_400_000);
-  if (days <= 0) return { text: "Due today", tone: "warn" };
-  return { text: `${days} day${days === 1 ? "" : "s"}`, tone: days <= 1 ? "warn" : "ok" };
+  const hours = Math.ceil((new Date(c.sla_deadline).getTime() - Date.now()) / 3_600_000);
+  if (hours <= 0) return { text: "Due now", tone: "warn" };
+  return { text: `Due in ${hours}h`, tone: hours <= SLA_RISK_WINDOW_HOURS ? "warn" : "ok" };
 }
 
 function RowAction({ c }: { c: CaseRow }) {

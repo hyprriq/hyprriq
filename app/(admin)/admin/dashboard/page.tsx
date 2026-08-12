@@ -5,10 +5,12 @@ import { PLAN_NAME, type PlanType } from "@/lib/constants/plans";
 import { StatusBadge } from "@/components/portal/badges";
 import { buildKpiTiles } from "@/lib/admin/dashboard-tiles";
 
+// HOUR granularity since the 24h SLA ruling (2026-08-12) — day math read "1 day" for the whole
+// window, useless for triage against a 24-hour deadline.
 function slaText(iso: string | null) {
   if (!iso) return "—";
-  const d = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
-  return d <= 0 ? "Overdue" : `${d} day${d === 1 ? "" : "s"}`;
+  const h = Math.ceil((new Date(iso).getTime() - Date.now()) / 3_600_000);
+  return h <= 0 ? "Overdue" : `${h}h`;
 }
 
 export default async function AdminDashboardPage() {

@@ -186,7 +186,7 @@ export default async function BillingPage() {
         {plan && client.plan_category === "one_time" && (
           <Card title="Upgrade to a subscription">
             <p className="mb-3 text-[14px] text-ink-2">
-              Ready for more? Move to a monthly plan for recurring reports, credit rollover, and (Scale) priority SLA.
+              Ready for more? Move to a monthly plan for recurring reports and credit rollover.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {(["growth_279", "scale_499"] as const).map((p) => (

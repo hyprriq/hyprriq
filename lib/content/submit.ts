@@ -1,7 +1,7 @@
 // Submit-flow copy. Kept here (not inline in the component) per the project
 // content-file pattern so wording can change without touching form logic.
 
-import { PLAN_SLA_DAYS, type PlanType } from "@/lib/constants/plans";
+import { CASE_SLA_HOURS, type PlanType } from "@/lib/constants/plans";
 
 // Vendor-brand expectation-setter, shown under the brand-tags input.
 // CORRECTED 2026-08-07 (form-is-authoritative ruling): the previous wording promised the report
@@ -24,10 +24,10 @@ export const MARKETPLACES: { value: string; label: string }[] = [
   { value: "amazon_au", label: "Amazon AU" },
 ];
 
-// "Estimated completion" shown on the submit confirmation screen. Sourced from the plan's
-// delivery SLA (the number the pricing page promises), NOT the pipeline runtime. Falls back
-// to 5 days for a client with no plan (the submit flow already blocks submitting without one).
+// "Estimated completion" shown on the submit confirmation screen. COPY RULING 2026-08-12:
+// 24 hours on every plan, derived from CASE_SLA_HOURS — the plan no longer changes the answer
+// (param kept so callers stay untouched; per-plan SLAs are retired).
 export function estimatedCompletionLabel(plan: PlanType | null): string {
-  const days = plan ? PLAN_SLA_DAYS[plan] : 5;
-  return `Within ${days} business ${days === 1 ? "day" : "days"}`;
+  void plan; // retired input, kept for caller stability
+  return `Within ${CASE_SLA_HOURS} hours`;
 }

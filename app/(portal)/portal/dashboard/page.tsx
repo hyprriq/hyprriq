@@ -11,12 +11,20 @@ import {
   PLAN_CATEGORY,
   PLAN_CREDITS_PER_CYCLE,
   PLAN_BRAND_CAPS,
+  SLA_RISK_WINDOW_HOURS,
   type PlanType,
 } from "@/lib/constants/plans";
 
 function daysUntil(iso: string | null): number | null {
   if (!iso) return null;
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+}
+
+// HOUR granularity for SLA reads since the 24h ruling (2026-08-12) — daysUntil stays for the
+// renewal date only. NOT clamped at 0: negative = overdue, and the risk filter must catch it.
+function hoursUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 3_600_000);
 }
 
 function Kpi({
@@ -129,7 +137,9 @@ export default async function DashboardPage() {
   // Active → full dashboard.
   const activeCount = cases.filter(isActive).length;
   const readyCount = cases.filter((c) => c.status === "delivered").length;
-  const slaRisk = cases.filter((c) => isActive(c) && c.sla_deadline && daysUntil(c.sla_deadline)! <= 1).length;
+  // 24h-SLA fix (2026-08-12): the old day-granularity check (<= 1 day) flagged EVERY active
+  // case from the moment of submission. Risk = inside the last SLA_RISK_WINDOW_HOURS or overdue.
+  const slaRisk = cases.filter((c) => isActive(c) && c.sla_deadline && hoursUntil(c.sla_deadline)! <= SLA_RISK_WINDOW_HOURS).length;
   const renew = daysUntil(client.renewal_date);
   const deadlines = cases
     .filter((c) => isActive(c) && c.sla_deadline)
@@ -188,15 +198,15 @@ export default async function DashboardPage() {
               <div className="p-5 text-center text-[14px] text-muted">No upcoming deadlines.</div>
             ) : (
               deadlines.map((c) => {
-                const d = daysUntil(c.sla_deadline);
+                const h = hoursUntil(c.sla_deadline);
                 return (
                   <div key={c.id} className="flex items-center gap-2 border-b border-line px-4 py-3 last:border-b-0">
                     <div className="min-w-0">
                       <div className="font-mono text-[12px] font-semibold text-brand">{c.case_number}</div>
                       <div className="truncate text-[14px] font-medium text-ink">{c.vendor_name ?? "—"}</div>
                     </div>
-                    <span className={`ml-auto text-[13px] font-semibold ${d !== null && d <= 1 ? "text-verify-ink" : "text-ink-2"}`}>
-                      {d !== null ? `${d} day${d === 1 ? "" : "s"}` : "—"}
+                    <span className={`ml-auto text-[13px] font-semibold ${h !== null && h <= SLA_RISK_WINDOW_HOURS ? "text-verify-ink" : "text-ink-2"}`}>
+                      {h === null ? "—" : h <= 0 ? "Due now" : `Due in ${h}h`}
                     </span>
                   </div>
                 );
