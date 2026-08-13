@@ -4,15 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { GRANTABLE_CAPABILITIES, CAPABILITY_LABELS, type Capability } from "@/lib/auth/capabilities";
 
-// ── PERMISSION HIERARCHY (2026-08-02) — the thin user-management screen (function only; the
-// UI/UX thread restyles). Calls the users APIs; the STRUCTURAL RULES are surfaced, not
-// discovered as errors: super_admin rows show "founder-managed (SQL)"; admin rows show
-// controls only to the super admin; the caller's own row shows "your row"; the capability
-// checkboxes offer only what THIS grantor may grant (subset-of-own for admins; the super-only
-// money/scope pair for nobody — the API enforces the same rules via lib/auth/grants).
-// CLOSE-OUT item 5 (2026-08-11): invitations wired in (invite by email, pending/claimed/expired/
-// revoked, revoke), client assignment (super admin only, via the existing assignments API), and
-// every capability renders its plain-English label — internal names never reach an operator. ──
+// ── PERMISSION HIERARCHY (2026-08-02) — user management. Function landed 2026-08-11
+// (invitations: invite/pending/claimed/expired/revoked/revoke + share-link fallback; client
+// assignment; plain-English capability labels). RESTYLED 2026-08-13 (admin design pass):
+// every handler, API call, and structural rule below is byte-identical to the wired version —
+// only the presentation moved. The screen is organised as its two jobs:
+//   1. WHO HAS ACCESS — invite (the front door), pending invitations, the team list.
+//   2. WHAT THEY CAN REACH — per person: capability chips + assigned clients.
+// Raw Clerk IDs are debugging data — demoted to a title tooltip on the email. The Clerk-ID
+// creation path is the FALLBACK, folded into a closed disclosure at the end. ──
 
 interface AdminUserRow {
   user_id: string; email: string; role: string; capabilities: string[]; disabled: boolean; created_by: string | null;
@@ -30,6 +30,7 @@ function invitationStatus(inv: InvitationRow): "pending" | "claimed" | "expired"
   return "pending";
 }
 
+// Calm, tokened invitation states — conditional=waiting, clear=done, subtle=lapsed, deny=pulled.
 const INVITE_STATUS_CLS: Record<string, string> = {
   pending: "bg-conditional-bg text-conditional-ink",
   claimed: "bg-clear-bg text-clear-ink",
@@ -38,6 +39,19 @@ const INVITE_STATUS_CLS: Record<string, string> = {
 };
 
 const label = (c: string) => CAPABILITY_LABELS[c as Capability] ?? c;
+
+function CapChips({ caps, empty }: { caps: string[]; empty: string }) {
+  if (caps.length === 0) return <span className="text-[12px] text-muted">{empty}</span>;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {caps.map((c) => (
+        <span key={c} className="rounded border border-line bg-subtle px-1.5 py-0.5 text-[11px] font-medium text-ink-2">
+          {label(c)}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export function UsersManager({
   selfId,
@@ -55,6 +69,7 @@ export function UsersManager({
   const router = useRouter();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [invites, setInvites] = useState<InvitationRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,9 +91,10 @@ export function UsersManager({
       fetch("/api/admin/users"),
       fetch("/api/admin/invitations"),
     ]);
-    if (!uRes.ok) { setError((await uRes.json().catch(() => null))?.error ?? "load failed"); return; }
+    if (!uRes.ok) { setError((await uRes.json().catch(() => null))?.error ?? "load failed"); setLoaded(true); return; }
     setUsers((await uRes.json()).users ?? []);
     if (iRes.ok) setInvites((await iRes.json()).invitations ?? []);
+    setLoaded(true);
   }, []);
   // Initial fetch from the external API — the setState happens after the network await, but the
   // react-hooks heuristic flags it; the fetch-on-mount is intentional for this functional screen.
@@ -161,14 +177,82 @@ export function UsersManager({
   const clientLabel = (id: string) => assignableClients.find((c) => c.id === id)?.label ?? id;
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-[920px] space-y-5">
       {error && <p className="rounded-lg bg-deny-bg px-3 py-2 text-[13px] text-deny-ink">{error}</p>}
       {notice && <p className="rounded-lg bg-conditional-bg px-3 py-2 text-[13px] text-conditional-ink">{notice}</p>}
 
+      {/* ============ JOB 1 · WHO HAS ACCESS — invite is the front door ============ */}
       <div className="rounded-card border border-line bg-surface p-4">
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Admin users</div>
-        <table className="w-full text-[13px]">
-          <tbody>
+        <h2 className="font-display text-[15px] font-semibold text-ink">Invite someone</h2>
+        <p className="mt-1 max-w-[64ch] text-[12.5px] text-ink-2">
+          The invited person signs up with this email address; on their first admin visit their staff access
+          activates with the permissions below. Invitations expire after 7 days and can be revoked while pending.
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="text-[12px] font-medium text-ink-2">Email<br />
+            <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
+          </label>
+          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(false)}
+            className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
+            Invite with selected permissions
+          </button>
+          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(true)}
+            className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
+            Invite with full access
+          </button>
+        </div>
+        <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
+          {GRANTABLE.map((cap) => (
+            <label key={cap} className="flex items-center gap-1.5 text-[12px] text-ink-2">
+              <input type="checkbox" checked={inviteCaps.includes(cap)}
+                onChange={(e) => setInviteCaps(e.target.checked ? [...inviteCaps, cap] : inviteCaps.filter((c) => c !== cap))} />
+              {label(cap)}
+            </label>
+          ))}
+        </div>
+
+        {invites.length > 0 && (
+          <div className="mt-4 border-t border-line pt-3">
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-2">Invitations</div>
+            {invites.map((inv) => {
+              const st = invitationStatus(inv);
+              return (
+                <div key={String(inv.id)} className="grid grid-cols-[minmax(160px,1.2fr)_76px_minmax(120px,1fr)_88px_64px] items-center gap-3 border-t border-line/60 py-2 first:border-t-0">
+                  <span className={`truncate text-[13px] font-medium ${st === "expired" || st === "revoked" ? "text-muted" : "text-ink"}`}>{inv.email}</span>
+                  <span className={`justify-self-start rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${INVITE_STATUS_CLS[st]}`}>{st}</span>
+                  <CapChips caps={inv.capabilities ?? []} empty="No permissions" />
+                  <span className="font-mono text-[11px] text-muted">exp {new Date(inv.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  <span className="text-right">
+                    {st === "pending" && (
+                      <button type="button" disabled={busy} onClick={() => revoke(inv.id)}
+                        className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink-2 hover:bg-subtle">
+                        Revoke
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ============ THE TEAM — who's here, then what each person can reach ============ */}
+      <div className="rounded-card border border-line bg-surface p-4">
+        <h2 className="font-display text-[15px] font-semibold text-ink">Team</h2>
+
+        {!loaded ? (
+          <div className="mt-3 space-y-2" aria-hidden>
+            {[0, 1].map((i) => (
+              <div key={i} className="animate-pulse rounded-lg bg-subtle py-6" />
+            ))}
+          </div>
+        ) : users.length === 0 ? (
+          <p className="mt-3 text-[13px] text-ink-2">
+            No admin-permission rows yet — the founder seeds the super admin via SQL (migration template); legacy founder access works meanwhile.
+          </p>
+        ) : (
+          <div className="mt-2">
             {users.map((u) => {
               const isSelf = u.user_id === selfId;
               const isSuper = u.role === "super_admin";
@@ -177,32 +261,70 @@ export function UsersManager({
               const assigned = assignments.filter((a) => a.admin_user_id === u.user_id).map((a) => a.client_id);
               const unassigned = assignableClients.filter((c) => !assigned.includes(c.id));
               return (
-                <tr key={u.user_id} className="border-t border-line/60 first:border-t-0 align-top">
-                  <td className="py-2 pr-3">
-                    <div className="font-medium text-ink">{u.email}</div>
-                    <div className="text-[11px] text-muted">{u.user_id}</div>
-                  </td>
-                  <td className="py-2 pr-3">
-                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-muted"}`}>{u.role === "super_admin" ? "Founder" : u.role === "admin" ? "Admin" : "Staff"}</span>
-                    {u.disabled && <span className="ml-1 rounded bg-deny-bg px-1.5 py-0.5 text-[11px] font-semibold text-deny-ink">disabled</span>}
-                  </td>
-                  <td className="py-2 pr-3 text-muted">
-                    {isSuper ? "All permissions" : (u.capabilities.map(label).join(", ") || "No permissions")}
+                <div key={u.user_id} className="border-t border-line py-3 first:border-t-0">
+                  {/* line 1 — the person */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Clerk ID is debugging data — it lives in the tooltip, not on screen */}
+                    <span className="text-[13.5px] font-semibold text-ink" title={u.user_id}>{u.email}</span>
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-ink-2"}`}>
+                      {u.role === "super_admin" ? "Founder" : u.role === "admin" ? "Admin" : "Staff"}
+                    </span>
+                    {u.disabled && <span className="rounded bg-deny-bg px-1.5 py-0.5 text-[11px] font-semibold text-deny-ink">Disabled</span>}
+                    <span className="ml-auto">
+                      {isSuper ? (
+                        <span className="text-[11px] text-muted">founder-managed (SQL)</span>
+                      ) : isSelf ? (
+                        <span className="text-[11px] text-muted">your row</span>
+                      ) : !managable ? (
+                        <span className="text-[11px] text-muted">managed by the super admin</span>
+                      ) : (
+                        <button type="button" disabled={busy} onClick={() => patch(u.user_id, { disabled: !u.disabled })}
+                          className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink-2 hover:bg-subtle">
+                          {u.disabled ? "Enable" : "Disable"}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* line 2 — what they can reach */}
+                  <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Permissions</div>
+                      <div className="mt-1">
+                        {isSuper ? (
+                          <span className="text-[12px] text-ink-2">All permissions</span>
+                        ) : managable ? (
+                          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                            {GRANTABLE.map((cap) => (
+                              <label key={cap} className="flex items-center gap-1.5 text-[12px] text-ink-2">
+                                <input type="checkbox" checked={u.capabilities.includes(cap)} disabled={busy}
+                                  onChange={(e) => patch(u.user_id, { capabilities: e.target.checked ? [...u.capabilities, cap] : u.capabilities.filter((c) => c !== cap) })} />
+                                {label(cap)}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <CapChips caps={u.capabilities} empty="No permissions" />
+                        )}
+                      </div>
+                    </div>
                     {canAssign && !isSuper && (
-                      <div className="mt-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Client access</div>
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Client access</div>
                         {assigned.length === 0 ? (
-                          <p className="mt-1 text-[12px] text-muted">
-                            {u.capabilities.includes("view_all_clients") ? "Sees all clients (permission)." : "No clients assigned — this person sees an empty product until one is."}
+                          <p className="mt-1 text-[12.5px] text-ink-2">
+                            {u.capabilities.includes("view_all_clients")
+                              ? "Sees all clients (permission)."
+                              : <><span className="font-semibold text-verify-ink">No clients assigned</span> — this person sees an empty product until one is.</>}
                           </p>
                         ) : (
                           <ul className="mt-1 space-y-1">
                             {assigned.map((cid) => (
-                              <li key={cid} className="flex items-center gap-2 text-[12px] text-ink-2">
+                              <li key={cid} className="flex items-center gap-2 text-[12.5px] text-ink-2">
                                 {clientLabel(cid)}
                                 <button type="button" disabled={busy} onClick={() => unassign(u.user_id, cid)}
-                                  className="rounded border border-line px-1.5 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle">
-                                  remove
+                                  className="rounded border border-line px-1.5 py-0.5 text-[11px] font-semibold text-ink-2 hover:bg-subtle">
+                                  Remove
                                 </button>
                               </li>
                             ))}
@@ -216,147 +338,71 @@ export function UsersManager({
                               {unassigned.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                             </select>
                             <button type="button" disabled={busy || !assignPick[u.user_id]} onClick={() => assign(u.user_id)}
-                              className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
+                              className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink-2 hover:bg-subtle disabled:opacity-50">
                               Assign
                             </button>
                           </div>
                         )}
                       </div>
                     )}
-                  </td>
-                  <td className="py-2 text-right">
-                    {isSuper ? (
-                      <span className="text-[11px] text-muted">founder-managed (SQL)</span>
-                    ) : isSelf ? (
-                      <span className="text-[11px] text-muted">your row</span>
-                    ) : !managable ? (
-                      <span className="text-[11px] text-muted">managed by the super admin</span>
-                    ) : (
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {GRANTABLE.map((cap) => (
-                          <label key={cap} className="flex items-center gap-1 text-[11px] text-muted">
-                            <input type="checkbox" checked={u.capabilities.includes(cap)} disabled={busy}
-                              onChange={(e) => patch(u.user_id, { capabilities: e.target.checked ? [...u.capabilities, cap] : u.capabilities.filter((c) => c !== cap) })} />
-                            {label(cap)}
-                          </label>
-                        ))}
-                        <button type="button" disabled={busy} onClick={() => patch(u.user_id, { disabled: !u.disabled })}
-                          className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle">
-                          {u.disabled ? "enable" : "disable"}
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-            {users.length === 0 && <tr><td className="py-3 text-muted">No admin-permission rows yet — the founder seeds the super admin via SQL (migration template); legacy founder access works meanwhile.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="rounded-card border border-line bg-surface p-4">
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Invite by email</div>
-        <p className="mb-2 text-[12px] text-muted">
-          The invited person signs up with this email address; on their first admin visit their staff access
-          activates with the permissions below. Invitations expire after 7 days and can be revoked while pending.
-        </p>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="text-[12px] text-muted">Email<br />
-            <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
-          </label>
-          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(false)}
-            className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
-            Invite with selected permissions
-          </button>
-          <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(true)}
-            className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
-            Invite with full access
-          </button>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-3">
-          {GRANTABLE.map((cap) => (
-            <label key={cap} className="flex items-center gap-1 text-[12px] text-muted">
-              <input type="checkbox" checked={inviteCaps.includes(cap)}
-                onChange={(e) => setInviteCaps(e.target.checked ? [...inviteCaps, cap] : inviteCaps.filter((c) => c !== cap))} />
-              {label(cap)}
-            </label>
-          ))}
-        </div>
-        {invites.length > 0 && (
-          <table className="mt-3 w-full text-[13px]">
-            <tbody>
-              {invites.map((inv) => {
-                const st = invitationStatus(inv);
-                return (
-                  <tr key={String(inv.id)} className="border-t border-line/60 align-top">
-                    <td className="py-2 pr-3 font-medium text-ink">{inv.email}</td>
-                    <td className="py-2 pr-3">
-                      <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${INVITE_STATUS_CLS[st]}`}>{st}</span>
-                    </td>
-                    <td className="py-2 pr-3 text-muted">{(inv.capabilities ?? []).map(label).join(", ") || "No permissions"}</td>
-                    <td className="py-2 pr-3 text-[12px] text-muted">expires {new Date(inv.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
-                    <td className="py-2 text-right">
-                      {st === "pending" && (
-                        <button type="button" disabled={busy} onClick={() => revoke(inv.id)}
-                          className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-subtle">
-                          revoke
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          </div>
         )}
       </div>
 
-      <div className="rounded-card border border-line bg-surface p-4">
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Add by Clerk user id (already signed up)</div>
-        <p className="mb-2 text-[12px] text-muted">
-          {selfRole === "super_admin"
-            ? "You can create admins (who manage staff) and staff. A super_admin row is founder-seeded SQL only. Money and all-clients scope stay with the super admin."
-            : "You can create staff and grant a subset of your own permissions. Admins are created by the super admin."}
-          {" "}You cannot edit your own row. For someone who has not signed up yet, use Invite by email above.
-        </p>
-        <div className="flex flex-wrap items-end gap-2">
-          {selfRole === "super_admin" && (
-            <label className="text-[12px] text-muted">Role<br />
-              <select value={newRole} onChange={(e) => setNewRole(e.target.value as "admin" | "sub_user")}
-                className="mt-1 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink">
-                <option value="sub_user">Staff (works cases)</option>
-                <option value="admin">Admin (manages staff)</option>
-              </select>
+      {/* ============ FALLBACK — the Clerk-ID path, deliberately behind a disclosure ============ */}
+      <details className="rounded-card border border-line bg-surface">
+        <summary className="cursor-pointer list-none p-4 text-[13px] font-semibold text-ink-2 hover:text-ink">
+          Add by Clerk user ID <span className="font-normal text-muted">— fallback for someone who already signed up. Prefer Invite by email above.</span>
+        </summary>
+        <div className="border-t border-line p-4">
+          <p className="mb-2 max-w-[70ch] text-[12.5px] text-ink-2">
+            {selfRole === "super_admin"
+              ? "You can create admins (who manage staff) and staff. A super_admin row is founder-seeded SQL only. Money and all-clients scope stay with the super admin."
+              : "You can create staff and grant a subset of your own permissions. Admins are created by the super admin."}
+            {" "}You cannot edit your own row. For someone who has not signed up yet, use Invite by email above.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            {selfRole === "super_admin" && (
+              <label className="text-[12px] font-medium text-ink-2">Role<br />
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value as "admin" | "sub_user")}
+                  className="mt-1 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink">
+                  <option value="sub_user">Staff (works cases)</option>
+                  <option value="admin">Admin (manages staff)</option>
+                </select>
+              </label>
+            )}
+            <label className="text-[12px] font-medium text-ink-2">Clerk user id<br />
+              <input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 font-mono text-[12.5px] text-ink" placeholder="user_..." />
             </label>
-          )}
-          <label className="text-[12px] text-muted">Clerk user id<br />
-            <input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" placeholder="user_..." />
-          </label>
-          <label className="text-[12px] text-muted">Email (label)<br />
-            <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
-          </label>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-3">
-          {GRANTABLE.map((cap) => (
-            <label key={cap} className="flex items-center gap-1 text-[12px] text-muted">
-              <input type="checkbox" checked={newCaps.includes(cap)}
-                onChange={(e) => setNewCaps(e.target.checked ? [...newCaps, cap] : newCaps.filter((c) => c !== cap))} />
-              {label(cap)}
+            <label className="text-[12px] font-medium text-ink-2">Email (label)<br />
+              <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
             </label>
-          ))}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            {GRANTABLE.map((cap) => (
+              <label key={cap} className="flex items-center gap-1.5 text-[12px] text-ink-2">
+                <input type="checkbox" checked={newCaps.includes(cap)}
+                  onChange={(e) => setNewCaps(e.target.checked ? [...newCaps, cap] : newCaps.filter((c) => c !== cap))} />
+                {label(cap)}
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button type="button" disabled={busy} onClick={() => create(false)}
+              className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
+              Create with selected permissions
+            </button>
+            <button type="button" disabled={busy} onClick={() => create(true)}
+              className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
+              Create with full access
+            </button>
+          </div>
         </div>
-        <div className="mt-3 flex gap-2">
-          <button type="button" disabled={busy} onClick={() => create(false)}
-            className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
-            Create with selected permissions
-          </button>
-          <button type="button" disabled={busy} onClick={() => create(true)}
-            className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-subtle disabled:opacity-50">
-            Create with full access
-          </button>
-        </div>
-      </div>
+      </details>
     </div>
   );
 }

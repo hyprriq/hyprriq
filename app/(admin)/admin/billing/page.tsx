@@ -45,15 +45,18 @@ export default async function AdminBillingPage() {
   const clients = (await getAdminClients(admin.clientScope)).filter((c) => c.role === "client");
   const subscribers = clients.filter((c) => c.plan_type && PLAN_CATEGORY[c.plan_type as PlanType] === "subscription");
   const lowCredit = subscribers.filter((c) => c.credits_available <= 1);
+  const paying = clients.filter((c) => c.plan_type);
+  const oneTime = paying.length - subscribers.length;
 
   return (
     <AdminShell active="billing" title="Billing" {...shellProps}>
+      <div className="max-w-[920px]">
       {/* the three numbers that drive a decision this morning */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div className="rounded-card border border-line bg-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Paying clients</div>
-          <div className="mt-1.5 font-mono text-[28px] font-semibold leading-none text-brand">{clients.filter((c) => c.plan_type).length}</div>
-          <div className="mt-1.5 text-[12px] text-ink-2">{subscribers.length} on subscriptions</div>
+          <div className="mt-1.5 font-mono text-[28px] font-semibold leading-none text-brand">{paying.length}</div>
+          <div className="mt-1.5 text-[12px] text-ink-2">{subscribers.length} subscription · {oneTime} one-time</div>
         </div>
         <div className="rounded-card border border-line bg-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Credits held</div>
@@ -66,7 +69,7 @@ export default async function AdminBillingPage() {
         <div className={`rounded-card border px-4 py-3 ${
           lowCredit.length > 0 ? "border-verify-ink/40 bg-verify-bg" : "border-line bg-surface"
         }`}>
-          <div className={`text-[11px] font-semibold uppercase tracking-wide ${lowCredit.length > 0 ? "text-verify-ink" : "text-muted"}`}>
+          <div className={`text-[11px] font-bold uppercase tracking-wide ${lowCredit.length > 0 ? "text-verify-ink" : "text-ink-2"}`}>
             Running low
           </div>
           <div className={`mt-1.5 font-mono text-[28px] font-semibold leading-none ${lowCredit.length > 0 ? "text-verify-ink" : "text-ink"}`}>
@@ -84,10 +87,9 @@ export default async function AdminBillingPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-card border border-line bg-surface">
-          <div className="grid grid-cols-[minmax(180px,1.4fr)_120px_110px_90px_110px_90px] items-center gap-3 border-b border-line bg-subtle px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+          <div className="grid grid-cols-[minmax(200px,1.6fr)_130px_80px_110px_96px] items-center gap-3 border-b border-line bg-subtle px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
             <span>Client</span>
             <span>Plan</span>
-            <span>Billing status</span>
             <span className="text-right">Credits</span>
             <span className="text-right">Since</span>
             <span />
@@ -98,7 +100,7 @@ export default async function AdminBillingPage() {
             return (
               <div
                 key={c.id}
-                className="grid grid-cols-[minmax(180px,1.4fr)_120px_110px_90px_110px_90px] items-center gap-3 border-b border-line px-4 py-2 last:border-b-0"
+                className="grid grid-cols-[minmax(200px,1.6fr)_130px_80px_110px_96px] items-center gap-3 border-b border-line px-4 py-2 last:border-b-0"
               >
                 <div className="min-w-0">
                   <div className="truncate text-[13.5px] font-semibold text-ink">
@@ -106,8 +108,15 @@ export default async function AdminBillingPage() {
                   </div>
                   <div className="mt-0.5 truncate font-mono text-[11px] text-muted">{c.email}</div>
                 </div>
-                <span className="text-[12.5px] font-medium text-ink-2">{plan ? PLAN_NAME[plan] : "No plan"}</span>
-                <span className="text-[12px] text-ink-2">{c.billing_status ?? "—"}</span>
+                <div className="min-w-0">
+                  <span className="text-[13px] font-medium text-ink-2">{plan ? PLAN_NAME[plan] : "No plan"}</span>
+                  {/* status is exception-only: "active" earns no ink; anything else does */}
+                  {c.billing_status && c.billing_status !== "active" && (
+                    <div className="mt-0.5 text-[11px] font-semibold capitalize text-verify-ink">
+                      {c.billing_status.replace(/_/g, " ")}
+                    </div>
+                  )}
+                </div>
                 <span className={`text-right font-mono text-[12.5px] font-medium ${low ? "text-verify-ink" : "text-ink"}`}>
                   {c.credits_available}
                 </span>
@@ -125,12 +134,13 @@ export default async function AdminBillingPage() {
       )}
 
       {/* honest boundary — the console's voice, not the build log's */}
-      <p className="mt-4 max-w-[72ch] text-[12.5px] leading-relaxed text-ink-2">
+      <p className="mt-4 max-w-[72ch] text-[13px] leading-relaxed text-ink-2">
         Each client&rsquo;s full history — payments, plan events, adjustments, and which report used which
         credit — is under Accounting on their row. Refunds will be issued there too, money and credit
         together, with a reason on record. Dollar-accurate revenue and churn live in Stripe; this screen
         shows what the app itself records.
       </p>
+      </div>
     </AdminShell>
   );
 }
