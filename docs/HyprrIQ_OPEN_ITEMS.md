@@ -40,6 +40,16 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ ADMIN REVIEW SCREEN REBUILT 2026-08-13** `85833bb` — findings-first per the ruling:
+> per-area client text (polished, labeled) over evidence (category/points/3-value certainty/
+> source links) with analyst context demoted; contradictions in full anatomy; identity always;
+> direction line (veto/floor or margin) instead of arithmetic; client view = the REAL ReportView
+> over the same pure projection (extraction test-locked, projection behavior unchanged);
+> escalation banner names the pipeline reason; last-decision surfaced (internal_notes OVERWRITES
+> — append-ledger pends a founder call); SLA at the decide point. CUT: why-not list, confidence
+> paragraph, coverage tiles, missing-evidence lists, hypotheses/doubt panels. Engine Trace stays
+> as the provenance disclosure. 1269/1269 · tsc 0 · eslint 0 · build clean · lib/research untouched.
+>
 > **✓ PROSE-CLEANUP RULING BUILT 2026-08-13** `888cb5e` — Rules 1+2 ratified and live at the
 > client projection: source-disposal sentences dropped (subject-source + disposal-verb shape
 > only; method narration survives, test-locked), internal dimension names substituted never
