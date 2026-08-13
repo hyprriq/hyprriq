@@ -40,6 +40,13 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ PROSE-CLEANUP RULING BUILT 2026-08-13** `888cb5e` — Rules 1+2 ratified and live at the
+> client projection: source-disposal sentences dropped (subject-source + disposal-verb shape
+> only; method narration survives, test-locked), internal dimension names substituted never
+> deleted (Track 0–6 + snake_case keys → the five client area names, article-aware). Rule 3
+> left alone as ruled. Admin raw text intact (consumer list client-only); lossless parser
+> invariant re-verified. 1261/1261 · tsc 0 · eslint 0 · build clean · frozen diff empty.
+>
 > **✓ REPORT POLISH LANDED 2026-08-13** `e361ac9` — src_N strip CLIENT-SIDE ONLY (ruled): deep
 > strip in getCaseFindings over everything crossing the RSC boundary; admin keeps every tag
 > (consumer list grep-verified client-only). Finding readability: parseFindingStructure renders
