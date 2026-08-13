@@ -8,7 +8,7 @@ import type { TrackSignal, Verdict, AdditionalQuestion, SupplierIdentity } from 
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 import type { AreaView, LastDecision } from "@/lib/admin/reviewView";
 import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
-import { ReportView } from "@/components/portal/report-view";
+import { ReportView, FindingBody } from "@/components/portal/report-view";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
 // buildVerdictViewModel(): Executive Intelligence Summary → Verdict Panel → Cross-Track
@@ -424,7 +424,8 @@ export function CaseReview({
                 {a.clientText && (
                   <div className="mt-2 rounded-md border border-brand/25 bg-surface p-3">
                     <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-brand">Client text — what they read</div>
-                    <p className="whitespace-pre-line text-[13px] leading-relaxed text-ink-2">{a.clientText}</p>
+                    {/* §2 parity: the SAME presenter the client page uses (headings + lists). */}
+                    <FindingBody text={a.clientText} />
                     {a.boundaryNotes.map((n) => (
                       <div key={n.label} className="mt-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>

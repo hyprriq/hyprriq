@@ -208,6 +208,7 @@ export type AdminCaseDetail = {
   sla_deadline: string | null;
   created_at: string;
   delivered_at: string | null;
+  delivered_attempt: number | null;
   client_id: string;
   additional_questions: AdditionalQuestion[] | null; // ADR-T2-002 follow-up — analyst/review-team questions
   supplier_identity: import("@/lib/research/contracts").SupplierIdentity | null; // Spec-B — Track 0.5 identity + discrepancy
@@ -217,7 +218,7 @@ export type AdminCaseDetail = {
 export async function getAdminCase(id: string): Promise<AdminCaseDetail | null> {
   const { data } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, vendor_name, vendor_website, brands_submitted, brands_from_ocr, client_notes, internal_notes, status, verdict, confidence_score, plan_type, sla_deadline, created_at, delivered_at, client_id, additional_questions, supplier_identity, clients(full_name, company_name, email)")
+    .select("id, case_number, vendor_name, vendor_website, brands_submitted, brands_from_ocr, client_notes, internal_notes, status, verdict, confidence_score, plan_type, sla_deadline, created_at, delivered_at, delivered_attempt, client_id, additional_questions, supplier_identity, clients(full_name, company_name, email)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();

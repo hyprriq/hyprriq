@@ -18,6 +18,7 @@ import { AttemptHistory } from "@/components/admin/attempt-history";
 import { buildAreaViews, buildClientFindings, parseLastDecision, slaHoursLeft, escalationReason } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
 import { projectSupplierIdentityForClient, type CaseDetail } from "@/lib/data/cases";
+import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -73,6 +74,13 @@ export default async function CaseReviewPage({
   // flip to the client's ACTUAL screen (same components, same pure projection). All assembly is
   // pure (lib/admin/reviewView); nothing engine-side is touched. ──
   const areas = buildAreaViews(trackRows);
+  // §3 ATTEMPT PARITY (2026-08-13): the client view pins to the DELIVERED attempt exactly as the
+  // client path does — a pending re-investigation never shows the operator client-text the
+  // client isn't reading. The snapshot comes through getClientDecisionSnapshot (the client
+  // path's own pinned reader); the operator's working view above stays on the latest attempt.
+  const deliveredPinned = c.delivered_attempt != null && (c.status === "delivered" || c.status === "complete");
+  const clientRows = deliveredPinned ? await getCaseTrackResults(c.id, c.delivered_attempt!) : trackRows;
+  const clientSnap = await getClientDecisionSnapshot(c.id);
   const clientView = {
     // Minimal client-shaped case: exactly the fields ReportView reads in preview mode.
     c: {
@@ -83,10 +91,10 @@ export default async function CaseReviewPage({
       change_request_deadline: null, change_request_used: true,
       supplier_identity: projectSupplierIdentityForClient(c.supplier_identity),
     } as unknown as CaseDetail,
-    findings: buildClientFindings(trackRows),
+    findings: buildClientFindings(clientRows),
     report: projectClientReport(
-      (intel?.synthesis.module_9_decision_snapshot ?? null) as Record<string, unknown> | null,
-      intel?.synthesis.module_8_vendor_questions ?? [],
+      (clientSnap?.decision_snapshot ?? null) as Record<string, unknown> | null,
+      clientSnap?.vendor_questions ?? [],
       c.additional_questions ?? [],
     ),
   };

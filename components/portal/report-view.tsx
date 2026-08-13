@@ -93,15 +93,19 @@ function areaChip(f: Finding): { label: string; cls: string; def: string } {
 // Item-3 readability (2026-08-13): render the structure the engine already writes — labeled
 // sections as headed blocks, numbered points as lists. Presentation only; the parser is
 // lossless (findingStructure.test.ts) and structureless text renders as prose unchanged.
-function FindingBody({ text }: { text: string }) {
+// Exported: the admin review screen renders the client text through the SAME presenter.
+// §2 (readability pass): section labels are the reader's only anchor in a long finding — they
+// render as real headings within the settled scale (display face, ink, hairline), not
+// body-weight whispers. Sentence case via CSS so the engine's ALL-CAPS text is untouched.
+export function FindingBody({ text }: { text: string }) {
   const blocks = parseFindingStructure(text);
   return (
     <div className="mt-1 max-w-[70ch] space-y-2">
       {blocks.map((b, i) => {
         if (b.type === "heading") {
           return (
-            <div key={i} className="pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">
-              {b.text}
+            <div key={i} className="mt-3 border-b border-line pb-1 first:mt-0">
+              <span className="text-[12.5px] font-bold tracking-wide text-ink">{b.text}</span>
             </div>
           );
         }
