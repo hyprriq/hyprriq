@@ -40,6 +40,14 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ READABILITY 2+3 LANDED 2026-08-13** `eabd9e3` — finding-section headings now real anchors
+> (settled scale, engine casing verbatim); admin client-text renders via the shared FindingBody;
+> admin client view PINNED to the delivered attempt (rows + snapshot through the client path's
+> own readers). ⚠ PENDING FOUNDER RULING: §1 sentence-segmentation rule (labels with (N)
+> prefixes + guarded sentence splits) and §4 invoice-transcription rule (bank-coordinate
+> sentence filter now; transcription style is a Track-4 prompt matter) — both reported in-chat,
+> nothing built. 1269/1269 · tsc 0 · eslint 0 · build clean · frozen diff empty.
+>
 > **✓ ADMIN REVIEW SCREEN REBUILT 2026-08-13** `85833bb` — findings-first per the ruling:
 > per-area client text (polished, labeled) over evidence (category/points/3-value certainty/
 > source links) with analyst context demoted; contradictions in full anatomy; identity always;
