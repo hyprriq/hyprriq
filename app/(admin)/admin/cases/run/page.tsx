@@ -14,7 +14,7 @@ export default async function RunCasePage() {
     return (
       <AdminShell active="run" title="Run a Case" {...shellProps}>
         <p className="rounded-card border border-line bg-surface p-6 text-sm text-muted">
-          Requires the <span className="font-semibold">run_case</span> capability.
+          Running a case requires the <span className="font-semibold">Can run cases</span> permission.
         </p>
       </AdminShell>
     );

@@ -9,6 +9,7 @@ import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
 import type { AdditionalQuestion } from "@/lib/research/contracts";
+import { buildWeeklyCaseSeries, type WeekBucket } from "@/lib/admin/dashboard-charts";
 
 // Admin-role guard. The (admin) layout enforces authentication; this enforces
 // the role (clients.is_admin). Non-admins are bounced to their own portal.
@@ -108,6 +109,11 @@ export type AdminDashboard = {
   reviewQueue: AdminCaseRow[];
   openSupport: SupportRow[];
   recentClients: { id: string; full_name: string | null; plan_type: PlanType | null; credits_available: number }[];
+  // Weekly true series for the dashboard charts (design pass 2026-08-13) — computed from the
+  // same case rows the KPIs read; see lib/admin/dashboard-charts.ts for the truth rules.
+  weekly: WeekBucket[];
+  // Active clients by plan — counted from the same rows MRR reads (house row already excluded).
+  planMix: { plan: PlanType; count: number }[];
 };
 
 // scope (ADMIN FOUNDATIONS): null = unrestricted; string[] = restrict every client-owned read
@@ -165,9 +171,24 @@ export async function getAdminDashboard(scope: ClientScope = null): Promise<Admi
       delivered,
       openRequests: support.length,
     },
-    reviewQueue: cases.filter((c) => inFounderQueue(c.status)).slice(0, 10),
+    // Triage order (design pass 2026-08-13): the queue is "what needs me next", so it lists the
+    // nearest SLA deadline first (was newest-first, which buried the urgent case under fresh
+    // arrivals). Ordering only — same statuses, same 10-row cap. Nulls sort last.
+    reviewQueue: cases
+      .filter((c) => inFounderQueue(c.status))
+      .sort((a, b) => (a.sla_deadline ? Date.parse(a.sla_deadline) : Infinity) - (b.sla_deadline ? Date.parse(b.sla_deadline) : Infinity))
+      .slice(0, 10),
     openSupport: support.slice(0, 10),
     recentClients: clients.slice(0, 5).map((c) => ({ id: c.id, full_name: c.full_name, plan_type: c.plan_type, credits_available: c.credits_available })),
+    weekly: buildWeeklyCaseSeries(cases, Date.now()),
+    planMix: Object.entries(
+      clients.reduce<Record<string, number>>((acc, c) => {
+        if (c.plan_type) acc[c.plan_type] = (acc[c.plan_type] ?? 0) + 1;
+        return acc;
+      }, {}),
+    )
+      .map(([plan, count]) => ({ plan: plan as PlanType, count }))
+      .sort((a, b) => b.count - a.count),
   };
 }
 
