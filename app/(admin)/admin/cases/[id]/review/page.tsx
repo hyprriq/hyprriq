@@ -15,6 +15,9 @@ import { findLegalSignals } from "@/lib/research/legalSignals";
 import { getCaseOpsView } from "@/lib/data/adminOps";
 import { PipelineProgress, deriveStages } from "@/components/admin/pipeline-progress";
 import { AttemptHistory } from "@/components/admin/attempt-history";
+import { buildAreaViews, buildClientFindings, parseLastDecision, slaHoursLeft, escalationReason } from "@/lib/admin/reviewView";
+import { projectClientReport } from "@/lib/portal/clientReport";
+import { projectSupplierIdentityForClient, type CaseDetail } from "@/lib/data/cases";
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -65,6 +68,28 @@ export default async function CaseReviewPage({
     ios: intel?.ios ?? null,
     requiredTracks: c.plan_type ? requiredFindingTracks(c.plan_type) : undefined,
   });
+
+  // ── REBUILD (build brief 2026-08-13) — the operator reads the client's text per area, and can
+  // flip to the client's ACTUAL screen (same components, same pure projection). All assembly is
+  // pure (lib/admin/reviewView); nothing engine-side is touched. ──
+  const areas = buildAreaViews(trackRows);
+  const clientView = {
+    // Minimal client-shaped case: exactly the fields ReportView reads in preview mode.
+    c: {
+      id: c.id, case_number: c.case_number, vendor_name: c.vendor_name,
+      brands_submitted: c.brands_submitted, brands_confirmed: null,
+      status: c.status, verdict: c.verdict, sla_deadline: c.sla_deadline,
+      delivered_at: c.delivered_at, created_at: c.created_at,
+      change_request_deadline: null, change_request_used: true,
+      supplier_identity: projectSupplierIdentityForClient(c.supplier_identity),
+    } as unknown as CaseDetail,
+    findings: buildClientFindings(trackRows),
+    report: projectClientReport(
+      (intel?.synthesis.module_9_decision_snapshot ?? null) as Record<string, unknown> | null,
+      intel?.synthesis.module_8_vendor_questions ?? [],
+      c.additional_questions ?? [],
+    ),
+  };
 
   return (
     <AdminShell
@@ -120,7 +145,22 @@ export default async function CaseReviewPage({
           )}
         </div>
 
-        <CaseReview caseId={c.id} caseNumber={c.case_number} vendorName={c.vendor_name} vm={vm} caseStatus={c.status} additionalQuestions={c.additional_questions ?? []} supplierIdentity={c.supplier_identity} canRerun={can(admin, "rerun")} canPublish={can(admin, "review_publish")} />
+        <CaseReview
+          caseId={c.id}
+          caseNumber={c.case_number}
+          vendorName={c.vendor_name}
+          vm={vm}
+          caseStatus={c.status}
+          additionalQuestions={c.additional_questions ?? []}
+          supplierIdentity={c.supplier_identity}
+          canRerun={can(admin, "rerun")}
+          canPublish={can(admin, "review_publish")}
+          areas={areas}
+          lastDecision={parseLastDecision(c.internal_notes)}
+          slaHours={slaHoursLeft(c.sla_deadline)}
+          escalation={escalationReason((ops?.statuses ?? null) as Record<string, string | null> | null, c.supplier_identity?.resolution_confidence ?? c.supplier_identity?.identity_confidence ?? null)}
+          clientView={clientView}
+        />
       </div>
     </AdminShell>
   );

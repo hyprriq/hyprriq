@@ -111,6 +111,31 @@ export function cleanClientProseDeep<T>(value: T): T {
   return deepMapStrings(value, cleanClientProse);
 }
 
+// ── F2 allowlist projection as a PURE function (extracted 2026-08-13 for the admin review
+// screen's client-view; getCaseFindings consumes it unchanged — the client projection's
+// behavior is byte-identical, and the admin can now render EXACTLY what the client gets
+// without a second implementation that could drift). FOUNDER-SIGNED exclusions unchanged. ──
+export const FINDING_CLIENT_ALLOWLIST = [
+  "title", "heading", "summary", "detail",
+  "brand_relationship_finding", "brand_risk_finding", "documentation_finding",
+  "identity_scope_note", "authorization_scope_note", "marketplace_eligibility_disclaimer",
+  "evidence_count",
+] as const;
+
+// OQ-D neutral constant (mirrors lib/research/contracts SOURCING_CLIENT_SUMMARY — duplicated
+// here so this module stays dependency-free; locked together by the projection tests).
+const SOURCING_NEUTRAL_SUMMARY = "Consistency check — informational; does not affect the verdict";
+
+export function projectFindingJsonForClient(
+  cf: Record<string, unknown>,
+  trackKey: string,
+): Record<string, unknown> {
+  const projected: Record<string, unknown> = {};
+  for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
+  if (trackKey === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_NEUTRAL_SUMMARY;
+  return projected;
+}
+
 export function isClientQuestion(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0 && s.trim().endsWith("?");
 }

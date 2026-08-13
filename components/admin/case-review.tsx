@@ -1,11 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { buildPublishConfirm, buildDeliveredToast } from "@/lib/admin/publish-confirm";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
-import type { TrackSignal, Verdict, VerdictResult, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
+import type { TrackSignal, Verdict, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
+import type { AreaView, LastDecision } from "@/lib/admin/reviewView";
+import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
+import { ReportView } from "@/components/portal/report-view";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
 // buildVerdictViewModel(): Executive Intelligence Summary → Verdict Panel → Cross-Track
@@ -29,27 +32,9 @@ const SIGNAL_META: Record<TrackSignal, { label: string; cls: string }> = {
   n_a: { label: "N/A", cls: "bg-subtle text-muted" },
 };
 
-const BOUNDARY_NAME: Record<number, string> = { 3.2: "Source Clear", 2.2: "Usable With Conditions", 1.2: "Verify Before Purchase" };
 
-// Item 1 — plain-language confidence explanation, built from the engine's derivation trace.
-function confidenceExplanation(v: VerdictResult): string {
-  const d = v.derivation;
-  const score = d.raw_score.toFixed(2);
-  if (v.derivation.final_differs_from_score && v.veto_fired) {
-    const lock = d.vetoes.find((x) => x.kind === "lock");
-    if (lock) return `Decision confidence is High — the verdict is locked at ${VERDICT_META[lock.verdict].name} by veto (${lock.reason}); the score (${score}) cannot override it.`;
-    return `Decision confidence is ${cap(v.decision_confidence)} — the score (${score}) mapped to ${VERDICT_META[d.score_verdict].name}, but the verdict was floored to ${VERDICT_META[v.verdict].name} by veto.`;
-  }
-  const near = BOUNDARY_NAME[d.margin.nearest_boundary] ?? `${d.margin.nearest_boundary}`;
-  const tail = v.decision_confidence === "low"
-    ? "a small shift in evidence could flip the verdict"
-    : v.decision_confidence === "moderate"
-      ? "a moderate margin — fairly stable"
-      : "well clear of the boundary — stable";
-  return `Decision confidence is ${cap(v.decision_confidence)} — the weighted score ${score} sits ${d.margin.distance.toFixed(2)} from the ${near} threshold (${d.margin.nearest_boundary}); ${tail}.`;
-}
-
-const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+// (§1.2: the confidence-explanation paragraph retired with the rebuild — the header's
+// direction line carries decision provenance; the full derivation stays in Engine Trace.)
 
 function Section({ title, eyebrow, children }: { title: string; eyebrow?: string; children: React.ReactNode }) {
   return (
@@ -87,6 +72,11 @@ export function CaseReview({
   supplierIdentity = null,
   canRerun = false,
   canPublish = false,
+  areas = [],
+  lastDecision = null,
+  slaHours = null,
+  escalation = null,
+  clientView = null,
 }: {
   caseId: string;
   caseNumber: string;
@@ -97,8 +87,17 @@ export function CaseReview({
   supplierIdentity?: SupplierIdentity | null;
   canRerun?: boolean;
   canPublish?: boolean;
+  areas?: AreaView[];
+  lastDecision?: LastDecision | null;
+  slaHours?: number | null;
+  escalation?: string | null;
+  clientView?: { c: CaseDetail; findings: Finding[]; report: ClientReport | null } | null;
 }) {
   const router = useRouter();
+  // §2 — the client view is a first-class working tool: a persistent top-level toggle, not a
+  // forgettable tab. Client mode renders the REAL portal report component over the SAME pure
+  // projection the client path uses — what you see is what they see.
+  const [view, setView] = useState<"operator" | "client">("operator");
   const [mode, setMode] = useState<"idle" | "override" | "investigate" | "dispute">("idle");
   const [overrideVerdict, setOverrideVerdict] = useState<Verdict | null>(null);
   const [reason, setReason] = useState("");
@@ -194,25 +193,97 @@ export function CaseReview({
   const es = vm.executiveSummary!;
   const ct = vm.crossTrack!;
   const vmeta = VERDICT_META[v.verdict];
+  // §4 — the one number that earns prominence: direction, not arithmetic. Where did this
+  // verdict come from, and how close was it?
+  const d = v.derivation;
+  const direction = v.veto_fired
+    ? `This verdict came from: ${v.veto_reasons.join("; ")} — not the score (score alone said ${VERDICT_META[d.score_verdict].name}).`
+    : `Score-decided — ${d.raw_score.toFixed(2)}/4, ${d.margin.distance.toFixed(2)} from the ${d.margin.nearest_boundary} boundary${v.decision_confidence === "low" ? ". Flippable: spend your scrutiny on the evidence below" : ""}.`;
+  const escalated = caseStatus === "manual_override_required";
 
   return (
     <div className="space-y-5">
-      {/* Spec-B — Identity discrepancy (name/website mismatch): informational only, NEVER a verdict/fraud penalty. */}
-      {supplierIdentity?.identity_discrepancy && (
-        <div className="rounded-card border border-conditional-ink/30 bg-conditional-bg p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[13px] font-semibold text-conditional-ink">Identity discrepancy</span>
-            <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">{supplierIdentity.identity_discrepancy.kind}</span>
-            <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">resolution {supplierIdentity.resolution_confidence ?? supplierIdentity.identity_confidence} · input {supplierIdentity.input_consistency ?? "—"}</span>
+      {/* ── Header: verdict + direction + the view toggle. Always visible in both views. ── */}
+      <div className="rounded-card border border-line bg-surface p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`rounded-lg border px-3 py-1.5 text-[15px] font-bold ${vmeta.cls}`}>{vmeta.name}</span>
+          <span className="text-[12px] text-muted">recomputed now from stored signals — not an archived record</span>
+          <div className="ml-auto flex rounded-lg border border-line bg-base p-0.5" role="tablist" aria-label="Review view">
+            {(["operator", "client"] as const).map((k) => (
+              <button key={k} type="button" role="tab" aria-selected={view === k} onClick={() => setView(k)}
+                className={`rounded-md px-3 py-1 text-[12.5px] font-semibold ${view === k ? "bg-brand text-white" : "text-ink-2 hover:bg-subtle"}`}>
+                {k === "operator" ? "Operator view" : "What the client sees"}
+              </button>
+            ))}
           </div>
-          <div className="mt-1.5 text-[13px] text-ink-2">
-            Entered <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.entered_name}”</span> →
-            resolved <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.resolved_name}”</span>
-            {supplierIdentity.identity_discrepancy.resolved_domain ? <span className="text-muted"> ({supplierIdentity.identity_discrepancy.resolved_domain})</span> : null}
-          </div>
-          <div className="mt-1 text-[12px] text-muted">Client copy: {supplierIdentity.identity_discrepancy.client_note}</div>
+        </div>
+        <p className="mt-2 text-[13.5px] font-medium text-ink-2">{direction}</p>
+      </div>
+
+      {/* §6 — escalation state: name the pipeline's specific reason, never a bare banner. */}
+      {escalated && (
+        <div className="rounded-card border border-deny-ink/30 bg-deny-bg p-4">
+          <div className="text-[12px] font-semibold uppercase tracking-wide text-deny-ink">Escalated by the pipeline — human decision required</div>
+          <p className="mt-1 text-[13px] text-deny-ink">{escalation ?? "The pipeline flagged this case for manual review."}</p>
         </div>
       )}
+
+      {/* §6 — last decision on file (cases.internal_notes; the column OVERWRITES — latest only). */}
+      {lastDecision && (
+        <div className="rounded-card border border-line bg-subtle px-4 py-2.5 text-[13px] text-ink-2">
+          <span className="font-semibold text-ink">Last decision on file:</span>{" "}
+          {lastDecision.raw ?? (
+            <>
+              {lastDecision.action ?? "—"}
+              {lastDecision.reason ? ` — “${lastDecision.reason}”` : ""}
+              {lastDecision.reviewed_by ? ` · by ${lastDecision.reviewed_by}` : ""}
+              {lastDecision.at ? ` · ${new Date(lastDecision.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
+            </>
+          )}
+        </div>
+      )}
+
+      {view === "client" && clientView ? (
+        /* ── THE CLIENT'S SCREEN — the real portal report component over the same pure
+              projection the client path uses. A working support tool, not a preview. ── */
+        <div className="rounded-card border-2 border-brand/40 bg-surface p-5">
+          <div className="mb-4 text-[11px] font-bold uppercase tracking-wider text-brand">
+            Client view — rendered exactly as the client&rsquo;s report page renders it
+          </div>
+          <ReportView c={clientView.c} findings={clientView.findings} report={clientView.report} preview />
+        </div>
+      ) : (
+      <>
+      {/* Spec-B — Identity discrepancy (name/website mismatch): informational only, NEVER a verdict/fraud penalty. */}
+      {/* §3/§4 — identity resolution ALWAYS shows, clean or not: wrong entity poisons everything
+          downstream, so "was the right company researched" must be confirmable either way. */}
+      <div className={`rounded-card border p-4 ${supplierIdentity?.identity_discrepancy ? "border-conditional-ink/30 bg-conditional-bg" : "border-line bg-surface"}`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[12px] font-semibold uppercase tracking-wide text-muted">Who was researched</span>
+          {supplierIdentity ? (
+            <>
+              <span className="text-[14px] font-semibold text-ink">{supplierIdentity.resolved_name ?? vendorName ?? "—"}</span>
+              {supplierIdentity.resolved_domain && <span className="font-mono text-[12px] text-muted">{supplierIdentity.resolved_domain}</span>}
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${(supplierIdentity.resolution_confidence ?? supplierIdentity.identity_confidence) === "high" ? "bg-clear-bg text-clear-ink" : "bg-conditional-bg text-conditional-ink"}`}>
+                resolution {supplierIdentity.resolution_confidence ?? supplierIdentity.identity_confidence ?? "—"}
+              </span>
+              {!supplierIdentity.identity_discrepancy && <span className="text-[12px] text-muted">no discrepancy recorded</span>}
+            </>
+          ) : (
+            <span className="text-[13px] text-muted">No identity record for this attempt.</span>
+          )}
+        </div>
+        {supplierIdentity?.identity_discrepancy && (
+          <>
+            <div className="mt-1.5 text-[13px] text-ink-2">
+              Entered <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.entered_name}”</span> →
+              resolved <span className="font-semibold text-ink">“{supplierIdentity.identity_discrepancy.resolved_name}”</span>
+              {supplierIdentity.identity_discrepancy.resolved_domain ? <span className="text-muted"> ({supplierIdentity.identity_discrepancy.resolved_domain})</span> : null}
+            </div>
+            <div className="mt-1 text-[12px] text-muted">Client copy: {supplierIdentity.identity_discrepancy.client_note}</div>
+          </>
+        )}
+      </div>
       {/* 1 — Executive Intelligence Summary (Module 9) */}
       <Section eyebrow="Module 9 · Decision Snapshot" title="Executive Intelligence Summary">
         <p className="text-[16px] font-semibold leading-snug text-ink">{es.headline || "—"}</p>
@@ -272,107 +343,158 @@ export function CaseReview({
           </div>
         )}
 
-        {/* Item 1 — confidence explanation */}
-        <div className="mt-3 rounded-lg border border-line bg-base p-3">
-          <div className="text-[12px] font-semibold text-muted">Why this confidence</div>
-          <p className="mt-1 text-[13px] text-ink-2">{confidenceExplanation(v)}</p>
-        </div>
-
-        {/* Item 2 — Why Not? rejected verdicts */}
-        <div className="mt-3 rounded-lg border border-line bg-base p-3">
-          <div className="text-[12px] font-semibold text-muted">Why not the other verdicts?</div>
-          <ul className="mt-1.5 space-y-1.5">
-            {v.derivation.rejected.map((r) => (
-              <li key={r.verdict} className="text-[13px] text-ink-2">
-                <span className="font-semibold text-ink">{VERDICT_META[r.verdict].name}:</span> {r.reason}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* §1.2 CUT: the "why this confidence" paragraph and the four "why not" rejection
+            sentences — arithmetic narration nobody reads; the header's direction line carries
+            the decision provenance, and the full derivation stays in Engine Trace. */}
       </Section>
 
-      {/* 3 — Cross-Track Intelligence */}
-      <Section eyebrow="Layer 3 · Synthesis (Modules 4/5/7)" title="Cross-Track Intelligence">
-        <div className="space-y-4">
-          <div>
-            <div className="text-[12px] font-semibold text-muted">Contradictions</div>
-            {ct.contradictions.length === 0 ? (
-              <p className="mt-1 text-[13px] text-muted">None detected.</p>
-            ) : (
-              <ul className="mt-1.5 space-y-1.5">
-                {ct.contradictions.map((c, i) => (
-                  <li key={i} className="flex items-center gap-2 text-[14px] text-ink-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${c.risk_level === "critical" ? "bg-deny-bg text-deny-ink" : "bg-verify-bg text-verify-ink"}`}>
-                      {c.risk_level}{c.is_load_bearing ? " · load-bearing" : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <div className="text-[12px] font-semibold text-muted">Hypotheses</div>
-            {ct.hypotheses.what_would_change_the_leader ? (
-              <p className="mt-1 text-[14px] text-ink-2">
-                What would change the leader: {ct.hypotheses.what_would_change_the_leader}
-              </p>
-            ) : (
-              <p className="mt-1 text-[13px] text-muted">No competing hypotheses recorded.</p>
-            )}
-          </div>
-          <div>
-            <div className="text-[12px] font-semibold text-muted">Doubt Calibration</div>
-            <p className="mt-1 text-[14px] text-ink-2">
-              <span className="capitalize">{ct.doubt_calibration.doubt_level || "—"}</span>
-              {ct.doubt_calibration.doubt_focus ? ` — ${ct.doubt_calibration.doubt_focus}` : ""}
-            </p>
-            {ct.doubt_calibration.rationale && (
-              <p className="mt-0.5 text-[13px] text-muted">{ct.doubt_calibration.rationale}</p>
-            )}
-          </div>
-        </div>
-      </Section>
-
-      {/* 4 — Track Intelligence */}
-      <Section eyebrow="Layer 1 · Evidence + Layer 4a · Code-derived signals" title="Track Intelligence">
-        <div className="space-y-3">
-          {vm.tracks.map((t) => {
-            const sm = t.signal ? SIGNAL_META[t.signal] : SIGNAL_META.n_a;
-            return (
-              <div key={t.track_number} className="rounded-lg border border-line bg-base p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[14px] font-semibold text-ink">{t.dimension}</span>
-                  <div className="flex items-center gap-2">
-                    {t.score_0_15 != null && <span className="text-[12px] text-muted">{t.score_0_15}/15{t.band ? ` · ${t.band}` : ""}</span>}
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${sm.cls}`}>{sm.label}</span>
+      {/* §3/§4 — CONTRADICTIONS, full anatomy: they decide verdicts and their substance is
+          certified for SHAPE only — the substance is the operator's call. (§1.2 CUT: the
+          hypotheses and doubt-calibration panels — M7 doubt is structurally locked out of the
+          verdict and its focus already rides the M9 headline; the refuter/leader machinery is
+          advisory internals nobody acts on at review time.) */}
+      <Section eyebrow="Certified for shape — the substance is your call" title={`Contradictions${ct.contradictions.length ? ` (${ct.contradictions.length})` : ""}`}>
+        {ct.contradictions.length === 0 ? (
+          <p className="text-[13px] text-muted">None detected.</p>
+        ) : (
+          <div className="space-y-3">
+            {ct.contradictions.map((c, i) => (
+              <div key={i} className="rounded-lg border border-line bg-base">
+                <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
+                  <span className="font-mono text-[12px] font-semibold text-ink">#{i + 1}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${c.risk_level === "critical" ? "bg-deny-bg text-deny-ink" : c.risk_level === "high" ? "bg-verify-bg text-verify-ink" : "bg-conditional-bg text-conditional-ink"}`}>{c.risk_level}</span>
+                  {c.is_load_bearing && <span className="rounded-full bg-deny-bg px-2 py-0.5 text-[11px] font-semibold text-deny-ink">load-bearing</span>}
+                  {"contradiction_type" in c && c.contradiction_type ? <span className="text-[12px] text-muted">{String(c.contradiction_type).replace(/_/g, " ")}</span> : null}
+                </div>
+                <div className="grid gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto_1fr]">
+                  <div className="text-[13px] leading-relaxed text-ink-2">
+                    {c.assertion_a?.statement ?? "—"}
+                    <div className="mt-0.5 font-mono text-[11px] text-muted">{c.assertion_a?.track_key} · {(c.assertion_a?.evidence_ids ?? []).join(", ")}</div>
+                  </div>
+                  <div className="self-center text-center font-mono text-[10px] font-semibold text-muted">VS</div>
+                  <div className="text-[13px] leading-relaxed text-ink-2">
+                    {c.assertion_b?.statement ?? "—"}
+                    <div className="mt-0.5 font-mono text-[11px] text-muted">{c.assertion_b?.track_key} · {(c.assertion_b?.evidence_ids ?? []).join(", ")}</div>
                   </div>
                 </div>
-                {/* ADR-T2-002 — scoped Track 2 finding + boundary notes; reasoning_notes kept as analyst context. */}
-                {t.brand_relationship_finding && (
-                  <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-ink-2">{t.brand_relationship_finding}</p>
-                )}
-                {t.boundary_notes.map((n) => (
-                  <div key={n.label} className="mt-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
-                    <div className="text-[12px] text-muted">{n.text}</div>
+                {"interpretation" in c && c.interpretation ? (
+                  <div className="border-t border-dashed border-line px-3 py-2 text-[12.5px] text-muted">{String(c.interpretation)}</div>
+                ) : null}
+              </div>
+            ))}
+            <p className="text-[12px] text-muted">Do the two sides genuinely conflict, and does the case turn on it? Open each side&rsquo;s evidence in the areas below before agreeing.</p>
+          </div>
+        )}
+      </Section>
+
+      {/* ── THE FIVE ASSESSMENT AREAS — the unit of content (§4). Per area, one question: does
+          the evidence support the narrative the client will read? The area's primary text is
+          THE CLIENT'S TEXT (same pure projection + cleanup the portal uses); evidence sits
+          directly beneath (the checking tool); analyst context is clearly subordinate. */}
+      <Section eyebrow="Per area: the client's text, the evidence beneath it" title="The Five Assessment Areas">
+        <div className="space-y-3">
+          {areas.map((a) => {
+            const sm = a.signal ? SIGNAL_META[a.signal as TrackSignal] : SIGNAL_META.n_a;
+            return (
+              <div key={a.track_key} className="rounded-lg border border-line bg-base p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[14px] font-semibold text-ink">{a.areaName}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${a.clientCertainty === "verified" ? "bg-clear-bg text-clear-ink" : "bg-conditional-bg text-conditional-ink"}`} title="The client's two-value chip">
+                      client: {a.clientCertainty === "verified" ? "Verified" : "Assessed"}
+                    </span>
+                    {a.score != null && <span className="font-mono text-[11px] text-muted">{a.score}/15</span>}
+                    <span className={`rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold ${sm.cls}`}>{sm.label}</span>
                   </div>
-                ))}
-                {t.reasoning_notes && (
-                  <p className={`mt-2 text-[13px] leading-relaxed ${t.brand_relationship_finding ? "text-muted" : "text-ink-2"}`}>
-                    {t.brand_relationship_finding && <span className="text-[11px] font-semibold uppercase tracking-wide">Analyst context: </span>}
-                    {t.reasoning_notes}
+                </div>
+
+                {/* §6 — "not assessed" is first-class, and a plan-excluded area is a LIMITATION,
+                    never a risk. These states must not look like findings or like each other. */}
+                {a.cause !== "assessed" && a.cause !== "non_voting" && (
+                  <p className="mt-2 rounded-md bg-subtle px-3 py-2 text-[13px] text-ink-2">
+                    {a.cause === "plan_excluded" && "Not part of this plan — a limitation of scope, not a risk."}
+                    {a.cause === "nothing_to_review" && "Nothing to review — no documents were provided. An absence, not a finding."}
+                    {a.cause === "not_implemented" && "This dimension is not built yet — deliberate absence, excluded from the verdict."}
+                    {(a.cause === "acquisition_failed" || a.cause === "llm_failed") && (
+                      <span className="font-semibold text-deny-ink">This paid-for area failed to score — it is why the case escalated.</span>
+                    )}
                   </p>
+                )}
+
+                {a.clientText && (
+                  <div className="mt-2 rounded-md border border-brand/25 bg-surface p-3">
+                    <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-brand">Client text — what they read</div>
+                    <p className="whitespace-pre-line text-[13px] leading-relaxed text-ink-2">{a.clientText}</p>
+                    {a.boundaryNotes.map((n) => (
+                      <div key={n.label} className="mt-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
+                        <div className="text-[12px] text-muted">{n.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* INTERNAL — the evidence beneath the narrative: statement · category · internal
+                    certainty (three-value) · source. The source link is the real leverage: no
+                    stored rationale exists for source→category — the link is how you check it. */}
+                {a.evidence.length > 0 && (
+                  <div className="mt-2 overflow-x-auto">
+                    <table className="w-full text-[12.5px]">
+                      <thead>
+                        <tr className="text-left text-[10.5px] uppercase tracking-wide text-muted">
+                          <th className="py-1 pr-3 font-semibold">Evidence</th>
+                          <th className="py-1 pr-3 font-semibold">Category (code-scored)</th>
+                          <th className="py-1 pr-3 font-semibold">Certainty</th>
+                          <th className="py-1 font-semibold">Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {a.evidence.map((e, i) => (
+                          <tr key={i} className="border-t border-line align-top">
+                            <td className="max-w-[340px] py-1.5 pr-3 text-ink-2">{e.statement}</td>
+                            <td className="py-1.5 pr-3 font-mono text-[11px] text-ink-2">
+                              {e.weight_key ?? "—"}
+                              {e.points != null && <span className={e.points < 0 ? "text-deny-ink" : "text-clear-ink"}> {e.points > 0 ? `+${e.points}` : e.points}</span>}
+                            </td>
+                            <td className="py-1.5 pr-3 font-mono text-[11px] text-muted">{e.certainty}</td>
+                            <td className="py-1.5 font-mono text-[11px]">
+                              {e.source_url ? <a href={e.source_url} target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">open ↗</a> : <span className="text-muted">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {a.rejected.length > 0 && (
+                  <div className="mt-2 rounded-md bg-subtle px-3 py-2 text-[12px] text-muted">
+                    <span className="font-semibold text-ink-2">Refused by the firewall ({a.rejected.length}):</span>{" "}
+                    {a.rejected.map((rj, i) => (
+                      <span key={i} className="font-mono text-[11px]">
+                        {i > 0 && " · "}
+                        {rj.proposed ?? "?"} <span className="font-sans">— gate {rj.gate ?? "?"}{rj.reason ? ` (${rj.reason})` : ""}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {a.reasoningNotes && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-[12px] font-semibold text-muted hover:text-ink-2">Analyst context (internal memo — never client-facing)</summary>
+                    <p className="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-muted">{a.reasoningNotes}</p>
+                  </details>
                 )}
                 {/* Track 5 (sub-gate B, OQ-B1a) — the non-voting arbitration block: ADMIN-ONLY
                     (stripped from the delivered client payload per the OQ-D rule). */}
-                {t.sourcing_logic && (
+                {a.sourcing && (
                   <div className="mt-2 rounded-md border border-line bg-raised p-2.5">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                       Sourcing Logic — arbitration (non-voting)
                     </div>
-                    {t.sourcing_logic.flags.length > 0 ? (
+                    {a.sourcing.flags.length > 0 ? (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {t.sourcing_logic.flags.map((f) => (
+                        {a.sourcing.flags.map((f) => (
                           <span key={f} className="rounded-full border border-line bg-base px-2 py-0.5 text-[11px] font-medium text-ink-2">
                             {f.replace(/_/g, " ")}
                           </span>
@@ -382,12 +504,12 @@ export function CaseReview({
                       <p className="mt-1 text-[12px] text-muted">No scenario flags.</p>
                     )}
                     <p className="mt-1.5 text-[12px] text-ink-2">
-                      <span className="font-semibold capitalize">{t.sourcing_logic.scenario_coherence.assessment.replace(/_/g, " ")}</span>
-                      <span className="text-muted"> — {t.sourcing_logic.scenario_coherence.basis}</span>
+                      <span className="font-semibold capitalize">{a.sourcing.scenario_coherence.assessment.replace(/_/g, " ")}</span>
+                      <span className="text-muted"> — {a.sourcing.scenario_coherence.basis}</span>
                     </p>
-                    {t.sourcing_logic.contradictions.length > 0 && (
+                    {a.sourcing.contradictions.length > 0 && (
                       <ul className="mt-1.5 space-y-1.5">
-                        {t.sourcing_logic.contradictions.map((c, i) => (
+                        {a.sourcing.contradictions.map((c, i) => (
                           <li key={i} className="text-[12px] text-ink-2">
                             <span className="font-semibold">{c.contradiction_type.replace(/_/g, " ")}</span>
                             <span className="text-muted"> · {c.risk_level}</span>
@@ -398,21 +520,13 @@ export function CaseReview({
                     )}
                   </div>
                 )}
-                {t.evidence_items.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {t.evidence_items.map((e) => (
-                      <li key={e.evidence_id} className="text-[13px] text-ink-2">
-                        <span className="text-muted">[{e.certainty}]</span> {e.statement}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {t.unknowns.length > 0 && (
+                {/* §6 — "could not confirm" is a destination, never an absence. */}
+                {a.unknowns.length > 0 && (
                   <div className="mt-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Unknowns</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-verify-ink">Could not confirm</div>
                     <ul className="mt-1 space-y-1">
-                      {t.unknowns.map((u, i) => (
-                        <li key={i} className="text-[13px] text-ink-2">• {u.unknown}</li>
+                      {a.unknowns.map((u, i) => (
+                        <li key={i} className="text-[13px] text-ink-2">• {u.unknown}{u.resolvable_by_client ? <span className="text-muted"> — client-resolvable</span> : null}</li>
                       ))}
                     </ul>
                   </div>
@@ -423,66 +537,9 @@ export function CaseReview({
         </div>
       </Section>
 
-      {/* 4.5 — Research Coverage & Gaps (items 3 + 4) */}
-      {vm.coverage && vm.gaps && (
-        <Section eyebrow="Research completeness" title="Research Coverage & Gaps">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-line bg-base p-3">
-              <div className="text-[22px] font-bold text-ink">{vm.coverage.tracks_run}<span className="text-[13px] font-normal text-muted"> run · {vm.coverage.tracks_skipped} skipped</span></div>
-              <div className="text-[12px] text-muted">Tracks</div>
-            </div>
-            <div className="rounded-lg border border-line bg-base p-3">
-              <div className="text-[22px] font-bold text-ink">{vm.coverage.total_evidence_items}</div>
-              <div className="text-[12px] text-muted">Evidence items</div>
-            </div>
-            <div className="rounded-lg border border-line bg-base p-3">
-              <div className="text-[13px] font-semibold text-ink">
-                <span className="text-clear-ink">{vm.coverage.certainty.verified} verified</span> ·{" "}
-                <span className="text-conditional-ink">{vm.coverage.certainty.inferred} inferred</span> ·{" "}
-                <span className="text-muted">{vm.coverage.certainty.unknown} unknown</span>
-              </div>
-              <div className="mt-0.5 text-[12px] text-muted">Certainty mix</div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <div className="text-[12px] font-semibold text-muted">Missing evidence <span className="font-normal">(material, not found — informational)</span></div>
-              {vm.gaps.per_track.every((g) => g.missing.length === 0) ? (
-                <p className="mt-1 text-[13px] text-muted">Nothing material missing.</p>
-              ) : (
-                <div className="mt-1.5 space-y-2">
-                  {vm.gaps.per_track.filter((g) => g.missing.length > 0).map((g) => (
-                    <div key={g.track_key}>
-                      <div className="text-[12px] font-semibold text-ink">{g.dimension}</div>
-                      <div className="text-[13px] text-ink-2">{g.missing.map((m) => m.label).join(" · ")}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <div className="text-[12px] font-semibold text-muted">Unknowns <span className="font-normal">(looked, unresolvable)</span></div>
-              {vm.gaps.per_track.every((g) => g.unknowns.length === 0) ? (
-                <p className="mt-1 text-[13px] text-muted">No open unknowns.</p>
-              ) : (
-                <div className="mt-1.5 space-y-2">
-                  {vm.gaps.per_track.filter((g) => g.unknowns.length > 0).map((g) => (
-                    <div key={g.track_key}>
-                      <div className="text-[12px] font-semibold text-ink">{g.dimension}</div>
-                      <ul className="space-y-0.5">
-                        {g.unknowns.map((u, i) => (
-                          <li key={i} className="text-[13px] text-ink-2">• {u.unknown}{u.resolvable_by_client ? <span className="text-muted"> — client-resolvable</span> : null}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </Section>
-      )}
+      {/* §1.2 CUT — the Coverage & Gaps section (stat tiles, missing-evidence lists): counts
+          nobody acts on at review time. The per-area view IS the coverage; unknowns render
+          inside each area as "Could not confirm". */}
 
       {/* 4.6 — Questions to Ask (Gap A: system questions; Gap B: analyst add/edit/delete). Merge is
           view-model-only (source-tagged); the AI questions_to_ask are never mutated. */}
@@ -563,6 +620,12 @@ export function CaseReview({
 
       {/* 5 — Analyst Decision */}
       <Section eyebrow="Optional · the engine already reached report-ready" title="Analyst Decision">
+        {/* §6 — the SLA clock keeps running through a hold: show it where the decision is made. */}
+        {slaHours != null && (
+          <p className={`mb-3 font-mono text-[12.5px] font-semibold ${slaHours <= 0 ? "text-deny-ink" : slaHours <= 6 ? "text-verify-ink" : "text-ink-2"}`}>
+            SLA: {slaHours <= 0 ? "overdue" : `${slaHours}h left`} — the clock keeps running through a hold.
+          </p>
+        )}
         {/* H5 — assertion-tier advisories: status vocabulary present in narrative/question fields.
             Non-blocking; the publish click is the attribution judgment. Hard tier gates separately. */}
         {vm.assertion_advisories.length > 0 && !delivered && (
@@ -775,6 +838,8 @@ export function CaseReview({
           )}
         </div>
       </details>
+      </>
+      )}
     </div>
   );
 }

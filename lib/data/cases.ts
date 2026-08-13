@@ -3,10 +3,9 @@ import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
-import { projectClientReport, cleanClientProseDeep, type ClientReport } from "@/lib/portal/clientReport";
+import { projectClientReport, cleanClientProseDeep, projectFindingJsonForClient, type ClientReport } from "@/lib/portal/clientReport";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
-import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 
 // queue_position EXCISED from the client payload 2026-08-08 (gap audit §5.5): the column has no
 // writer — the "Queue #N" pill was a dead husk. The DB column stays pending the founder's
@@ -217,23 +216,14 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   // narrative fields. FOUNDER-SIGNED exclusions: per-track signal/score (verdict is case-level;
   // raw signals are method exposure — re-adding is a deliberate client-surface-gate decision),
   // consensus/diversity records, research identity, auth_level*, b2b advisory metadata.
-  const FINDING_CLIENT_ALLOWLIST = [
-    "title", "heading", "summary", "detail",
-    "brand_relationship_finding", "brand_risk_finding", "documentation_finding",
-    "identity_scope_note", "authorization_scope_note", "marketplace_eligibility_disclaimer",
-    "evidence_count",
-  ] as const;
   return rows
     .filter((r) => (r.attempt_number ?? 1) === chosen)
     .map((r): Finding => {
       const cf = r.compiled_findings_json;
-      const projected: Record<string, unknown> = {};
-      if (cf) {
-        for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
-        // OQ-D summary rule (founder-ruled 2026-07-14) — read-side defense in depth stays: a track_5
-        // summary is ALWAYS the ruled neutral string, whatever the stored row carries.
-        if (r.track_key === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_CLIENT_SUMMARY;
-      }
+      // The allowlist + OQ-D neutral-summary rule live in the PURE projectFindingJsonForClient
+      // (extracted 2026-08-13, behavior identical) so the admin's client-view renders through
+      // the exact same projection.
+      const projected: Record<string, unknown> = cf ? projectFindingJsonForClient(cf, r.track_key) : {};
       return {
         id: r.id,
         track: r.track,

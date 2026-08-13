@@ -127,7 +127,10 @@ function FindingBody({ text }: { text: string }) {
   );
 }
 
-export function ReportView({ c, findings, report }: { c: CaseDetail; findings: Finding[]; report: ClientReport | null }) {
+// `preview` — the admin review screen renders this component as the client-view working tool;
+// portal-routed action links are hidden there (they belong to the client's session). Nothing
+// else changes: preview mode is the same component over the same projection.
+export function ReportView({ c, findings, report, preview = false }: { c: CaseDetail; findings: Finding[]; report: ClientReport | null; preview?: boolean }) {
   const [tab, setTab] = useState<TabKey>("findings");
   const [howtoOpen, setHowtoOpen] = useState(true);
   const meta = VERDICT_META[(c.verdict ?? "verify_before_purchase") as Verdict] ?? VERDICT_META.verify_before_purchase;
@@ -404,16 +407,18 @@ export function ReportView({ c, findings, report }: { c: CaseDetail; findings: F
         <div className="mt-2 font-mono text-[11px] uppercase tracking-wide text-muted">
           {c.case_number} · {c.vendor_name ?? ""} {c.delivered_at ? `· delivered ${fmt(c.delivered_at)}` : ""}
         </div>
-        <div className="mt-4 flex flex-wrap gap-2.5 print:hidden">
-          <Link href="/portal/help" className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
-            Ask about this report
-          </Link>
-          {changeRequestOpen(c) && (
-            <Link href={`/portal/cases/${c.id}/change`} className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
-              Request a change (one included, 7-day window)
+        {!preview && (
+          <div className="mt-4 flex flex-wrap gap-2.5 print:hidden">
+            <Link href="/portal/help" className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
+              Ask about this report
             </Link>
-          )}
-        </div>
+            {changeRequestOpen(c) && (
+              <Link href={`/portal/cases/${c.id}/change`} className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
+                Request a change (one included, 7-day window)
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
