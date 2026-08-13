@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { stripInternalRefs, stripInternalRefsDeep, isClientQuestion, projectClientReport } from "./clientReport";
+import {
+  stripInternalRefs, stripInternalRefsDeep, isClientQuestion, projectClientReport,
+  substituteInternalDimensionNames, dropSourceDisposalSentences, cleanClientProse,
+} from "./clientReport";
 
 // ── CLIENT REPORT PROJECTION (full-build brief §2) — the Decision Snapshot finally reaches the
 // client, through a projection that (a) filters M8 on STRUCTURE, not a blocklist, and (b) strips
@@ -69,6 +72,81 @@ describe("stripInternalRefsDeep — the per-area findings path (founder ruling 2
   it("leaves null and non-string values untouched", () => {
     expect(stripInternalRefsDeep(null)).toBeNull();
     expect(stripInternalRefsDeep({ a: 3, b: true })).toEqual({ a: 3, b: true });
+  });
+});
+
+// ── FOUNDER RULING 2026-08-13 (ratified): Rule 1 — source-disposal sentence filter; Rule 2 —
+// track-name SUBSTITUTION (never deletion). Rule 3 (method-discipline narration) LEFT ALONE.
+describe("Rule 2 — substituteInternalDimensionNames (substitute, never delete)", () => {
+  it("substitutes the ruled example: out of scope for Track 2", () => {
+    expect(substituteInternalDimensionNames("Any such assessment is out of scope for Track 2."))
+      .toBe("Any such assessment is out of scope for the Supply-Chain Relationship assessment.");
+  });
+
+  it("covers every internal dimension number, not only those seen so far", () => {
+    expect(substituteInternalDimensionNames("Track 1 confirmed it")).toBe("the Supplier Legitimacy assessment confirmed it");
+    expect(substituteInternalDimensionNames("a Track 3 concern")).toBe("a Brand Risk concern");
+  });
+
+  it("article-preceded references substitute the bare area name — no doubled article, nothing deleted", () => {
+    expect(substituteInternalDimensionNames("this is a Track 2 brand-affiliation data point, not a vendor identity finding"))
+      .toBe("this is a Supply-Chain Relationship brand-affiliation data point, not a vendor identity finding");
+  });
+
+  it("substitutes snake_case dimension names (M9 prose carries documentation_review)", () => {
+    expect(substituteInternalDimensionNames("The documentation_review dimension was not assessed in this evaluation."))
+      .toBe("The Documentation Review dimension was not assessed in this evaluation.");
+    expect(substituteInternalDimensionNames("per supply_chain_relationship and brand_risk_assessment"))
+      .toBe("per Supply-Chain Relationship and Brand Risk");
+  });
+
+  it("covers Track 0 / 0.5 / 4 / 5 / 6", () => {
+    expect(substituteInternalDimensionNames("Track 0.5 resolved it; Track 0 accepted it; Track 4 read it; Track 5 checked it; Track 6 flagged it."))
+      .toBe("supplier identity resolution resolved it; intake accepted it; the Documentation Review assessment read it; the Sourcing Logic check checked it; the category compliance review flagged it.");
+  });
+
+  it("never touches ordinary prose or the word Track in shipping contexts", () => {
+    const s = "Track your case in your portal.";
+    expect(substituteInternalDimensionNames(s)).toBe(s);
+  });
+});
+
+describe("Rule 1 — dropSourceDisposalSentences (the AWI-2607-031 disposal log)", () => {
+  const log =
+    "The Gazzetta Ufficiale source returned no extractable content and was not used. " +
+    "The Gandelli SRL source is an unrelated entity and was not used. " +
+    "The Trustpilot source concerns a different company and was excluded.";
+
+  it("drops all three disposal sentences from the live example", () => {
+    expect(dropSourceDisposalSentences(`${log} The registry filing confirms the entity.`))
+      .toBe("The registry filing confirms the entity.");
+  });
+
+  it("keeps findings prose that merely mentions sources", () => {
+    const s = "Evidence across government registrations, SEC filings, and BBB profiles confirms the entity. Primary sources were weighted most heavily.";
+    expect(dropSourceDisposalSentences(s)).toBe(s);
+  });
+
+  it("keeps Rule-3 method-discipline narration (ruled: leave alone)", () => {
+    const s = "Homonym discipline was applied: all Bosch sources were verified to concern Robert Bosch GmbH or its subsidiaries, not an unrelated entity.";
+    expect(dropSourceDisposalSentences(s)).toBe(s);
+  });
+
+  it("empty result when the whole text is a disposal log", () => {
+    expect(dropSourceDisposalSentences(log)).toBe("");
+  });
+});
+
+describe("cleanClientProse — the composed client-projection pass (strip refs → substitute → drop disposal)", () => {
+  it("cleans the full AWI-2607-031 shape end to end", () => {
+    const raw =
+      "Gandelli S.R.L. is registered in Brescia (src_2). " +
+      "The Gazzetta Ufficiale source (src_8) returned no extractable content and was not used. " +
+      "This is a Track 2 brand-affiliation data point, not a vendor identity finding.";
+    expect(cleanClientProse(raw)).toBe(
+      "Gandelli S.R.L. is registered in Brescia. " +
+      "This is a Supply-Chain Relationship brand-affiliation data point, not a vendor identity finding.",
+    );
   });
 });
 

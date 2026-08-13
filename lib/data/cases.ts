@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
-import { projectClientReport, stripInternalRefsDeep, type ClientReport } from "@/lib/portal/clientReport";
+import { projectClientReport, cleanClientProseDeep, type ClientReport } from "@/lib/portal/clientReport";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
@@ -240,11 +240,12 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
         track_key: r.track_key,
         // The ruled two-value derivation — evidence_items consumed here, never returned.
         finding_certainty: deriveClientCertainty(r.evidence_items),
-        // FOUNDER RULING 2026-08-13: internal evidence refs (src_N / E-nn / EV-nnn) are stripped
-        // CLIENT SIDE ONLY, here at the projection — the admin path reads the raw rows and keeps
-        // its tags (the operator's source-checking leverage).
-        compiled_findings_json: cf ? stripInternalRefsDeep(projected) : null,
-        questions_to_ask: stripInternalRefsDeep(r.questions_to_ask),
+        // FOUNDER RULINGS 2026-08-13 (both same day): internal refs stripped + Rule 1
+        // (source-disposal sentences dropped) + Rule 2 (internal dimension names substituted,
+        // never deleted) — CLIENT SIDE ONLY, here at the projection. The admin path reads the
+        // raw rows and keeps tags and internal names (the operator's source-checking leverage).
+        compiled_findings_json: cf ? cleanClientProseDeep(projected) : null,
+        questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
       };
     });
 }
