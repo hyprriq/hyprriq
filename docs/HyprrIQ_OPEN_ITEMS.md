@@ -40,6 +40,17 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ EMPTY-TAB GUARDS + RATIFIED READABILITY LANDED 2026-08-14** `5420fe3` — stub-headline
+> guard (<20 chars = absent, structural); conditional Checklist/Could-not-confirm tabs (content
+> or nothing, print inherits); ratified segmentation live (label-marker fusion + guarded
+> sentence splits, under-split-only failure mode); bank-coordinate filter live (Documentation-
+> scoped, shared by portal + admin client view). Unknowns-fill NOT built (ruled).
+> **BACKLOG (recorded by ruling):** (a) confirm whether the delivery-time banned-language gate
+> walks the `unknowns` column — any future decision to surface unknowns client-side depends on
+> it; (b) imperative-phrasing contingency rule for M8 (admit ask-verb imperatives, reject
+> `^[a-z_]+:` internals) — ready if a non-interrogative M8 entry ever appears; no stored case
+> needs it. 1277/1277 · tsc 0 · eslint 0 · build clean · frozen diff empty.
+>
 > **✓ READABILITY 2+3 LANDED 2026-08-13** `eabd9e3` — finding-section headings now real anchors
 > (settled scale, engine casing verbatim); admin client-text renders via the shared FindingBody;
 > admin client view PINNED to the delivered attempt (rows + snapshot through the client path's
