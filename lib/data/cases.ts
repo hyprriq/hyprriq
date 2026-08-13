@@ -2,6 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
+import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
+import { projectClientReport, type ClientReport } from "@/lib/portal/clientReport";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
@@ -123,6 +125,37 @@ export async function getCaseById(id: string): Promise<CaseDetail | null> {
   // PG-1 — project the identity BEFORE it can cross the RSC boundary (see ClientSupplierIdentity).
   const raw = data as Omit<CaseDetail, "supplier_identity"> & { supplier_identity: import("@/lib/research/contracts").SupplierIdentity | null };
   return { ...raw, supplier_identity: projectSupplierIdentityForClient(raw.supplier_identity) };
+}
+
+// ── FULL-BUILD §2 (2026-08-13) — the Decision Snapshot finally reaches the client. Delivered
+// cases only, ownership-scoped, attempt-pinned (getClientDecisionSnapshot), projected through
+// projectClientReport: EXACTLY headline / the_real_risk / leading_interpretation /
+// what_to_monitor / questions cross — M8 filtered structurally, analyst-added merged
+// source-tagged, internal evidence refs stripped. Modules 1–7 never cross. Every field here is
+// inside the delivery-time banned-language gate (the review route scans decision_snapshot +
+// vendor_questions before any publish). ──
+export type { ClientReport } from "@/lib/portal/clientReport";
+
+export async function getClientReport(caseId: string): Promise<ClientReport | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+  const supa = createServerClient();
+  const { data: owned } = await supa
+    .from("cases")
+    .select("id, status, additional_questions")
+    .eq("id", caseId)
+    .eq("client_id", userId)
+    .maybeSingle();
+  if (!owned) return null;
+  const { status, additional_questions } = owned as { status: string; additional_questions: { question?: string }[] | null };
+  if (!findingsVisibleToClient(status)) return null; // the H5 gate: nothing before delivery
+  const snap = await getClientDecisionSnapshot(caseId);
+  if (!snap) return null;
+  return projectClientReport(
+    (snap.decision_snapshot ?? null) as Record<string, unknown> | null,
+    snap.vendor_questions,
+    additional_questions ?? [],
+  );
 }
 
 // H5 — the CLIENT-facing finding shape. Deliberately excludes ai_output_json (raw model output —
