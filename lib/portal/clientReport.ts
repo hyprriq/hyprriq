@@ -27,6 +27,21 @@ export function stripInternalRefs(text: string): string {
     .trim();
 }
 
+// ── FOUNDER RULING 2026-08-13: src_N stripping is CLIENT SIDE ONLY — the operator's view keeps
+// the tags (checking a finding against its cited source is the operator's leverage). This deep
+// variant runs in the CLIENT projection (getCaseFindings) over every string that crosses the
+// RSC boundary; the admin path never imports it. ──
+export function stripInternalRefsDeep<T>(value: T): T {
+  if (typeof value === "string") return stripInternalRefs(value) as unknown as T;
+  if (Array.isArray(value)) return value.map((v) => stripInternalRefsDeep(v)) as unknown as T;
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = stripInternalRefsDeep(v);
+    return out as unknown as T;
+  }
+  return value;
+}
+
 export function isClientQuestion(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0 && s.trim().endsWith("?");
 }

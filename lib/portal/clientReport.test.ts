@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stripInternalRefs, isClientQuestion, projectClientReport } from "./clientReport";
+import { stripInternalRefs, stripInternalRefsDeep, isClientQuestion, projectClientReport } from "./clientReport";
 
 // ── CLIENT REPORT PROJECTION (full-build brief §2) — the Decision Snapshot finally reaches the
 // client, through a projection that (a) filters M8 on STRUCTURE, not a blocklist, and (b) strips
@@ -40,6 +40,35 @@ describe("stripInternalRefs — internal evidence tokens never reach a client su
 
   it("normalizes doubled spaces left behind", () => {
     expect(stripInternalRefs("a (src_1) b")).toBe("a b");
+  });
+});
+
+describe("stripInternalRefsDeep — the per-area findings path (founder ruling 2026-08-13: client side only)", () => {
+  it("strips every string value in a projected findings object, including nested arrays", () => {
+    const projected = {
+      summary: "Confirmed via portal (src_40).",
+      brand_risk_finding: "Enforcement documented (E10, E11).",
+      identity_scope_note: "Assessed separately (EV-005).",
+      evidence_count: 7,
+    };
+    expect(stripInternalRefsDeep(projected)).toEqual({
+      summary: "Confirmed via portal.",
+      brand_risk_finding: "Enforcement documented.",
+      identity_scope_note: "Assessed separately.",
+      evidence_count: 7,
+    });
+  });
+
+  it("strips strings inside arrays of objects (questions_to_ask shape)", () => {
+    const v = stripInternalRefsDeep({ qs: [{ question: "Confirm the LOA (src_3)?", reason: "See (E01)." }] }) as {
+      qs: { question: string; reason: string }[];
+    };
+    expect(v.qs[0]).toEqual({ question: "Confirm the LOA?", reason: "See." });
+  });
+
+  it("leaves null and non-string values untouched", () => {
+    expect(stripInternalRefsDeep(null)).toBeNull();
+    expect(stripInternalRefsDeep({ a: 3, b: true })).toEqual({ a: 3, b: true });
   });
 });
 

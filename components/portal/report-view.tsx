@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
 import { findingText, findingNotes } from "@/lib/portal/finding-view";
+import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import { changeRequestOpen } from "@/lib/portal/changeRequest";
 import type { Verdict } from "@/components/portal/badges";
 
@@ -87,6 +88,43 @@ function areaChip(f: Finding): { label: string; cls: string; def: string } {
   return f.finding_certainty === "verified"
     ? { label: "Verified", cls: "bg-clear-bg text-clear-ink", def: CHIP_DEFS.verified }
     : { label: "Assessed", cls: "bg-conditional-bg text-conditional-ink", def: CHIP_DEFS.assessed };
+}
+
+// Item-3 readability (2026-08-13): render the structure the engine already writes — labeled
+// sections as headed blocks, numbered points as lists. Presentation only; the parser is
+// lossless (findingStructure.test.ts) and structureless text renders as prose unchanged.
+function FindingBody({ text }: { text: string }) {
+  const blocks = parseFindingStructure(text);
+  return (
+    <div className="mt-1 max-w-[70ch] space-y-2">
+      {blocks.map((b, i) => {
+        if (b.type === "heading") {
+          return (
+            <div key={i} className="pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">
+              {b.text}
+            </div>
+          );
+        }
+        if (b.type === "list") {
+          return (
+            <ul key={i} className="space-y-1">
+              {b.items.map((item, j) => (
+                <li key={j} className="flex gap-2 text-[13px] leading-relaxed text-ink-2">
+                  <span className="text-muted" aria-hidden>•</span>
+                  <span className="min-w-0">{item}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <p key={i} className="whitespace-pre-line text-[13px] leading-relaxed text-ink-2">
+            {b.text}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ReportView({ c, findings, report }: { c: CaseDetail; findings: Finding[]; report: ClientReport | null }) {
@@ -273,7 +311,7 @@ export function ReportView({ c, findings, report }: { c: CaseDetail; findings: F
                       {AREA_NAMES[f.track_key] ?? f.track_key}
                       <span className="ml-1.5 cursor-help text-[12px] font-normal text-muted" title={AREA_DEFS[f.track_key] ?? ""}>ⓘ</span>
                     </div>
-                    {detail && <p className="mt-1 max-w-[70ch] whitespace-pre-line text-[13px] leading-relaxed text-ink-2">{detail}</p>}
+                    {detail && <FindingBody text={detail} />}
                     {notes.map((n) => (
                       <div key={n.label} className="mt-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
