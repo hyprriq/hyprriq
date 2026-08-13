@@ -40,6 +40,15 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ REPORT POLISH LANDED 2026-08-13** `e361ac9` — src_N strip CLIENT-SIDE ONLY (ruled): deep
+> strip in getCaseFindings over everything crossing the RSC boundary; admin keeps every tag
+> (consumer list grep-verified client-only). Finding readability: parseFindingStructure renders
+> the engine's own labels/numbering as headed blocks + lists, lossless, prose-unchanged fallback.
+> Housekeeping-prose investigation REPORTED (no filter built): 3 classes — true source-disposal
+> log (1/25 rows), internal Track-N vocabulary in real findings (3/25 — needs substitution, not
+> deletion), method-discipline narration (2/25) — proposed rules await founder ruling.
+> 1250/1250 exit 0 · tsc 0 · eslint 0 · build clean · frozen diff empty.
+>
 > **✓ CLIENT PORTAL FULL BUILD — CORE LANDED 2026-08-13** `1601bdc`+`9fd9579`+`9337495` —
 > THE REPORT: Decision Snapshot wired to clients (headline/real-risk/interpretation/monitor +
 > M8 questions, structural ?-filter, src_N/E-id strip, delivery-gate-covered, allowlist intact);
