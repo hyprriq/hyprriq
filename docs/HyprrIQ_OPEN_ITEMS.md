@@ -40,6 +40,17 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ CLIENT PORTAL FULL BUILD — CORE LANDED 2026-08-13** `1601bdc`+`9fd9579`+`9337495` —
+> THE REPORT: Decision Snapshot wired to clients (headline/real-risk/interpretation/monitor +
+> M8 questions, structural ?-filter, src_N/E-id strip, delivery-gate-covered, allowlist intact);
+> report-view per approved prototype (decision never tabbed, 4-level scale w/ position, honest
+> split, print-flat); case page split delivered→report / active→tracker (scope flow stays dead).
+> SUBMIT: 4-step logic-preserving restructure (cap-2 now legible — supersedes silent-guardrail).
+> Guides shell, settings invoice-promise reword, 60+ claim removed. 59 new strings in MUST_PASS.
+> NOT built (reported): invoices route (needs Stripe read), client name-edit, dashboard rail
+> quick-actions/plan cards, reports-list search, separate FAQ route (help carries ruled copy).
+> 1239/1239 exit 0 · tsc 0 · eslint 0 · build clean · frozen engine untouched.
+>
 > **✓ SLA COPY RULING LANDED 2026-08-12** `470c184` — client promise = 24h, matching
 > CASE_SLA_HOURS; PLAN_SLA_DAYS retired (absence locked); every delivery statement derives from
 > the one constant (submit estimate, onboarding ×2, pricing bullets + comparison row, FAQ,
