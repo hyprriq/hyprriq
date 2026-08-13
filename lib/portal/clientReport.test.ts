@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   stripInternalRefs, stripInternalRefsDeep, isClientQuestion, projectClientReport,
   substituteInternalDimensionNames, dropSourceDisposalSentences, cleanClientProse,
+  dropBankCoordinateSentences, cleanClientFindingJson,
 } from "./clientReport";
 
 // ── CLIENT REPORT PROJECTION (full-build brief §2) — the Decision Snapshot finally reaches the
@@ -147,6 +148,32 @@ describe("cleanClientProse — the composed client-projection pass (strip refs �
       "Gandelli S.R.L. is registered in Brescia. " +
       "This is a Supply-Chain Relationship brand-affiliation data point, not a vendor identity finding.",
     );
+  });
+});
+
+describe("stub-headline guard + bank-coordinate filter (founder-approved 2026-08-14)", () => {
+  it("a stub/short headline is treated as absent — the Summary fallback renders", () => {
+    const r = projectClientReport({ headline: "stub", the_real_risk: "", leading_interpretation: "", what_to_verify: [], what_to_monitor: [] }, [], [])!;
+    expect(r.headline).toBe("");
+  });
+
+  it("a real headline passes untouched and untruncated", () => {
+    const h = "Supplier verified for one brand; authorization for the second is unconfirmed. — subject to verification";
+    const r = projectClientReport({ headline: h, what_to_monitor: [] }, [], [])!;
+    expect(r.headline).toBe(h);
+  });
+
+  it("drops the AWI-2607-031 bank-coordinate sentence, keeps the findings around it", () => {
+    const t = "The stated grand total is arithmetically consistent with the line items. Bank payment details (IBAN IT06Y0810234870000000002609, Cassa Rurale Valsugana e Tesino) are provided. One branded product is present.";
+    expect(dropBankCoordinateSentences(t)).toBe("The stated grand total is arithmetically consistent with the line items. One branded product is present.");
+  });
+
+  it("cleanClientFindingJson applies the bank filter ONLY to Documentation Review", () => {
+    const j = { summary: "Payment details (IBAN IT06Y0810234870000000002609) are provided. The rest stands here." };
+    const doc = cleanClientFindingJson(j, "documentation_review") as { summary: string };
+    const brand = cleanClientFindingJson(j, "brand_risk_assessment") as { summary: string };
+    expect(doc.summary).toBe("The rest stands here.");
+    expect(brand.summary).toContain("IBAN");
   });
 });
 

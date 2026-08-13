@@ -152,6 +152,35 @@ export interface ClientReport {
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 
+// ── STUB-HEADLINE GUARD (founder-approved 2026-08-14): a headline that is empty or implausibly
+// short is treated as ABSENT — the Summary fallback renders instead. Structural, no blocklist:
+// the four legacy test reports carry the literal "stub"; any future thin engine output is
+// caught the same way. ──
+export const MIN_REAL_HEADLINE_CHARS = 20;
+
+// ── BANK-COORDINATE FILTER (ratified 2026-08-14, scoped to Documentation Review): a sentence
+// carrying payment coordinates (IBAN/BIC/SWIFT/account numbers) is transcription, never a
+// finding — no client needs their own IBAN read back. Sentence-level, zero-false-positive
+// patterns only. ──
+const BANK_COORD_RE = /\bIBAN\b|\bBIC\b|\bSWIFT\b|\baccount\s+number\b|\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/;
+
+export function dropBankCoordinateSentences(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => !BANK_COORD_RE.test(s))
+    .join(" ")
+    .trim();
+}
+
+// The per-finding clean pass used by BOTH client projections (portal getCaseFindings and the
+// admin client-view's buildClientFindings): generic prose cleanup everywhere, plus the
+// documentation-scoped bank-coordinate filter.
+export function cleanClientFindingJson<T>(value: T, trackKey: string): T {
+  const cleaned = cleanClientProseDeep(value);
+  if (trackKey !== "documentation_review") return cleaned;
+  return deepMapStrings(cleaned, dropBankCoordinateSentences);
+}
+
 export function projectClientReport(
   snapshot: Record<string, unknown> | null,
   vendorQuestions: unknown,
@@ -166,8 +195,9 @@ export function projectClientReport(
       .filter(isClientQuestion)
       .map((q) => ({ question: cleanClientProse(q.trim()), source: "additional" as const })),
   ];
+  const headline = cleanClientProse(str(snapshot.headline));
   return {
-    headline: cleanClientProse(str(snapshot.headline)),
+    headline: headline.trim().length >= MIN_REAL_HEADLINE_CHARS ? headline : "",
     the_real_risk: cleanClientProse(str(snapshot.the_real_risk)),
     leading_interpretation: cleanClientProse(str(snapshot.leading_interpretation)),
     what_to_monitor: (Array.isArray(snapshot.what_to_monitor) ? snapshot.what_to_monitor : [])

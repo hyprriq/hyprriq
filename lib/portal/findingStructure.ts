@@ -19,7 +19,10 @@ export type FindingBlock =
   | { type: "list"; items: string[] };
 
 // A label: start-of-string or after sentence punctuation + space; caps words; colon.
-const LABEL_RE = /(^|(?<=[.!?…]\s))([A-Z][A-Z0-9&/'’-]*(?:\s*[—–-]\s*[A-Z][A-Z0-9&/'’-]*|\s+[A-Z][A-Z0-9&/'’-]*)*):\s+/g;
+// RATIFIED 2026-08-14 (label-marker fusion): an optional "(N) " prefix is consumed WITH the
+// label — the engine writes "(1) CONFIRMED POSITIVES:" and a caps-run + colon is never a
+// genuine list item, so the marker is structural, not content.
+const LABEL_RE = /(^|(?<=[.!?…]\s))(?:\(\d{1,2}\)\s*)?([A-Z][A-Z0-9&/'’-]*(?:\s*[—–-]\s*[A-Z][A-Z0-9&/'’-]*|\s+[A-Z][A-Z0-9&/'’-]*)*):\s+/g;
 const PAREN_ITEM_RE = /\(\d{1,2}\)\s*/;
 const NUM_ITEM_RE = /(^|(?<=[.!?…]\s))(\d{1,2})\.\s+(?=[A-Z(])/g;
 
@@ -61,12 +64,52 @@ function splitNumberedList(segment: string): FindingBlock[] | null {
   return blocks;
 }
 
-function parseSegment(segment: string): FindingBlock[] {
+// ── RATIFIED 2026-08-14: guarded sentence-splitting, INSIDE LABELED SECTIONS ONLY. A boundary
+// is a ". " (or "! "/"? ") followed by an uppercase/€/digit/quote opener, where the token
+// before the period is safe: a word of ≥4 letters ending lowercase, or a closing parenthesis.
+// REFUSED: single capitals ("C. sas"), short capitalized tokens ("Reg. Imprese"), tokens with
+// digits ("n°16215."). Applied only when it yields ≥3 items each ≥40 chars — otherwise prose.
+// The failure mode is under-splitting, never mis-splitting. ──
+const MIN_SENTENCE_ITEMS = 3;
+const MIN_ITEM_CHARS = 40;
+
+function safeBoundaryToken(prefix: string): boolean {
+  if (prefix.endsWith(")")) return true;
+  const m = prefix.match(/([A-Za-zÀ-ÿ0-9°&€'’-]+)$/);
+  if (!m) return false;
+  const token = m[1];
+  if (/\d/.test(token)) return false;
+  if (token.length < 4) return false;
+  if (/^[A-Z]/.test(token) && token.length <= 4) return false;
+  return /[a-zà-ÿ]$/.test(token);
+}
+
+function splitSentences(segment: string): FindingBlock[] | null {
+  const parts: string[] = [];
+  let start = 0;
+  const re = /([.!?])\s+(?=[A-Z€"“(\d])/g;
+  for (const m of segment.matchAll(re)) {
+    const end = (m.index ?? 0) + 1;
+    if (!safeBoundaryToken(segment.slice(start, end - 1))) continue;
+    parts.push(segment.slice(start, end).trim());
+    start = end;
+  }
+  parts.push(segment.slice(start).trim());
+  const items = parts.filter(Boolean);
+  if (items.length < MIN_SENTENCE_ITEMS || items.some((s) => s.length < MIN_ITEM_CHARS)) return null;
+  return [{ type: "list", items }];
+}
+
+function parseSegment(segment: string, inSection = false): FindingBlock[] {
   const trimmed = segment.trim();
   if (!trimmed) return [];
   if (PAREN_ITEM_RE.test(trimmed)) return splitParenList(trimmed);
   const numbered = splitNumberedList(trimmed);
   if (numbered) return numbered;
+  if (inSection) {
+    const sentences = splitSentences(trimmed);
+    if (sentences) return sentences;
+  }
   return [{ type: "prose", text: trimmed }];
 }
 
@@ -82,18 +125,20 @@ export function parseFindingStructure(text: string): FindingBlock[] {
   let sawLabel = false;
   LABEL_RE.lastIndex = 0;
   const labelMatches = [...t.matchAll(LABEL_RE)];
+  let anyHeading = false;
   for (const m of labelMatches) {
     const label = m[2];
     if (label.replace(/[^A-Z]/g, "").length < 4) continue; // too short to be a section label
     sawLabel = true;
     const start = m.index ?? 0;
     const before = t.slice(lastIndex, start);
-    blocks.push(...parseSegment(before));
+    blocks.push(...parseSegment(before, anyHeading)); // lead text before the first label stays prose
     blocks.push({ type: "heading", text: label });
+    anyHeading = true;
     lastIndex = start + m[0].length;
   }
   const tail = t.slice(lastIndex);
-  blocks.push(...parseSegment(tail));
+  blocks.push(...parseSegment(tail, anyHeading));
   if (!sawLabel && blocks.length === 1 && blocks[0].type === "prose") {
     return [{ type: "prose", text: t }]; // no structure at all — verbatim
   }

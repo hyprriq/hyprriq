@@ -79,4 +79,34 @@ describe("parseFindingStructure", () => {
     const t = "The vendor TD SYNNEX CORPORATION appears in SEC filings. BBB lists the entity.";
     expect(parseFindingStructure(t)).toEqual([{ type: "prose", text: t }]);
   });
+
+  // ── RATIFIED 2026-08-14: label-marker fusion + guarded sentence-splitting ──
+  it("label-marker fusion: '(1) CONFIRMED POSITIVES:' is a heading, never a mega list item", () => {
+    const t = "(1) CONFIRMED POSITIVES: The registry confirms the entity and its operating history in full detail. (2) RISK SIGNALS REQUIRING VERIFICATION: The distribution model is controlled and requires verification before commitment.";
+    const b = parseFindingStructure(t);
+    expect(b[0]).toEqual({ type: "heading", text: "CONFIRMED POSITIVES" });
+    expect(b[2]).toEqual({ type: "heading", text: "RISK SIGNALS REQUIRING VERIFICATION" });
+    expect(b.filter((x) => x.type === "heading")).toHaveLength(2);
+  });
+
+  it("guarded sentence split: a labeled sentence-run becomes items (the AWI-2607-031 shape)", () => {
+    const t =
+      "RISK SIGNALS REQUIRING VERIFICATION: The brand operates a controlled distribution model outside the US and channels purchases through dealers. The brand has an active counterfeit-product concern documented on its own website and in forums. Community discussion raises authenticity concerns about products sold by third-party sellers.";
+    const b = parseFindingStructure(t);
+    expect(b[0]).toEqual({ type: "heading", text: "RISK SIGNALS REQUIRING VERIFICATION" });
+    expect(b[1].type).toBe("list");
+    expect((b[1] as { items: string[] }).items).toHaveLength(3);
+  });
+
+  it("the Reg. Imprese hazard never splits; splitting refuses under 3 items", () => {
+    const t =
+      "CONFIRMED POSITIVES: The invoice was issued by the supplier at Via Pertega 6 with CF/PI data and Reg. Imprese TN registration present in the header block of the document.";
+    const b = parseFindingStructure(t);
+    expect(b[1]).toEqual({ type: "prose", text: "The invoice was issued by the supplier at Via Pertega 6 with CF/PI data and Reg. Imprese TN registration present in the header block of the document." });
+  });
+
+  it("free prose (no label) is never sentence-split", () => {
+    const t = "The first sentence stands here with enough length to matter. The second sentence also stands here with enough length. The third sentence stands here with plenty of length too.";
+    expect(parseFindingStructure(t)).toEqual([{ type: "prose", text: t }]);
+  });
 });

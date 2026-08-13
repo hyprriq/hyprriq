@@ -139,6 +139,12 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   const [howtoOpen, setHowtoOpen] = useState(true);
   const meta = VERDICT_META[(c.verdict ?? "verify_before_purchase") as Verdict] ?? VERDICT_META.verify_before_purchase;
   const orderedFindings = findings; // data layer orders by area already
+  // CONDITIONAL TABS (founder-approved 2026-08-14): an empty tab on a paid report is worse than
+  // no tab — Checklist and Could-not-confirm render only when they carry content. Print output
+  // inherits: an unrendered panel cannot print. The buttons vanish with the panels, so the tab
+  // state can never reach a hidden tab.
+  const hasChecklist = (report?.questions.length ?? 0) > 0;
+  const hasHonesty = !!(report?.leading_interpretation || (report?.what_to_monitor.length ?? 0) > 0);
 
   const tabBtn = (key: TabKey, label: string, extra?: React.ReactNode) => (
     <button
@@ -192,9 +198,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               <p className="mt-2 font-display text-[16.5px] font-medium leading-relaxed text-ink">
                 {report?.headline || "Your report is ready — the findings below carry the detail."}
               </p>
-              <button type="button" onClick={() => setTab("checklist")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
-                What to verify first ↓
-              </button>
+              {hasChecklist && (
+                <button type="button" onClick={() => setTab("checklist")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
+                  What to verify first ↓
+                </button>
+              )}
             </div>
             {/* The five areas at a glance (the prototype's "key points" slot — see header note) */}
             <div className="rounded-card border border-line bg-surface p-5">
@@ -210,9 +218,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                   );
                 })}
               </ul>
-              <button type="button" onClick={() => setTab("honesty")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
-                See what we could not confirm ↓
-              </button>
+              {hasHonesty && (
+                <button type="button" onClick={() => setTab("honesty")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
+                  See what we could not confirm ↓
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -297,8 +307,8 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <span className="text-[11px] font-bold uppercase tracking-wider text-muted">The full detail</span>
         <div className="mt-2.5 flex flex-wrap gap-2" role="tablist" aria-label="Report detail">
           {tabBtn("findings", "Findings", <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{orderedFindings.length} areas</span>)}
-          {tabBtn("honesty", "Could not confirm", <span className="h-[7px] w-[7px] rounded-full bg-verify-ink" aria-hidden />)}
-          {tabBtn("checklist", "Checklist", report ? <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{report.questions.length}</span> : null)}
+          {hasHonesty && tabBtn("honesty", "Could not confirm", <span className="h-[7px] w-[7px] rounded-full bg-verify-ink" aria-hidden />)}
+          {hasChecklist && tabBtn("checklist", "Checklist", <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{report!.questions.length}</span>)}
           {tabBtn("notes", "Notes")}
         </div>
 
@@ -338,7 +348,8 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           </p>
         </div>
 
-        {/* COULD NOT CONFIRM — the honest split */}
+        {/* COULD NOT CONFIRM — the honest split (rendered only with content; see hasHonesty) */}
+        {hasHonesty && (
         <div role="tabpanel" className={panelCls("honesty")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">What we confirmed — and what we could not</div>
           <div className="mt-3 rounded-card border border-line bg-surface p-5">
@@ -346,10 +357,8 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               <h4 className="text-[14px] font-bold text-ink">The reading, and its limits</h4>
               <span className="cursor-help text-[12px] text-muted" title="What we looked for but public evidence did not confirm. This marks the limits of the research — not a finding against the supplier. Absence of evidence is not evidence of a problem.">ⓘ</span>
             </div>
-            {report?.leading_interpretation ? (
+            {report?.leading_interpretation && (
               <p className="mt-2 max-w-[75ch] whitespace-pre-line text-[14px] leading-relaxed text-ink-2">{report.leading_interpretation}</p>
-            ) : (
-              <p className="mt-2 text-[13px] text-muted">The findings above carry what was and was not confirmed for this case.</p>
             )}
             {report && report.what_to_monitor.length > 0 && (
               <div className="mt-4 border-t border-dashed border-line pt-3">
@@ -363,15 +372,16 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             )}
           </div>
         </div>
+        )}
 
-        {/* CHECKLIST — the questions to put to the supplier */}
+        {/* CHECKLIST — rendered only with content (see hasChecklist) */}
+        {hasChecklist && (
         <div role="tabpanel" className={panelCls("checklist")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">Verify before you commit</div>
           <div className="mt-3 rounded-card border border-line bg-surface px-5 py-2">
             <p className="py-2 text-[12.5px] text-ink-2">Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.</p>
-            {report && report.questions.length > 0 ? (
-              <ol className="mb-2">
-                {report.questions.map((q, i) => (
+            <ol className="mb-2">
+                {report!.questions.map((q, i) => (
                   <li key={i} className="flex items-start gap-3 border-t border-line py-2.5">
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[12.5px] font-bold text-brand-ink">{i + 1}</span>
                     <div className="min-w-0">
@@ -382,12 +392,10 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                     </div>
                   </li>
                 ))}
-              </ol>
-            ) : (
-              <p className="mb-2 border-t border-line py-3 text-[13px] text-muted">No supplier questions were recorded for this report.</p>
-            )}
+            </ol>
           </div>
         </div>
+        )}
 
         {/* NOTES */}
         <div role="tabpanel" className={panelCls("notes")}>
