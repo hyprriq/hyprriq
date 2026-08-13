@@ -160,7 +160,10 @@ export function SettingsForm({ profile }: { profile: ClientProfile }) {
         )}
       </Card>
 
-      <Card title="Billing address" hint="Used on your invoices. Separate from your Stripe card details.">
+      {/* Full-build §0 REWORD (2026-08-13): nothing sends these to Stripe today, so the copy
+          promises nothing — "appear on your invoices" was a false promise. Wiring them into
+          Stripe invoices is a separate dev-lane item, reported. */}
+      <Card title="Billing address" hint="Saved to your account for your records. Separate from your Stripe card details.">
         <Text label="Billing company" value={form.billing_company_name} onChange={(v) => set("billing_company_name", v)} />
         <Text label="Address line 1" value={form.billing_address_line1} onChange={(v) => set("billing_address_line1", v)} />
         <Text label="Address line 2" value={form.billing_address_line2} onChange={(v) => set("billing_address_line2", v)} />
@@ -176,7 +179,7 @@ export function SettingsForm({ profile }: { profile: ClientProfile }) {
         </label>
       </Card>
 
-      <Card title="Tax & compliance" hint="Only needed for invoice generation. Leave blank if not applicable.">
+      <Card title="Tax & compliance" hint="Saved to your account for your records. Leave blank if not applicable.">
         <Text label="VAT number" value={form.vat_number} onChange={(v) => set("vat_number", v)} />
         <Text label="EIN" value={form.ein_number} onChange={(v) => set("ein_number", v)} />
         <Text label="Tax ID" value={form.tax_id} onChange={(v) => set("tax_id", v)} />

@@ -9,8 +9,8 @@ export default async function SettingsPage() {
   return (
     <PortalShell client={client} active="settings" title="Settings">
       <p className="mb-5 max-w-3xl text-sm text-ink-2">
-        Keep your contact and billing details up to date. Tax fields are only used
-        when we generate an invoice.
+        Keep your contact and billing details up to date. These are saved to your
+        account for your records.
       </p>
       {profile ? (
         <SettingsForm profile={profile} />

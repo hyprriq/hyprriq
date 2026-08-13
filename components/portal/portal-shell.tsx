@@ -17,7 +17,8 @@ export type PortalNavKey =
   | "billing"
   | "settings"
   | "help"
-  | "support";
+  | "support"
+  | "guides";
 
 // Stroked SVG icons (skin port 2026-08-11) — the emoji glyphs are gone; one icon
 // family, 17px, stroke 2, matching the ruled prototype's icon language.
@@ -45,6 +46,9 @@ const ICONS: Record<PortalNavKey, React.ReactNode> = {
   ),
   support: (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>
+  ),
+  guides: (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2ZM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7Z" /></svg>
   ),
 };
 
@@ -78,6 +82,7 @@ const NAV: { section?: string; items: NavItem[] }[] = [
     items: [
       { key: "help", label: "Help Centre", href: "/portal/help" },
       { key: "support", label: "Contact Support", href: "/portal/support" },
+      { key: "guides", label: "How-to Guides", href: "/portal/guides" },
     ],
   },
 ];

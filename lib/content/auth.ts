@@ -29,7 +29,8 @@ export const signUp = {
   tagline: ["Start vetting suppliers", "in minutes, not days."],
   pills: [
     { color: "#6EE7B7", name: "Human-reviewed reports" },
-    { color: "#93C5FD", name: "60+ public data sources" },
+    // §0 (2026-08-13): "60+" was an unverified count — nothing in the codebase enumerates it.
+    { color: "#93C5FD", name: "Five assessment areas, one clear verdict" },
     { color: "#FCD34D", name: "Clear, unbiased verdicts" },
     { color: "#C4B5FD", name: "Built by operators" },
   ],

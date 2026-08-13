@@ -150,6 +150,16 @@ const MUST_PASS: [string, string][] = [
   ["submit tip brands", "The brands and vendor you enter here are what we research — one case covers one supplier and the brands you list."],
   ["submit tip documents", "A PO or letterhead helps us confirm the vendor's entity and address. The brands and vendor you entered are what we research."],
   ["submit tip review", "A minute here protects the credit — check the supplier, brands, and marketplace are exactly right, then submit."],
+  // — guides shell + settings reword + auth pill (full-build §0/§1) —
+  ["guides page sub", "Short, practical guides. This section will grow — the entries below are the launch set."],
+  ["guides row: read report", "How to read your report"],
+  ["guides row: strong case", "Submitting a strong case"],
+  ["guides row: checklist", "Working the verification checklist"],
+  ["guides row: five areas", "What the five assessment areas cover"],
+  ["settings page sub (reworded)", "Keep your contact and billing details up to date. These are saved to your account for your records."],
+  ["settings billing hint (reworded)", "Saved to your account for your records. Separate from your Stripe card details."],
+  ["settings tax hint (reworded)", "Saved to your account for your records. Leave blank if not applicable."],
+  ["auth pill (60+ removed)", "Five assessment areas, one clear verdict"],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],

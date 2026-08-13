@@ -66,7 +66,7 @@ const CHIP_DEFS = {
 } as const;
 
 const HOW_TO_READ =
-  "This report gives you one clear verdict, the single most important risk in plain language, findings across five assessment areas, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit. A few things worth knowing: the verdict is a position on a four-level scale, not a pass/fail — it reflects what the observable evidence supported at the time of research; “could not confirm” is not an accusation — it marks the limits of what public evidence shows; “not assessed” means we did not evaluate that area — it neither helps nor harms the verdict; the decision stays yours — no report can guarantee an outcome, this one tells you what the evidence supports.";
+  "This report gives you one clear verdict, the single most important risk in plain language, findings across five assessment areas, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit. A few things worth knowing: the verdict is a position on a four-level scale, not a pass/fail — it reflects what the observable evidence supported at the time of research; “could not confirm” is not an accusation — it marks the limits of what public evidence shows; “not assessed” means we did not evaluate that area — it neither helps nor harms the verdict; the decision stays yours — a report is not a guarantee of an outcome; it tells you what the evidence supports.";
 
 const QUESTION_SOURCE_LABEL = { system: "From our research", additional: "From our review team" } as const;
 
