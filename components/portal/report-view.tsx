@@ -99,21 +99,24 @@ function areaChip(f: Finding): { label: string; cls: string; def: string } {
 // body-weight whispers. Sentence case via CSS so the engine's ALL-CAPS text is untouched.
 export function FindingBody({ text }: { text: string }) {
   const blocks = parseFindingStructure(text);
+  // Typography pass (founder-ruled 2026-08-14): finding prose reads in the reading serif at a
+  // 68ch measure with open leading; section-label headings stay in the interface sans — they are
+  // anchors, not prose. Sizes bumped 13→14.5 because the serif needs the reading size.
   return (
-    <div className="mt-1 max-w-[70ch] space-y-2">
+    <div className="mt-1 max-w-[68ch] space-y-2.5 font-reading">
       {blocks.map((b, i) => {
         if (b.type === "heading") {
           return (
-            <div key={i} className="mt-3 border-b border-line pb-1 first:mt-0">
-              <span className="text-[12.5px] font-bold tracking-wide text-ink">{b.text}</span>
+            <div key={i} className="mt-3.5 border-b border-line pb-1 first:mt-0">
+              <span className="font-sans text-[12.5px] font-bold tracking-wide text-ink">{b.text}</span>
             </div>
           );
         }
         if (b.type === "list") {
           return (
-            <ul key={i} className="space-y-1">
+            <ul key={i} className="space-y-1.5">
               {b.items.map((item, j) => (
-                <li key={j} className="flex gap-2 text-[13px] leading-relaxed text-ink-2">
+                <li key={j} className="flex gap-2 text-[14.5px] leading-[1.7] text-ink-2">
                   <span className="text-muted" aria-hidden>•</span>
                   <span className="min-w-0">{item}</span>
                 </li>
@@ -122,7 +125,7 @@ export function FindingBody({ text }: { text: string }) {
           );
         }
         return (
-          <p key={i} className="whitespace-pre-line text-[13px] leading-relaxed text-ink-2">
+          <p key={i} className="whitespace-pre-line text-[14.5px] leading-[1.7] text-ink-2">
             {b.text}
           </p>
         );
@@ -260,7 +263,8 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
       {report?.the_real_risk && (
         <div className="mt-6 rounded-card border border-line border-l-4 border-l-verify-ink bg-surface p-6">
           <h3 className="font-display text-[17px] font-bold text-ink">The single most important risk</h3>
-          <p className="mt-2.5 whitespace-pre-line text-[14px] leading-relaxed text-ink-2">{report.the_real_risk}</p>
+          {/* Reading measure: this paragraph ran the full card width (~110+ characters a line). */}
+          <p className="mt-2.5 max-w-[68ch] whitespace-pre-line font-reading text-[15px] leading-[1.7] text-ink-2">{report.the_real_risk}</p>
         </div>
       )}
 
@@ -358,14 +362,16 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               <span className="cursor-help text-[12px] text-muted" title="What we looked for but public evidence did not confirm. This marks the limits of the research — not a finding against the supplier. Absence of evidence is not evidence of a problem.">ⓘ</span>
             </div>
             {report?.leading_interpretation && (
-              <p className="mt-2 max-w-[75ch] whitespace-pre-line text-[14px] leading-relaxed text-ink-2">{report.leading_interpretation}</p>
+              /* The one long unbroken block (AWI-2607-022): solved with measure (75→68ch), the
+                 reading serif, and open leading — NOT by loosening the segmentation guards. */
+              <p className="mt-2 max-w-[68ch] whitespace-pre-line font-reading text-[15px] leading-[1.7] text-ink-2">{report.leading_interpretation}</p>
             )}
             {report && report.what_to_monitor.length > 0 && (
               <div className="mt-4 border-t border-dashed border-line pt-3">
                 <div className="text-[12px] font-semibold uppercase tracking-wide text-muted">What to monitor</div>
-                <ul className="mt-1.5 space-y-1.5">
+                <ul className="mt-1.5 max-w-[68ch] space-y-1.5">
                   {report.what_to_monitor.map((m, i) => (
-                    <li key={i} className="flex gap-2 text-[13.5px] leading-relaxed text-ink-2"><span className="text-muted">•</span>{m}</li>
+                    <li key={i} className="flex gap-2 font-reading text-[14.5px] leading-[1.7] text-ink-2"><span className="text-muted">•</span>{m}</li>
                   ))}
                 </ul>
               </div>
@@ -385,7 +391,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                   <li key={i} className="flex items-start gap-3 border-t border-line py-2.5">
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[12.5px] font-bold text-brand-ink">{i + 1}</span>
                     <div className="min-w-0">
-                      <div className="text-[13.5px] leading-relaxed text-ink">{q.question}</div>
+                      <div className="max-w-[68ch] font-reading text-[14.5px] leading-[1.7] text-ink">{q.question}</div>
                       {q.source === "additional" && (
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{QUESTION_SOURCE_LABEL.additional}</div>
                       )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { Wordmark } from "@/components/brand/wordmark";
 
 const NAV = [
   { label: "How it works", href: "/how-it-works" },
@@ -15,8 +16,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="font-display text-xl font-bold tracking-tight text-ink">
-          Hyprr<span className="text-brand">IQ</span>
+        <Link href="/" aria-label="HyprrIQ home">
+          <Wordmark height={22} />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">

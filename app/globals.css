@@ -51,6 +51,8 @@
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-instrument);
   --font-mono: var(--font-jetbrains-mono);
+  /* Reading serif — report prose only (founder-ruled single exception, 2026-08-14). */
+  --font-reading: var(--font-source-serif), Georgia, serif;
 }
 
 :root {

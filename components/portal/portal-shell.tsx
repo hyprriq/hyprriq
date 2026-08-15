@@ -3,6 +3,7 @@ import type { Client } from "@/lib/data/client";
 import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
 import { ShellChrome } from "@/components/portal/shell-chrome";
+import { Wordmark } from "@/components/brand/wordmark";
 import {
   PLAN_NAME,
   type PlanType,
@@ -135,9 +136,7 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
   return (
     <aside className="flex h-full w-full flex-col overflow-y-auto bg-brand-hover px-4 py-5 text-nav-fg">
       <div className="mb-5 px-1">
-        <div className="font-display text-xl font-semibold tracking-tight text-white">
-          Hyprr<span className="text-accent-warm">IQ</span>
-        </div>
+        <Wordmark variant="reversed" height={21} />
         <div className="mt-0.5 text-xs font-medium text-nav-fg-dim">
           {plan ? `${PLAN_NAME[plan]} Plan` : "No plan yet"}
         </div>

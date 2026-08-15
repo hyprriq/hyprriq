@@ -1,4 +1,5 @@
 import { VerdictBadge, type Verdict } from "./verdict-badge";
+import { Wordmark } from "@/components/brand/wordmark";
 
 // SWAP POINT (post dashboard-finalization): replace the mock panel below with a
 // real <Image> screenshot of /portal/dashboard. Keep the frame + blur overlay
@@ -25,7 +26,7 @@ export function DashboardPreview() {
       <div className="flex">
         {/* sidebar */}
         <aside className="hidden w-44 flex-none border-r border-line bg-subtle px-3 py-4 sm:block">
-          <p className="px-2 font-display text-sm font-semibold text-ink">HyprrIQ</p>
+          <div className="px-2"><Wordmark height={14} /></div>
           <nav className="mt-4 space-y-1 text-sm">
             <span className="block rounded-md bg-brand-tint px-2 py-1.5 font-medium text-brand-ink">
               Dashboard

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Instrument_Sans, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
 // Display / headlines — Fraunces: research-firm gravitas (ruled skin, 2026-08-05).
@@ -22,6 +22,16 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+// Reading — REPORT PROSE ONLY (founder-ruled single exception to "no new fonts", 2026-08-14):
+// Source Serif 4, designed for on-screen long-form reading. Applies to findings, the risk
+// statement, the leading interpretation, what-to-monitor, checklist items — never interface
+// chrome, tables, forms, or the admin console.
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  axes: ["opsz"],
+});
+
 export const metadata: Metadata = {
   title: "HyprrIQ — Source intelligence for Amazon wholesale",
   description:
@@ -39,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${instrument.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${instrument.variable} ${jetbrainsMono.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

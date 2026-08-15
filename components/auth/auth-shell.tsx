@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { brand, signIn, signUp } from "@/lib/content/auth";
+import { Wordmark } from "@/components/brand/wordmark";
 
 // Bright dot colors for the dark navy brand panel (the light-bg verdict inks
 // would be too low-contrast here).
@@ -26,8 +27,8 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
         style={{ background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)" }}
       />
       <div className="relative m-auto max-w-sm">
-        <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white">
-          Hyprr<span className="text-white/70">IQ</span>
+        <Link href="/" aria-label="HyprrIQ home" className="inline-block">
+          <Wordmark variant="reversed" height={26} />
         </Link>
         <p className="mt-1 text-sm text-white/60">{brand.sub}</p>
         <div className="my-6 h-px w-12 bg-white/25" />
@@ -80,11 +81,8 @@ export function AuthShell({
       <div className="flex flex-col justify-center bg-base px-5 py-12 sm:px-10">
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile-only wordmark (brand panel hidden below md) */}
-          <Link
-            href="/"
-            className="mb-8 inline-block font-display text-xl font-bold tracking-tight text-ink md:hidden"
-          >
-            Hyprr<span className="text-brand">IQ</span>
+          <Link href="/" aria-label="HyprrIQ home" className="mb-8 inline-block md:hidden">
+            <Wordmark height={22} />
           </Link>
 
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink">

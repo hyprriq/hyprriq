@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/brand/wordmark";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-base px-5 text-center">
-      <Link href="/" className="font-display text-xl font-bold tracking-tight text-ink">
-        Hyprr<span className="text-brand">IQ</span>
+      <Link href="/" aria-label="HyprrIQ home" className="inline-block">
+        <Wordmark height={22} />
       </Link>
       <p className="mt-10 font-mono text-sm tnum text-muted">404</p>
       <h1 className="mt-3 max-w-md text-[clamp(1.8rem,4vw,2.6rem)] font-bold leading-tight text-ink">

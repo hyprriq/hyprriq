@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/brand/wordmark";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
@@ -22,8 +23,8 @@ export function SiteFooter() {
     <footer className="border-t border-line bg-surface">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-5 py-14 sm:grid-cols-4 lg:px-8">
         <div className="col-span-2 sm:col-span-1">
-          <Link href="/" className="font-display text-lg font-bold tracking-tight text-ink">
-            Hyprr<span className="text-brand">IQ</span>
+          <Link href="/" aria-label="HyprrIQ home" className="inline-block">
+            <Wordmark height={20} />
           </Link>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink-2">
             Source intelligence for Amazon wholesale. We surface what&rsquo;s

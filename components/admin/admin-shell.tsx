@@ -4,6 +4,7 @@ import { navFor, type AdminNavKey, type NavGroup } from "@/lib/admin/nav";
 import type { Operator } from "@/lib/auth/permissions";
 import type { ClientScope } from "@/lib/auth/clientScope";
 import { getOpenSupportCount } from "@/lib/data/adminSupport";
+import { Wordmark } from "@/components/brand/wordmark";
 
 // ── OPERATOR-AWARE SHELL (founder-ruled 2026-08-02): the nav model + visibility rules live in
 // lib/admin/nav.ts (SHARED capability source — the same can()/canManageUsers() the API gates
@@ -113,8 +114,9 @@ export async function AdminShell({
     <div className="flex min-h-dvh bg-base">
       <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 py-5">
         <div className="mb-4 flex items-center justify-between px-1">
-          <div className="font-display text-base font-semibold tracking-tight text-white">
-            Hyprr<span className="text-accent-warm">IQ</span> <span className="text-white/50">Admin</span>
+          <div className="flex items-baseline gap-1.5">
+            <Wordmark variant="reversed" height={17} />
+            <span className="font-display text-base font-semibold tracking-tight text-white/50">Admin</span>
           </div>
           <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
             {roleBadge}
