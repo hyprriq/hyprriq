@@ -5,6 +5,7 @@ import { CATEGORY_CLIENT_SUMMARY } from "@/lib/research/categoryStep";
 import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/research/categoryFlagsTable";
 import { clientNote } from "@/lib/research/websiteAnchor";
 import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
+import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
 
 // ── BANNED-LANGUAGE FIX GATE (spec 2026-07-24, ALL SIX OQs founder-ruled) — the new HARD rules
 // H10–H15 + the H4 negation carve-out, TWO-SIDED BY LAW.
@@ -58,6 +59,11 @@ const MUST_BLOCK: [string, string][] = [
 
 // ═══ SIDE 2 — THE MUST-PASS SET (BL5, founder-ruled 2026-07-24) ═══
 const MUST_PASS: [string, string][] = [
+  // — PDF document identity (spec 2026-08-15, standing rule 8: same commit; imported, never copied) —
+  ["PDF document title", DOC_TITLE],
+  ["PDF issuer line", ISSUER],
+  ["PDF confidentiality line", confidentialityLine("Marcus Chen (Chen Trading Co.)")],
+  ["PDF running footer", runningFooter("AWI-2607-022", 4, 9, "August 13, 2026")],
   // — pricing-ladder / intake strings (2026-08-07 pass — standing rule 8: same commit) —
   ["upload upsell ($99 gate)", "Document review is included from the $149 report up."],
   ["upload authority copy", "Optional. A PO or letterhead helps us confirm the vendor's entity and address. The brands and vendor you enter above are what we research."],
