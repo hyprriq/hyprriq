@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  PLAN_NAME,
   brandCapForPlan,
   creditsRequired,
   PLAN_PRICE_LABEL,
@@ -269,7 +268,7 @@ export function SubmitForm({
     <div className="mx-auto max-w-4xl">
       <h2 className="font-display text-2xl font-bold tracking-tight text-ink">Research a supplier</h2>
       <p className="mt-1 text-sm text-ink-2">
-        One case covers one supplier and up to {cap} brands, for one credit. You&rsquo;ll review everything before it&rsquo;s submitted.
+        One case covers one supplier and their brands, for one credit. You&rsquo;ll review everything before it&rsquo;s submitted.
       </p>
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
@@ -343,7 +342,7 @@ export function SubmitForm({
                 <div>
                   <div className="text-sm font-bold text-ink">The brands</div>
                   <p className="mt-0.5 text-[13px] text-muted">
-                    Up to {cap} brands per case on your plan — one credit covers them all.
+                    {`Up to ${cap} brands per case — one credit covers them all.`}
                   </p>
                 </div>
                 <div>
@@ -374,7 +373,7 @@ export function SubmitForm({
                     )}
                   </div>
                   <div className="mt-1.5 text-[13px] text-muted">
-                    {brands.length} of {cap} brands added ({plan ? `${PLAN_NAME[plan]} plan` : "plan"}: up to {cap} brands per credit)
+                    {`${brands.length} of ${cap} brands added`}
                   </div>
                   {brands.length >= cap && (
                     <p className="mt-1 text-[13px] text-ink-2">{brandCapMessage(plan)}</p>

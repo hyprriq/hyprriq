@@ -147,7 +147,10 @@ const MUST_PASS: [string, string][] = [
   ["active case review line", "Every report is reviewed by a human analyst before delivery, and you'll get an email when it's ready."],
   ["active case about row", "Question about this case? Message support — include the case ID"],
   // — submit 4-step (full-build §4) — step subs, hints, tips, review copy —
-  ["submit page sub", "One case covers one supplier and up to 5 brands, for one credit. You'll review everything before it's submitted."],
+  ["submit page sub (dedup 2026-08-15)", "One case covers one supplier and their brands, for one credit. You'll review everything before it's submitted."],
+  ["submit brands sub (single statement)", "Up to 5 brands per case — one credit covers them all."],
+  ["submit brands counter", "2 of 5 brands added"],
+  ["credits widget detail", "plan adds 12 at renewal · 3 used this cycle"],
   ["submit supplier sub", "Who are you planning to buy from?"],
   ["submit name hint", "The full legal name from their invoice or quote — spelling matters."],
   ["submit website hint", "If they gave you a storefront, portal, or catalog link, paste it here."],

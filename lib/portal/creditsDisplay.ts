@@ -34,6 +34,8 @@ export function creditsView(available: number, plan: PlanType | null | undefined
       ? null
       : extra > 0
         ? `plan renews to ${perCycle}/cycle · includes ${extra} extra (top-ups & rollover carry until used)${usedSuffix}`
-        : `plan includes ${perCycle}/cycle${usedSuffix}`;
+        // Copy fix 2026-08-15: the old "plan includes N/cycle" echoed the balance when they
+        // matched ("12 / plan includes 12/cycle"). "Adds at renewal" states what renewal DOES.
+        : `plan adds ${perCycle} at renewal${usedSuffix}`;
   return { available, perCycle, extra, pct, headline, detail };
 }

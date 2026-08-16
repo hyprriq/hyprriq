@@ -1,9 +1,9 @@
-// ── BUG-2 — the credits framing can never say "7 of 5" or overflow the bar. ──
+﻿// â”€â”€ BUG-2 â€” the credits framing can never say "7 of 5" or overflow the bar. â”€â”€
 import { describe, it, expect } from "vitest";
 import { creditsView } from "./creditsDisplay";
 
-describe("creditsView — honest credits framing (BUG-2)", () => {
-  it("the live bug case: 7 credits on a 5/cycle plan — no '7 of 5', bar capped at 100", () => {
+describe("creditsView â€” honest credits framing (BUG-2)", () => {
+  it("the live bug case: 7 credits on a 5/cycle plan â€” no '7 of 5', bar capped at 100", () => {
     const v = creditsView(7, "growth_279");
     expect(v.headline).toBe("7 credits available");
     expect(v.detail).toContain("renews to 5/cycle");
@@ -15,14 +15,14 @@ describe("creditsView — honest credits framing (BUG-2)", () => {
   it("under the allotment with real usage: usage from the USED COLUMN, never inferred", () => {
     const v = creditsView(3, "growth_279", 2);
     expect(v.headline).toBe("3 credits available");
-    expect(v.detail).toBe("plan includes 5/cycle · 2 used this cycle");
+    expect(v.detail).toBe("plan adds 5 at renewal · 2 used this cycle");
     expect(v.pct).toBe(60);
     expect(v.extra).toBe(0);
   });
 
-  it("THE POST-UPGRADE CASE (founder-ruled): 7 on a fresh 12/cycle plan, 0 used — never implies 5 consumed", () => {
+  it("THE POST-UPGRADE CASE (founder-ruled): 7 on a fresh 12/cycle plan, 0 used â€” never implies 5 consumed", () => {
     const v = creditsView(7, "scale_499", 0);
-    expect(v.detail).toBe("plan includes 12/cycle");
+    expect(v.detail).toBe("plan adds 12 at renewal");
     const all = v.headline + v.detail;
     expect(all).not.toMatch(/of 12/);      // the consumed-implying framing is gone
     expect(all).not.toMatch(/used/);       // zero usage shows no usage claim at all
@@ -30,14 +30,14 @@ describe("creditsView — honest credits framing (BUG-2)", () => {
 
   it("post-upgrade WITH prior usage: every number independently true (7 avail · 12/cycle · 3 used)", () => {
     const v = creditsView(7, "scale_499", 3);
-    expect(v.detail).toBe("plan includes 12/cycle · 3 used this cycle");
+    expect(v.detail).toBe("plan adds 12 at renewal · 3 used this cycle");
   });
 
   it("exactly at the allotment: full bar, no phantom extra", () => {
     const v = creditsView(12, "scale_499");
     expect(v.pct).toBe(100);
     expect(v.extra).toBe(0);
-    expect(v.detail).toBe("plan includes 12/cycle");
+    expect(v.detail).toBe("plan adds 12 at renewal");
   });
 
   it("zero credits: honest zero, empty bar", () => {
@@ -60,3 +60,4 @@ describe("creditsView — honest credits framing (BUG-2)", () => {
     for (const n of [6, 10, 50, 999]) expect(creditsView(n, "growth_279").pct).toBe(100);
   });
 });
+
