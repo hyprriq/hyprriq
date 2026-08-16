@@ -341,3 +341,39 @@ describe("BL fix — the H4 negation carve-out (BL4)", () => {
     expect(scanHard("Category requirements are stated as 'may require'; they are not confirmation of Amazon approval or refusal.")).toEqual([]);
   });
 });
+
+// ── GATE RULING 2026-08-16 — two-sided proof for the four census-driven changes. PASS side is
+// REAL corpus sentences the old gate wrongly blocked; BLOCK side is constructed violations
+// proving every ban still bites. Advisory: the demoted evidence-subject form must flag, not block.
+import { scanAssertion } from "./banned-language";
+
+describe("gate ruling 2026-08-16 — census corpus passes, real violations still block", () => {
+  const CORPUS_MUST_PASS: [string, string][] = [
+    ["#1 request-voice with e.g. abbreviation", "Can TD SYNNEX provide documentation (e.g., distributor agreement, vendor portal screenshot, or Lenovo partner portal confirmation) confirming its authorized distributor status for Lenovo in the specific geography?"],
+    ["#3 fraud clearing", "No scam reports naming NVE Pharmaceuticals as a fraudulent vendor were found; src_1 and src_18 concern unrelated parties."],
+    ["#3 fraud attribution (impersonation)", "The only negative signals are a low-volume Trustpilot score and third-party recruitment fraud impersonation - the latter concerns scammers posing AS TD SYNNEX, not TD SYNNEX itself."],
+    ["#3 legitimacy inside a whether-question", "It is ambiguous whether the seller was a legitimate reseller or counterfeit."],
+    ["#4 ungating subject-matter (gating state)", "Broad resale is supported through authorized channels, but unauthorized or ungated marketplace resale faces friction."],
+    ["#4 ungating reported speech", "Multiple seller forum posts consistently report that the brand requires a brand-issued LOA and that Amazon ungating alone is insufficient."],
+    ["#4 mandated service denial still passes", "We do not provide ungating services."],
+  ];
+  it.each(CORPUS_MUST_PASS)("PASS %s", (_n, s) => expect(scanHard(s)).toEqual([]));
+
+  const MUST_BLOCK: [string, string][] = [
+    ["our-voice confirm", "We confirm your authorization with the brand."],
+    ["this-confirms form", "This document confirms the authorization of the vendor."],
+    ["passive without evidence subject", "Authorization is confirmed for this vendor."],
+    ["fraud accusation", "The vendor is a fraudulent operation run by scammers."],
+    ["attributive fraud accusation", "This is a fraudulent vendor."],
+    ["bare legitimacy verdict", "The supplier is legitimate."],
+    ["ungating service offer", "We can handle ungating for your account."],
+    ["ungating service noun", "Our package includes ungating services for restricted categories."],
+  ];
+  it.each(MUST_BLOCK)("BLOCK %s", (_n, s) => expect(scanHard(s).length).toBeGreaterThan(0));
+
+  it("#2 evidence-subject form: demoted to ADVISORY - never silently released", () => {
+    const s = "The evidence confirms authorization in at least three distinct geographic contexts.";
+    expect(scanHard(s)).toEqual([]);
+    expect(scanAssertion(s)).toContain("evidence-voice authorization confirmation (reword to 'supports')");
+  });
+});

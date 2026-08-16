@@ -48,6 +48,77 @@ function hasUnnegatedAmazonApproval(text: string): boolean {
 // BL FIX — H12's denial-awareness: "could not confirm authorization" IS the instead-column;
 // only UNNEGATED confirm/certify-authorization claims block.
 const CONFIRM_NEGATION_BEFORE = /(?:\bnot|n[o'’]t|\bcannot|\bcan'?t|\bnever|\bno|\bunable\s+to|\bcould\s+not|\bdo(?:es)?\s+not)\s*$/i;
+
+// ── GATE RULING 2026-08-16 (#1, census-driven): abbreviation-aware sentence starts. The old
+// lastIndexOf(".") treated the period in "e.g." as a sentence end, truncating the request-voice
+// guard's scope and defeating the 2026-07-28 carve-out on real M8 questions (10-case census
+// class). A period ends a sentence only when it does not belong to an abbreviation. ──
+const ABBREV_TAIL = /(?:\b(?:e\.g|i\.e|etc|vs|cf|approx|inc|ltd|corp|co|dr|mr|mrs|ms|st|no)|[\s(["'“][A-Za-z])\.$/i;
+function sentenceStartIndex(text: string, idx: number): number {
+  for (let i = idx - 1; i >= 0; i--) {
+    const ch = text[i];
+    if (ch === "?" || ch === "!") return i + 1;
+    if (ch === ".") {
+      if (ABBREV_TAIL.test(text.slice(Math.max(0, i - 7), i + 1))) continue;
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
+// ── GATE RULING 2026-08-16 (#3): negation + attribution awareness for the verdict-shaped
+// fraud/legitimacy rules — the same machinery H2/H12 carry. Clearing forms ("No scam reports …
+// were found", "whether the seller was a legitimate reseller") and attributed impersonation
+// ("scammers posing AS the vendor, not the vendor itself") pass; affirmative our-voice
+// accusations still block. ──
+// Clearing shapes, scoped tight so an unrelated negation earlier in the sentence can never
+// exempt a verdict ("…is not identity fraud — X is a verifiably legitimate entity" still
+// blocks): leading determiner "No …" gets the wide window; bare not/never a 2-word reach;
+// whether/if a 4-word reach.
+const CLEARING_BEFORE = /(?:\bno\b[^.?!]{0,60}|(?:\bnot\b|\bnever\b|\bwithout\b)\s+(?:\w+\s+){0,2}|(?:\bwhether\b|\bif\b)\s+(?:\w+\s+){0,4})$/i;
+const ATTRIBUTION_IN_SENTENCE = /\bposing\s+as\b|\bimpersonat|\bpretending\s+to\s+be\b|\ballegedly\b|\baccused\s+of\b|\bnot\s+[A-Z][\w\s]*\s+itself\b/i;
+function makeVerdictGuard(re: RegExp): (text: string) => boolean {
+  const flags = re.flags.includes("g") ? re.flags : re.flags + "g";
+  return (text: string): boolean => {
+    const g = new RegExp(re.source, flags);
+    let m: RegExpExecArray | null;
+    while ((m = g.exec(text)) !== null) {
+      const start = sentenceStartIndex(text, m.index);
+      if (CLEARING_BEFORE.test(text.slice(start, m.index))) continue;
+      if (ATTRIBUTION_IN_SENTENCE.test(text.slice(start, Math.min(text.length, m.index + 80)))) continue;
+      return true;
+    }
+    return false;
+  };
+}
+
+// ── GATE RULING 2026-08-16 (#4): ungating splits SERVICE from SUBJECT-MATTER. Blocking only
+// the service-offer shape (our subject or an offer verb before "ungat", or "ungating service");
+// descriptive gating-state vocabulary ("ungated resale", reported "Amazon ungating alone is
+// insufficient") is the product's subject matter and passes. The mandated service DENIAL
+// ("We do not provide ungating services") stays passing via the in-sentence negation check. ──
+function hasUngatingServiceClaim(text: string): boolean {
+  const re = /ungat/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const start = sentenceStartIndex(text, m.index);
+    const beforeInSentence = text.slice(start, m.index);
+    const serviceShape =
+      /\b(?:we|our|hyprriq)\b[^.?!]*$/i.test(beforeInSentence) ||
+      /\b(?:provide|offer|sell|perform|promise|handle|guarantee)\w*\s+(?:\w+\s+)?$/i.test(beforeInSentence) ||
+      /^ing\s+services?\b/i.test(text.slice(m.index + 5, m.index + 19));
+    if (!serviceShape) continue;
+    if (/\b(?:not|don'?t|does\s+not|doesn'?t|never|won'?t|no)\b/i.test(beforeInSentence)) continue;
+    return true;
+  }
+  return false;
+}
+
+// ── GATE RULING 2026-08-16 (#2): the EVIDENCE-SUBJECT form ("the evidence confirms
+// authorization…") is DEMOTED to the assertion tier — flagged for reword to "supports" until
+// the engine-prose pass lands, never silently released. Our-voice and passive-without-evidence-
+// subject forms stay HARD. ──
+const EVIDENCE_SUBJECT_BEFORE = /\b(?:evidence|sources?|records?|documentation|filings?|listings?|pack)\b[^.?!]{0,30}$/i;
 // AMENDMENT 2026-07-28 (founder-authorized, from the REAL-OUTPUT probe) — REQUEST-VOICE carve-out:
 // Module 8's mandated job is REQUESTING evidence ("can you provide documentation confirming your
 // authorization?") — a request/question is not our assertion. The guard is sentence-scoped: a
@@ -64,8 +135,11 @@ function hasUnnegatedConfirmAuth(text: string): boolean {
   while ((m = re.exec(text)) !== null) {
     const before = text.slice(Math.max(0, m.index - 20), m.index);
     if (CONFIRM_NEGATION_BEFORE.test(before)) continue;
-    const sentenceStart = Math.max(text.lastIndexOf(".", m.index), text.lastIndexOf("?", m.index), text.lastIndexOf("!", m.index), 0);
+    // #1 (2026-08-16): abbreviation-aware sentence scope — "e.g." can no longer truncate it.
+    const sentenceStart = sentenceStartIndex(text, m.index);
     if (REQUEST_VOICE_IN_SENTENCE.test(text.slice(sentenceStart, m.index))) continue;
+    // #2 (2026-08-16): evidence-subject form → demoted to the assertion tier (scanAssertion).
+    if (EVIDENCE_SUBJECT_BEFORE.test(text.slice(sentenceStart, m.index))) continue;
     return true;
   }
   // AMENDMENT 2026-07-28 — the PASSIVE our-voice form ("authorization is confirmed"), which the
@@ -81,22 +155,11 @@ function hasUnnegatedConfirmAuth(text: string): boolean {
 // recommendation language BEYOND it, and the four VERDICT_SENTENCES are whitelisted BY
 // CONSTRUCTION: "Verify Before Purchase" carries no recommendation verb, "Do Not Rely" keeps
 // "rely" deliberately OUT of H10's verb alternation. Two-sided fixtures name both.
-// BL fix (2026-07-24, BL5) — H1's ONE carve-out: the platform's own service-denial ("We do not
-// provide ungating services") is a MANDATED denial and must pass; every other form of "ungat"
-// stays blocked, anywhere, any voice (Hard Rule #12 otherwise intact).
-const UNGATING_DENIAL_BEFORE = /(?:do(?:es)?\s+not|don'?t|never|not|won'?t|\bno)\s+(?:provide\s+|offer\s+|sell\s+|perform\s+|promise\s+)?$/i;
-function hasUnexemptedUngating(text: string): boolean {
-  const re = /ungat/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    const before = text.slice(Math.max(0, m.index - 24), m.index);
-    if (!UNGATING_DENIAL_BEFORE.test(before)) return true;
-  }
-  return false;
-}
+// (H1's 2026-07-24 any-voice ungating guard retired by the 2026-08-16 ruling — replaced by
+// hasUngatingServiceClaim above: service-offer shapes block, subject-matter vocabulary passes.)
 
 const HARD: Rule[] = [
-  { re: /ungat/i, label: "ungating", test: hasUnexemptedUngating },                             // H1 (Hard Rule #12) — BL fix: the service-denial carve-out only
+  { re: /ungat/i, label: "ungating", test: hasUngatingServiceClaim },                           // H1 — RULING 2026-08-16: service-offer shape only; subject-matter gating vocabulary passes
   { re: /\bguarantee/i, label: "guarantee", test: hasUnnegatedGuarantee },                      // H2 — HARD even attributed (founder ruling); negation-aware (mandated disclaimers pass)
   // H3 — the PROMISE forms only ("account is safe", "we ensure account safety"). The bare noun
   // "account safety" appears in the MANDATED disclaimer's denial list and must not match — hence
@@ -153,14 +216,17 @@ const HARD: Rule[] = [
   // borderline ("holds a legitimate … authorized distribution relationship", evidence-attributed)
   // and "legitimately registered" (adverb, no bare adjective) stay passing. Our-voice BARE
   // ASSERTION of entity legitimacy only; consistent-with framing untouched (no is/are before it).
-  { re: /\b(?:is|are|was|were|seems?|looks?|holds?|remains?)\s+(?:a\s+|an\s+)?(?:\w+ly\s+)*legitimate\b(?![^.?!]{0,60}\b(?:relationship|agreement|channel|chain-of-custody)\b)/i, label: "bare legitimacy verdict" },
+  { re: /\b(?:is|are|was|were|seems?|looks?|holds?|remains?)\s+(?:a\s+|an\s+)?(?:\w+ly\s+)*legitimate\b(?![^.?!]{0,60}\b(?:relationship|agreement|channel|chain-of-custody)\b)/i, label: "bare legitimacy verdict",
+    test: makeVerdictGuard(/\b(?:is|are|was|were|seems?|looks?|holds?|remains?)\s+(?:a\s+|an\s+)?(?:\w+ly\s+)*legitimate\b(?![^.?!]{0,60}\b(?:relationship|agreement|channel|chain-of-custody)\b)/i) }, // #3 2026-08-16
   // POST-FREEZE AMENDMENT (founder-authorized bug-hunt, 2026-07-24): VERDICT-SHAPED, not
   // presence-based — the pipeline RESEARCHES scam reports, so its absence-reporting narrative
   // ("No scam reports were found") must never block delivery. Our-voice conclusions block;
   // research-artifact vocabulary passes. Attributed allegations ("the vendor is a scam") still
   // block by the H2 even-attributed precedent — the founder rephrases at review.
-  { re: /\b(?:is|are|was|were|being)\s+(?:a\s+|an\s+)?(?:scam(?:mer)?|fake|fraud(?:ulent|ster)?|bogus)\b|\blooks?\s+(?:like\s+)?(?:a\s+)?(?:scam|fake|fraud)\b|\brunning\s+a\s+scam\b|\bscammers?\b/i, label: "fraud verdict" },
-  { re: /\b(?:fraudulent|fake|bogus)\s+(?:vendor|supplier|wholesaler|distributor|company|business|operation|reseller|entity)\b/i, label: "fraud verdict (attributive)" },
+  { re: /\b(?:is|are|was|were|being)\s+(?:a\s+|an\s+)?(?:scam(?:mer)?|fake|fraud(?:ulent|ster)?|bogus)\b|\blooks?\s+(?:like\s+)?(?:a\s+)?(?:scam|fake|fraud)\b|\brunning\s+a\s+scam\b|\bscammers?\b/i, label: "fraud verdict",
+    test: makeVerdictGuard(/\b(?:is|are|was|were|being)\s+(?:a\s+|an\s+)?(?:scam(?:mer)?|fake|fraud(?:ulent|ster)?|bogus)\b|\blooks?\s+(?:like\s+)?(?:a\s+)?(?:scam|fake|fraud)\b|\brunning\s+a\s+scam\b|\bscammers?\b/i) }, // #3 2026-08-16
+  { re: /\b(?:fraudulent|fake|bogus)\s+(?:vendor|supplier|wholesaler|distributor|company|business|operation|reseller|entity)\b/i, label: "fraud verdict (attributive)",
+    test: makeVerdictGuard(/\b(?:fraudulent|fake|bogus)\s+(?:vendor|supplier|wholesaler|distributor|company|business|operation|reseller|entity)\b/i) }, // #3 2026-08-16
   { re: /\b(?:authentic|genuine)\s+(?:vendor|supplier|wholesaler|distributor|source|business|operation|reseller)\b/i, label: "authenticity guarantee" },
   // ── H15 — approved as a status, word-order-complete (the adjacency hole: A3/A5 need
   // "approved seller/supplier"; the predicate order escaped). ──
@@ -176,6 +242,9 @@ const ASSERTION: Rule[] = [
   { re: /approved\s+(seller|reseller)/i, label: "approved seller/reseller" },                   // A3
   { re: /brand[\s-]approved/i, label: "brand approved" },                                       // A4
   { re: /\b(safe|approved|verified|recommended|low[\s-]?risk)\s+supplier/i, label: "safe/approved/verified supplier" }, // A5 (requires the "supplier" pairing — never matches the bare UI certainty label)
+  // A6 — RULING 2026-08-16 (#2): the evidence-subject confirmation form, demoted from HARD.
+  // Flags for reword ("supports", not "confirms") until the engine-prose pass retires the verb.
+  { re: /\b(?:evidence|sources?|records?|documentation|filings?|listings?|pack)\b[^.?!]{0,30}\bconfirm\w*\b[^.?!]{0,40}\b(?:authoriz|authoris|approv|authentic)/i, label: "evidence-voice authorization confirmation (reword to 'supports')" },
 ];
 
 const scanWith = (rules: Rule[]) => (text: string): string[] => {
