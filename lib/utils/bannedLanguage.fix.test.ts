@@ -6,6 +6,7 @@ import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/resear
 import { clientNote } from "@/lib/research/websiteAnchor";
 import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
+import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
 
 // ── BANNED-LANGUAGE FIX GATE (spec 2026-07-24, ALL SIX OQs founder-ruled) — the new HARD rules
 // H10–H15 + the H4 negation carve-out, TWO-SIDED BY LAW.
@@ -64,6 +65,16 @@ const MUST_PASS: [string, string][] = [
   ["PDF issuer line", ISSUER],
   ["PDF confidentiality line", confidentialityLine("Marcus Chen (Chen Trading Co.)")],
   ["PDF running footer", runningFooter("AWI-2607-022", 4, 9, "August 13, 2026")],
+  // — PDF document structural copy (rebuild 2026-08-16; imported, never copied) —
+  ...SECTIONS.flatMap((s): [string, string][] => [[`PDF section title ${s.no}`, `${s.no} · ${s.title}`], [`PDF toc line ${s.no}`, s.toc]]),
+  ["PDF contents title", CONTENTS_TITLE],
+  ["PDF areas table", `${AREAS_TABLE.caption} — ${AREAS_TABLE.colArea} / ${AREAS_TABLE.colStatus}`],
+  ["PDF checklist table", `${CHECKLIST_TABLE.colNo} ${CHECKLIST_TABLE.colQuestion} — ${CHECKLIST_TABLE.analystNote}`],
+  ["PDF monitor caption", MONITOR_TABLE_CAPTION],
+  ["PDF boundary callout label", BOUNDARY_CALLOUT_LABEL],
+  ["PDF cover meta labels", `${COVER_META_LABELS.preparedFor} · ${COVER_META_LABELS.delivered} · ${COVER_META_LABELS.caseRef} · ${COVER_META_LABELS.inside}`],
+  ["PDF cover inside line", coverInsideLine(17)],
+  ["PDF document footer", documentFooter("Marcus Chen (Chen Trading Co.)", 6, 12)],
   // — pricing-ladder / intake strings (2026-08-07 pass — standing rule 8: same commit) —
   ["upload upsell ($99 gate)", "Document review is included from the $149 report up."],
   ["upload authority copy", "Optional. A PO or letterhead helps us confirm the vendor's entity and address. The brands and vendor you enter above are what we research."],
