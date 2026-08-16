@@ -40,6 +40,12 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ HUMANISE PASS LANDED 2026-08-14** `2c2a866` — jargon sweep clean (0 hits); density fixes:
+> "Ready to read" (download stub honesty), document-review bullet de-teched, creditExplainer
+> plain. ⚠ FLAGGED: "Full 5-dimension research" onboarding bullet renders on the 3-dimension
+> $99 tier — claims fix pends ruling. §1 (client source links) + §3 (engine prose tone)
+> REPORTED in-chat, nothing built. 1302/1302 · tsc 0 · eslint 0 · build clean.
+>
 > **✓ EMPTY-TAB GUARDS + RATIFIED READABILITY LANDED 2026-08-14** `5420fe3` — stub-headline
 > guard (<20 chars = absent, structural); conditional Checklist/Could-not-confirm tabs (content
 > or nothing, print inherits); ratified segmentation live (label-marker fusion + guarded
