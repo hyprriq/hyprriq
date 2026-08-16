@@ -96,7 +96,7 @@ export const oneTimePlans: Plan[] = [
 ];
 
 export const creditExplainer =
-  "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Credits are just how many reports you can run.";
+  "One credit buys one report: one supplier, up to your plan's brand limit, covering the assessment areas your plan includes. Credits are simply how many reports you can run.";
 
 export const comparisonColumns = ["Single Report", "Single Deep Report", "Growth", "Scale"] as const;
 

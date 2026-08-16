@@ -178,6 +178,9 @@ const MUST_PASS: [string, string][] = [
   ["settings billing hint (reworded)", "Saved to your account for your records. Separate from your Stripe card details."],
   ["settings tax hint (reworded)", "Saved to your account for your records. Leave blank if not applicable."],
   ["auth pill (60+ removed)", "Five assessment areas, one clear verdict"],
+  // — humanise pass (2026-08-14) —
+  ["dashboard reports-ready sub", "Ready to read"],
+  ["onboarding document bullet", "Document review when you upload paperwork"],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],

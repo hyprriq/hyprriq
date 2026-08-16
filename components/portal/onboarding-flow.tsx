@@ -24,7 +24,7 @@ function planBullets(plan: PlanType): string[] {
     sub ? `${credits} research reports per month` : `${credits} complete report`,
     `Up to ${PLAN_BRAND_CAPS[plan]} brands per report`,
     "Full 5-dimension research",
-    "14-field document review if uploaded",
+    "Document review when you upload paperwork",
     `Delivered within ${CASE_SLA_HOURS} hours`,
     ...(PLAN_ROLLOVER_LIMIT[plan] > 0
       ? [`Up to ${PLAN_ROLLOVER_LIMIT[plan]} credits roll over each month`]
