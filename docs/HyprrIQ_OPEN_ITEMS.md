@@ -40,6 +40,14 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ AREA-CLAIMS RULING FULLY LANDED 2026-08-14** `126d440` — help-page full-depth claim
+> replaced (plan-neutral truth, "Research Dimensions" heading retired); $99 loses the
+> document-review bullet (planAcceptsUploads); report header/print-head count-derived from the
+> case's own findings; how-to-read superseded to plan-includes wording; PDF strings plan-neutral
+> (count-derivation REPORTED as not possible in the paused renderer — lands with the PDF lane);
+> "research dimensions" → "assessment areas" across all public copy, five-area marketing framing
+> kept as ruled. 1306/1306 · tsc 0 · eslint 0 · build clean · frozen engine untouched.
+>
 > **✓ CLAIMS FIX LANDED 2026-08-14** `1d1ba42` — onboarding research bullet plan-derived from
 > the track registry ($99 = 3 named areas; others = all five). ⚠ SWEEP FINDS, REPORTED NOT
 > FIXED (pending ruling): help page "All five run at full depth on every plan" (flat false on
