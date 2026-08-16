@@ -1,4 +1,4 @@
-# HyprrIQ — Open Items Tracker (v2, merged)
+﻿# HyprrIQ — Open Items Tracker (v2, merged)
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
@@ -40,6 +40,8 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ SUBMIT COPY FIXES LANDED 2026-08-15** ``538c0ec`` — interpolation seams -> template literals; brand cap stated once (counter kept); credits sub now "plan adds N at renewal" never echoing balance; ASIN gating confirmed ($149+Scale on KEEPA flip, test-locked). Track 6 explainer delivered in-chat. 1306/1306 · gates green.
+>
 > **✓ AREA-CLAIMS RULING FULLY LANDED 2026-08-14** `126d440` — help-page full-depth claim
 > replaced (plan-neutral truth, "Research Dimensions" heading retired); $99 loses the
 > document-review bullet (planAcceptsUploads); report header/print-head count-derived from the
