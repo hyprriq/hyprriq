@@ -14,11 +14,11 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What exactly do I get?",
-    a: "A one-page Decision Snapshot with one of four plain-English verdicts, the evidence behind it across five research dimensions, and a checklist of what to ask your vendor. Full reports include the detailed findings.",
+    a: "A one-page Decision Snapshot with one of four plain-English verdicts, the evidence behind it across five assessment areas, and a checklist of what to ask your vendor. Full reports include the detailed findings.",
   },
   {
     q: "How do credits work?",
-    a: "One credit = one report — one supplier, up to your plan's brand limit, across the research dimensions your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
+    a: "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
   },
   {
     q: "How long does a report take?",
@@ -30,7 +30,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I try it before subscribing?",
-    a: "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five research dimensions, to see the depth before committing to a monthly plan.",
+    a: "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five assessment areas, to see the depth before committing to a monthly plan.",
   },
 ];
 

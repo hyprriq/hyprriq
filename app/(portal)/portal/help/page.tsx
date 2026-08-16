@@ -66,7 +66,9 @@ export default async function HelpPage() {
           </div>
         </Section>
 
-        <Section title="The 5 Research Dimensions" sub="Every report covers five areas of investigation. All five run at full depth on every plan.">
+        {/* CLAIMS FIX (founder-ruled 2026-08-14): the old sub claimed all five run on every
+            plan — false on $99. Plan-neutral truth; internal "Research Dimensions" heading retired. */}
+        <Section title="The Assessment Areas" sub="Which areas run depends on your plan — your report states exactly what it covered.">
           <div className="space-y-2">
             {dimensions.map((d) => (
               <div key={d.name} className="flex gap-3 rounded-card border border-line bg-surface p-4">

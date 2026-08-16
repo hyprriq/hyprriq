@@ -17,6 +17,7 @@ import {
   type PlanType,
 } from "@/lib/constants/plans";
 import { requiredFindingTracks } from "@/lib/constants/tracks";
+import { planAcceptsUploads } from "@/lib/constants/uploads";
 
 // CLAIMS FIX (founder-ruled 2026-08-14): the research bullet derives from the plan's own track
 // registry — never hardcoded. Client-facing area names, never "dimension". The old static
@@ -40,7 +41,9 @@ function planBullets(plan: PlanType): string[] {
     sub ? `${credits} research reports per month` : `${credits} complete report`,
     `Up to ${PLAN_BRAND_CAPS[plan]} brands per report`,
     researchBullet(plan),
-    "Document review when you upload paperwork",
+    // $99 takes no uploads (planAcceptsUploads is the server rule) — the bullet only renders
+    // where document review can actually happen (claims ruling 2026-08-14).
+    ...(planAcceptsUploads(plan) ? ["Document review when you upload paperwork"] : []),
     `Delivered within ${CASE_SLA_HOURS} hours`,
     ...(PLAN_ROLLOVER_LIMIT[plan] > 0
       ? [`Up to ${PLAN_ROLLOVER_LIMIT[plan]} credits roll over each month`]

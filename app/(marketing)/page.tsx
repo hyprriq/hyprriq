@@ -66,14 +66,14 @@ const OUTCOME_COPY: Record<Verdict, string> = {
 
 const EDGE_STATS = [
   { value: 60, suffix: "+", label: "public data points per case" },
-  { value: 5, suffix: "", label: "research dimensions" },
+  { value: 5, suffix: "", label: "assessment areas" },
   { value: 14, suffix: "", label: "documentation standards checked" },
 ];
 
 const EDGE = [
   {
     icon: Boxes,
-    title: "Five research dimensions",
+    title: "Five assessment areas",
     body: "Supplier identity, supply-chain relationship, brand risk, document review, and sourcing logic — each reported on its own terms.",
   },
   {

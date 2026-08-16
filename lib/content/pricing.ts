@@ -38,7 +38,7 @@ export const subscriptionPlans: Plan[] = [
     meta: "5 reports a month",
     points: [
       "Up to 5 brands per report",
-      "All five research dimensions",
+      "All five assessment areas",
       "Document review included",
       "Full portal + case history",
       "Credit rollover (up to 2)",
@@ -71,7 +71,7 @@ export const oneTimePlans: Plan[] = [
     meta: "1 report",
     points: [
       "Up to 3 brands",
-      "Three research dimensions: supplier identity, brand risk, sourcing logic",
+      "Three assessment areas: Supplier Legitimacy, Brand Risk, Sourcing Logic",
       "Supplier questions checklist",
       `Ready in your portal within ${CASE_SLA_HOURS} hours`,
     ],
@@ -86,7 +86,7 @@ export const oneTimePlans: Plan[] = [
     meta: "1 complete report",
     points: [
       "Up to 3 brands",
-      "All five research dimensions",
+      "All five assessment areas",
       "Category compliance review",
       "Document review included",
       `Ready in your portal within ${CASE_SLA_HOURS} hours`,
@@ -106,7 +106,7 @@ export const comparison: {
 }[] = [
   { feature: "Reports", values: ["1", "1", "5 / mo", "12 / mo"] },
   { feature: "Brands per report", values: ["Up to 3", "Up to 3", "Up to 5", "Up to 5"] },
-  { feature: "Research dimensions", values: ["3 of 5", "All 5", "All 5", "All 5"] },
+  { feature: "Assessment areas", values: ["3 of 5", "All 5", "All 5", "All 5"] },
   { feature: "Category compliance review", values: ["—", "Yes", "—", "Yes"] },
   { feature: "Document review", values: ["—", "Yes", "Yes", "Yes"] },
   { feature: "Deep analysis + contradiction", values: ["—", "—", "—", "Yes"] },

@@ -67,7 +67,7 @@ const CHIP_DEFS = {
 } as const;
 
 const HOW_TO_READ =
-  "This report gives you one clear verdict, the single most important risk in plain language, findings across five assessment areas, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit. A few things worth knowing: the verdict is a position on a four-level scale, not a pass/fail — it reflects what the observable evidence supported at the time of research; “could not confirm” is not an accusation — it marks the limits of what public evidence shows; “not assessed” means we did not evaluate that area — it neither helps nor harms the verdict; the decision stays yours — a report is not a guarantee of an outcome; it tells you what the evidence supports.";
+  "This report gives you one clear verdict, the single most important risk in plain language, findings across the assessment areas your plan includes, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit. A few things worth knowing: the verdict is a position on a four-level scale, not a pass/fail — it reflects what the observable evidence supported at the time of research; “could not confirm” is not an accusation — it marks the limits of what public evidence shows; “not assessed” means we did not evaluate that area — it neither helps nor harms the verdict; the decision stays yours — a report is not a guarantee of an outcome; it tells you what the evidence supports.";
 
 const QUESTION_SOURCE_LABEL = { system: "From our research", additional: "From our review team" } as const;
 
@@ -148,6 +148,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   // state can never reach a hidden tab.
   const hasChecklist = (report?.questions.length ?? 0) > 0;
   const hasHonesty = !!(report?.leading_interpretation || (report?.what_to_monitor.length ?? 0) > 0);
+  // CLAIMS RULING 2026-08-14: the header states the ACTUAL count for this case — derived from
+  // the rendered findings (the case's own record of what ran), never hardcoded.
+  const areasLabel = orderedFindings.length === 5
+    ? "The five assessment areas"
+    : `The ${orderedFindings.length} assessment areas in this report`;
 
   const tabBtn = (key: TabKey, label: string, extra?: React.ReactNode) => (
     <button
@@ -209,7 +214,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             </div>
             {/* The five areas at a glance (the prototype's "key points" slot — see header note) */}
             <div className="rounded-card border border-line bg-surface p-5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">The five assessment areas</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{areasLabel}</span>
               <ul className="mt-2 space-y-1.5">
                 {orderedFindings.map((f) => {
                   const chip = areaChip(f);
@@ -318,7 +323,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
 
         {/* FINDINGS */}
         <div role="tabpanel" className={panelCls("findings")}>
-          <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">The five assessment areas</div>
+          <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">{areasLabel}</div>
           <div className="mt-3 overflow-hidden rounded-card border border-line bg-surface">
             {orderedFindings.map((f) => {
               const { detail } = findingText(f);

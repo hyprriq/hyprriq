@@ -8,7 +8,9 @@ import { DOC_TITLE } from "@/lib/content/documentIdentity";
 
 export const SECTIONS = [
   { no: "01", title: "The verdict", toc: "The decision, the four-level scale, and the single most important risk." },
-  { no: "02", title: "Assessment findings", toc: "The five assessment areas, examined in detail." },
+  // Claims ruling 2026-08-14: plan-neutral — no case context reaches these constants inside the
+  // paused PDF renderer, so no count is claimed (reported; count-derivation lands with the PDF lane).
+  { no: "02", title: "Assessment findings", toc: "The assessment areas your plan includes, examined in detail." },
   { no: "03", title: "What we could not confirm", toc: "The reading, its limits, and what to monitor." },
   { no: "04", title: "Verification checklist", toc: "The questions to put to the supplier before you commit." },
   { no: "05", title: "Scope, definitions & limits", toc: "How to read this report, and what it does not claim." },
@@ -17,7 +19,7 @@ export const SECTIONS = [
 export const CONTENTS_TITLE = "Contents";
 
 export const AREAS_TABLE = {
-  caption: "The five assessment areas at a glance",
+  caption: "The assessment areas at a glance",
   colArea: "Assessment area",
   colStatus: "Certainty",
 } as const;
@@ -44,7 +46,7 @@ export const COVER_META_LABELS = {
 } as const;
 
 export const coverInsideLine = (questionCount: number) =>
-  `Verdict · five assessment areas · ${questionCount} verification questions`;
+  `Verdict · the assessment areas your plan includes · ${questionCount} verification questions`;
 
 // Running footer for the full document (brief §3: document · client · page).
 export const documentFooter = (clientName: string, page: number, total: number) =>
