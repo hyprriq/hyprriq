@@ -32,6 +32,10 @@ export const MONITOR_TABLE_CAPTION = "What to monitor after purchase";
 
 export const BOUNDARY_CALLOUT_LABEL = "Limits of this reading";
 
+// Areas the engine marks Not assessed / Informational carry a one-line engine statement, not
+// findings prose — the document presents it as a scope note (v2 formatting fix §4).
+export const SCOPE_NOTE_LABEL = "Scope note";
+
 export const COVER_META_LABELS = {
   preparedFor: "Prepared for",
   delivered: "Delivered",

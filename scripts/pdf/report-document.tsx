@@ -31,7 +31,7 @@ import type { TrackResultRow } from "@/lib/data/track-results";
 import { DOC_TITLE, ISSUER, confidentialityLine } from "@/lib/content/documentIdentity";
 import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
-  BOUNDARY_CALLOUT_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter,
+  BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter,
 } from "@/lib/content/reportDocument";
 
 // ── Palette: print inks + reference-style tint fills ──
@@ -284,8 +284,10 @@ function StructuredProse({ text, P }: { text: string; P: Palette }) {
       {groups.map((g, gi) => {
         if (!g.heading) return <View key={gi}>{g.blocks.map((b, i) => body(b, i, P.ink))}</View>;
         const chars = g.blocks.reduce((s, b) => s + (b.type === "list" ? b.items.join("").length : b.type === "prose" ? b.text.length : 0), 0);
+        // v2 fix §1: boxes above ~600 chars may split across pages — an unsplittable near-page
+        // box was what stranded area headings over blank pages.
         return (
-          <ToneBox key={gi} tone={toneFor(g.heading)} heading={g.heading} P={P} wrapOk={chars > 1100}>
+          <ToneBox key={gi} tone={toneFor(g.heading)} heading={g.heading} P={P} wrapOk={chars > 600}>
             {g.blocks.map((b, i) => body(b, i, P.ink))}
           </ToneBox>
         );
@@ -335,13 +337,17 @@ function ReportDoc({ c, P, mono }: { c: Content; P: Palette; mono: boolean }) {
         </View>
         <View style={{ height: 3, backgroundColor: P.ink, marginBottom: 16 }} />
         {SECTIONS.map((s, i) => (
-          <View key={s.no} style={{ flexDirection: "row", alignItems: "center", backgroundColor: i % 2 ? P.zebra : P.paper, borderRadius: 5, paddingVertical: 10, paddingHorizontal: 12, gap: 14, marginBottom: 4 }}>
+          /* v2 fix §6 — page number right-aligned behind a dotted leader, never trailing the text */
+          <View key={s.no} style={{ flexDirection: "row", backgroundColor: i % 2 ? P.zebra : P.paper, borderRadius: 5, paddingVertical: 10, paddingHorizontal: 12, gap: 14, marginBottom: 4 }}>
             <Text style={{ fontFamily: "Mono", fontWeight: 600, fontSize: 12, color: P.copper, width: 26 }}>{s.no}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 12, color: P.ink }}>{s.title}</Text>
-              <Text style={{ fontFamily: "Sans", fontSize: 8.5, color: P.soft, marginTop: 1.5 }}>{s.toc}</Text>
+              <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
+                <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 12, color: P.ink }}>{s.title}</Text>
+                <View style={{ flex: 1, borderBottomWidth: 1, borderBottomColor: P.hairline, borderStyle: "dotted", marginHorizontal: 8, marginBottom: 2.5 }} />
+                <Text style={{ fontFamily: "Mono", fontWeight: 600, fontSize: 11, color: P.ink }}>{sectionPages[s.no] ?? "·"}</Text>
+              </View>
+              <Text style={{ fontFamily: "Sans", fontSize: 8.5, color: P.soft, marginTop: 2.5 }}>{s.toc}</Text>
             </View>
-            <Text style={{ fontFamily: "Mono", fontWeight: 600, fontSize: 11, color: P.ink }}>{sectionPages[s.no] ?? "·"}</Text>
           </View>
         ))}
         <Text style={{ fontFamily: "Sans", fontSize: 8.5, lineHeight: 1.5, color: P.soft, marginTop: 22 }}>{confidentialityLine(c.clientName)} {ISSUER}</Text>
@@ -403,13 +409,35 @@ function ReportDoc({ c, P, mono }: { c: Content; P: Palette; mono: boolean }) {
           const { detail } = findingText(f);
           const notes = findingNotes(f);
           const st = areaStatus(f);
+          // v2 fix §4 — Not-assessed / Informational areas carry a one-line engine statement,
+          // not findings prose: present it as a scope-note callout (deterministic: by status).
+          const isScopeNote = st.label === "Not assessed" || st.label === "Informational";
+          // v2 fix §1 — keep-with-next must cover the heading PLUS its first content. For short
+          // (scope-note) areas the heading and box bind ATOMICALLY in one unsplittable view —
+          // minPresenceAhead alone proved unreliable across sibling boundaries.
+          const headingRow = (
+            <View minPresenceAhead={150} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5, borderBottomWidth: 1.5, borderBottomColor: P.ink, paddingBottom: 4 }}>
+              <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 14, color: P.ink }}>{AREA_NAMES[f.track_key] ?? f.track_key}</Text>
+              <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 9.5, color: (P.tone[st.tone] ?? P.tone.navy).ink }}>{st.label}</Text>
+            </View>
+          );
           return (
             <View key={f.id} style={{ marginBottom: 14 }}>
-              <View minPresenceAhead={70} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5, borderBottomWidth: 1.5, borderBottomColor: P.ink, paddingBottom: 4 }}>
-                <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 14, color: P.ink }}>{AREA_NAMES[f.track_key] ?? f.track_key}</Text>
-                <Text style={{ fontFamily: "Sans", fontWeight: 700, fontSize: 9.5, color: (P.tone[st.tone] ?? P.tone.navy).ink }}>{st.label}</Text>
-              </View>
-              {detail ? <StructuredProse text={detail} P={P} /> : null}
+              {isScopeNote ? (
+                <View wrap={false}>
+                  {headingRow}
+                  {detail ? (
+                    <ToneBox tone="navy" heading={SCOPE_NOTE_LABEL} P={P}>
+                      <Text style={{ fontFamily: "Serif", fontSize: 9.5, lineHeight: 1.5, color: P.ink }}>{detail}</Text>
+                    </ToneBox>
+                  ) : null}
+                </View>
+              ) : (
+                <>
+                  {headingRow}
+                  {detail ? <StructuredProse text={detail} P={P} /> : null}
+                </>
+              )}
               {notes.length > 0 && (
                 <ToneBox tone="navy" heading={BOUNDARY_CALLOUT_LABEL} P={P}>
                   {notes.map((n) => (
@@ -459,7 +487,10 @@ function ReportDoc({ c, P, mono }: { c: Content; P: Palette; mono: boolean }) {
             </Text>
           </View>
         ))}
-        <Text style={{ fontFamily: "Sans", fontSize: 8, color: P.soft, marginTop: 8 }}>† {CHECKLIST_TABLE.analystNote}</Text>
+        {/* v2 fix §3 — the footnote renders only when at least one † marker exists. */}
+        {r.questions.some((q) => q.source === "additional") && (
+          <Text style={{ fontFamily: "Sans", fontSize: 8, color: P.soft, marginTop: 8 }}>† {CHECKLIST_TABLE.analystNote}</Text>
+        )}
       </Page>
 
       {/* ═══ 05 · SCOPE, DEFINITIONS & LIMITS ═══ */}

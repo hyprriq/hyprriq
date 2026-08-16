@@ -6,7 +6,7 @@ import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/resear
 import { clientNote } from "@/lib/research/websiteAnchor";
 import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
-import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
+import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
 
 // ── BANNED-LANGUAGE FIX GATE (spec 2026-07-24, ALL SIX OQs founder-ruled) — the new HARD rules
 // H10–H15 + the H4 negation carve-out, TWO-SIDED BY LAW.
@@ -72,6 +72,7 @@ const MUST_PASS: [string, string][] = [
   ["PDF checklist table", `${CHECKLIST_TABLE.colNo} ${CHECKLIST_TABLE.colQuestion} — ${CHECKLIST_TABLE.analystNote}`],
   ["PDF monitor caption", MONITOR_TABLE_CAPTION],
   ["PDF boundary callout label", BOUNDARY_CALLOUT_LABEL],
+  ["PDF scope note label", SCOPE_NOTE_LABEL],
   ["PDF cover meta labels", `${COVER_META_LABELS.preparedFor} · ${COVER_META_LABELS.delivered} · ${COVER_META_LABELS.caseRef} · ${COVER_META_LABELS.inside}`],
   ["PDF cover inside line", coverInsideLine(17)],
   ["PDF document footer", documentFooter("Marcus Chen (Chen Trading Co.)", 6, 12)],
