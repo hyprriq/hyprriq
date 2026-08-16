@@ -181,6 +181,8 @@ const MUST_PASS: [string, string][] = [
   // — humanise pass (2026-08-14) —
   ["dashboard reports-ready sub", "Ready to read"],
   ["onboarding document bullet", "Document review when you upload paperwork"],
+  ["onboarding research bullet (all-5 tiers)", "Research across all five assessment areas"],
+  ["onboarding research bullet ($99, plan-derived)", "Research across 3 assessment areas: Supplier Legitimacy, Brand Risk, Sourcing Logic"],
   // — marketing pricing copy (2026-08-08 batch — IMPORTED, cannot drift) —
   ["pricing hero title", pricingHero.title],
   ["pricing hero subtitle", pricingHero.subtitle],

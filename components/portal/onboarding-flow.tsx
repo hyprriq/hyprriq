@@ -16,6 +16,22 @@ import {
   PLAN_TYPES,
   type PlanType,
 } from "@/lib/constants/plans";
+import { requiredFindingTracks } from "@/lib/constants/tracks";
+
+// CLAIMS FIX (founder-ruled 2026-08-14): the research bullet derives from the plan's own track
+// registry — never hardcoded. Client-facing area names, never "dimension". The old static
+// "Full 5-dimension research" was false on the 3-area $99 tier.
+const AREA_NAME: Record<number, string> = {
+  1: "Supplier Legitimacy", 2: "Supply-Chain Relationship", 3: "Brand Risk",
+  4: "Documentation Review", 5: "Sourcing Logic",
+};
+
+function researchBullet(plan: PlanType): string {
+  const areas = requiredFindingTracks(plan);
+  return areas.length >= 5
+    ? "Research across all five assessment areas"
+    : `Research across ${areas.length} assessment areas: ${areas.map((n) => AREA_NAME[n]).join(", ")}`;
+}
 
 function planBullets(plan: PlanType): string[] {
   const credits = PLAN_CREDITS_PER_CYCLE[plan];
@@ -23,7 +39,7 @@ function planBullets(plan: PlanType): string[] {
   return [
     sub ? `${credits} research reports per month` : `${credits} complete report`,
     `Up to ${PLAN_BRAND_CAPS[plan]} brands per report`,
-    "Full 5-dimension research",
+    researchBullet(plan),
     "Document review when you upload paperwork",
     `Delivered within ${CASE_SLA_HOURS} hours`,
     ...(PLAN_ROLLOVER_LIMIT[plan] > 0
