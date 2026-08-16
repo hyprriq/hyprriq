@@ -40,6 +40,15 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ CLAIMS FIX LANDED 2026-08-14** `1d1ba42` — onboarding research bullet plan-derived from
+> the track registry ($99 = 3 named areas; others = all five). ⚠ SWEEP FINDS, REPORTED NOT
+> FIXED (pending ruling): help page "All five run at full depth on every plan" (flat false on
+> $99, worst); onboarding "Document review when you upload paperwork" bullet on $99 (no-uploads
+> tier); report-view "five assessment areas" header/how-to-read/print-head on $99 reports;
+> marketing FAQ Decision-Snapshot answer "across five research dimensions"; PDF structural copy
+> (reportDocument.ts) five-area lines on a $99 case; auth pill "Five assessment areas" (generic
+> marketing, borderline). 1304/1304 · gates green.
+>
 > **✓ HUMANISE PASS LANDED 2026-08-14** `2c2a866` — jargon sweep clean (0 hits); density fixes:
 > "Ready to read" (download stub honesty), document-review bullet de-teched, creditExplainer
 > plain. ⚠ FLAGGED: "Full 5-dimension research" onboarding bullet renders on the 3-dimension
