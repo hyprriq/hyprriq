@@ -40,6 +40,8 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **GATE RULING BUILT 2026-08-16** `5541857` — #1 sentence-scope bug fixed, #3 verdict negation/attribution guards, #4 ungating service-split, #2 evidence-subject demoted to advisory (A6). Two-sided fixtures (7 corpus PASS / 8 constructed BLOCK). ACCEPTANCE CENSUS: 31% -> 23%; entire residual = the ruled-HARD passive ('Authorization is confirmed...') — passive-with-evidence-attribution extension or engine-prose fix pends founder ruling. 1325/1325 gates green.
+>
 > **✓ SUBMIT COPY FIXES LANDED 2026-08-15** ``538c0ec`` — interpolation seams -> template literals; brand cap stated once (counter kept); credits sub now "plan adds N at renewal" never echoing balance; ASIN gating confirmed ($149+Scale on KEEPA flip, test-locked). Track 6 explainer delivered in-chat. 1306/1306 · gates green.
 >
 > **✓ AREA-CLAIMS RULING FULLY LANDED 2026-08-14** `126d440` — help-page full-depth claim
