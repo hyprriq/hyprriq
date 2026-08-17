@@ -11,7 +11,7 @@
 - named-artifact subjects: *"Ingram Micro's 2025 Lenovo Playbook **confirms** current authorization"*, *"regional portals **confirm** authorization"*;
 - scope-attached passives: *"Authorization **is confirmed** for US, UK, Belgium, and Mexico"* (scope after the verb, no via/by/through evidence marker).
 
-**Standing recommendation, delivered and tracker-recorded: stop grammar-chasing; run the `confirms→supports` ENGINE-PROSE PASS.** It is founder-run (touches frozen prompts), already scoped in-chat and below (§5). Two real operator cases — **AWI-2608-033 (Bulk Buy America, Growth)** and **AWI-2608-034 (Stacker/NVE, Scale)** — sit `awaiting_review`, blocked only by this residual class; they publish as-is once the prose pass (or a further shell demotion, not recommended) lands. The founder has NOT yet ruled on running the prose pass — that is the open question the next session likely starts with.
+**Standing recommendation, delivered and tracker-recorded: stop grammar-chasing; run the `confirms→supports` ENGINE-PROSE PASS.** It is founder-run (touches frozen prompts), already scoped in-chat and below (§5). Of the two real operator cases: **AWI-2608-034 (Stacker/NVE, Scale) now scans CLEAN — the #3 attribution guards cleared it; it is publishable today through the normal review flow.** **AWI-2608-033 (Bulk Buy America, Growth)** remains held on the confirms-authorization residual and publishes once the prose pass (or a further shell demotion, not recommended) lands. The founder has NOT yet ruled on running the prose pass — that is the open question the next session likely starts with.
 
 ## 1 · WHAT THIS SESSION BUILT (chronological; every commit message is a full record)
 
