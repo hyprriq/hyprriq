@@ -107,16 +107,26 @@ export async function getSynthesisByEvidenceHash(
 // Admin/QA-facing (Phase 4): the FULL case_synthesis row for a case — all 9 modules + the IOS
 // version vector — mapped back to the canonical contracts. Feeds buildVerdictViewModel(). Service-
 // role; callers are admin-guarded. Returns null until the engine has written synthesis.
+// ATTEMPT SKEW FIX (founder-ruled 2026-08-17): pass `attempt` and this returns the synthesis for
+// THAT investigation, or null. Without it the default below takes the latest synthesis row that
+// EXISTS — which is not the latest ATTEMPT when a re-run wrote track rows and then died before
+// synthesis. That skew delivered a case on 2026-08-17 whose tracks came from a stub attempt and
+// whose synthesis came from June. Delivery paths MUST pass the attempt; read-only views may omit
+// it. The returned `attempt` says which investigation the caller actually got, so a caller can
+// never again believe it has synthesis for an attempt it does not.
 export async function getCaseIntelligence(
   caseId: string,
-): Promise<{ synthesis: SynthesisOutput; ios: IosVersion } | null> {
-  const { data } = await supabaseAdmin
+  attempt?: number,
+): Promise<{ synthesis: SynthesisOutput; ios: IosVersion; attempt: number | null } | null> {
+  let q = supabaseAdmin
     .from("case_synthesis")
     .select(
-      "normalized_evidence, claim_attributions, assertions, contradictions, hypotheses, risk_gaps, doubt_calibration, vendor_questions, decision_snapshot, evidence_hash, prompt_version, rubric_version, synthesis_version, corpus_version, configuration_version, model_provider, model_version, ios_version",
+      "attempt_number, normalized_evidence, claim_attributions, assertions, contradictions, hypotheses, risk_gaps, doubt_calibration, vendor_questions, decision_snapshot, evidence_hash, prompt_version, rubric_version, synthesis_version, corpus_version, configuration_version, model_provider, model_version, ios_version",
     )
     .eq("case_id", caseId)
-    .is("deleted_at", null)
+    .is("deleted_at", null);
+  if (typeof attempt === "number") q = q.eq("attempt_number", attempt);
+  const { data } = await q
     .order("attempt_number", { ascending: false }) // H1 — latest investigation (case_id alone is no longer unique)
     .limit(1)
     .maybeSingle();
@@ -143,7 +153,7 @@ export async function getCaseIntelligence(
     configuration_version: r.configuration_version, model_provider: r.model_provider,
     model_version: r.model_version, evidence_hash: r.evidence_hash, ios_version: r.ios_version,
   };
-  return { synthesis, ios };
+  return { synthesis, ios, attempt: (r as { attempt_number?: number }).attempt_number ?? null };
 }
 
 // Client-facing: ONLY Module 9 + vendor questions (reasoning modules never exposed).

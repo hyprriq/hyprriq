@@ -5,6 +5,8 @@ import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
 import { locateBannedLanguage, summariseHits } from "@/lib/utils/bannedLanguageReport";
+import { checkDeliverable } from "@/lib/research/deliverability";
+import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
@@ -132,7 +134,34 @@ export async function POST(
   // closed): the client columns (M9 snapshot + M8 questions) get the banned-language gate, and
   // the DERIVATION-RULE method scanner runs over them plus M7's rationale/focus — gate names,
   // thresholds, corroboration counts, firewall vocabulary never ship (the Rider-2 leak class).
-  const intel = await getCaseIntelligence(id);
+  // ── ATTEMPT SKEW FIX + DELIVERABILITY PRECONDITION (founder-ruled 2026-08-17, from the incident
+  // where a case delivered on a stub attempt: one track row, no synthesis, and it passed the
+  // language gate precisely BECAUSE it was empty). The attempt being delivered is resolved FIRST,
+  // and everything below is read for THAT attempt — synthesis included. ──
+  const deliverAttempt = rows.length ? Math.max(...rows.map((r) => r.attempt_number ?? 1)) : 1;
+  const intel = await getCaseIntelligence(id, deliverAttempt);
+  const notDeliverable = checkDeliverable({
+    attempt: deliverAttempt,
+    rows,
+    synthesis: intel?.synthesis ?? null,
+    synthesisAttempt: intel?.attempt ?? null,
+    planType: c.plan_type as PlanType,
+    verdict: (action === "override" ? body.override_verdict : c.verdict) ?? null,
+  });
+  if (notDeliverable.length > 0) {
+    // Fail LOUD and name what is missing — the same discipline as the language gate.
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "cases", record_id: id, action: "UPDATE",
+      actor_id: userId, actor_type: "admin",
+      new_value: { blocked: "not_deliverable", attempt: deliverAttempt, missing: notDeliverable },
+    });
+    return NextResponse.json({
+      error: "not_deliverable",
+      attempt: deliverAttempt,
+      missing: notDeliverable,
+      message: `This attempt has nothing deliverable: ${notDeliverable.join("; ")}.`,
+    }, { status: 422 });
+  }
   const violations = [...new Set([
     ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
     ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
