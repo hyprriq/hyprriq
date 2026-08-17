@@ -13,7 +13,10 @@ import { scanHard } from "@/lib/utils/banned-language";
 
 export type BannedHit = {
   label: string;      // the gate's own label, verbatim — never re-worded here
-  where: string;      // "supply_chain_relationship › brand_relationship_finding"
+  target: string;     // MACHINE key: 'track:supply_chain_relationship' | 'synthesis' | 'identity'
+  path: string;       // MACHINE path within that record: 'questions_to_ask[1].reason'
+  field_text: string; // the WHOLE field the hit lives in — what piece 2 gives the operator to edit
+  where: string;      // display form of target › path
   sentence: string;   // the sentence that reproduces the label (or the field, if it spans sentences)
   fix: string;        // what to write instead — operator guidance, not a rule
 };
@@ -49,11 +52,16 @@ const clip = (s: string): string => {
 
 /**
  * Walk `source` exactly as the delivery gate walks it, returning one hit per (label, location).
- * `origin` names the record the structure came from — the track key, or "synthesis".
+ * `target` names the record the structure came from — 'track:<key>', 'synthesis' or 'identity'.
+ * `display` is the human label for it; defaults to the target.
+ *
+ * target + path + field_text are the MACHINE handle piece 2 keys an override on; where/sentence/fix
+ * are what the operator reads. Both come from one walk so they can never disagree.
  */
-export function locateBannedLanguage(source: unknown, origin: string): BannedHit[] {
+export function locateBannedLanguage(source: unknown, target: string, display?: string): BannedHit[] {
   const hits: BannedHit[] = [];
   const seen = new Set<string>();
+  const origin = display ?? target;
 
   const walk = (node: unknown, path: string) => {
     if (typeof node === "string") {
@@ -68,7 +76,12 @@ export function locateBannedLanguage(source: unknown, origin: string): BannedHit
         const key = `${label}|${where}|${sentence.slice(0, 80)}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        hits.push({ label, where, sentence: clip(sentence), fix: FIX[label] ?? DEFAULT_FIX });
+        hits.push({
+          label, target, path, where,
+          field_text: node,                       // WHOLE field, unclipped — the operator edits this
+          sentence: clip(sentence),
+          fix: FIX[label] ?? DEFAULT_FIX,
+        });
       }
       return;
     }
