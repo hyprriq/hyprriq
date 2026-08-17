@@ -37,6 +37,50 @@
 
 ---
 
+## Task 0: THE THREE-CLASS ENGINE-PROSE PASS — retire all three at source, in ONE pass
+
+**Founder-ruled 2026-08-18: "Three classes, one pass — don't close them one at a time across three
+sessions."** Do this BEFORE the repair loop. The loop is the safety net for what the engine still
+gets wrong; every class retired at source is a class the net never has to catch.
+
+**Files:** Modify `lib/research/synthesisCallC.prompt.ts` (classes 2+3), `lib/research/track2.prompt.ts`,
+`track3.prompt.ts`, `track4.prompt.ts` (class 3); Modify `lib/research/ios.ts` (`prompt_version` bump);
+Test: extend `lib/research/prosePass.test.ts`.
+
+| # | Class | Status | Where it lives |
+|---|---|---|---|
+| 1 | confirms-authorization | ✅ done `cd68cfd` | all four prompts |
+| 2 | **derivation / method vocabulary** | **open — blocks 034** | Call C (M9/M8/M7) |
+| 3 | **bare legitimacy verdict** | **open — 3 cases** | all four prompts |
+
+- [ ] **Step 1: Extend `prosePass.test.ts` with failing assertions for classes 2 and 3.** Assert Call C
+      carries a METHOD VOCABULARY rule naming all four ruled patterns (corroboration vocabulary, gate
+      names, source-count thresholds, firewall vocabulary) with substitutes; assert all four prompts
+      carry a LEGITIMACY rule. Reuse the existing "WORD rule, not a strength rule" clause verbatim —
+      it is the clause that made 033 reword rather than hedge.
+- [ ] **Step 2: Run — expect FAIL.**
+- [ ] **Step 3: Write the two rules**, additively, alongside the existing AUTHORIZATION VOCABULARY
+      block. Method: *say what the sources do or do not show, never how many agreed; never a gate name,
+      a count, a threshold, or firewall vocabulary.* Legitimacy: *describe observably — "consistent with
+      an established wholesale operation", "registered since 2014" — never rule that the vendor is or is
+      not legitimate.* Content instructions, veto definitions, attribution rules and output shapes stay
+      byte-identical.
+- [ ] **Step 4: Add two-sided fixtures** — the real blocking sentences from 034 and from 021/022/032
+      into MUST_BLOCK, their rule-compliant rewrites into MUST_PASS, verified against the UNCHANGED
+      scanners. **The gate is not touched by this task.**
+- [ ] **Step 5: Bump `IOS.prompt_version`** `p001-1.0.0` → `p002-1.0.0` and `ios_version` with it (the
+      memoization key — stored synthesis from the old prompts must never be reused). Update the pins in
+      `prosePass.test.ts`.
+- [ ] **Step 6: Full battery + `npx tsx … scripts/gate-census.ts`.** The MERGED census is the single
+      acceptance number for all three classes — one instrument, one number, no per-class report.
+- [ ] **Step 7: Commit.** Acceptance is founder-run: re-run 034 and one of 021/022/032, then re-census.
+
+> **Read the census WITH the incomplete-attempt sweep.** An incomplete attempt suppresses the census
+> (it scans near-empty records as clean) — that is how the legitimacy class stayed invisible until the
+> stub cleanup. A falling number with rising stubs is false comfort.
+
+---
+
 ## Task 1: The repair prompt, versioned
 
 **Files:** Create `lib/research/proseRepairPrompt.ts`; Test `lib/research/proseRepairPrompt.test.ts`

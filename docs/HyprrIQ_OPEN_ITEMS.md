@@ -40,6 +40,26 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **⚠ AN INCOMPLETE ATTEMPT SUPPRESSES THE CENSUS — recorded 2026-08-18, and it changes what the
+> completeness precondition is FOR.** The stub cleanup was not tidiness: **it changed a measurement.**
+> While AWI-2607-021/022/032 had replay-stub latest attempts, the census scanned near-empty records
+> and reported them clean on the language gate. Soft-deleting the stubs restored the good attempts and
+> a SECOND residual class immediately surfaced — **"bare legitimacy verdict" on all three** — which had
+> been there all along and was invisible. **The same emptiness that made a stub MORE publishable also
+> made the corpus LOOK SAFER than it was: both instruments read empty as clean.** So `checkDeliverable`
+> earns its place twice — it stops a blank report reaching a client, AND it stops incomplete attempts
+> silently deflating the launch-risk number. Any future census run should be read together with the
+> incomplete-attempt sweep; a falling number with rising stubs is a false comfort, not progress.
+>
+> **RULED 2026-08-18 — THREE CLASSES, ONE PASS. Do NOT close them one at a time across three sessions.**
+> The engine-prose treatment that retired confirms-authorization is extended, in a single pass, to:
+> (1) **confirms-authorization** — done, `cd68cfd`; (2) **the derivation/method class** — a Call C
+> METHOD-VOCABULARY rule (corroboration vocabulary, gate names, source-count thresholds, firewall
+> vocabulary), which is **what durably unblocks AWI-2608-034**, today fixable only by a re-run that may
+> reproduce it; (3) **bare legitimacy verdict** — same treatment, currently on 3 cases. All three land
+> with the self-correcting loop build; each bumps `prompt_version`, each gets two-sided fixtures, and
+> the merged census is the single acceptance number for all three.
+>
 > **🟢 FIRST REAL REPORT DELIVERED END TO END — 2026-08-17.** **AWI-2608-033 (Growth) IS PUBLISHED.**
 > Submit → research → review → publish → email, the whole path, on a live case. **GROWTH WORKS.**
 > AWI-2608-034 (Scale) STAYS HELD — blocked by the derivation-rule scanner on `"corroborated"` in
