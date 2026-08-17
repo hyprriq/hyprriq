@@ -40,6 +40,41 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **RULINGS 2026-08-17 (publish path) — SELF-CORRECTING LOOP + REVIEW ADDITIONS** `7c06703` — **Piece 2
+> (operator prose editing) CANCELLED, not deferred** (the operator phases out in v2; a hand-editing habit
+> would have to be unlearned, and it hides the engine producing bad language instead of stopping it).
+> `case_prose_overrides` stays in production **unwired, 0 rows, nothing reads it** — reverting a live
+> migration is more risk than an unused table. Piece 1 (the publish-block locator, `385088b`) STANDS.
+> **PART A APPROVED** incl. the `pipeline.steps.ts` freeze amendment at TWO call sites, with a stop rule:
+> if that diff exceeds two call lines plus imports, stop and report; `rejudge-case.ts` must still PASS as
+> acceptance. **⚠ THE FIVE RULED INVARIANTS WERE INSUFFICIENT AND THE FOUNDER RULED A SIXTH IN:** the
+> founder's own drift example ("No positive confirmation of authorization exists" → "Authorization was not
+> fully documented") passes citations, entities, numbers, length AND negation-count (1 on both sides —
+> "No" became "not"). All five guard DELETION; softening is SUBSTITUTION. The sixth — LOCALIZED EDIT, a
+> word-level diff refusing any change that is not within 6 words of a place the gate actually matched — is
+> now **LAW, not an option**: the escape hatch is `TEST_ONLY_disableLocalizedEdit` and
+> `proseRepair.freeze.test.ts` fails the build if any production file consumes it (precedent:
+> `TEST_ONLY_GAP_THRESHOLDS`). The five-pass-it case stays as an executable test by ruling.
+> Also ruled: `REPAIR_PROMPT_VERSION` separate from `IOS.prompt_version` (so a drop in hits cannot mean
+> "the repair got better at hiding it"); the self-scan surface may NEVER be narrower than the delivery
+> gate's, with a test; **`gate_events` threshold = 3 hits on one label under the current prompt_version →
+> fix the prompt at source**, threshold living in the census report not a DB constraint; **ONE STORE for
+> Part B — `cases.review_additions` SUPERSEDES the proposed `case_reference_links`**, gated at save AND on
+> the publish path, rendered "Added by our review team", carried into the PDF lane's spec; **review
+> additions SURVIVE a re-run** (operator knowledge, not engine output; per-case, not per-attempt).
+> TWO MIGRATIONS WRITTEN, FOUNDER-RUN, NOT APPLIED: `20260818000000_gate_events.sql`,
+> `20260818000100_cases_review_additions.sql`. Plan:
+> `docs/superpowers/plans/2026-08-17-self-correcting-prose-and-review-additions.md`.
+> ✓ **HANDOVER CORRECTION:** `20260812000000` IS APPLIED — `adjust_client_credits(text,int)` exists,
+> EXECUTE granted to anon/authenticated/service_role, and a PostgREST probe (nonexistent client, delta 0,
+> zero rows touched) returned cleanly. **Admin credit adjustments are NOT 503-ing; close the item.**
+> Supabase `list_migrations` returns EMPTY here (migrations applied by hand) — it proves nothing, the
+> schema must be inspected directly. Swept the rest: everything else recorded as applied IS applied.
+> ⚠ GO-LIVE CHECKLIST ITEM: `PRICES` in `lib/ai/providers/anthropic.ts` has ONE row (`claude-sonnet-4-6`);
+> the ruled synthesis flip to `claude-opus-4-8` makes every cost figure report $0. The row moves WITH the
+> flip. ⚠ V2 DEPENDENCY LOGGED: removing the operator needs an answer for the ASSERTION tier, not just
+> HARD — 23 of 39 cases carry an A-tier advisory today. 1384/1384 · tsc 0 · eslint 0.
+>
 > **✓ ENGINE-PROSE PASS BUILT 2026-08-17 (founder-ruled — the §3.1 blocker)** `cd68cfd` — the `confirms→supports`
 > vocabulary rule landed in the four scoped prompts: Track 2 `brand_relationship_finding`, Track 3
 > `brand_risk_finding`, Track 4 `documentation_finding`, synthesis Call C (M9/M8). ONE rule, carried

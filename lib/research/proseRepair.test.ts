@@ -42,7 +42,7 @@ describe("⚠ the five are NOT sufficient — softening is substitution, not del
   const SOFTENED = "Authorization was not fully documented for Belgium (src_3).";
 
   it("all five ruled invariants PASS on the softened rewrite — citations, entities, numbers, negation, length", () => {
-    const withoutSixth = checkRepairInvariants(CLAIM, SOFTENED, { localizedEdit: false });
+    const withoutSixth = checkRepairInvariants(CLAIM, SOFTENED, { TEST_ONLY_disableLocalizedEdit: true });
     expect(withoutSixth).toEqual([]);          // <- the claim got weaker and nothing objected
   });
 

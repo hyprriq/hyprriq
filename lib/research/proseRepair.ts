@@ -72,10 +72,16 @@ function flaggedWordIndices(original: string): Set<number> {
 export type RepairCheckOptions = {
   /** Founder-ruled floor: a repair may not collapse the field. */
   lengthFloor?: number;
-  /** The sixth guard (see header). Default ON. */
-  localizedEdit?: boolean;
   /** How far from a flagged word an edit may reach, in words. */
   editWindow?: number;
+  /**
+   * ⛔ TEST ONLY. The sixth invariant is FOUNDER-RULED LAW (2026-08-17): "Localized-edit
+   * enforcement is the ruling, not an option." It exists here for exactly ONE purpose — the
+   * executable record that the five ruled invariants pass the softening example and this one does
+   * not. Setting it in production code is a DEFECT, and proseRepair.freeze.test.ts fails the build
+   * if any non-test file does. (Precedent: TEST_ONLY_GAP_THRESHOLDS, S-1f Step 4.)
+   */
+  TEST_ONLY_disableLocalizedEdit?: boolean;
 };
 
 /**
@@ -87,7 +93,8 @@ export function checkRepairInvariants(
   repaired: string,
   opts: RepairCheckOptions = {},
 ): InvariantFailure[] {
-  const { lengthFloor = 0.6, localizedEdit = true, editWindow = 6 } = opts;
+  const { lengthFloor = 0.6, editWindow = 6, TEST_ONLY_disableLocalizedEdit = false } = opts;
+  const localizedEdit = !TEST_ONLY_disableLocalizedEdit;
   const fails: InvariantFailure[] = [];
 
   // (1) CITATIONS — every src_N the engine cited must survive. Losing one strands a claim.
