@@ -40,6 +40,48 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **DELIVERY PATH — STATE OF TRUTH 2026-08-17 (end of session; verified, not carried)** `7cdab2c` —
+> **THE PUBLISH PATH WORKS AND HAS BEEN EXERCISED END TO END.** AWI-2608-033 (Growth) is
+> **PUBLISHABLE — verified by running the route's own two preconditions read-only**: deliverability PASS
+> (attempt 2, 6 tracks, 3 scored, synthesis at attempt 2 stamped `p001-1.0.0`), language gate PASS.
+> **AWI-2608-034 (Scale) is BLOCKED** on ONE word — `"corroborated"` in `decision_snapshot.leading_interpretation`,
+> caught by `scanSynthesisAtDelivery`, NOT by the banned-language gate.
+> ⚠ **THE CENSUS MEASURES HALF THE PUBLISH GATE.** `scripts/gate-census.ts` runs only
+> `scanFindingsForBannedLanguage`; the publish path ALSO runs `scanSynthesisAtDelivery` (derivation-rule
+> scanner: gate names, thresholds, corroboration counts, validation vocabulary). Every launch-risk number
+> reported before today measured one of two gates. **MEASURED NOW across all 39: language 8, method 1,
+> EITHER 9 — the method scanner is NOT systemic, it is exactly 034.** (35 of 39 have synthesis at their
+> latest attempt; the other 4 would now be stopped by the deliverability precondition, correctly.)
+> The method scanner has NO locator — a block names a label, not a sentence, the same dead end Piece 1
+> fixed for language. 034 needs either a Call C method-vocabulary fix or a re-run; the prose pass did not
+> touch corroboration vocabulary, so a re-run may reproduce it.
+> ✓ **FOUNDER-CONFIRMED, RECORDED SO IT CANNOT GO STALE:** both migrations (`gate_events`,
+> `cases.review_additions`) APPLIED + verified. Five stub attempts SOFT-DELETED (reversible via
+> `deleted_at = NULL`); all five cases show 6 rows in their latest attempt again; seed pin moved back to
+> `delivered_attempt = 1`; 023 stays pinned at 2. **NULL-PIN SWEEP CLEAN — zero delivered cases have a
+> null `delivered_attempt`, so the `?? latest` fallback has NEVER fired for any client. Exposure closed.**
+> ✓ **EMAILS WORK AND HAVE FOR DAYS** — delivery + submission confirmation both received in production.
+> `RESEND_API_KEY`, `RESEND_FROM`, `SUPPORT_INBOX` are ALL SET IN VERCEL. **CLAUDE ERROR, TWICE: read
+> `.env.local` and asserted about production. LOCAL ENV PROVES NOTHING — CHECK STAGING.** "No email" is
+> NOT a blocker and never was; strike it from every list.
+> ⚠ **P0 FOUND AND CLOSED THE SAME DAY:** the delivery email fired for an EMPTY report (seed case, one
+> track row, no synthesis) because the language gate passed it — there was nothing in it to scan. The
+> deliverability precondition now sits ABOVE both the status write and the email, and there is exactly
+> ONE production path that sets `delivered` and ONE caller of `sendDeliveryNotification`, both in the
+> review route. **RESIDUAL, UNGUARDED: nothing structurally stops a FUTURE second delivery path (cron,
+> Inngest, backfill) from bypassing the precondition. One lock test — belongs in the loop build.**
+> REPLAY POST-MORTEM: all five replays died because those June/July Growth attempts store only 2 packs
+> (`supplier_identity`, `supply_chain_relationship`); the replay hits Track 3, finds no pack, dies. They
+> can NEVER be replayed — only `rerun-batch --run` (live). Claude built that run sheet from a preflight
+> that printed the pack counts and did not read its own output.
+> PROSE-PASS PROOF IS SUFFICIENT AT TWO (ruled): 021 controlled replay (frozen evidence, identical
+> signals + verdict) and 033 live re-collection (fresh evidence, identical signals) — opposite directions,
+> both clean. 022/032 would re-confirm the same property by the same method; spend it on the $149 path.
+> NEXT SESSION ORDER (founder-set): tracker ✓ → method-scanner census ✓ → `replay-attempt.ts` preflight →
+> self-correcting loop + operator attachments → **full end-to-end audit LAST, in a fresh context window,
+> fanned out per path stage** (token budget ≠ context window; a from-memory audit is the one thing ruled
+> out). 1389/1389 · tsc 0 · eslint 0.
+>
 > **RULINGS 2026-08-17 (publish path) — SELF-CORRECTING LOOP + REVIEW ADDITIONS** `7c06703` — **Piece 2
 > (operator prose editing) CANCELLED, not deferred** (the operator phases out in v2; a hand-editing habit
 > would have to be unlearned, and it hides the engine producing bad language instead of stopping it).
