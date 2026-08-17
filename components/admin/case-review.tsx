@@ -7,6 +7,7 @@ import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
 import type { TrackSignal, Verdict, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 import type { AreaView, LastDecision } from "@/lib/admin/reviewView";
+import type { BannedHit } from "@/lib/utils/bannedLanguageReport";
 import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
 import { ReportView, FindingBody } from "@/components/portal/report-view";
 
@@ -103,6 +104,9 @@ export function CaseReview({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // "SHOW + FIX" piece 1 — a banned-language block is not a one-line error, it is a worklist: the
+  // operator needs the sentence, the field it lives in, and what to write instead.
+  const [blocked, setBlocked] = useState<{ violations: string[]; findings: BannedHit[] } | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   // Gap B — analyst/review-team questions (create/edit/delete against cases.additional_questions).
@@ -148,6 +152,7 @@ export function CaseReview({
     if (confirmMsg && !window.confirm(confirmMsg)) return;
     setBusy(action);
     setError(null);
+    setBlocked(null);
     try {
       const res = await fetch(`/api/admin/cases/${caseId}/review`, {
         method: "POST",
@@ -161,7 +166,9 @@ export function CaseReview({
       const data = await res.json();
       if (!res.ok) {
         if (data?.error === "banned_language") {
-          throw new Error(`Delivery blocked — prohibited language: ${(data.violations ?? []).join(", ")}`);
+          // Structured, not a string: the panel below names every sentence and where it lives.
+          setBlocked({ violations: data.violations ?? [], findings: data.findings ?? [] });
+          return;
         }
         throw new Error(data?.message || data?.error || "Could not save.");
       }
@@ -786,6 +793,39 @@ export function CaseReview({
           </>
         )}
         {error && <p className="mt-3 text-[13px] text-deny-ink">{error}</p>}
+        {/* ── "SHOW + FIX" piece 1: the blocked-publish worklist. Before this, a block showed the
+            gate's label and nothing else — no sentence, no field — so the only ways forward were a
+            deploy or a full case re-run. Every hit below names where it lives and what to write. ── */}
+        {blocked && (
+          <div className="mt-3 rounded-card border border-deny-ink bg-deny-bg p-4">
+            <p className="text-[13px] font-semibold text-deny-ink">
+              Delivery blocked — {blocked.findings.length || blocked.violations.length}{" "}
+              {(blocked.findings.length || blocked.violations.length) === 1 ? "phrase" : "phrases"} cannot ship to a client.
+            </p>
+            <p className="mt-1 text-[12px] text-muted">
+              Nothing has been delivered and nothing was changed. Fix the wording at the source, then publish again.
+            </p>
+            <ul className="mt-3 space-y-3">
+              {blocked.findings.map((f, i) => (
+                <li key={`${f.where}-${i}`} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{f.where}</p>
+                  <p className="mt-1 text-[13px] text-ink">“{f.sentence}”</p>
+                  <p className="mt-1 text-[12px] text-muted">
+                    <span className="font-semibold text-deny-ink">{f.label}</span> — {f.fix}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            {/* A label with no located sentence comes from the derivation-rule scanner, which reads
+                fields this walk does not — surfaced rather than silently dropped. */}
+            {blocked.violations.filter((v) => !blocked.findings.some((f) => f.label === v)).length > 0 && (
+              <p className="mt-3 border-t border-line pt-3 text-[12px] text-muted">
+                Also flagged, without a located sentence:{" "}
+                {blocked.violations.filter((v) => !blocked.findings.some((f) => f.label === v)).join(", ")}
+              </p>
+            )}
+          </div>
+        )}
         {done && <p className="mt-3 text-[13px] font-semibold text-clear-ink">✓ {done}</p>}
       </Section>
 

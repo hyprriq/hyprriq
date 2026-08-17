@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import { locateBannedLanguage, summariseHits } from "@/lib/utils/bannedLanguageReport";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
@@ -140,11 +141,29 @@ export async function POST(
     ...(intel ? scanSynthesisAtDelivery(intel.synthesis) : []),
   ])];
   if (violations.length > 0) {
+    // ── "SHOW + FIX" piece 1 (founder-ruled 2026-08-17). The gate's DECISION is untouched — the
+    // block above is computed exactly as before and still blocks. What changes is what the operator
+    // is handed: until now this returned a bare label ("prohibited language: confirms/certifies
+    // authorization") with no sentence, no field and no track, so the only ways past a blocked
+    // publish were a code deploy or a full case re-run — with a paying client waiting. The locator
+    // re-walks the SAME structures, keeps the path, and localises each label to its sentence.
+    // (A label with no finding — e.g. from the derivation-rule method scanner, which reads
+    // different fields — still ships in `violations`, so nothing is ever silently dropped.)
+    const findings = [
+      ...rows.flatMap((r) => locateBannedLanguage(r.compiled_findings_json, r.track_key)),
+      ...rows.flatMap((r) => locateBannedLanguage(r.questions_to_ask, `${r.track_key} (questions)`)),
+      ...locateBannedLanguage(identityNote ? { client_note: identityNote } : null, "supplier identity"),
+      ...(intel ? locateBannedLanguage({
+        decision_snapshot: intel.synthesis.module_9_decision_snapshot,
+        vendor_questions: intel.synthesis.module_8_vendor_questions,
+      }, "synthesis") : []),
+    ];
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",
-      actor_id: userId, actor_type: "admin", new_value: { blocked: "banned_language", violations },
+      actor_id: userId, actor_type: "admin",
+      new_value: { blocked: "banned_language", violations, located: summariseHits(findings) },
     });
-    return NextResponse.json({ error: "banned_language", violations }, { status: 422 });
+    return NextResponse.json({ error: "banned_language", violations, findings }, { status: 422 });
   }
 
   // H1 — pin the attempt that passed the banned-language gate; publishing resolves any pending
