@@ -144,8 +144,20 @@ function hasUnnegatedConfirmAuth(text: string): boolean {
   }
   // AMENDMENT 2026-07-28 — the PASSIVE our-voice form ("authorization is confirmed"), which the
   // verb-first pattern cannot see. Negation-aware: "could not be confirmed" is mandated language.
+  // RULING 2026-08-16(b): the EVIDENCE-ATTRIBUTED passive ("…is confirmed … via/by/through
+  // [named evidence]") is the same claim as the demoted evidence-subject form — inverted
+  // grammar, not a different assertion — and joins the assertion-tier advisory (A6 fires on it).
+  // The BARE passive, nothing behind it, stays HARD: that is our voice asserting a fact.
   const passive = /\bauthoriz\w+\s+(?:is|are|was|were|has\s+been|have\s+been)\s+confirmed\b/gi;
-  while ((m = passive.exec(text)) !== null) return true;
+  while ((m = passive.exec(text)) !== null) {
+    const sentenceEnd = (() => {
+      const rest = text.slice(m.index);
+      const e = rest.search(/[.?!]/);
+      return e === -1 ? text.length : m.index + e;
+    })();
+    if (/\b(?:via|by|through|per|according\s+to)\b\s+\S/i.test(text.slice(m.index, sentenceEnd))) continue;
+    return true;
+  }
   return false;
 }
 
@@ -244,7 +256,7 @@ const ASSERTION: Rule[] = [
   { re: /\b(safe|approved|verified|recommended|low[\s-]?risk)\s+supplier/i, label: "safe/approved/verified supplier" }, // A5 (requires the "supplier" pairing — never matches the bare UI certainty label)
   // A6 — RULING 2026-08-16 (#2): the evidence-subject confirmation form, demoted from HARD.
   // Flags for reword ("supports", not "confirms") until the engine-prose pass retires the verb.
-  { re: /\b(?:evidence|sources?|records?|documentation|filings?|listings?|pack)\b[^.?!]{0,30}\bconfirm\w*\b[^.?!]{0,40}\b(?:authoriz|authoris|approv|authentic)/i, label: "evidence-voice authorization confirmation (reword to 'supports')" },
+  { re: /\b(?:evidence|sources?|records?|documentation|filings?|listings?|pack)\b[^.?!]{0,30}\bconfirm\w*\b[^.?!]{0,40}\b(?:authoriz|authoris|approv|authentic)|\bauthoriz\w+\s+(?:is|are|was|were|has\s+been|have\s+been)\s+confirmed\b[^.?!]*\b(?:via|by|through|per|according\s+to)\b/i, label: "evidence-voice authorization confirmation (reword to 'supports')" },
 ];
 
 const scanWith = (rules: Rule[]) => (text: string): string[] => {

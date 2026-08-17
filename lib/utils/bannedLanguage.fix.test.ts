@@ -377,3 +377,15 @@ describe("gate ruling 2026-08-16 — census corpus passes, real violations still
     expect(scanAssertion(s)).toContain("evidence-voice authorization confirmation (reword to 'supports')");
   });
 });
+
+describe("gate ruling 2026-08-16(b) — evidence-attributed passive demoted, bare passive stays HARD", () => {
+  const attributed = "For Lenovo: DIRECT manufacturer authorization is confirmed across multiple territories via TD SYNNEX's own official domain pages, Lenovo-issued awards, and a 2025 press release.";
+  it("PASS (hard) + ADVISORY fires: the attributed passive", () => {
+    expect(scanHard(attributed)).toEqual([]);
+    expect(scanAssertion(attributed)).toContain("evidence-voice authorization confirmation (reword to 'supports')");
+  });
+  it("BLOCK: the bare passive, nothing behind it", () => {
+    expect(scanHard("Authorization is confirmed for this vendor.").length).toBeGreaterThan(0);
+    expect(scanHard("Authorization is confirmed.").length).toBeGreaterThan(0);
+  });
+});
