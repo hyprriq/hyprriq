@@ -40,7 +40,7 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
-> **✓ ENGINE-PROSE PASS BUILT 2026-08-17 (founder-ruled — the §3.1 blocker)** — the `confirms→supports`
+> **✓ ENGINE-PROSE PASS BUILT 2026-08-17 (founder-ruled — the §3.1 blocker)** `cd68cfd` — the `confirms→supports`
 > vocabulary rule landed in the four scoped prompts: Track 2 `brand_relationship_finding`, Track 3
 > `brand_risk_finding`, Track 4 `documentation_finding`, synthesis Call C (M9/M8). ONE rule, carried
 > identically in all four: confirm/confirms/confirmed/confirming/confirmation/certify/certified may never
