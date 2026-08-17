@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-08 (PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-17 (ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -40,6 +40,33 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ ENGINE-PROSE PASS BUILT 2026-08-17 (founder-ruled — the §3.1 blocker)** — the `confirms→supports`
+> vocabulary rule landed in the four scoped prompts: Track 2 `brand_relationship_finding`, Track 3
+> `brand_risk_finding`, Track 4 `documentation_finding`, synthesis Call C (M9/M8). ONE rule, carried
+> identically in all four: confirm/confirms/confirmed/confirming/confirmation/certify/certified may never
+> stand next to authorization/approval/authenticity, in ANY shell — own voice, named-artifact subject,
+> passive, ATTRIBUTIVE noun phrase ("without confirmed authorization"), and questions — with the substitutes
+> supplied (SUPPORTS/INDICATES/ESTABLISHES/SHOWS; VERIFIED/DOCUMENTED/ON RECORD) and stated as **a WORD rule,
+> not a strength rule** (the positives-first law survives, re-worded "VERIFIED POSITIVES FIRST" in all three
+> tracks). **THE GATE IS NOT TOUCHED** — no ruling consumed. `prompt_version` 0.0.0→`p001-1.0.0` and
+> `ios_version`→`HyprrIQ IOS v0.2-prose` in the SAME edit: ios_version is the memoization key
+> (`getSynthesisByEvidenceHash`), so synthesis written under the old prompts can never be reused under the
+> new ones; `synthesis_version` deliberately untouched (S-2 forward pins stay valid).
+> **NEW ACCEPTANCE LOCK** `lib/research/prosePass.test.ts` (24 tests): the rule is present in all four prompts
+> with every census shell named (a later edit cannot quietly narrow it back to "our voice only"), and it is
+> **two-sided on the census's OWN sentences** — 4 real blocking sentences still block, their 4 rule-compliant
+> rewrites clear the unchanged `scanHard`.
+> **CENSUS UNCHANGED AT 9/39 BY CONSTRUCTION** (re-run post-change, verified): it scans STORED output, so the
+> number only moves when a case is re-run under the new prompts. NEXT (founder-run): re-run AWI-2608-033
+> (`15fc3396-68b9-4984-8d18-4b5224b8cf93`) and re-census — that is the acceptance proof and it unblocks the
+> held case. AWI-2608-034 (`8a30c432-…`) already scans clean and needs no re-run.
+> ⚠ **UNRULED GATE HOLE FOUND — REPORTED, NOT FIXED** (verified by probe): H12's verb rule only matches when
+> the object follows the verb immediately (articles allowed). An intervening word slips past HARD **and**
+> past the A6 advisory — "the Playbook **confirms current authorization**" and "the page **confirms Lenovo
+> authorization**" both scan CLEAN today. This pass makes it moot for the four prompts' prose; it stays live
+> for every other surface (Tracks 1/5, category, code-templated strings, operator text). Gate edits need a
+> founder ruling — flagged, untouched. 1351/1351 · tsc 0 · eslint 0.
+>
 > **GATE RULING (b) BUILT 2026-08-16** `8997d6d` — evidence-attributed passive (via/by/through) demoted to A6 advisory, bare passive stays HARD, two-sided fixtures. CENSUS STILL 9/39 (23%): residual = two shells outside the ruled scope — named-artifact subjects ('the Playbook confirms authorization') and scope-attached passives ('confirmed for US, UK'). RECOMMENDED: stop grammar-chasing; run the confirms→supports engine-prose pass (founder-run, scoped) — it retires the whole class. 1327/1327 gates green.
 >
 > **GATE RULING BUILT 2026-08-16** `5541857` — #1 sentence-scope bug fixed, #3 verdict negation/attribution guards, #4 ungating service-split, #2 evidence-subject demoted to advisory (A6). Two-sided fixtures (7 corpus PASS / 8 constructed BLOCK). ACCEPTANCE CENSUS: 31% -> 23%; entire residual = the ruled-HARD passive ('Authorization is confirmed...') — passive-with-evidence-attribution extension or engine-prose fix pends founder ruling. 1325/1325 gates green.

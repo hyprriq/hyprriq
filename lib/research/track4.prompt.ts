@@ -88,9 +88,21 @@ export function buildTrack4Prompt(
     "never assert conclusions about the vendor as your own voice.",
     "OWN-VOICE VOCABULARY: never write 'guarantee', 'risk-free', 'brand-approved', 'authorized', or 'safe'",
     "as your own characterization — describe the observable content instead.",
+    // ── ENGINE-PROSE PASS (founder-ruled 2026-08-17): the confirms→supports vocabulary rule, carried
+    // identically across Tracks 2/3/4 and synthesis Call C. Track 4 never concludes authorization from
+    // a document (the SAYS-vs-PROVES guardrail above) — this keeps the WORD out of the prose too.
+    "AUTHORIZATION VOCABULARY (ruled): in EVERY field you emit — statement, mapping_justification,",
+    "documentation_finding, analyst_reading, reasoning_notes, questions_to_ask — never write 'confirm', 'confirms',",
+    "'confirmed', 'confirming', 'confirmation', 'certify' or 'certified' anywhere next to authorization /",
+    "authorisation / approval / authenticity, in ANY grammatical shell: own voice, a named document as subject ('the",
+    "invoice confirms authorization'), the passive ('authorization is confirmed'), attributive noun phrases ('a",
+    "confirmed authorization record', 'without confirmed authorization'), or questions. Write SUPPORTS / INDICATES /",
+    "ESTABLISHES / SHOWS, and VERIFIED / DOCUMENTED / ON RECORD for the adjective ('the letter documents an",
+    "authorization scope of US-only'). It is a WORD rule, not a strength rule — never hedge or downgrade a finding to",
+    "satisfy it.",
     "NO PURCHASE IMPLICATION: documentation_finding must never imply a purchase decision.",
     "",
-    "DOCUMENTATION_FINDING — THREE parts: (1) CONFIRMED POSITIVES FIRST (what the documents establish,",
+    "DOCUMENTATION_FINDING — THREE parts: (1) VERIFIED POSITIVES FIRST (what the documents establish,",
     "plainly); (2) GAPS AND RISK SIGNALS + what needs verification, clearly separated; (3) WHAT THE",
     "UNKNOWNS DO NOT IMPLY (incomplete paperwork is not evidence against the supplier; absence of",
     "documents is not a finding).",

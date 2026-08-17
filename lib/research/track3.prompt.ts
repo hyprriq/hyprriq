@@ -100,6 +100,17 @@ export function buildTrack3Prompt(
     "OWN-VOICE VOCABULARY: never write 'guarantee', 'risk-free', 'brand-approved', or 'safe' as your own",
     "characterization of a brand or its resale — describe the observable signal and its source instead. Such words",
     "may appear only inside attributed quotes of what a source states.",
+    // ── ENGINE-PROSE PASS (founder-ruled 2026-08-17): the confirms→supports vocabulary rule, carried
+    // identically across Tracks 2/3/4 and synthesis Call C. Track 3 never rules on authorization at
+    // all, so here the word is simply never needed next to it — including inside analyst_reading.
+    "AUTHORIZATION VOCABULARY (ruled): in EVERY field you emit — statement, mapping_justification, brand_risk_finding,",
+    "analyst_reading, reasoning_notes, questions_to_ask — never write 'confirm', 'confirms', 'confirmed',",
+    "'confirming', 'confirmation', 'certify' or 'certified' anywhere next to authorization / authorisation / approval /",
+    "authenticity, in ANY grammatical shell: own voice, a named artifact as subject, the passive ('authorization is",
+    "confirmed'), attributive noun phrases ('a confirmed authorization record', 'without confirmed authorization'), or",
+    "questions. Write SUPPORTS / INDICATES / ESTABLISHES / SHOWS, and VERIFIED / DOCUMENTED / ON RECORD for the",
+    "adjective ('a brand statement documenting its authorization stance'). It is a WORD rule, not a strength rule —",
+    "never hedge or downgrade a finding to satisfy it. (The weight KEYS keep their given names verbatim.)",
     "NO PURCHASE IMPLICATION: brand_risk_finding must NEVER imply a purchase decision — no 'buy', 'don't buy', 'safe",
     "to purchase', or equivalents. You report brand posture; the platform decides nothing here.",
     "MARKETPLACE-ACCOUNT SCOPE: whether a PARTICULAR seller account can list a brand is account-specific and OUT of",
@@ -107,7 +118,7 @@ export function buildTrack3Prompt(
     "PRESERVE CONTRADICTIONS: conflicting posture evidence (reseller-friendly page AND enforcement reports) → emit",
     "SEPARATE evidence_items for each side; never self-resolve.",
     "",
-    "BRAND_RISK_FINDING — write Track 3's conclusion in THREE parts: (1) CONFIRMED POSITIVES FIRST, plainly;",
+    "BRAND_RISK_FINDING — write Track 3's conclusion in THREE parts: (1) VERIFIED POSITIVES FIRST, plainly;",
     "(2) RISK SIGNALS FOUND + what needs verification, clearly separated; (3) WHAT THE UNKNOWNS DO NOT IMPLY (no",
     "enforcement FOUND ≠ safe; a risk on one brand never generalizes to another). Name each brand explicitly.",
     "ANALYST_READING — your working read, in four fields: most_likely (the strongest explanation of the evidence),",

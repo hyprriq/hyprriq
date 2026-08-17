@@ -33,7 +33,7 @@ describe("buildTrack2Prompt", () => {
   it("ADR-T2-002: carries lane discipline, three-part structure, per-brand naming, and the procurement prohibition", () => {
     expect(system).toContain("brand_relationship_finding");
     expect(system).toMatch(/do not assess.*(legitimacy|identity)/i);        // legitimacy lane handed off
-    expect(system).toMatch(/confirmed positives/i);                          // positives-first
+    expect(system).toMatch(/verified positives/i);                           // positives-first (prose pass 2026-08-17: was "confirmed positives")
     expect(system).toMatch(/what those unknowns do not imply/i);             // three-part structure
     expect(system).toMatch(/name each (submitted )?brand/i);                 // per-brand naming
     expect(system).toMatch(/never.*(recommend|imply).*(buy|purchase)/i);     // no purchase recommendation
