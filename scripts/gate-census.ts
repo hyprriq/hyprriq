@@ -4,9 +4,16 @@
 // sentences. THE NUMBER IT PRINTS IS THE LAUNCH RISK. Re-run after any gate or engine-prose
 // change — it is the acceptance test for both (baseline 2026-08-16: 12/39 → 9/39 after the
 // ruled amendments; residual = the confirms-authorization vocabulary class).
+//
+// 2026-08-17 (engine-prose pass acceptance): BOTH GATE SCANS now print. The HARD section is
+// unchanged — same walk, same number, comparable to every prior run. The ASSERTION section is
+// ADDITIVE: the founder's acceptance target is "~0% blocks AND the A6 advisory count trending to
+// zero", and A6 ("evidence-voice authorization confirmation") is the advisory the two gate rulings
+// created to hold this exact class until the prose pass retired it. A HARD 0 with a high A6 is the
+// pass half-done — the word moved shell rather than leaving.
 // Run: npx tsx --conditions=react-server --tsconfig tsconfig.json --env-file=.env.local scripts/gate-census.ts
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { scanHard, scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
+import { scanHard, scanAssertion, scanFindingsForBannedLanguage, assertionAdvisories } from "@/lib/utils/banned-language";
 
 const SENT = /(?<=[.!?])\s+/;
 
@@ -14,8 +21,11 @@ async function main() {
   const { data: cases } = await supabaseAdmin.from("cases")
     .select("id, case_number, plan_type, status").is("deleted_at", null).order("created_at");
   const agg: Record<string, { cases: Set<string>; samples: string[] }> = {};
+  const advAgg: Record<string, { cases: Set<string>; samples: string[] }> = {};
   let blocked = 0;
+  let advised = 0;
   const blockedCases: string[] = [];
+  const advisedCases: string[] = [];
   for (const c of cases ?? []) {
     const { data: rows } = await supabaseAdmin.from("case_track_results")
       .select("track_key, compiled_findings_json, questions_to_ask, attempt_number")
@@ -30,10 +40,9 @@ async function main() {
       snapshot: s?.decision_snapshot ?? null,
       vq: s?.vendor_questions ?? null,
     };
-    const v = scanFindingsForBannedLanguage(surface);
-    if (v.length === 0) continue;
-    blocked++;
-    blockedCases.push(`${c.case_number} (${c.plan_type}) [${[...new Set(v)].join(", ")}]`);
+    const v = scanFindingsForBannedLanguage(surface);   // HARD — blocks delivery
+    const a = assertionAdvisories(surface);             // ASSERTION — mandatory-review advisory
+    if (v.length === 0 && a.length === 0) continue;
     const texts: string[] = [];
     const walk = (x: unknown) => {
       if (typeof x === "string") texts.push(x);
@@ -41,20 +50,46 @@ async function main() {
       else if (x && typeof x === "object") Object.values(x).forEach(walk);
     };
     walk(surface);
-    for (const label of new Set(v)) {
-      agg[label] ??= { cases: new Set(), samples: [] };
-      agg[label].cases.add(c.case_number);
-      for (const t of texts) for (const sent of t.split(SENT)) {
-        if (scanHard(sent).includes(label) && agg[label].samples.length < 3 && !agg[label].samples.includes(sent)) {
-          agg[label].samples.push(sent.slice(0, 220));
+    // One aggregator, run per tier — the sample hunt uses that tier's own sentence scanner.
+    const collect = (
+      labels: string[], into: Record<string, { cases: Set<string>; samples: string[] }>,
+      scan: (t: string) => string[],
+    ) => {
+      for (const label of new Set(labels)) {
+        into[label] ??= { cases: new Set(), samples: [] };
+        into[label].cases.add(c.case_number);
+        for (const t of texts) for (const sent of t.split(SENT)) {
+          if (scan(sent).includes(label) && into[label].samples.length < 3 && !into[label].samples.includes(sent)) {
+            into[label].samples.push(sent.slice(0, 220));
+          }
         }
       }
+    };
+    if (v.length) {
+      blocked++;
+      blockedCases.push(`${c.case_number} (${c.plan_type}) [${[...new Set(v)].join(", ")}]`);
+      collect(v, agg, scanHard);
+    }
+    if (a.length) {
+      advised++;
+      advisedCases.push(`${c.case_number} (${c.plan_type}) [${[...new Set(a)].join(", ")}]`);
+      collect(a, advAgg, scanAssertion);
     }
   }
-  console.log(`TOTAL CASES SCANNED: ${(cases ?? []).length}, WOULD BLOCK TODAY: ${blocked}`);
-  console.log("BLOCKED:", blockedCases.join(" | "));
+  const total = (cases ?? []).length;
+  const pct = (n: number) => `${Math.round((n / Math.max(1, total)) * 100)}%`;
+  console.log(`TOTAL CASES SCANNED: ${total}, WOULD BLOCK TODAY: ${blocked} (${pct(blocked)})`);
+  console.log("BLOCKED:", blockedCases.join(" | ") || "(none)");
   for (const [label, d] of Object.entries(agg)) {
     console.log(`\n== ${label} — ${d.cases.size} case(s): ${[...d.cases].join(", ")}`);
+    d.samples.forEach((smp, i) => console.log(`  [${i + 1}] ${smp}`));
+  }
+  // ── ASSERTION TIER — never blocks; the A6 line is the prose pass's second acceptance number. ──
+  console.log(`\n──────── ASSERTION TIER (advisory — mandatory review, never blocking) ────────`);
+  console.log(`CASES CARRYING AN ADVISORY: ${advised} (${pct(advised)})`);
+  console.log("ADVISED:", advisedCases.join(" | ") || "(none)");
+  for (const [label, d] of Object.entries(advAgg)) {
+    console.log(`\n~~ ${label} — ${d.cases.size} case(s): ${[...d.cases].join(", ")}`);
     d.samples.forEach((smp, i) => console.log(`  [${i + 1}] ${smp}`));
   }
 }
