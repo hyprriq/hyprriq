@@ -40,6 +40,8 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **GATE RULING (b) BUILT 2026-08-16** `8997d6d` — evidence-attributed passive (via/by/through) demoted to A6 advisory, bare passive stays HARD, two-sided fixtures. CENSUS STILL 9/39 (23%): residual = two shells outside the ruled scope — named-artifact subjects ('the Playbook confirms authorization') and scope-attached passives ('confirmed for US, UK'). RECOMMENDED: stop grammar-chasing; run the confirms→supports engine-prose pass (founder-run, scoped) — it retires the whole class. 1327/1327 gates green.
+>
 > **GATE RULING BUILT 2026-08-16** `5541857` — #1 sentence-scope bug fixed, #3 verdict negation/attribution guards, #4 ungating service-split, #2 evidence-subject demoted to advisory (A6). Two-sided fixtures (7 corpus PASS / 8 constructed BLOCK). ACCEPTANCE CENSUS: 31% -> 23%; entire residual = the ruled-HARD passive ('Authorization is confirmed...') — passive-with-evidence-attribution extension or engine-prose fix pends founder ruling. 1325/1325 gates green.
 >
 > **✓ SUBMIT COPY FIXES LANDED 2026-08-15** ``538c0ec`` — interpolation seams -> template literals; brand cap stated once (counter kept); credits sub now "plan adds N at renewal" never echoing balance; ASIN gating confirmed ($149+Scale on KEEPA flip, test-locked). Track 6 explainer delivered in-chat. 1306/1306 · gates green.
