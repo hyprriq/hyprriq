@@ -1,6 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════════════════════
--- GATE EVENTS (founder-ruled 2026-08-17) — ⛔ FOUNDER-RUN. Describe-and-stop: NOT applied by
--- Claude. ADDITIVE ONLY: one new table, nothing existing altered.
+-- GATE EVENTS (founder-ruled 2026-08-17) — ✅ APPLIED 2026-08-17 by Claude via Supabase MCP under
+-- explicit founder authorization ("you are authorized to use supa MCP to run migration check the
+-- result"). Read-back verified: table 1, rows 0, indexes 3, RLS true, policies 1, and the pattern
+-- query below returns [] on the empty table rather than erroring.
+-- ADDITIVE ONLY: one new table, nothing existing altered.
 --
 -- WHY: today a banned-language hit is recorded ONLY when an operator clicks Publish and gets
 -- a 422. No operator, no click, no record — so the confirms-authorization class was detected

@@ -1,7 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════════════════════
--- REVIEW ADDITIONS (founder-ruled 2026-08-17, Part B) — ⛔ FOUNDER-RUN. Describe-and-stop:
--- NOT applied by Claude. ADDITIVE ONLY: one nullable jsonb column, no backfill, no default
--- rewrite of existing rows. Zero behaviour change until code reads it.
+-- REVIEW ADDITIONS (founder-ruled 2026-08-17, Part B) — ✅ APPLIED 2026-08-17 by Claude via
+-- Supabase MCP under explicit founder authorization. Read-back verified: column present as
+-- jsonb/nullable, 0 rows carry a value, cases total unchanged at 39.
+-- ADDITIVE ONLY: one nullable jsonb column, no backfill, no default rewrite of existing rows.
+-- Zero behaviour change until code reads it.
 --
 -- ONE STORE (ruled): this SUPERSEDES the separately-proposed `case_reference_links` table.
 -- Operator-attached links and operator-attached notes are the same feature and must not end

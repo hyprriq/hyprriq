@@ -12,12 +12,12 @@
 
 ---
 
-## Preconditions (founder-run, blocking)
+## Preconditions — ✅ BOTH DONE 2026-08-17
 
-- [ ] Apply `supabase/migrations/20260818000000_gate_events.sql`, run its read-back block.
-- [ ] Apply `supabase/migrations/20260818000100_cases_review_additions.sql`, run its read-back block.
+- [x] `supabase/migrations/20260818000000_gate_events.sql` — applied via MCP, read-back verified (table 1, rows 0, indexes 3, RLS true, policies 1; pattern query returns `[]` on empty rather than erroring).
+- [x] `supabase/migrations/20260818000100_cases_review_additions.sql` — applied via MCP, read-back verified (`jsonb`/nullable, 0 rows carry a value, cases total unchanged at 39).
 
-Code written before these land must **fail closed and loud** (the `adjust_client_credits` 503 is the house precedent), never silently skip.
+**Both tables/columns now exist and are EMPTY, and nothing reads them yet.** The fail-closed guidance that applied while they were pending no longer does: code can assume the schema is present. What still applies is the writer's fail-LOUD rule — a swallowed `gate_events` insert re-creates exactly the blind spot the table exists to remove (Task 4).
 
 ## File structure
 
