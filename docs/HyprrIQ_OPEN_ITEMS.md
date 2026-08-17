@@ -40,6 +40,62 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **🟢 FIRST REAL REPORT DELIVERED END TO END — 2026-08-17.** **AWI-2608-033 (Growth) IS PUBLISHED.**
+> Submit → research → review → publish → email, the whole path, on a live case. **GROWTH WORKS.**
+> AWI-2608-034 (Scale) STAYS HELD — blocked by the derivation-rule scanner on `"corroborated"` in
+> M9 `leading_interpretation`. Scale remains unproven end to end: one case, blocked.
+>
+> **⚠ THE FINDING THAT REPRICES THE WEEK — RULED FIRST PRIORITY.** `gate-census.ts` measures ONE of
+> the publish path's TWO scanners. **Every number ruled on all week — 31%, 23%, gate ruling (b), the
+> prose-pass acceptance — measured banned-language ONLY.** The derivation-rule scanner
+> (`scanSynthesisAtDelivery`) had never been run across the corpus. The launch risk was never 23%; it
+> was 23% plus an unknown. **This is the SAME DEFECT CLASS as the attempt skew: two instruments that
+> should agree on one path, not pinned to the same thing.** Partial measurement taken 2026-08-17
+> (language 8 · method 1 · either 9) but that is a scratchpad probe, not the instrument.
+> **RULED: (1) MERGE THE SCANNERS INTO ONE CENSUS — one instrument, one number, all 39 cases, not two
+> reports. (2) GIVE THE DERIVATION-RULE SCANNER A LOCATOR** — a block must name its sentence, its
+> field and the rule it hit, exactly as Piece 1 does for banned language. 034 today gives a label and
+> nothing else. **This decides whether Scale can publish at all.**
+>
+> **PDF LANE — RULED 2026-08-17. Generate at publish, store, serve a signed URL** (option 3; items 2
+> and 3 are ONE piece of work). The report is frozen at delivery so per-request rendering is pure
+> waste; it keeps Chromium out of a serverless request entirely; and a failed render becomes a
+> retriable job against an immutable record instead of something that can block or slow a publish.
+> Generation hangs off the delivery choke point, AFTER `checkDeliverable`, as a background job.
+> Signed-URL TTL: **minutes, re-issued per click** — a leaked long-lived URL is an unauthenticated
+> report naming suppliers and verdicts. Ownership + delivered-state check on the download route,
+> copying the `lib/data/cases.ts` model. **⛔ VERIFY THE `reports` BUCKET IS PRIVATE BEFORE ANYTHING
+> IS WRITTEN TO IT — if it is public, STOP and tell the founder: that is a P0.** `review_additions`
+> must render in the PDF. The deferred count-derivation debt returns with this lane.
+> Noted: the `reports` bucket ALREADY EXISTS and the client-deletion path already cleans it up
+> (`app/api/admin/clients/[id]/route.ts:99`) for a bucket **nothing writes to** — someone designed
+> this and stopped, so deletion is already correct for the design about to be built.
+> **CLIENT NAME FROM STRIPE — RULED, BUILD NOW, INDEPENDENT (~1h).** `s.customer_details?.name` is
+> discarded at `app/api/webhooks/stripe/route.ts:132` while the email beside it is kept.
+> `clients.full_name` is written in exactly ONE place (`app/api/onboarding/complete/route.ts:23`), so
+> a client who skips onboarding has no name though Stripe collected it. Capture ABOVE the three-way
+> branch (topup / subscription / one-time) or two of three paths miss it. **SET-IF-NULL ONLY — never
+> overwrite a name entered in onboarding: Stripe's is a billing name, theirs is what they want to be
+> called.** Same for `company_name` where Stripe collects it.
+>
+> **CARRIED FORWARD, RULED:** (a) **ONE-TEST LOCK** — no future path may set `delivered` or send the
+> delivery email without passing `checkDeliverable`; the residual is named, now make it a test, in the
+> loop build. (b) **`STRIPE_PRICE_SINGLE_149`** — Claude must state exactly what to check in Vercel;
+> the founder confirms. (c) **NOTHING PUSHES** — 3 cases sit in `research_failed` and the founder would
+> only know by looking. Once the loop lands, propose what should alert and how. **v2 dependency for
+> removing the operator; on the board now.**
+>
+> **⛔ STANDING RULE, EARNED THREE TIMES — `.env.local` IS NOT PRODUCTION.** Claude asserted
+> production env state from the local file three separate times this week (`SUPPORT_INBOX`, then
+> email, then `STRIPE_PRICE_SINGLE_149`). **Emails work and have for days:** `RESEND_API_KEY`,
+> `RESEND_FROM`, `SUPPORT_INBOX` are ALL SET IN VERCEL; delivery and submission emails both arrive.
+> **Local env proves NOTHING. If env state matters, say it cannot be verified locally and ask.**
+>
+> **SEQUENCE (founder-set 2026-08-17):** 1 tracker ✓ · 2 merged census + derivation locator ·
+> 3 client name from Stripe · 4 `replay-attempt.ts` preflight · 5 self-correcting loop, then operator
+> attachments · 6 PDF lane (AFTER the audit reports on the bucket's RLS, which may change the auth
+> shape). The audit runs in its own fresh session per `docs/AUDIT_BRIEF_2026-08-17.md`.
+>
 > **DELIVERY PATH — STATE OF TRUTH 2026-08-17 (end of session; verified, not carried)** `7cdab2c` —
 > **THE PUBLISH PATH WORKS AND HAS BEEN EXERCISED END TO END.** AWI-2608-033 (Growth) is
 > **PUBLISHABLE — verified by running the route's own two preconditions read-only**: deliverability PASS
