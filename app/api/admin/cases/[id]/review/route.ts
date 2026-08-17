@@ -10,6 +10,7 @@ import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { locateSynthesisMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 import { sendDeliveryNotification } from "@/lib/email/notify";
@@ -186,6 +187,11 @@ export async function POST(
         decision_snapshot: intel.synthesis.module_9_decision_snapshot,
         vendor_questions: intel.synthesis.module_8_vendor_questions,
       }, "synthesis") : []),
+      // TWO SCANNERS, ONE WORKLIST (founder-ruled 2026-08-17). The derivation-rule scanner is the
+      // OTHER half of this gate and until now returned a label with no sentence — which is why
+      // AWI-2608-034 sat held with no actionable diagnosis. Same BannedHit shape, so it lands in
+      // the same array and the blocked-publish panel renders it with no change.
+      ...(intel ? locateSynthesisMethodLeakage(intel.synthesis) : []),
     ];
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",

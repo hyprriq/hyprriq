@@ -14,6 +14,7 @@
 // Run: npx tsx --conditions=react-server --tsconfig tsconfig.json --env-file=.env.local scripts/gate-census.ts
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { scanHard, scanAssertion, scanFindingsForBannedLanguage, assertionAdvisories } from "@/lib/utils/banned-language";
+import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
 
 const SENT = /(?<=[.!?])\s+/;
 
@@ -34,13 +35,25 @@ async function main() {
     const att = Math.max(...rows.map((r) => r.attempt_number ?? 1));
     const latest = rows.filter((r) => (r.attempt_number ?? 1) === att);
     const { data: s } = await supabaseAdmin.from("case_synthesis")
-      .select("decision_snapshot, vendor_questions").eq("case_id", c.id).eq("attempt_number", att).maybeSingle();
+      .select("decision_snapshot, vendor_questions, doubt_calibration").eq("case_id", c.id).eq("attempt_number", att).maybeSingle();
     const surface = {
       rows: latest.map((r) => ({ f: r.compiled_findings_json, q: r.questions_to_ask })),
       snapshot: s?.decision_snapshot ?? null,
       vq: s?.vendor_questions ?? null,
     };
-    const v = scanFindingsForBannedLanguage(surface);   // HARD — blocks delivery
+    // ── ONE INSTRUMENT, ONE NUMBER (founder-ruled 2026-08-17). The publish path runs TWO scanners;
+    // this census ran ONE, so every launch-risk number before today measured half a gate. The
+    // blocking set below is now composed EXACTLY as app/api/admin/cases/[id]/review/route.ts
+    // composes it — language + derivation-rule — so the census and the publish path can never
+    // again disagree about whether a case would block. (Same defect class as the attempt skew.)
+    const method = s
+      ? scanSynthesisAtDelivery({
+          module_9_decision_snapshot: s.decision_snapshot,
+          module_8_vendor_questions: s.vendor_questions,
+          module_7_doubt_calibration: (s.doubt_calibration ?? undefined) as { doubt_focus?: string; rationale?: string } | undefined,
+        })
+      : [];
+    const v = [...scanFindingsForBannedLanguage(surface), ...method];   // HARD — blocks delivery
     const a = assertionAdvisories(surface);             // ASSERTION — mandatory-review advisory
     if (v.length === 0 && a.length === 0) continue;
     const texts: string[] = [];
