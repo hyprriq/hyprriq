@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-17 (ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-18 (END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -40,6 +40,35 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ TRACK 6 CLIENT SURFACE — RULED 2026-08-18. Ships with the Track 6 pass; §8 closed.**
+> Approved as proposed. Verified against AWI-2608-034's REAL stored findings, not a mock.
+> **risk_level renders as "Flagged for closer attention than the other categories on this case."
+> NEVER "HIGH".** THE REASON, founder's, recorded because it is the load-bearing why and someone
+> could otherwise undo it: **without an ASIN the engine cannot know which category the client's
+> product sits in — printing HIGH would claim exactly what we established it cannot determine.**
+> Keep the ordering signal, drop the claim. (MODERATE → "Standard attention for this category.")
+> **PROJECTOR BRANCH, NOT THE ALLOWLIST** — a branch in `projectFindingJsonForClient` mirroring the
+> existing `sourcing_logic` precedent. Adding `category_compliance` to `FINDING_CLIENT_ALLOWLIST`
+> would drag `matched_via` ("category_research" — METHOD vocabulary, the exact thing the derivation
+> scanner exists to stop), raw `evidence_ids`, `audits` and `scope` across.
+> **CROSSES:** category · subcategory · confidence · evidence COUNT (derived from
+> `evidence_ids.length`, never the ids) · `flag_language` VERBATIM · `brand_category_note` ·
+> the attention label. **NEVER CROSSES:** `matched_via` · `evidence_ids` · `audits` · `scope`.
+> **TWO BLOCKS, SEPARATE ATTRIBUTION — THE BOUNDARY IS STRUCTURAL, NOT A DISCLAIMER.** (a) what the
+> research found, evidence-backed and confidence-qualified; (b) *"From our category reference notes
+> for this category:"* — the founder's §8 flag language verbatim, code-owned, plainly OUR table and
+> not a finding about the client's product. Fixed boundary line above, fixed "requirements change
+> frequently" footer below.
+> **GAP CLOSED IN THE SAME PASS (ruled):** `findCategoryLanguageViolations` JOINS THE DELIVERY
+> COMPOSITION. It runs at GENERATION ONLY today, while `brand_category_note` and the `category`
+> strings are LLM-written — **nothing LLM-written may reach a client scanned only at generation.**
+> **AND it folds into the MERGED census, so the real block rate stays ONE number** (the census now
+> composes exactly what publish composes; a third scanner outside it would re-create the very defect
+> the merge just fixed).
+> GATE COVERAGE VERIFIED 2026-08-18: all 12 proposed strings — including 034's three `flag_language`
+> strings verbatim and its `brand_category_note` — pass `scanHard`, `scanAssertion`,
+> `findCategoryLanguageViolations` AND `scanForMethodLeakage`. Zero violations across all four.
+>
 > **⚠ AN INCOMPLETE ATTEMPT SUPPRESSES THE CENSUS — recorded 2026-08-18, and it changes what the
 > completeness precondition is FOR.** The stub cleanup was not tidiness: **it changed a measurement.**
 > While AWI-2607-021/022/032 had replay-stub latest attempts, the census scanned near-empty records
@@ -157,6 +186,24 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > self-correcting loop + operator attachments → **full end-to-end audit LAST, in a fresh context window,
 > fanned out per path stage** (token budget ≠ context window; a from-memory audit is the one thing ruled
 > out). 1389/1389 · tsc 0 · eslint 0.
+>
+> **AUDIT 2026-08-18 — END-TO-END, READ-ONLY.** Full findings: `docs/AUDIT_FINDINGS_2026-08-18.md`
+> (2 P0 · 15 P1 · P2 · CLEAN, every line carrying its verification method). Landed this pass: the
+> **second half of the 2026-08-17 attempt-skew fix** — the publish ROUTE was pinned that day, the
+> operator's REVIEW SCREEN was not (`review/page.tsx:61` read "the latest synthesis row that EXISTS").
+> Swept the whole class: that was the ONLY live unpinned read; every other call site pins, and the one
+> other candidate (`isCaseReadyForReport`) has zero callers. 1398/1398 · tsc 0 · eslint 0.
+> ⚠ **GO-LIVE CHECKLIST ITEM — THE PAYMENT PATH HAS NEVER RUN IN LIVE MODE.** All 37 rows in
+> `stripe_events` are `livemode: false`, including both "subscriptions". MRR is derived from
+> `clients.plan_type`, never from a settled payment; `billing_audit` holds **0** `new_subscription` rows.
+> Before go-live: confirm the live webhook endpoint + signing secret, then re-verify that a real
+> `checkout.session.completed` provisions credits — because two credit paths are currently dead behind
+> a hidden Stripe field move (`current_period_end` now lives on `items.data[0]`; the `as unknown as`
+> cast at `webhooks/stripe/route.ts:155,204` hides it, so `renewal_date` is NULL on 5/5 clients and
+> **every Growth→Scale upgrade grants zero credits**). Not fixed this pass, by ruling.
+> ⚠ **SECURITY, FOUNDER-RUN:** six credit RPCs hold `EXECUTE` for `anon`/`authenticated`/`PUBLIC`.
+> All six are called ONLY through service-role clients (verified: both `createServerClient` and
+> `supabaseAdmin` use `SUPABASE_SERVICE_ROLE_KEY`), so the REVOKE is safe. SQL in the audit report.
 >
 > **RULINGS 2026-08-17 (publish path) — SELF-CORRECTING LOOP + REVIEW ADDITIONS** `7c06703` — **Piece 2
 > (operator prose editing) CANCELLED, not deferred** (the operator phases out in v2; a hand-editing habit
