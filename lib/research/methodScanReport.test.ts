@@ -3,10 +3,17 @@ import { locateMethodLeakage, locateSynthesisMethodLeakage } from "@/lib/researc
 import { scanForMethodLeakage, scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
 
 // AWI-2608-034's actual block, in its actual field — the case this locator was built to diagnose.
+//
+// FIXTURE UPDATED 2026-08-18 (attribution carve-out), coverage NOT reduced: the offending sentence
+// was "This reading is corroborated by the distributor listing." That sentence now PASSES by
+// ruling — it names its source and discloses no threshold, which is exactly what this locator's
+// own fix text tells the engine to write. The fixture therefore carries a sentence that still
+// blocks (bare method voice, our threshold) so every assertion below keeps testing what it was
+// written to test: field naming, sentence isolation out of a four-sentence field, and the fix text.
 const M9 = {
   headline: "Key items could not be verified.",
   leading_interpretation:
-    "Verdict: Verify Before Purchase. The vendor appears on two regional portals. This reading is corroborated by the distributor listing. Products may be genuine.",
+    "Verdict: Verify Before Purchase. The vendor appears on two regional portals. This reading rests on our corroboration threshold. Products may be genuine.",
   the_real_risk: "What remains unverified drives the risk: the sourcing channel is not documented.",
 };
 
@@ -40,8 +47,20 @@ describe("what 034's operator finally gets", () => {
   });
 
   it("isolates the offending SENTENCE out of a four-sentence field", () => {
-    expect(hits[0].sentence).toBe("This reading is corroborated by the distributor listing.");
+    expect(hits[0].sentence).toBe("This reading rests on our corroboration threshold.");
     expect(hits[0].sentence).not.toContain("Verify Before Purchase");   // the clean sentences stay out
+  });
+
+  // The carve-out is inherited, not re-implemented — same property the "honest uncertainty" test
+  // above asserts. A sentence the scanner now releases must produce NO locator hit, or the two
+  // instruments have drifted and the operator is handed work the gate did not ask for.
+  it("reports nothing for corroboration ATTRIBUTED to named sources — 034's real sentence", () => {
+    const attributed = {
+      leading_interpretation:
+        "The physical address is corroborated by the FDA, BBB, and LinkedIn, and the owner is named in federal correspondence.",
+    };
+    expect(scanForMethodLeakage(attributed)).toEqual([]);
+    expect(locateMethodLeakage(attributed)).toEqual([]);
   });
 
   it("carries a concrete rewrite, not a restatement of the rule", () => {
