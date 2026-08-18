@@ -40,6 +40,62 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **🔴 P0 LIVE ON A CLIENT ACCOUNT — INTERNAL TOKENS ON DELIVERED AWI-2608-034. TOP OF QUEUE.**
+> Measured over 034's **PROJECTED** client payload, after every existing cleaner — **THREE leaks, TWO
+> classes**, not the one seen by eye: `src_1, src_18` in `findings[1].summary` (Supplier Legitimacy —
+> the visible one) · `src_3, src_9, src_0` in `findings[3].summary` (**unseen**) · **`EV-001, EV-004,
+> EV-005` in `decision_snapshot.leading_interpretation`** (**unseen — evidence IDs in the client's
+> summary block, the most-read field on the page**).
+> **ROOT CAUSE — NOT A BYPASSED PATH.** `stripInternalRefs`' `REF_GROUP` matches **parenthesised
+> groups only**. `(src_1)` strips; `; src_1 and src_18 concern...`, `[src_2]`, `Evidence: src_3, src_4`,
+> sentence-initial `src_5 is...`, `Sources src_6 and src_7` **all survive** (proven, six shapes).
+> `dropSourceDisposalSentences` missed the same sentence — **two mechanisms, same blind spot**. The
+> projected/raw boundary HELD; the allowlist did its job. This is coverage inside the projection, not
+> a breach of it. It was "verified weeks ago" because **the fixtures were parenthesised**.
+> **FIX (ruled):** token-level strip **+** sentence-level drop **+** widen the disposal filter — NOT a
+> wider regex alone; **grammar must survive the strip**. All six shapes as two-sided fixtures, 034's
+> actual delivered text as the regression case. **Render-path inventory is PART OF the fix — do not
+> assume it away**: the cleaner defect explains the leak but does not rule out a second uncleaned route.
+>
+> **✓ RULED 2026-08-18 — THE PRESENCE CHECKPOINT (a backstop, not another cleaner).** Founder's
+> framing, recorded because it is the design: *"every cleaner matches KNOWN BAD SHAPES, so any shape
+> nobody imagined passes. A wider regex just moves the edge of imagination."* Before any text reaches
+> a client — portal, PDF, email — assert the **mere PRESENCE** of internal token patterns, regardless
+> of grammar or punctuation. **Any occurrence REFUSES.**
+> **⚠ PLACEMENT IS COUNTER-INTUITIVE AND MUST NOT BE GOT WRONG: it sits on the CLIENT side of the
+> projection — the OPPOSITE side from every existing gate.** Today's delivery gate scans RAW
+> `compiled_findings_json`. For banned language that is safe (cleaning only removes, so raw is a
+> superset of projected). **For internal tokens it inverts: raw ALWAYS legitimately carries `src_N`
+> (the operator's ruled source-checking leverage), so a token assertion on raw would refuse every case.**
+> Same defect shape as the census/attempt skew — two instruments not pinned to the same thing.
+> **BINDINGS (ruled):** (1) at the TAIL of `cleanClientFindingJson` and `projectClientReport` — the
+> only sanctioned way to produce client bytes, so anything built on them inherits it by construction;
+> (2) the PUBLISH gate over the fully-assembled projected payload — the REFUSING enforcement point;
+> (3) PDF render and email assembly. **PLUS A LOCK TEST: no client-facing render path may read raw
+> track rows** (freeze-test pattern).
+> **TOKEN RULES (ruled):** `src_N` safe, assert freely · **`EV-` plus exactly three digits, ANCHORED;
+> bare `E-nn` DROPPED** — it collides with real product model numbers (E-40, EV-2000) and **a false
+> refusal at publish is the worst failure mode for a backstop** · internal snake_case track keys safe
+> in prose · **`client_notes` IN SCOPE** · **`review_additions`: EXCLUDE URL-valued fields or
+> normalise them out BEFORE Part B ships** (an operator pasting `/img/src_1.png` must not refuse a
+> publish).
+> **⛔ LAW, WRITE IT INTO THE CODE SO NOBODY MERGES THEM: the cleaners are SHAPE-based and may always
+> miss; the checkpoint is PRESENCE-based and may NEVER be widened into a shape matcher. The moment
+> someone adds grammar-awareness to fix a false positive, it stops being a backstop.**
+> NOT caught by the checkpoint: **defect 2** (`category_compliance` rendered as a raw key + "THE 6
+> ASSESSMENT AREAS") is a RENDERING choice, not a token in prose — **the Track 6 pass still owns it**,
+> and the area count must derive from VOTING areas only.
+>
+> **⛔ STANDING RULE 2026-08-18 — A FIXTURE THAT ONLY CARRIES THE SHAPE THE RULE WAS WRITTEN FOR
+> PROVES NOTHING ABOUT THE SHAPES IT WASN'T.** This leak and the census undercount are **the same
+> failure: the instrument only saw what it was built to see.** **Any new cleaner or scanner ships with
+> fixtures covering shapes the author did NOT have in mind.** Not a suggestion — the acceptance bar.
+>
+> **QUEUE (founder-set, ahead of the client-name item):** 1 the cleaner fix + render-path inventory +
+> the presence checkpoint, ONE lane (the checkpoint is what makes the cleaner fix trustworthy rather
+> than another shape guess) · 2 defect 2 with the Track 6 pass · 3 defects 3/4 + vendor website +
+> formatting as one presentation pass against the approved prototype.
+>
 > **✓ TRACK 6 CLIENT SURFACE — RULED 2026-08-18. Ships with the Track 6 pass; §8 closed.**
 > Approved as proposed. Verified against AWI-2608-034's REAL stored findings, not a mock.
 > **risk_level renders as "Flagged for closer attention than the other categories on this case."
