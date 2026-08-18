@@ -43,7 +43,29 @@ Deterministic: same case + same delivered attempt → same document, always. It 
 
 ---
 
-## 2 · The blocker to clear first
+## 2 · Blockers to clear before any client receives a PDF
+
+### 2a · The internal-token presence checkpoint (P0, commit `3e4c9ff`) binds here
+
+That P0 names **"PDF and email"** among the checkpoint's bindings. Confirmed empirically on
+2026-08-16 by rendering the known-bad case: **`AWI-2608-034` produces a client PDF containing
+`EV-###` and `src_N` tokens.** The renderer is faithful — it carries whatever the projection
+emits — so the leak arrives on the document, in the client's most-read fields.
+
+Two consequences for this integration:
+
+1. The render path must sit **behind** the presence checkpoint once it exists, on the client
+   side of the projection, exactly as the P0 rules. Do not add token-stripping to the template:
+   the P0's law is that cleaners are shape-based and the checkpoint is presence-based, and
+   widening one into the other is the defect it was written to prevent.
+2. Until the checkpoint ships, **PDF delivery must not be enabled for cases whose projected
+   payload still carries tokens.** `scripts/pdf/verify-report.ts` will fail such a document on
+   its "no internal vocabulary" check — usable as an interim manual gate, not as the fix.
+
+Earlier passes in this thread reported "zero internal vocabulary" — that was measured on
+`AWI-2607-022` only, and is not a statement about the corpus.
+
+### 2b · The client name
 
 `no_client_name` **fires today on real cases** (AWI-2607-022 included). Root cause is dev-lane:
 Stripe checkout captures `customer_details.name` and the webhook discards it

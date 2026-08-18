@@ -57,7 +57,18 @@ async function verify(pdfPath: string): Promise<Check[]> {
   add("footnote only with markers", hasDagger === hasNote, `markers=${hasDagger} note=${hasNote}`);
 
   // Content completeness.
-  add("17 checklist questions", (all.match(/\?/g) || []).length >= 17, `found ${(all.match(/\?/g) || []).length}`);
+  // The checklist length is a property of the CASE, not of the template — an earlier version of
+  // this check hardcoded 17 (case AWI-2607-022's count) and failed a perfectly good document
+  // that legitimately had 16. Exactly the failure the founder's standing rule names: an
+  // instrument that only sees the shape it was built for. Assert presence, and let the caller
+  // assert an exact count when it actually knows one.
+  const questionCount = (all.match(/\?/g) || []).length;
+  const expected = Number(process.env.EXPECT_QUESTIONS ?? 0);
+  add(
+    expected > 0 ? `checklist has ${expected} questions` : "checklist has questions",
+    expected > 0 ? questionCount === expected : questionCount >= 1,
+    `found ${questionCount}`,
+  );
   const missing = [...AREAS, "single most important risk", "not for redistribution", "Hyprr Retail LLC", "It is not a guarantee", "Contents"]
     .filter((m) => !squash.includes(m.toLowerCase().replace(/\s/g, "")));
   add("content set complete", missing.length === 0, missing.join(", "));
