@@ -1,461 +1,62 @@
 /**
- * THE REPORT AS A DOCUMENT — HTML → headless-Chromium renderer (founder-ruled switch, 2026-08-16).
- * Ports the v2 template (report-document.tsx) verbatim in design: same structure, palette, toned
- * callout boxes, dark-header zebra tables, stat tiles, type roles, structural copy, determinism.
+ * REPORT PDF — command-line wrapper (design lane).
+ * The renderer itself lives in lib/pdf/ and is what the app integrates:
+ *   lib/pdf/renderReportPdf.ts   ← entry point: renderCaseReportPdf({ case })
+ *   lib/pdf/reportTemplate.ts    ← the document (pure)
+ *   lib/pdf/reportAssets.ts      ← embedded fonts + wordmark
+ * See docs/PDF_INTEGRATION_HANDOFF.md.
  *
- * Run (founder): npx tsx scripts/pdf/report-html.ts [case_number]
- * Output: docs/pdf-samples/<case>-report.pdf + <case>-report-grey.pdf
- *         + <case>-report.html (the browser preview — open it, review pages without a rebuild)
+ * Run:  npx tsx scripts/pdf/report-html.ts [case_number] [--print-check]
  *
- * What the switch buys (each verified by scripts/pdf/verify-report.ts):
- *  - native break-inside/orphans/widows — the minPresenceAhead workarounds are retired
- *  - correct ligature text layer from Chromium — fonts-web/ carries UNSTRIPPED faces
- *  - real overflow clipping + border-radius on the toned boxes
- *  - full-bleed layered colour on the cover (@page :first { margin: 0 })
- *  - running footer via Chromium's native footer template (pageNumber/totalPages)
- * TOC page numbers: two-pass — pass 1 prints with placeholders, pdfjs-dist finds each section's
- * real page, pass 2 prints final. Renderer deps: puppeteer-core (against installed Chrome) +
- * pdfjs-dist. No browser download.
+ * Writes to docs/pdf-samples/:
+ *   <case>-report.pdf    THE DELIVERABLE — the client's report, in colour.
+ *   <case>-report.html   the same document as a self-contained page; open it in a browser to
+ *                        review pages without a rebuild.
+ *   <case>-report-print-check.pdf   only with --print-check. NOT a deliverable: a greyscale
+ *                        proof that no meaning is carried by hue (mono office printer).
  *
- * MEANING LOCKED: same projection chain (buildClientFindings + projectClientReport), engine
- * prose verbatim, structural copy imported from lib/content/reportDocument.ts (fixture-bound).
- * HARD RULE: a missing client name fails the build loudly (PDF_ALLOW_MISSING_NAME=1 → marked
- * internal proof only).
+ * PDF_ALLOW_MISSING_NAME=1 renders a visibly-marked internal proof for a case with no client
+ * name on file. Never use it for anything a client sees.
  */
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
-import { buildClientFindings } from "@/lib/admin/reviewView";
-import { projectClientReport, type ClientReport } from "@/lib/portal/clientReport";
-import { findingText, findingNotes } from "@/lib/portal/finding-view";
-import { parseFindingStructure } from "@/lib/portal/findingStructure";
-import type { Finding } from "@/lib/data/cases";
-import { DOC_TITLE, ISSUER, confidentialityLine } from "@/lib/content/documentIdentity";
-import {
-  SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
-  BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine,
-} from "@/lib/content/reportDocument";
 
-// ── Palette (identical to the v2 react-pdf template) ──
-const COLOUR = {
-  paper: "#FFFFFF", ink: "#14181D", soft: "#43494F", navy: "#122E4A", copper: "#9A551F",
-  hairline: "#C9CDD2", zebra: "#F2F4F6",
-  tone: {
-    green: { ink: "#1D5638", bg: "#E4EFEA" },
-    amber: { ink: "#755110", bg: "#F7F0E2" },
-    red: { ink: "#7C2622", bg: "#F5E4E1" },
-    navy: { ink: "#122E4A", bg: "#EDF1F5" },
-  } as Record<string, { ink: string; bg: string }>,
-  verdict: { source_clear: "#1D5638", usable_with_conditions: "#755110", verify_before_purchase: "#8A470B", do_not_rely: "#7C2622" } as Record<string, string>,
-};
-const toGrey = (hex: string) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  const h = Math.round(0.299 * r + 0.587 * g + 0.114 * b).toString(16).padStart(2, "0");
-  return `#${h}${h}${h}`;
-};
-const GREY: typeof COLOUR = {
-  paper: "#FFFFFF", ink: toGrey(COLOUR.ink), soft: toGrey(COLOUR.soft), navy: toGrey(COLOUR.navy),
-  copper: toGrey(COLOUR.copper), hairline: toGrey(COLOUR.hairline), zebra: toGrey(COLOUR.zebra),
-  tone: Object.fromEntries(Object.entries(COLOUR.tone).map(([k, v]) => [k, { ink: toGrey(v.ink), bg: toGrey(v.bg) }])),
-  verdict: Object.fromEntries(Object.entries(COLOUR.verdict).map(([k, v]) => [k, toGrey(v)])),
-};
-type Palette = typeof COLOUR;
+async function run() {
+  const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  const printCheck = process.argv.includes("--print-check");
+  const caseNumber = args[0] ?? "AWI-2607-022";
 
-function toneFor(label: string): string {
-  const l = label.toUpperCase();
-  if (/POSITIVE|CONFIRMED/.test(l)) return "green";
-  if (/RISK|ENFORCEMENT|NEGATIVE|CONCERN|RESTRICT/.test(l)) return "red";
-  if (/UNKNOWN|UNRESOLVED|GAP|COULD NOT/.test(l)) return "amber";
-  return "navy";
-}
+  const { renderCaseReportPdf } = await import("@/lib/pdf/renderReportPdf");
+  const { PALETTE_PRINT_CHECK } = await import("@/lib/pdf/reportTemplate");
 
-// ── Locked display copy — verbatim from the shipping report (components/portal/report-view.tsx) ──
-const VERDICT_META: Record<string, { name: string; level: number; means: string }> = {
-  source_clear: { name: "Source Clear", level: 1, means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours." },
-  usable_with_conditions: { name: "Usable With Conditions", level: 2, means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote." },
-  verify_before_purchase: { name: "Verify Before Purchase", level: 3, means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved." },
-  do_not_rely: { name: "Do Not Rely", level: 4, means: "The evidence does not support relying on this source. The report explains what drove this." },
-};
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
-};
-const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
-  not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
-} as const;
-const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
-const CATEGORY_NOTE = "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";
-const CLOSING = "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.";
-const RISK_HEAD = "The single most important risk";
-const LIMITS_HEAD = "The reading, and its limits";
-const SCALE_ORDER = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"] as const;
-
-function areaStatus(f: Finding): { label: string; tone: string } {
-  if (f.track_key === "sourcing_logic") return { label: "Informational", tone: "navy" };
-  const j = (f.compiled_findings_json ?? {}) as Record<string, unknown>;
-  const notAssessed = typeof j.summary === "string" && /not (?:assessed|evaluated)|no documents were provided/i.test(j.summary) && f.track_key === "documentation_review";
-  if (notAssessed || (f.track_key === "documentation_review" && !j.documentation_finding && typeof j.summary === "string" && /excluded from scoring/.test(j.summary))) {
-    return { label: "Not assessed", tone: "navy" };
-  }
-  return f.finding_certainty === "verified" ? { label: "Verified", tone: "green" } : { label: "Assessed", tone: "amber" };
-}
-
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-interface CaseRow {
-  id: string; case_number: string; vendor_name: string | null; brands_submitted: string[] | null;
-  status: string; verdict: string | null; delivered_at: string | null; delivered_attempt: number | null;
-  created_at: string; additional_questions: { question?: string }[] | null;
-  clients: { full_name: string | null; company_name: string | null } | null;
-}
-interface Content { caseNumber: string; vendor: string; brands: string[]; clientName: string; deliveredAt: string; verdict: string; report: ClientReport; findings: Finding[] }
-
-const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—");
-
-async function loadContent(caseNumber: string): Promise<Content> {
-  const { supabaseAdmin } = await import("@/lib/supabase/admin");
-  const { getCaseTrackResults } = await import("@/lib/data/track-results");
-  const { getClientDecisionSnapshot } = await import("@/lib/data/synthesis");
-  const { data: c } = await supabaseAdmin
-    .from("cases")
-    .select("id, case_number, vendor_name, brands_submitted, status, verdict, delivered_at, delivered_attempt, created_at, additional_questions, clients(full_name, company_name)")
-    .eq("case_number", caseNumber).is("deleted_at", null).maybeSingle();
-  if (!c) throw new Error(`case ${caseNumber} not found`);
-  const row = c as unknown as CaseRow;
-  const rows = await getCaseTrackResults(row.id, row.delivered_attempt ?? undefined);
-  const snap = await getClientDecisionSnapshot(row.id);
-  const findings = buildClientFindings(rows);
-  const report = projectClientReport((snap?.decision_snapshot ?? null) as Record<string, unknown> | null, snap?.vendor_questions, row.additional_questions ?? []);
-  if (!report) throw new Error("no decision snapshot for the delivered attempt");
-  const cl = row.clients;
-  let clientName = cl?.company_name ? `${cl?.full_name ?? ""} (${cl.company_name})`.trim() : (cl?.full_name ?? "");
-  if (!clientName || clientName === "—") {
-    if (process.env.PDF_ALLOW_MISSING_NAME === "1") clientName = "[Client name missing — internal proof]";
-    else throw new Error("Client name is missing on this case — refusing to render a deliverable addressed to nobody. (Root cause is the Stripe-webhook name gap; set PDF_ALLOW_MISSING_NAME=1 for an internal proof copy.)");
-  }
-  return {
-    caseNumber: row.case_number, vendor: row.vendor_name ?? "—", brands: row.brands_submitted ?? [],
-    clientName, deliveredAt: fmt(row.delivered_at), verdict: row.verdict ?? "verify_before_purchase",
-    report, findings,
-  };
-}
-
-// ── HTML template ──
-const fontUrl = (f: string) => pathToFileURL(path.join(process.cwd(), "scripts/pdf/fonts-web", f)).href;
-
-function structuredProse(text: string): string {
-  const blocks = parseFindingStructure(text);
-  const groups: { heading: string | null; parts: string[] }[] = [];
-  const bodyHtml = (b: (typeof blocks)[number]): string => {
-    if (b.type === "list") return `<ul class="dash">${b.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
-    if (b.type === "prose") return `<p>${esc(b.text)}</p>`;
-    return "";
-  };
-  for (const b of blocks) {
-    if (b.type === "heading") groups.push({ heading: b.text, parts: [] });
-    else {
-      if (groups.length === 0) groups.push({ heading: null, parts: [] });
-      groups[groups.length - 1].parts.push(bodyHtml(b));
-    }
-  }
-  return groups.map((g) => {
-    if (!g.heading) return g.parts.join("");
-    const tone = toneFor(g.heading);
-    const chars = g.parts.join("").length;
-    return `<div class="tonebox tone-${tone}${chars < 900 ? " keep" : ""}"><div class="tb-head">${esc(g.heading)}</div>${g.parts.join("")}</div>`;
-  }).join("");
-}
-
-function toneBox(tone: string, heading: string | null, inner: string, keep = true): string {
-  return `<div class="tonebox tone-${tone}${keep ? " keep" : ""}">${heading ? `<div class="tb-head">${esc(heading)}</div>` : ""}${inner}</div>`;
-}
-
-function htmlFor(c: Content, P: Palette, toc: Record<string, number | string>): string {
-  const meta = VERDICT_META[c.verdict];
-  const vInk = P.verdict[c.verdict];
-  const vTone = ({ source_clear: "green", usable_with_conditions: "amber", verify_before_purchase: "amber", do_not_rely: "red" } as Record<string, string>)[c.verdict] ?? "amber";
-  const r = c.report;
-  const wm = fs.readFileSync(path.join(process.cwd(), "public/brand/wordmark-reversed.svg"), "utf8").replace(/<svg /, '<svg class="wm" ');
-  const scale = (h: number) => SCALE_ORDER.map((k) => {
-    const active = k === c.verdict;
-    return `<div class="slot"><div class="bar" style="height:${h}px;${active ? `background:${vInk};border:0` : `background:${P.paper};border:1px solid ${P.hairline}`}"></div><div class="slot-label" style="${active ? `color:${vInk};font-weight:700` : `color:${P.soft}`}">${VERDICT_META[k].name}</div></div>`;
-  }).join("");
-
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(DOC_TITLE)} — ${esc(c.caseNumber)}</title><style>
-@font-face{font-family:Fraunces;src:url("${fontUrl("fraunces-600.ttf")}");font-weight:600}
-@font-face{font-family:SSerif;src:url("${fontUrl("source-serif-400.ttf")}");font-weight:400}
-@font-face{font-family:SSerif;src:url("${fontUrl("source-serif-600.ttf")}");font-weight:600}
-@font-face{font-family:SSerif;src:url("${fontUrl("source-serif-italic.ttf")}");font-weight:400;font-style:italic}
-@font-face{font-family:ISans;src:url("${fontUrl("instrument-400.ttf")}");font-weight:400}
-@font-face{font-family:ISans;src:url("${fontUrl("instrument-600.ttf")}");font-weight:600}
-@font-face{font-family:ISans;src:url("${fontUrl("instrument-700.ttf")}");font-weight:700}
-@font-face{font-family:Mono;src:url("${fontUrl("jetbrains-400.ttf")}");font-weight:400}
-@font-face{font-family:Mono;src:url("${fontUrl("jetbrains-600.ttf")}");font-weight:600}
-@page{size:letter;margin:56pt 0 64pt 0}
-@page:first{margin:0}
-*{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:ISans,sans-serif;color:${P.ink};background:${P.paper};font-size:10pt}
-p{font-family:SSerif,serif;font-size:10pt;line-height:1.5;color:${P.ink};margin-bottom:5pt;orphans:2;widows:2}
-ul.dash{list-style:none;margin-bottom:4pt}
-ul.dash li{font-family:SSerif,serif;font-size:10pt;line-height:1.45;color:${P.ink};padding-left:13pt;position:relative;margin-bottom:2.5pt;orphans:2;widows:2}
-ul.dash li::before{content:"–";position:absolute;left:0}
-.pagebody{padding:0 60pt}
-/* cover */
-.cover{width:8.5in;height:11in;background:${P.navy};padding:60pt 62pt 0;position:relative;page-break-after:always}
-.wm{height:21pt;width:auto;display:block}
-.cover-rule{width:46pt;height:3.5pt;background:${P.copper};margin:86pt 0 16pt}
-.cover h1{font-family:Fraunces,serif;font-weight:600;font-size:34pt;line-height:1.12;color:#fff;max-width:400pt}
-.cover .who{font-weight:600;font-size:13.5pt;color:#fff;opacity:.9;margin-top:12pt}
-.vbox{border:1.25pt solid #fff;border-radius:6pt;padding:16pt;margin-top:44pt;max-width:470pt}
-.vbox .k{font-weight:700;font-size:9pt;color:#fff;opacity:.8;letter-spacing:1.5pt;text-transform:uppercase}
-.vbox .name{font-family:Fraunces,serif;font-weight:600;font-size:22pt;color:#fff;margin-top:5pt}
-.vbox p{color:#fff;opacity:.93;font-size:10.5pt;margin:8pt 0 0}
-.cover-foot{position:absolute;bottom:38pt;left:62pt;right:62pt}
-.cover-foot .rule{height:.75pt;background:#fff;opacity:.4;margin-bottom:12pt}
-.cover-foot .cols{display:flex;justify-content:space-between}
-.cover-foot .k{font-weight:700;font-size:7pt;color:#fff;opacity:.65;text-transform:uppercase;margin-bottom:2pt}
-.cover-foot .v{font-size:8.5pt;color:#fff;max-width:150pt}
-.cover-foot .v.mono{font-family:Mono,monospace}
-/* section furniture */
-.section{page-break-before:always}
-.sec-open{display:flex;align-items:baseline;gap:12pt;margin-bottom:8pt}
-.sec-open .no{font-family:Mono,monospace;font-weight:600;font-size:16pt;color:${P.copper}}
-.sec-open .t{font-weight:700;font-size:23pt;color:${P.ink}}
-.sec-rule{height:3pt;background:${P.ink};margin-bottom:18pt}
-/* toc */
-.tocrow{display:flex;gap:14pt;border-radius:5pt;padding:10pt 12pt;margin-bottom:4pt}
-.tocrow:nth-child(even){background:${P.zebra}}
-.tocrow .no{font-family:Mono,monospace;font-weight:600;font-size:12pt;color:${P.copper};width:26pt;flex:none}
-.tocrow .mid{flex:1}
-.tocrow .line1{display:flex;align-items:flex-end}
-.tocrow .t{font-weight:700;font-size:12pt;color:${P.ink}}
-.tocrow .leader{flex:1;border-bottom:1.5pt dotted ${P.hairline};margin:0 8pt 3pt}
-.tocrow .pg{font-family:Mono,monospace;font-weight:600;font-size:11pt;color:${P.ink}}
-.tocrow .d{font-size:8.5pt;color:${P.soft};margin-top:2.5pt}
-/* tone boxes — real radius + clipping now */
-.tonebox{border-left:4.5pt solid;border-radius:6pt;overflow:hidden;padding:11pt 13pt;margin:10pt 0 6pt}
-.tonebox.keep{break-inside:avoid}
-.tb-head{font-weight:700;font-size:10.5pt;margin-bottom:5pt}
-${Object.entries(P.tone).map(([k, v]) => `.tone-${k}{background:${v.bg};border-color:${v.ink}}.tone-${k} .tb-head{color:${v.ink}}`).join("\n")}
-/* stat tiles */
-.tiles{display:flex;gap:10pt;margin-bottom:16pt}
-.tile{flex:1;background:${P.zebra};border-radius:6pt;overflow:hidden}
-.tile .bar{height:3.5pt}
-.tile .inner{padding:10pt 11pt}
-.tile .v{font-weight:700;font-size:19pt;color:${P.ink}}
-.tile .c{font-size:8pt;color:${P.soft};margin-top:3pt;line-height:1.35}
-/* verdict page */
-.v-name{font-family:Fraunces,serif;font-weight:600;font-size:27pt;margin-top:5pt}
-.v-kick{font-weight:700;font-size:9pt;text-transform:uppercase;letter-spacing:1pt}
-.scalerow{display:flex;gap:4pt;margin-top:12pt}
-.slot{flex:1}
-.slot .bar{border-radius:2pt}
-.slot-label{font-size:7.2pt;margin-top:3pt}
-/* tables */
-table{width:100%;border-collapse:collapse}
-thead th{background:${P.navy};color:#fff;font-weight:700;font-size:9.5pt;text-align:left;padding:7pt 10pt}
-thead th:first-child{border-top-left-radius:5pt}
-thead th:last-child{border-top-right-radius:5pt}
-tbody td{padding:6.5pt 10pt;border-bottom:.5pt solid ${P.hairline};font-size:10pt;vertical-align:top}
-tbody tr:nth-child(even){background:${P.zebra}}
-tbody tr{break-inside:avoid}
-td.num{font-family:Mono,monospace;font-weight:600;font-size:9pt;color:${P.copper};width:34pt}
-td.serif{font-family:SSerif,serif;line-height:1.45}
-td.status{font-weight:700;font-size:9.5pt;width:100pt}
-/* areas */
-.area{margin-bottom:14pt}
-.area.keep{break-inside:avoid}
-.area-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5pt solid ${P.ink};padding-bottom:4pt;margin-bottom:5pt;break-after:avoid}
-.area-head .n{font-weight:700;font-size:14pt;color:${P.ink}}
-.area-head .s{font-weight:700;font-size:9.5pt}
-h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-after:avoid}
-.closing{margin-top:22pt;border-top:1.5pt solid ${P.ink};padding-top:12pt}
-.closing .fine{font-family:ISans;font-size:8.5pt;line-height:1.5;color:${P.soft};margin-top:10pt}
-.closing .mono{font-family:Mono,monospace;font-size:7.5pt;color:${P.soft};margin-top:6pt}
-.footnote{font-size:8pt;color:${P.soft};margin-top:8pt}
-.defrow{display:flex;gap:12pt;margin-bottom:7pt;break-inside:avoid}
-.defrow .k{width:78pt;flex:none;font-weight:700;font-size:10pt}
-.defrow p{flex:1;font-size:10pt;line-height:1.45;margin:0}
-.conf{font-size:8.5pt;line-height:1.5;color:${P.soft};margin-top:22pt}
-</style></head><body>
-
-<div class="cover">
-  ${wm}
-  <div class="cover-rule"></div>
-  <h1>${esc(DOC_TITLE)}</h1>
-  <div class="who">${esc(c.vendor)} · ${c.brands.map(esc).join(" · ")}</div>
-  <div class="vbox">
-    <div class="k">Verdict · Level ${meta.level} of 4</div>
-    <div class="name">${esc(meta.name)}</div>
-    <p>${esc(r.headline)}</p>
-  </div>
-  <div class="cover-foot">
-    <div class="rule"></div>
-    <div class="cols">
-      ${[[COVER_META_LABELS.preparedFor, esc(c.clientName), ""], [COVER_META_LABELS.delivered, esc(c.deliveredAt), ""], [COVER_META_LABELS.caseRef, esc(c.caseNumber), "mono"], [COVER_META_LABELS.inside, esc(coverInsideLine(r.questions.length)), ""]]
-        .map(([k, v, cls]) => `<div><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`).join("")}
-    </div>
-  </div>
-</div>
-
-<div class="pagebody">
-  <div class="sec-open"><span class="t">${esc(CONTENTS_TITLE)}</span></div>
-  <div class="sec-rule"></div>
-  ${SECTIONS.map((s) => `<div class="tocrow"><span class="no">${s.no}</span><span class="mid"><span class="line1"><span class="t">${esc(s.title)}</span><span class="leader"></span><span class="pg">${toc[s.no] ?? "·"}</span></span><span class="d" style="display:block">${esc(s.toc)}</span></span></div>`).join("")}
-  <div class="conf">${esc(confidentialityLine(c.clientName))} ${esc(ISSUER)}</div>
-</div>
-
-<div class="section pagebody">
-  <div class="sec-open"><span class="no">01</span><span class="t">${esc(SECTIONS[0].title)}</span></div>
-  <div class="sec-rule"></div>
-  <div class="tiles">
-    <div class="tile"><div class="bar" style="background:${vInk}"></div><div class="inner"><div class="v">${meta.level} / 4</div><div class="c">Verdict level on the four-level scale</div></div></div>
-    <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${c.findings.length}</div><div class="c">Assessment areas examined</div></div></div>
-    <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${r.questions.length}</div><div class="c">Verification questions to put to the supplier</div></div></div>
-    <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${c.brands.length}</div><div class="c">Brands in scope of this research</div></div></div>
-  </div>
-  ${toneBox(vTone, null, `
-    <div class="v-kick" style="color:${vInk}">Verdict · Level ${meta.level} of 4</div>
-    <div class="v-name" style="color:${vInk}">${esc(meta.name)}</div>
-    <div class="scalerow">${scale(10)}</div>
-    <p style="margin-top:12pt">${esc(meta.means)}</p>`)}
-  ${toneBox("red", RISK_HEAD, `<p>${esc(r.the_real_risk)}</p>`)}
-</div>
-
-<div class="section pagebody">
-  <div class="sec-open"><span class="no">02</span><span class="t">${esc(SECTIONS[1].title)}</span></div>
-  <div class="sec-rule"></div>
-  <table style="margin-bottom:18pt"><thead><tr><th>${esc(AREAS_TABLE.colArea)}</th><th style="width:100pt">${esc(AREAS_TABLE.colStatus)}</th></tr></thead><tbody>
-    ${c.findings.map((f) => { const st = areaStatus(f); return `<tr><td style="font-weight:600">${esc(AREA_NAMES[f.track_key] ?? f.track_key)}</td><td class="status" style="color:${(P.tone[st.tone] ?? P.tone.navy).ink}">${esc(st.label)}</td></tr>`; }).join("")}
-  </tbody></table>
-  ${c.findings.map((f) => {
-    const { detail } = findingText(f);
-    const notes = findingNotes(f);
-    const st = areaStatus(f);
-    const isScope = st.label === "Not assessed" || st.label === "Informational";
-    const head = `<div class="area-head"><span class="n">${esc(AREA_NAMES[f.track_key] ?? f.track_key)}</span><span class="s" style="color:${(P.tone[st.tone] ?? P.tone.navy).ink}">${esc(st.label)}</span></div>`;
-    const bodyH = detail ? (isScope ? toneBox("navy", SCOPE_NOTE_LABEL, `<p style="font-size:9.5pt">${esc(detail)}</p>`) : structuredProse(detail)) : "";
-    const notesH = notes.length ? toneBox("navy", BOUNDARY_CALLOUT_LABEL, notes.map((n) => `<p style="font-size:9.5pt;margin-bottom:2pt"><strong style="font-family:ISans">${esc(n.label)}:</strong> ${esc(n.text)}</p>`).join("")) : "";
-    return `<div class="area${isScope ? " keep" : ""}">${head}${bodyH}${notesH}</div>`;
-  }).join("")}
-</div>
-
-<div class="section pagebody">
-  <div class="sec-open"><span class="no">03</span><span class="t">${esc(SECTIONS[2].title)}</span></div>
-  <div class="sec-rule"></div>
-  <h4 class="sub">${esc(LIMITS_HEAD)}</h4>
-  ${r.leading_interpretation ? structuredProse(r.leading_interpretation) : ""}
-  ${r.what_to_monitor.length ? `<table style="margin-top:14pt"><thead><tr><th style="width:34pt">No.</th><th>${esc(MONITOR_TABLE_CAPTION)}</th></tr></thead><tbody>
-    ${r.what_to_monitor.map((m, i) => `<tr><td class="num">${String(i + 1).padStart(2, "0")}</td><td class="serif">${esc(m)}</td></tr>`).join("")}
-  </tbody></table>` : ""}
-</div>
-
-<div class="section pagebody">
-  <div class="sec-open"><span class="no">04</span><span class="t">${esc(SECTIONS[3].title)}</span></div>
-  <div class="sec-rule"></div>
-  <p style="margin-bottom:12pt">${esc(CHECKLIST_INTRO)}</p>
-  <table><thead><tr><th style="width:34pt">${esc(CHECKLIST_TABLE.colNo)}</th><th>${esc(CHECKLIST_TABLE.colQuestion)}</th></tr></thead><tbody>
-    ${r.questions.map((q, i) => `<tr><td class="num">${String(i + 1).padStart(2, "0")}</td><td class="serif">${esc(q.question)}${q.source === "additional" ? " †" : ""}</td></tr>`).join("")}
-  </tbody></table>
-  ${r.questions.some((q) => q.source === "additional") ? `<div class="footnote">† ${esc(CHECKLIST_TABLE.analystNote)}</div>` : ""}
-</div>
-
-<div class="section pagebody">
-  <div class="sec-open"><span class="no">05</span><span class="t">${esc(SECTIONS[4].title)}</span></div>
-  <div class="sec-rule"></div>
-  ${([["Verified", "green", CHIP_DEFS.verified], ["Assessed", "amber", CHIP_DEFS.assessed], ["Not assessed", "navy", CHIP_DEFS.not_assessed]] as const)
-    .map(([k, tone, def]) => toneBox(tone, k, `<p style="font-size:9.5pt">${esc(def)}</p>`)).join("")}
-  ${toneBox("red", "Category requirements", `<p style="font-size:9.5pt">${esc(CATEGORY_NOTE)}</p>`)}
-  <div class="closing">
-    <p style="font-size:9.5pt;line-height:1.55">${esc(CLOSING)}</p>
-    <div class="fine">${esc(confidentialityLine(c.clientName))}</div>
-    <div class="mono">${esc(c.caseNumber)} · ${esc(c.vendor)} · delivered ${esc(c.deliveredAt)} · ${esc(ISSUER)}</div>
-  </div>
-</div>
-
-</body></html>`;
-}
-
-// ── Print via installed Chrome ──
-function chromePath(): string {
-  const candidates = [
-    process.env.CHROME_PATH,
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    "/usr/bin/google-chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  ].filter(Boolean) as string[];
-  for (const p of candidates) if (fs.existsSync(p)) return p;
-  throw new Error("Chrome not found — set CHROME_PATH");
-}
-
-async function printPdf(html: string, outFile: string, footerClient: string): Promise<void> {
-  const puppeteer = (await import("puppeteer-core")).default;
-  const browser = await puppeteer.launch({ executablePath: chromePath(), headless: true });
-  try {
-    const page = await browser.newPage();
-    const tmpHtml = outFile.replace(/\.pdf$/, ".tmp.html");
-    fs.writeFileSync(tmpHtml, html);
-    await page.goto(pathToFileURL(tmpHtml).href, { waitUntil: "networkidle0" });
-    await page.pdf({
-      path: outFile, printBackground: true, displayHeaderFooter: true,
-      headerTemplate: "<span></span>",
-      footerTemplate: `<div style="width:100%;font-family:'JetBrains Mono',monospace;font-size:7px;color:#43494F;padding:0 60pt;">${esc(DOC_TITLE)} · Prepared for ${esc(footerClient)} · Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`,
-    });
-    fs.unlinkSync(tmpHtml);
-  } finally {
-    await browser.close();
-  }
-}
-
-async function sectionPagesOf(pdfPath: string): Promise<Record<string, number>> {
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const doc = await getDocument({ data: new Uint8Array(fs.readFileSync(pdfPath)), useSystemFonts: true }).promise;
-  const pages: string[] = [];
-  for (let p = 1; p <= doc.numPages; p++) {
-    const tc = await (await doc.getPage(p)).getTextContent();
-    pages.push((tc.items as { str: string }[]).map((i) => i.str).join(" ").replace(/\s+/g, " "));
-  }
-  const found: Record<string, number> = {};
-  for (const s of SECTIONS) {
-    // The TOC (page 2) also names every section — the section's own page is the occurrence after it.
-    const idx = pages.findIndex((t, i) => i + 1 > 2 && t.includes(s.no) && t.includes(s.title));
-    if (idx >= 0) found[s.no] = idx + 1;
-  }
-  return found;
-}
-
-async function main() {
-  const caseNumber = process.argv[2] ?? "AWI-2607-022";
-  // The projection chain needs the react-server condition (server-only poison); no React is
-  // involved in this renderer, so the WHOLE pipeline runs in one conditioned child.
-  if (!process.env.PDF_CHILD) {
-    const r = spawnSync("npx", ["tsx", "--conditions=react-server", "--tsconfig", "tsconfig.json", "--env-file=.env.local", "scripts/pdf/report-html.ts", caseNumber],
-      { shell: true, stdio: "inherit", env: { ...process.env, PDF_CHILD: "1" } });
-    process.exit(r.status ?? 1);
-  }
-  const c = await loadContent(caseNumber);
   const outDir = path.join(process.cwd(), "docs/pdf-samples");
   fs.mkdirSync(outDir, { recursive: true });
+  const allowMissingClientName = process.env.PDF_ALLOW_MISSING_NAME === "1";
 
-  // Pass 1 — placeholders, capture real section pages.
-  const pass1 = path.join(outDir, `${caseNumber}-toc-pass.pdf`);
-  await printPdf(htmlFor(c, COLOUR, {}), pass1, c.clientName);
-  const toc = await sectionPagesOf(pass1);
-  fs.unlinkSync(pass1);
-  console.log("toc pass:", JSON.stringify(toc));
+  const r = await renderCaseReportPdf({ case: caseNumber, allowMissingClientName });
+  fs.writeFileSync(path.join(outDir, `${caseNumber}-report.pdf`), r.pdf);
+  fs.writeFileSync(path.join(outDir, `${caseNumber}-report.html`), r.html);
+  console.log(`wrote ${caseNumber}-report.pdf  (${r.pageCount} pages, contents ${JSON.stringify(r.toc)})`);
+  console.log(`wrote ${caseNumber}-report.html (browser preview)`);
 
-  // Pass 2 — final colour + greyscale, plus the browser-preview HTML.
-  const previewHtml = htmlFor(c, COLOUR, toc);
-  fs.writeFileSync(path.join(outDir, `${caseNumber}-report.html`), previewHtml);
-  await printPdf(previewHtml, path.join(outDir, `${caseNumber}-report.pdf`), c.clientName);
-  console.log("wrote", `${caseNumber}-report.pdf`);
-  await printPdf(htmlFor(c, GREY, toc), path.join(outDir, `${caseNumber}-report-grey.pdf`), c.clientName);
-  console.log("wrote", `${caseNumber}-report-grey.pdf`);
-  console.log(`content: ${c.findings.length} areas · ${c.report.questions.length} questions · ${c.report.what_to_monitor.length} monitor items · verdict ${c.verdict}`);
+  if (printCheck) {
+    const g = await renderCaseReportPdf({ case: caseNumber, allowMissingClientName, palette: PALETTE_PRINT_CHECK });
+    fs.writeFileSync(path.join(outDir, `${caseNumber}-report-print-check.pdf`), g.pdf);
+    console.log(`wrote ${caseNumber}-report-print-check.pdf (greyscale proof — not a deliverable)`);
+  }
+
+  console.log(`content: ${r.content.findings.length} areas · ${r.content.report.questions.length} questions · ${r.content.report.what_to_monitor.length} monitor items · verdict ${r.content.verdict}`);
 }
 
-main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });
+// The projection chain is server-only poisoned; re-exec under the react-server condition once.
+if (!process.env.PDF_CHILD) {
+  const res = spawnSync(
+    "npx",
+    ["tsx", "--conditions=react-server", "--tsconfig", "tsconfig.json", "--env-file=.env.local", "scripts/pdf/report-html.ts", ...process.argv.slice(2)],
+    { shell: true, stdio: "inherit", env: { ...process.env, PDF_CHILD: "1" } },
+  );
+  process.exit(res.status ?? 1);
+} else {
+  run().then(() => process.exit(0)).catch((e) => { console.error(String(e?.message ?? e)); process.exit(1); });
+}

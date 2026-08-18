@@ -79,9 +79,11 @@ async function verify(pdfPath: string): Promise<Check[]> {
 }
 
 async function main() {
+  // Default target = THE DELIVERABLE. The greyscale print-check is an internal proof and is
+  // only verified when explicitly passed.
   const files = process.argv.slice(2).length
     ? process.argv.slice(2)
-    : ["docs/pdf-samples/AWI-2607-022-report.pdf", "docs/pdf-samples/AWI-2607-022-report-grey.pdf"];
+    : ["docs/pdf-samples/AWI-2607-022-report.pdf"];
   let failed = false;
   for (const f of files) {
     const checks = await verify(path.resolve(f));
