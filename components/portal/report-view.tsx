@@ -192,6 +192,16 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                 <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-2">Brands in scope</span>
                 <span className="text-[14.5px] font-semibold text-ink">{(c.brands_submitted ?? []).join(" · ") || "—"}</span>
               </div>
+              {/* VENDOR WEBSITE (founder-ruled 2026-08-18) — the client gave us this at submit and it
+                  was never shown back. Rendered ONLY when supplied: an empty row is worse than none.
+                  Not a link — the client typed it, we did not verify it, and a live anchor implies we
+                  vouched for the destination. Plain text keeps the report's own attribution honest. */}
+              {c.vendor_website ? (
+                <div className="grid grid-cols-1 items-baseline gap-x-4 border-b border-line py-2 sm:grid-cols-[128px_minmax(0,1fr)]">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-2">Website</span>
+                  <span className="break-all text-[14px] text-ink-2">{c.vendor_website}</span>
+                </div>
+              ) : null}
               <div className="grid grid-cols-1 items-baseline gap-x-4 py-2 sm:grid-cols-[128px_minmax(0,1fr)]">
                 <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-2">Delivered</span>
                 <span className="font-mono text-[12.5px] text-ink">{fmt(c.delivered_at)}</span>
