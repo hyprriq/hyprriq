@@ -31,6 +31,12 @@ export type DeliverabilityInput = {
   synthesisAttempt: number | null;       // which attempt the synthesis actually belongs to
   planType: PlanType;
   verdict: string | null;
+  // VERDICT PROVENANCE (audit 2026-08-18, founder-ruled) — which attempt the STORED verdict belongs
+  // to, i.e. cases.delivered_attempt. null on a case that has never been delivered.
+  deliveredAttempt: number | null;
+  // True when the founder is supplying the verdict explicitly (the override action). An explicit
+  // verdict IS the adoption decision, so provenance cannot be stale by definition.
+  verdictIsExplicit: boolean;
 };
 
 /** Client-facing prose anywhere in a track's compiled findings — the "something to read" test. */
@@ -82,6 +88,25 @@ export function checkDeliverable(input: DeliverabilityInput): string[] {
 
   // (d) A VERDICT.
   if (!input.verdict) missing.push("no verdict on the case");
+
+  // (d2) THE VERDICT BELONGS TO *THIS* ATTEMPT (audit 2026-08-18, founder-ruled).
+  //      (d) only asks whether a verdict EXISTS. `cases.verdict` is a CASE-LEVEL pointer, and
+  //      stageFinalize deliberately refuses to update it once a case is delivered — so a delivered
+  //      case that was re-investigated holds attempt-N findings and attempt-M's verdict, and
+  //      publishing again would ship the new findings under the old verdict. That is a wrong
+  //      answer that looks right, which is exactly what this file exists to stop.
+  //      NOT a dead end: the founder adopts the re-investigation through the OVERRIDE action,
+  //      which supplies the verdict explicitly — so the guard names that remedy rather than
+  //      freezing the case forever.
+  if (
+    !input.verdictIsExplicit &&
+    input.deliveredAttempt !== null &&
+    input.deliveredAttempt !== input.attempt
+  ) {
+    missing.push(
+      `the stored verdict belongs to attempt ${input.deliveredAttempt}, not the attempt being delivered (${input.attempt}) — this re-investigation has not been adopted; publish it with an explicit override verdict to adopt it`,
+    );
+  }
 
   // (e) A RISK STATEMENT — M9's the_real_risk is the sentence the client actually acts on.
   const risk = input.synthesis?.module_9_decision_snapshot?.the_real_risk;

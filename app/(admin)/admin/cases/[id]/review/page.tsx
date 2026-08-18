@@ -58,7 +58,17 @@ export default async function CaseReviewPage({
   if (admin.clientScope !== null && !admin.clientScope.includes(c.client_id)) notFound();
 
   const trackRows = c.plan_type ? await getCaseTrackResults(c.id) : [];
-  const intel = await getCaseIntelligence(c.id);
+  // ── ATTEMPT PARITY, OPERATOR VIEW (audit 2026-08-18) — the second half of the 2026-08-17 skew
+  // fix. The publish ROUTE was pinned that day (getCaseIntelligence(id, deliverAttempt)); this
+  // SCREEN was not, so it kept reading "the latest synthesis row that EXISTS" — which is NOT the
+  // latest ATTEMPT once a re-run has written track rows and then died before synthesis. That is
+  // the exact shape that delivered a blank report. The operator's working view now reads tracks
+  // and synthesis from the SAME investigation. If that attempt has no synthesis the panel renders
+  // empty — which is the honest answer, and the same answer the publish route now gives.
+  const workingAttempt = trackRows.length
+    ? Math.max(...trackRows.map((r) => r.attempt_number ?? 1))
+    : undefined;
+  const intel = await getCaseIntelligence(c.id, workingAttempt);
   // H6 — outcome ground truth, only meaningful once delivered (row seeded by the publish route).
   const delivered = c.status === "delivered" || c.status === "complete";
   const outcome = delivered ? await getCaseOutcome(c.id) : null;

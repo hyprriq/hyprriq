@@ -69,7 +69,7 @@ export async function POST(
 
   const { data: c } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity, client_id")
+    .select("id, case_number, status, verdict, vendor_name, vendor_website, brands_submitted, brands_confirmed, marketplace, plan_type, supplier_identity, client_id, delivered_attempt")
     .eq("id", id)
     .maybeSingle();
   if (!c) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -148,6 +148,11 @@ export async function POST(
     synthesisAttempt: intel?.attempt ?? null,
     planType: c.plan_type as PlanType,
     verdict: (action === "override" ? body.override_verdict : c.verdict) ?? null,
+    // VERDICT PROVENANCE (audit 2026-08-18) — a re-investigated delivered case holds attempt-N
+    // findings under attempt-M's verdict, because stageFinalize refuses to move the case-level
+    // pointer once delivered. An explicit override IS the adoption decision, so it clears the guard.
+    deliveredAttempt: (c.delivered_attempt as number | null) ?? null,
+    verdictIsExplicit: action === "override",
   });
   if (notDeliverable.length > 0) {
     // Fail LOUD and name what is missing — the same discipline as the language gate.

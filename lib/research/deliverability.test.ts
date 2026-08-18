@@ -33,6 +33,7 @@ describe("THE INCIDENT — a stub attempt must never publish again", () => {
     const missing = checkDeliverable({
       attempt: 2, rows: STUB, synthesis: null, synthesisAttempt: null,
       planType: "growth_279", verdict: "verify_before_purchase",
+      deliveredAttempt: null, verdictIsExplicit: false,
     });
     expect(missing.join(" | ")).toMatch(/no synthesis for attempt 2/);
     expect(missing.join(" | ")).toMatch(/missing track/);
@@ -43,6 +44,7 @@ describe("THE INCIDENT — a stub attempt must never publish again", () => {
     const missing = checkDeliverable({
       attempt: 2, rows: GOOD, synthesis: synth(RISK), synthesisAttempt: 1,
       planType: "growth_279", verdict: "verify_before_purchase",
+      deliveredAttempt: null, verdictIsExplicit: false,
     });
     expect(missing.join(" | ")).toMatch(/synthesis belongs to attempt 1, not the attempt being delivered \(2\)/);
   });
@@ -53,6 +55,7 @@ describe("a complete attempt still publishes", () => {
     expect(checkDeliverable({
       attempt: 2, rows: GOOD, synthesis: synth(RISK), synthesisAttempt: 2,
       planType: "growth_279", verdict: "verify_before_purchase",
+      deliveredAttempt: null, verdictIsExplicit: false,
     })).toEqual([]);
   });
 
@@ -60,6 +63,7 @@ describe("a complete attempt still publishes", () => {
     const missing = checkDeliverable({
       attempt: 2, rows: GOOD, synthesis: synth(""), synthesisAttempt: 2,
       planType: "growth_279", verdict: null,
+      deliveredAttempt: null, verdictIsExplicit: false,
     });
     expect(missing).toContain("no verdict on the case");
     expect(missing).toContain("no risk statement in the decision snapshot");
@@ -70,6 +74,47 @@ describe("a complete attempt still publishes", () => {
     expect(checkDeliverable({
       attempt: 2, rows: naOnly, synthesis: synth(RISK), synthesisAttempt: 2,
       planType: "growth_279", verdict: "verify_before_purchase",
+      deliveredAttempt: null, verdictIsExplicit: false,
     }).join(" | ")).toMatch(/would be blank/);
+  });
+});
+
+// ── VERDICT PROVENANCE (audit 2026-08-18, founder-ruled). `cases.verdict` is a CASE-LEVEL pointer
+// and stageFinalize refuses to move it once a case is delivered — so a delivered case that was
+// re-investigated holds attempt-N findings under attempt-M's verdict. Three live cases were in
+// that state when this was written (AWI-2606-001 pin 1/rows 2, -021 pin 6/rows 14, -022 pin 9/rows 10).
+describe("VERDICT PROVENANCE — new findings must never ship under an old verdict", () => {
+  const base = {
+    attempt: 10, rows: GOOD.map((r) => ({ ...r, attempt_number: 10 })),
+    synthesis: synth(RISK), synthesisAttempt: 10, planType: "growth_279" as const,
+  };
+
+  it("refuses to publish attempt 10 while the stored verdict belongs to attempt 9", () => {
+    const missing = checkDeliverable({
+      ...base, verdict: "verify_before_purchase",
+      deliveredAttempt: 9, verdictIsExplicit: false,
+    });
+    expect(missing.join(" | ")).toMatch(/stored verdict belongs to attempt 9, not the attempt being delivered \(10\)/);
+  });
+
+  it("names the remedy rather than freezing the case — an override adopts the re-investigation", () => {
+    expect(checkDeliverable({
+      ...base, verdict: "do_not_rely",
+      deliveredAttempt: 9, verdictIsExplicit: true,
+    })).toEqual([]);
+  });
+
+  it("a re-publish of the SAME attempt is not a provenance problem", () => {
+    expect(checkDeliverable({
+      ...base, verdict: "verify_before_purchase",
+      deliveredAttempt: 10, verdictIsExplicit: false,
+    })).toEqual([]);
+  });
+
+  it("a first delivery has no prior pin and is never blocked by this rule", () => {
+    expect(checkDeliverable({
+      ...base, verdict: "verify_before_purchase",
+      deliveredAttempt: null, verdictIsExplicit: false,
+    })).toEqual([]);
   });
 });
