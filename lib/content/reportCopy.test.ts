@@ -10,6 +10,7 @@ import { scanHard } from "@/lib/utils/banned-language";
 import { scanForMethodLeakage } from "@/lib/research/synthesisMethodScan";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
+import { IDENTITY_SCOPE_NOTE } from "@/lib/research/track2.disclaimers";
 
 const repo = path.resolve(__dirname, "../..");
 const read = (rel: string) => fs.readFileSync(path.join(repo, rel), "utf8");
@@ -51,6 +52,20 @@ describe("LOCK — display copy is defined ONCE, never re-declared on a surface"
     const declarations = SURFACES.concat(["lib/content/reportCopy.ts"])
       .filter((f) => /const HOW_TO_READ\s*=/.test(read(f)));
     expect(declarations).toEqual(["lib/content/reportCopy.ts"]);
+  });
+});
+
+// ── CROSS-REFERENCES MUST NAME A HEADING THAT EXISTS. Founder-reported on AWI-2608-038: the note
+// said "see the Supplier Identity findings" and the report renders that area as "Supplier
+// Legitimacy", so a client following the instruction found nothing and read the report as
+// incomplete. The finding was there — 1,151 characters — under another name.
+describe("LOCK — prose that points at a section names the RENDERED heading", () => {
+  it("the Track 2 identity-scope note references the real area name", () => {
+    expect(IDENTITY_SCOPE_NOTE).toContain(AREA_NAMES.supplier_identity);
+  });
+
+  it("and does NOT use the retired wording that caused the dangling reference", () => {
+    expect(IDENTITY_SCOPE_NOTE).not.toContain("Supplier Identity findings");
   });
 });
 
