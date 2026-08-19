@@ -5,6 +5,8 @@
 // case_synthesis client columns (the B4-EXT named gap, closed here). Pattern class, ruled:
 // gate names · thresholds/corroboration counts ("two independent sources") · firewall vocabulary. ──
 
+import { projectFindingJsonForClient } from "@/lib/portal/clientReport";
+
 interface MethodPattern {
   name: string;
   re: RegExp;
@@ -86,6 +88,40 @@ export function scanForMethodLeakage(fields: Record<string, unknown>): string[] 
   };
   for (const [k, v] of Object.entries(fields)) walk(v, k);
   return violations;
+}
+
+// ── CLASS 4 — TRACK PROSE (founder-ruled 2026-08-18). THE COVERAGE HOLE, stated plainly:
+//
+//   scanner              | track prose | synthesis
+//   banned language      |     yes     |    yes
+//   derivation / method  |     NO      |    yes
+//
+// There are TWO client-facing prose surfaces and this scanner covered one. `weight[_\s]?key` has
+// been in METHOD_PATTERNS the whole time — it simply never looked at track findings, so 9
+// occurrences across 6 cases have been passing the publish gate and always have.
+//
+// ⚠ THE CENSUS NUMBER WILL RISE WHEN THIS LANDS. THAT IS THE CORRECT OUTCOME AND IT IS NOT A
+// REGRESSION: nothing got worse today, the instrument stopped being blind. Read the rise as the
+// measurement catching up with reality. (Same shape as the census/attempt skew: an instrument
+// pinned to less than the thing it claims to measure.)
+//
+// SURFACE: the ALLOWLIST projection of each track row — the fields that actually cross to a
+// client — NOT the whole raw row. Raw `compiled_findings_json` carries internal machinery
+// (validation records, weight bookkeeping) whose field values legitimately contain this
+// vocabulary and never reach anybody. Scanning it wholesale would manufacture false blocks, and a
+// false refusal at publish is the failure mode this codebase has ruled against twice. No cleaning
+// is applied first: the gate must see what the ENGINE wrote, not what a cleaner happened to hide.
+export function scanTrackProseAtDelivery(
+  rows: { track_key: string; compiled_findings_json?: unknown; questions_to_ask?: unknown }[],
+): string[] {
+  return rows.flatMap((r) =>
+    scanForMethodLeakage({
+      [`${r.track_key}`]: r.compiled_findings_json
+        ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
+        : null,
+      [`${r.track_key} (questions)`]: r.questions_to_ask ?? null,
+    }),
+  );
 }
 
 /** The delivery-gate composition (G2): scan a stored synthesis row's client-bound + derived

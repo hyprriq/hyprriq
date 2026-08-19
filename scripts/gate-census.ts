@@ -14,7 +14,7 @@
 // Run: npx tsx --conditions=react-server --tsconfig tsconfig.json --env-file=.env.local scripts/gate-census.ts
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { scanHard, scanAssertion, scanFindingsForBannedLanguage, assertionAdvisories } from "@/lib/utils/banned-language";
-import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
 
 const SENT = /(?<=[.!?])\s+/;
 
@@ -53,7 +53,19 @@ async function main() {
           module_7_doubt_calibration: (s.doubt_calibration ?? undefined) as { doubt_focus?: string; rationale?: string } | undefined,
         })
       : [];
-    const v = [...scanFindingsForBannedLanguage(surface), ...method];   // HARD — blocks delivery
+    // CLASS 4 (founder-ruled 2026-08-18) — the derivation scanner now covers TRACK prose as well
+    // as synthesis. It lands INSIDE the merged blocking set, not beside it: a third scanner outside
+    // this composition would re-create the exact defect the merge fixed.
+    // ⚠ THE NUMBER RISES WHEN THIS LANDS AND THAT IS CORRECT. Those occurrences pass the publish
+    // gate today and always have; the instrument stopped being blind. It is not a regression.
+    const trackMethod = scanTrackProseAtDelivery(
+      latest.map((r) => ({
+        track_key: r.track_key,
+        compiled_findings_json: r.compiled_findings_json,
+        questions_to_ask: r.questions_to_ask,
+      })),
+    );
+    const v = [...scanFindingsForBannedLanguage(surface), ...method, ...trackMethod];   // HARD — blocks delivery
     const a = assertionAdvisories(surface);             // ASSERTION — mandatory-review advisory
     if (v.length === 0 && a.length === 0) continue;
     const texts: string[] = [];

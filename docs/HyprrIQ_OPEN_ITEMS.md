@@ -40,6 +40,36 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ CLASS 4 BUILT 2026-08-18 — the derivation scanner now covers TRACK PROSE. CENSUS 8/39 (21%)
+> → 17/39 (44%). ⚠ THE RISE IS THE CORRECT OUTCOME AND IS NOT A REGRESSION:** those occurrences
+> pass the publish gate today and always have. Nothing got worse; the instrument stopped being
+> blind. The language scanner covered both client-facing prose surfaces, the derivation scanner
+> covered one — a scanner covering one of two surfaces is the defect, not the coverage.
+>
+> **⚠ THE RISE IS MUCH BIGGER THAN CLASS 4, AND IT IS NOT MOSTLY `weight_key`. THIS IS THE FINDING.**
+> Class 4 named 9 `weight_key` occurrences over 6 cases. Extending the scanner surfaced a far larger
+> class beside it — **CORROBORATION VOCABULARY IN TRACK PROSE**, on 11 cases:
+> `weight key`/`weight_key` → AWI-2606-009, 2607-014, 2607-016, 2607-030, 2608-034 (5) ·
+> **corroboration vocabulary → AWI-2606-004, 2606-012, 2607-014, 2607-016, 2607-017, 2607-021,
+> 2607-023, 2607-028, 2607-029, 2607-031, 2608-034 (11)** · source-count threshold → 2607-023 (1).
+> The ruled attribution carve-out still applies (named sources pass; counts block), so these are
+> genuine method voice, not the "corroborated by the FDA, BBB and LinkedIn" shape. **44% of the
+> corpus would now be held at publish. That is a launch-risk number and it needs a decision:** the
+> engine-prose pass retired this class in SYNTHESIS prose; it was never run over TRACK prose.
+>
+> **⚠ UNRULED GAP, FOUND AND DELIBERATELY NOT CLOSED — NEEDS A RULING.** `METHOD_PATTERNS` matches
+> `weight[_\s]?key\b`, which does **not** match the PLURAL, and the corpus contains plurals
+> (AWI-2607-030 "the relevant blocking weight keys"). Adding `s?` WIDENS A GATE RULE — the ruling
+> was a coverage extension, not a change to what the patterns match, and slipping a widening in
+> under a coverage commit is what the "laws attached to plumbing get named" rule exists to stop.
+> **CONSEQUENCE FOR THE NUMBERS:** the token-leak sweep counts `keys?` and reports 9 occurrences;
+> the gate, with the narrower pattern, sees fewer. **The two instruments disagree ON PURPOSE until
+> this is ruled — do not "fix" one to match the other without it.**
+> Surface: the ALLOWLIST projection of each track row, NOT the raw row — raw carries internal
+> machinery whose values legitimately contain this vocabulary and never reach anybody, so scanning
+> it wholesale would manufacture false blocks. Landed INSIDE the merged census composition, never
+> beside it. Gates: 1495/1495 · tsc 0 · eslint 0.
+
 > **✓ §1 BUILT 2026-08-18 — CLEANER FIX + PRESENCE CHECKPOINT + RENDER-PATH INVENTORY, ONE LANE.**
 > Corpus effect, measured over all 35 projected client payloads before and after
 > (`scripts/token-leak-sweep.ts`, read-only): **cases carrying an internal token 34/35 → 6/35.**

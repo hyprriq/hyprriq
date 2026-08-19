@@ -9,13 +9,13 @@ import { checkDeliverable } from "@/lib/research/deliverability";
 import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
-import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
 import {
   cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
   projectClientReport, projectFindingJsonForClient,
 } from "@/lib/portal/clientReport";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
-import { locateSynthesisMethodLeakage } from "@/lib/research/methodScanReport";
+import { locateSynthesisMethodLeakage, locateMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 import { sendDeliveryNotification } from "@/lib/email/notify";
@@ -179,6 +179,11 @@ export async function POST(
     ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
     ...(intel ? scanFindingsForBannedLanguage({ decision_snapshot: intel.synthesis.module_9_decision_snapshot, vendor_questions: intel.synthesis.module_8_vendor_questions }) : []),
     ...(intel ? scanSynthesisAtDelivery(intel.synthesis) : []),
+    // CLASS 4 (founder-ruled 2026-08-18) — the derivation scanner now covers TRACK prose too. It
+    // has always covered synthesis while the language scanner covered both; a scanner covering one
+    // of two client-facing surfaces is the defect, not the coverage. Cases that block on this today
+    // were passing the gate before because nothing looked, not because they were clean.
+    ...scanTrackProseAtDelivery(rows),
   ])];
   if (violations.length > 0) {
     // ── "SHOW + FIX" piece 1 (founder-ruled 2026-08-17). The gate's DECISION is untouched — the
@@ -202,6 +207,19 @@ export async function POST(
       // AWI-2608-034 sat held with no actionable diagnosis. Same BannedHit shape, so it lands in
       // the same array and the blocked-publish panel renders it with no change.
       ...(intel ? locateSynthesisMethodLeakage(intel.synthesis) : []),
+      // Class 4 gets a sentence too — a label with no sentence is what held AWI-2608-034 with no
+      // actionable diagnosis, and shipping the coverage without the locator would repeat it.
+      ...rows.flatMap((r) =>
+        locateMethodLeakage(
+          {
+            [r.track_key]: r.compiled_findings_json
+              ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
+              : null,
+            [`${r.track_key} (questions)`]: r.questions_to_ask ?? null,
+          },
+          r.track_key,
+        ),
+      ),
     ];
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",
