@@ -7,6 +7,8 @@ import { findingText, findingNotes } from "@/lib/portal/finding-view";
 import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import { changeRequestOpen } from "@/lib/portal/changeRequest";
 import type { Verdict } from "@/components/portal/badges";
+import { isAssessmentArea } from "@/lib/constants/tracks";
+import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
 
 // ── THE REPORT (full-build brief §1–§3, approved prototype public/prototype/client/report.html) —
 // decision-first, engine's words. STRUCTURAL RULES (§5): the decision layer (identity, summary,
@@ -58,7 +60,88 @@ const AREA_NAMES: Record<string, string> = {
   brand_risk_assessment: "Brand Risk",
   documentation_review: "Documentation Review",
   sourcing_logic: "Sourcing Logic",
+  // §2 — Track 6 is ADVISORY, not a sold assessment area (it is deliberately absent from the
+  // canonical TrackKey union). Without this entry the list rendered the raw internal key
+  // "category_compliance" to a paying Scale client.
+  category_compliance: "Category compliance",
 };
+
+// ── §2 TRACK 6 — THE CATEGORY SECTION (founder-ruled 2026-08-18) ────────────────────────────
+// TWO VISIBLY SEPARATE BLOCKS WITH SEPARATE ATTRIBUTION, AND THE BOUNDARY IS STRUCTURAL, NOT A
+// DISCLAIMER: (a) what OUR RESEARCH found about this brand's categories, evidence-backed and
+// confidence-qualified; (b) what OUR REFERENCE TABLE says that category generally involves —
+// founder copy, code-owned, plainly not a finding about the client's product. A reader must never
+// be able to mistake the second for the first, which a single block with a caveat line allows.
+const CATEGORY_TABLE_LEAD = "From our category reference notes for this category:";
+const CATEGORY_FOOTER =
+  "Category requirements change frequently. Check the current marketplace policy before you commit inventory.";
+
+function CategorySection({ data }: { data: ClientCategoryCompliance }) {
+  return (
+    <div className="mt-6">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Category compliance</span>
+      <div className="mt-2.5 rounded-card border border-line bg-surface p-5">
+        <p className="text-[13px] text-muted">
+          Advisory only — this section does not affect the verdict. It reflects the product categories our
+          research associated with each brand, and what those categories generally involve.
+        </p>
+        {data.per_brand.map((b) => (
+          <div key={b.brand} className="mt-4 border-t border-line pt-4 first:border-t-0">
+            <div className="text-[14px] font-bold text-ink">{b.brand}</div>
+
+            {/* BLOCK (a) — WHAT THE RESEARCH FOUND. */}
+            {b.categories_found.length > 0 ? (
+              b.categories_found.map((cat) => (
+                <div key={`${b.brand}-${cat.category}-${cat.subcategory ?? ""}`} className="mt-2.5">
+                  <div className="text-[13.5px] text-ink-2">
+                    {cat.category}
+                    {cat.subcategory ? <span className="text-muted"> · {cat.subcategory}</span> : null}
+                    {cat.confidence ? (
+                      <span className="ml-2 rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">
+                        {cat.confidence} confidence
+                      </span>
+                    ) : null}
+                  </div>
+                  {/* The COUNT, never the evidence ids. */}
+                  <div className="mt-0.5 text-[12px] text-muted">
+                    {cat.evidence_count} {cat.evidence_count === 1 ? "source" : "sources"} considered
+                  </div>
+
+                  {/* BLOCK (b) — OUR REFERENCE TABLE. Separately attributed, visually inset. */}
+                  {cat.flags.length > 0 && (
+                    <div className="mt-2 rounded-card border border-line bg-subtle p-3.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{CATEGORY_TABLE_LEAD}</div>
+                      {cat.flags.map((f) => (
+                        <div key={`${f.subcategory}-${f.flag_language.slice(0, 24)}`} className="mt-2">
+                          {/* flag_language is FOUNDER COPY, VERBATIM — never reworded here. */}
+                          <p className="max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-ink-2">{f.flag_language}</p>
+                          {/* ⛔ The ATTENTION LABEL, never the raw risk_level. "HIGH" would claim
+                              which category the product sits in — which, with no ASIN, we cannot know. */}
+                          <div className="mt-1 text-[12px] text-muted">{f.attention}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              // EMPTY STATE — a brand our research could not place in a category. Said plainly:
+              // absence is not an accusation, and it is not a gap in the report either.
+              <p className="mt-2 text-[13px] text-muted">
+                Our research did not associate this brand with a specific product category.
+              </p>
+            )}
+
+            {b.brand_category_note ? (
+              <p className="mt-2.5 max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-ink-2">{b.brand_category_note}</p>
+            ) : null}
+          </div>
+        ))}
+        <p className="mt-4 border-t border-line pt-3 text-[12px] text-muted">{CATEGORY_FOOTER}</p>
+      </div>
+    </div>
+  );
+}
 
 const CHIP_DEFS = {
   verified: "Independently corroborated — multiple independent sources confirm this.",
@@ -148,11 +231,24 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   // state can never reach a hidden tab.
   const hasChecklist = (report?.questions.length ?? 0) > 0;
   const hasHonesty = !!(report?.leading_interpretation || (report?.what_to_monitor.length ?? 0) > 0);
-  // CLAIMS RULING 2026-08-14: the header states the ACTUAL count for this case — derived from
-  // the rendered findings (the case's own record of what ran), never hardcoded.
-  const areasLabel = orderedFindings.length === 5
+  // CLAIMS RULING 2026-08-14: the header states the ACTUAL count for this case, never hardcoded.
+  // ── §2 FIX 2026-08-19: it counted RENDERED ROWS, so the moment Track 6 lands a Scale case reads
+  // "The 6 assessment areas in this report" — and we sell five. Track 6 is ADVISORY and non-voting.
+  // The count now derives from the canonical track registry (isAssessmentArea), which is a property
+  // of the PRODUCT, not of this case: $99 → 3, $149/Growth/Scale → 5, and an advisory row never
+  // moves the number at any tier.
+  const areaFindings = orderedFindings.filter((f) => isAssessmentArea(f.track_key));
+  const advisoryFindings = orderedFindings.filter((f) => !isAssessmentArea(f.track_key));
+  // The projector emits `category_compliance` ONLY when it has real per-brand content, so a
+  // missing block means "no category section" — never an empty bordered box, which on a paid
+  // report reads as something that failed. Tier behaviour, checked at all four: $99 and Growth
+  // have no Track 6 row at all, so this is null and nothing renders.
+  const category = (advisoryFindings
+    .map((f) => (f.compiled_findings_json as { category_compliance?: ClientCategoryCompliance } | null)?.category_compliance)
+    .find(Boolean)) ?? null;
+  const areasLabel = areaFindings.length === 5
     ? "The five assessment areas"
-    : `The ${orderedFindings.length} assessment areas in this report`;
+    : `The ${areaFindings.length} assessment areas in this report`;
 
   const tabBtn = (key: TabKey, label: string, extra?: React.ReactNode) => (
     <button
@@ -226,7 +322,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             <div className="rounded-card border border-line bg-surface p-5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{areasLabel}</span>
               <ul className="mt-2 space-y-1.5">
-                {orderedFindings.map((f) => {
+                {areaFindings.map((f) => {
                   const chip = areaChip(f);
                   return (
                     <li key={f.id} className="flex items-center justify-between gap-2 text-[13.5px] text-ink-2">
@@ -235,6 +331,17 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                     </li>
                   );
                 })}
+                {/* ── §2: SIX ROWS, FIVE IN THE COUNT (founder-ruled). The advisory row is listed —
+                    a Scale client paid for it and hiding it would make the differentiator invisible
+                    — but it is visibly separated and labelled so it can never read as a sixth
+                    assessment area. At $99 and Growth this list is empty and renders nothing: no
+                    divider, no heading, no stray count. ── */}
+                {advisoryFindings.map((f) => (
+                  <li key={f.id} className="flex items-center justify-between gap-2 border-t border-line pt-1.5 text-[13.5px] text-ink-2">
+                    {AREA_NAMES[f.track_key] ?? f.track_key}
+                    <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">Advisory</span>
+                  </li>
+                ))}
               </ul>
               {hasHonesty && (
                 <button type="button" onClick={() => setTab("honesty")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
@@ -325,7 +432,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
       <div className="mt-6">
         <span className="text-[11px] font-bold uppercase tracking-wider text-muted">The full detail</span>
         <div className="mt-2.5 flex flex-wrap gap-2" role="tablist" aria-label="Report detail">
-          {tabBtn("findings", "Findings", <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{orderedFindings.length} areas</span>)}
+          {tabBtn("findings", "Findings", <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{areaFindings.length} areas</span>)}
           {hasHonesty && tabBtn("honesty", "Could not confirm", <span className="h-[7px] w-[7px] rounded-full bg-verify-ink" aria-hidden />)}
           {hasChecklist && tabBtn("checklist", "Checklist", <span className="rounded-full bg-subtle px-1.5 py-0.5 text-[10.5px] font-bold text-ink-2">{report!.questions.length}</span>)}
           {tabBtn("notes", "Notes")}
@@ -335,7 +442,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <div role="tabpanel" className={panelCls("findings")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">{areasLabel}</div>
           <div className="mt-3 overflow-hidden rounded-card border border-line bg-surface">
-            {orderedFindings.map((f) => {
+            {areaFindings.map((f) => {
               const { detail } = findingText(f);
               const notes = findingNotes(f);
               const chip = areaChip(f);
@@ -365,6 +472,10 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           <p className="mt-2 text-[12px] text-muted">
             <b>Verified</b> — {CHIP_DEFS.verified} <b>Assessed</b> — {CHIP_DEFS.assessed} <b>Not assessed</b> — {CHIP_DEFS.not_assessed}
           </p>
+          {/* §2 — Track 6 sits INSIDE the findings panel, after the five areas and after their
+              chip legend: it is supporting detail on the same surface, not a peer of the verdict.
+              Renders at $149/Scale only; null at $99 and Growth by construction. */}
+          {category && <CategorySection data={category} />}
         </div>
 
         {/* COULD NOT CONFIRM — the honest split (rendered only with content; see hasHonesty) */}

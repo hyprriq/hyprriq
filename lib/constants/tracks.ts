@@ -18,6 +18,29 @@ export const TRACKS: TrackDef[] = [
   { track: "track_5", track_key: "sourcing_logic",            track_number: 5, dimension: "Sourcing Logic" },
 ];
 
+// ── WHAT COUNTS AS AN "ASSESSMENT AREA" (§2, founder-ruled 2026-08-18) ──────────────────────
+// The count a client reads must derive from THE PRODUCT DEFINITION, not from case data. Two
+// wrong bases were measured on the corpus before this existed and both are traps:
+//   · counting RENDERED ROWS — what report-view did — makes a Scale case say "6 assessment
+//     areas" the moment Track 6 lands, when we sell five.
+//   · counting rows where `non_voting !== true` — the obvious second guess — is WORSE: the probe
+//     found `sourcing_logic` carrying `non_voting: true` on 5 stored rows and absent on 11, so
+//     the SAME track would count as an area on some cases and not on others.
+// TRACKS (1–5) is the canonical registry and the Track 6 advisory key is deliberately NOT in the
+// TrackKey union, so "is it a sold assessment area" is answerable without looking at a single case.
+//
+// ⚠ THE TRACK 6 KEY IS NOT NAMED IN THIS FILE ON PURPOSE. A source-scan lock
+// (track6.inertia.test.ts) asserts the literal string never appears here, because the frozen
+// synthesisCallB consumes Record<TrackKey,…> exhaustively and growing the union would edit frozen
+// code. This function answers by MEMBERSHIP in TRACKS, so it needs no such name and the lock holds.
+export const ASSESSMENT_AREA_KEYS: readonly string[] =
+  TRACKS.filter((t) => t.track_number >= 1).map((t) => t.track_key);
+
+/** True for the five sold assessment areas; false for advisory surfaces such as Track 6. */
+export function isAssessmentArea(trackKey: string): boolean {
+  return ASSESSMENT_AREA_KEYS.includes(trackKey);
+}
+
 export function trackByNumber(n: number): TrackDef {
   const t = TRACKS.find((x) => x.track_number === n);
   if (!t) throw new Error(`Unknown track_number ${n}`);

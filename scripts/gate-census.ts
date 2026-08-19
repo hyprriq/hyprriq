@@ -15,6 +15,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { scanHard, scanAssertion, scanFindingsForBannedLanguage, assertionAdvisories } from "@/lib/utils/banned-language";
 import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { scanCategoryAtDelivery } from "@/lib/research/categoryLanguage";
 
 const SENT = /(?<=[.!?])\s+/;
 
@@ -65,7 +66,8 @@ async function main() {
         questions_to_ask: r.questions_to_ask,
       })),
     );
-    const v = [...scanFindingsForBannedLanguage(surface), ...method, ...trackMethod];   // HARD — blocks delivery
+    const category = scanCategoryAtDelivery(latest.map((r) => ({ track_key: r.track_key, compiled_findings_json: r.compiled_findings_json })));
+    const v = [...scanFindingsForBannedLanguage(surface), ...method, ...trackMethod, ...category];   // HARD — blocks delivery
     const a = assertionAdvisories(surface);             // ASSERTION — mandatory-review advisory
     if (v.length === 0 && a.length === 0) continue;
     const texts: string[] = [];

@@ -50,3 +50,38 @@ export function findCategoryLanguageViolations(text: string): string[] {
 export function containsCategoryLanguageViolation(text: string): boolean {
   return findCategoryLanguageViolations(text).length > 0;
 }
+
+// ── DELIVERY COMPOSITION (§2, founder-ruled 2026-08-18) — THE GAP THIS CLOSES:
+// these rules ran at GENERATION ONLY (runTrack6), while `category` and `brand_category_note` are
+// LLM-WRITTEN and ride into a client's report. NOTHING LLM-WRITTEN MAY REACH A CLIENT SCANNED
+// ONLY AT GENERATION — a re-run, a restored row, or a future write path all reach delivery
+// without passing generation.
+//
+// ⚠ `flag_language` IS DELIBERATELY NOT SCANNED, and that is not an oversight. It is FOUNDER COPY,
+// code-injected byte-identically from the flags table; it legitimately contains "may require",
+// and scanning our own ruled copy would let a rule change silently block every case carrying a
+// category block. The scanner exists to police what the MODEL wrote, not what the founder wrote.
+export function scanCategoryAtDelivery(
+  rows: { track_key: string; compiled_findings_json?: unknown }[],
+): string[] {
+  const out: string[] = [];
+  for (const r of rows) {
+    if (r.track_key !== "category_compliance") continue;
+    const cc = (r.compiled_findings_json as { category_compliance?: unknown } | null)?.category_compliance as
+      | { per_brand?: { brand?: string; categories_found?: { category?: string; subcategory?: string }[]; brand_category_note?: string | null }[] }
+      | undefined;
+    for (const b of cc?.per_brand ?? []) {
+      for (const label of findCategoryLanguageViolations(b.brand_category_note ?? "")) {
+        out.push(`category_compliance.${b.brand ?? "?"}.brand_category_note: ${label}`);
+      }
+      for (const cat of b.categories_found ?? []) {
+        for (const field of ["category", "subcategory"] as const) {
+          for (const label of findCategoryLanguageViolations(cat[field] ?? "")) {
+            out.push(`category_compliance.${b.brand ?? "?"}.${field}: ${label}`);
+          }
+        }
+      }
+    }
+  }
+  return out;
+}

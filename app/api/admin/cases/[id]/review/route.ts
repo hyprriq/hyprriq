@@ -10,6 +10,7 @@ import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
+import { scanCategoryAtDelivery } from "@/lib/research/categoryLanguage";
 import {
   cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
   projectClientReport, projectFindingJsonForClient,
@@ -184,6 +185,10 @@ export async function POST(
     // of two client-facing surfaces is the defect, not the coverage. Cases that block on this today
     // were passing the gate before because nothing looked, not because they were clean.
     ...scanTrackProseAtDelivery(rows),
+    // §2 (founder-ruled 2026-08-18) — the category scanner JOINS the delivery composition.
+    // It ran at GENERATION ONLY while `category` and `brand_category_note` are LLM-written and
+    // reach a client. It lands inside this merged set, never as a fourth scanner beside it.
+    ...scanCategoryAtDelivery(rows),
   ])];
   if (violations.length > 0) {
     // ── "SHOW + FIX" piece 1 (founder-ruled 2026-08-17). The gate's DECISION is untouched — the

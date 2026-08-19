@@ -286,6 +286,74 @@ export const FINDING_CLIENT_ALLOWLIST = [
 // here so this module stays dependency-free; locked together by the projection tests).
 const SOURCING_NEUTRAL_SUMMARY = "Consistency check — informational; does not affect the verdict";
 
+// ── §2 TRACK 6 CLIENT SURFACE (founder-ruled 2026-08-18) ────────────────────────────────────
+//
+// ⚠ A PROJECTOR BRANCH, NEVER THE ALLOWLIST, AND THE REASON IS SPECIFIC. Adding
+// `category_compliance` to FINDING_CLIENT_ALLOWLIST would drag the WHOLE assessment across:
+// `matched_via` ("category_research" — METHOD vocabulary, exactly what the derivation scanner
+// exists to stop), raw `evidence_ids`, `audits` and `scope`. The allowlist is a key filter; this
+// needs a FIELD filter one level down. Mirrors the existing `sourcing_logic` precedent below.
+//
+// CROSSES: category · subcategory · confidence · evidence COUNT (derived from evidence_ids.length,
+// NEVER the ids) · flag_language VERBATIM · brand_category_note · the attention label.
+// NEVER CROSSES: matched_via · evidence_ids · audits · scope · contract_version.
+type CategoryFlagIn = { subcategory?: unknown; flag_language?: unknown; risk_level?: unknown };
+type CategoryFoundIn = { category?: unknown; subcategory?: unknown; confidence?: unknown; evidence_ids?: unknown; flags?: unknown };
+type CategoryBrandIn = { brand?: unknown; categories_found?: unknown; brand_category_note?: unknown };
+
+export interface ClientCategoryFlag { subcategory: string; flag_language: string; attention: string }
+export interface ClientCategoryFound { category: string; subcategory: string | null; confidence: string | null; evidence_count: number; flags: ClientCategoryFlag[] }
+export interface ClientCategoryBrand { brand: string; categories_found: ClientCategoryFound[]; brand_category_note: string | null }
+export interface ClientCategoryCompliance { per_brand: ClientCategoryBrand[]; category_verdict: string | null }
+
+// ⛔ risk_level NEVER REACHES A CLIENT AS "HIGH". THE REASON IS THE LOAD-BEARING ONE AND SOMEONE
+// COULD OTHERWISE UNDO IT: without an ASIN the engine cannot know which category the client's
+// product actually sits in (KEEPA_LIVE is false, so no ASIN is collected). Printing HIGH would
+// claim precisely what we established the engine cannot determine. The ORDERING signal is kept;
+// the CLAIM is dropped.
+//
+// ⚠ "MODERATE-HIGH" IS UNRULED. The ruling named HIGH and MODERATE. The flags table also emits
+// MODERATE-HIGH (lib/research/categoryFlagsTable.ts). It is mapped to the flagged label here
+// because it sits ABOVE moderate, but that is my reading, not a ruling — flagged for the founder
+// rather than silently decided. A missing/unknown level takes the SAFE side (flagged), never a
+// reassuring one.
+const CATEGORY_ATTENTION_FLAGGED = "Flagged for closer attention than the other categories on this case.";
+const CATEGORY_ATTENTION_STANDARD = "Standard attention for this category.";
+
+export function attentionLabelFor(riskLevel: unknown): string {
+  return riskLevel === "MODERATE" ? CATEGORY_ATTENTION_STANDARD : CATEGORY_ATTENTION_FLAGGED;
+}
+
+const s = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+export function projectCategoryComplianceForClient(raw: unknown): ClientCategoryCompliance | null {
+  if (!raw || typeof raw !== "object") return null;
+  const a = raw as { per_brand?: unknown; category_verdict?: unknown };
+  const brands = Array.isArray(a.per_brand) ? (a.per_brand as CategoryBrandIn[]) : [];
+  const per_brand: ClientCategoryBrand[] = brands.map((b) => {
+    const cats = Array.isArray(b.categories_found) ? (b.categories_found as CategoryFoundIn[]) : [];
+    return {
+      brand: s(b.brand),
+      brand_category_note: s(b.brand_category_note) || null,
+      categories_found: cats.map((cat) => ({
+        category: s(cat.category),
+        subcategory: s(cat.subcategory) || null,
+        confidence: s(cat.confidence) || null,
+        // The COUNT, never the ids — the ids are internal evidence references and would trip the
+        // presence checkpoint on the way out, which is the checkpoint doing its job.
+        evidence_count: Array.isArray(cat.evidence_ids) ? cat.evidence_ids.length : 0,
+        flags: (Array.isArray(cat.flags) ? (cat.flags as CategoryFlagIn[]) : []).map((f) => ({
+          subcategory: s(f.subcategory),
+          // FOUNDER CLIENT COPY, VERBATIM — code-owned, never LLM-written, never reworded here.
+          flag_language: s(f.flag_language),
+          attention: attentionLabelFor(f.risk_level),
+        })),
+      })),
+    };
+  });
+  return { per_brand, category_verdict: s(a.category_verdict) || null };
+}
+
 export function projectFindingJsonForClient(
   cf: Record<string, unknown>,
   trackKey: string,
@@ -293,6 +361,13 @@ export function projectFindingJsonForClient(
   const projected: Record<string, unknown> = {};
   for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
   if (trackKey === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_NEUTRAL_SUMMARY;
+  if (trackKey === "category_compliance") {
+    const cc = projectCategoryComplianceForClient(cf.category_compliance);
+    // Absent or unusable → the key simply does not appear. The renderer must treat a missing
+    // block as "no category section", never as an empty one: $99 and Growth have no Track 6 at
+    // all, and an empty bordered box on a paid report reads as something that failed.
+    if (cc && cc.per_brand.length > 0) projected.category_compliance = cc;
+  }
   return projected;
 }
 
