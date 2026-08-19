@@ -371,6 +371,47 @@ export function projectFindingJsonForClient(
   return projected;
 }
 
+// ── QUESTIONS PROJECTION — THE ONE DEFINITION (founder-ruled 2026-08-19) ─────────────────────
+//
+// THE ROOT CAUSE OF THREE SEPARATE DEFECTS. `compiled_findings_json` has had an allowlist since
+// F2; `questions_to_ask` never had one. So every consumer improvised, each differently, and the
+// same bug appeared three times in three call sites:
+//   1. the Class 4 scanner read the raw row and blocked on `blocking_weight_key`
+//   2. the publish-route LOCATOR did the same, in a composition written in the SAME commit as the
+//      fix for (1) — I fixed one and not its twin
+//   3. `getCaseFindings` returns the whole object, so `blocking_weight_key` and `priority` cross
+//      the RSC boundary into a browser today
+// There was nothing to be right about. Now there is.
+//
+// ⛔ THE SAME LAW AS FINDING_CLIENT_ALLOWLIST: allowlist by construction. A field added to
+// QuestionToAsk tomorrow is PRIVATE BY DEFAULT and must be named here to reach a client.
+//
+// WHAT CROSSES: `question` (the client's checklist item) · `reason` (why it matters — LLM prose
+// ABOUT THE CLIENT'S SUPPLIER, and one product decision away from being rendered, which is why it
+// is also kept in scope for the prose gate) · `brand` (which of their brands it concerns).
+// WHAT NEVER CROSSES: `blocking_weight_key` — a STRUCTURED INTERNAL FIELD WHOSE VALUE IS A WEIGHT
+// KEY BY DESIGN, i.e. pure scoring machinery · `priority` — our triage ordering, not their concern.
+export const QUESTION_CLIENT_ALLOWLIST = ["question", "reason", "brand"] as const;
+
+export interface ClientQuestionRow { question: string; reason?: string; brand?: string }
+
+/** Project ONE question. Pure; the single definition every consumer reads. */
+export function projectQuestionForClient(q: unknown): ClientQuestionRow | null {
+  // Legacy rows store plain strings. Handled here so no caller has to know that.
+  if (typeof q === "string") return q.trim() ? { question: q } : null;
+  if (!q || typeof q !== "object") return null;
+  const src = q as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const k of QUESTION_CLIENT_ALLOWLIST) if (typeof src[k] === "string") out[k] = src[k];
+  return typeof out.question === "string" && out.question.trim() ? (out as unknown as ClientQuestionRow) : null;
+}
+
+/** Project a whole `questions_to_ask` array. Non-questions and empties drop out. */
+export function projectQuestionsForClient(questions: unknown): ClientQuestionRow[] {
+  if (!Array.isArray(questions)) return [];
+  return questions.map(projectQuestionForClient).filter((q): q is ClientQuestionRow => q !== null);
+}
+
 export function isClientQuestion(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0 && s.trim().endsWith("?");
 }

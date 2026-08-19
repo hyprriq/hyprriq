@@ -1,7 +1,7 @@
 import type { TrackResultRow } from "@/lib/data/track-results";
-import type { EvidenceItem, Unknown, SourcingLogicOutput, WeightValidation, QuestionToAsk } from "@/lib/research/contracts";
+import type { EvidenceItem, Unknown, SourcingLogicOutput, WeightValidation } from "@/lib/research/contracts";
 import type { Finding } from "@/lib/data/cases";
-import { cleanClientProse, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, type ClientProjectionOptions } from "@/lib/portal/clientReport";
+import { cleanClientProse, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, projectQuestionsForClient, type ClientProjectionOptions } from "@/lib/portal/clientReport";
 import { narrativeFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 
@@ -116,7 +116,7 @@ export function buildClientFindings(rows: TrackResultRow[], opts?: ClientProject
         track_key: r.track_key,
         finding_certainty: deriveClientCertainty(r.evidence_items),
         compiled_findings_json: cf ? cleanClientFindingJson(projectFindingJsonForClient(cf, r.track_key), r.track_key, opts) : null,
-        questions_to_ask: cleanClientProseDeep((r.questions_to_ask ?? null) as QuestionToAsk[] | null),
+        questions_to_ask: cleanClientProseDeep(projectQuestionsForClient(r.questions_to_ask)),
       };
     });
 }

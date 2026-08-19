@@ -9,7 +9,7 @@ export const SUPPLIER_IDENTITY_KEYS = [
   "website_fraudulent", "scam_reports_corroborated",
 ] as const;
 
-import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+import { CLIENT_SUMMARY_INSTRUCTION, CLIENT_PROSE_SURFACE_RULE, parseClientSummary } from "@/lib/research/clientSummary.prompt";
 
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedEvidenceItem {
@@ -70,6 +70,7 @@ export function buildTrack1Prompt(
     "Per item you MUST include: mapping_justification (why this maps to the key), counter_evidence (what cuts against it;",
     "'None found' if nothing), certainty (verified|inferred|unknown), and confidence (high|medium|low).",
     CLIENT_SUMMARY_INSTRUCTION,
+    CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, statement, proposed_weight_key, supporting_source_ids,",
     "mapping_justification, counter_evidence, certainty, confidence }], reasoning_notes, client_summary, unknowns: [{ unknown,",
     "why_unresolvable, resolvable_by_client }] }.",

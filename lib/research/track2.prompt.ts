@@ -10,7 +10,7 @@ export const SUPPLY_CHAIN_KEYS = [
   "grey_market_signals", "counterfeit_channel", "conflicting_authorization",
 ] as const;
 
-import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+import { CLIENT_SUMMARY_INSTRUCTION, CLIENT_PROSE_SURFACE_RULE, parseClientSummary } from "@/lib/research/clientSummary.prompt";
 
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack2Item {
@@ -126,6 +126,7 @@ export function buildTrack2Prompt(
     "Per item you MUST include: brand, mapping_justification, counter_evidence ('None found' if none), certainty",
     "(verified|inferred|unknown), confidence (high|medium|low).",
     CLIENT_SUMMARY_INSTRUCTION,
+    CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key, supporting_source_ids,",
     "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning,",
     "brand_relationship_finding, b2b_only_detected, b2b_only_brands, questions_to_ask: [{ question, reason,",

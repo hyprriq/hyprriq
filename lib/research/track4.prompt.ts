@@ -11,7 +11,7 @@ export const DOC_REVIEW_KEYS = [
   "document_alteration", "retail_receipt_as_wholesale",
 ] as const;
 
-import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+import { CLIENT_SUMMARY_INSTRUCTION, CLIENT_PROSE_SURFACE_RULE, parseClientSummary } from "@/lib/research/clientSummary.prompt";
 
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack4Item {
@@ -121,6 +121,7 @@ export function buildTrack4Prompt(
     "('None found' if none), certainty (verified|inferred|unknown), confidence (high|medium|low).",
     "You PROPOSE; the platform validates and scores.",
     CLIENT_SUMMARY_INSTRUCTION,
+    CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
     "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }],",
     "documentation_finding, analyst_reading: { most_likely, alternative, confidence,",

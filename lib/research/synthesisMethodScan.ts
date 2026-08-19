@@ -5,7 +5,7 @@
 // case_synthesis client columns (the B4-EXT named gap, closed here). Pattern class, ruled:
 // gate names · thresholds/corroboration counts ("two independent sources") · firewall vocabulary. ──
 
-import { projectFindingJsonForClient } from "@/lib/portal/clientReport";
+import { projectFindingJsonForClient, projectQuestionsForClient } from "@/lib/portal/clientReport";
 import { allWeightKeys } from "@/lib/research/weights";
 
 interface MethodPattern {
@@ -153,15 +153,6 @@ export function scanForMethodLeakage(fields: Record<string, unknown>): string[] 
 // first version of this projection returned {} for a string, silently dropping every legacy
 // question from the scan. A fixture caught it. Narrowing a scan surface must never narrow it to
 // nothing for a shape the corpus still contains.
-const questionProse = (q: unknown): { question?: string; reason?: string } => {
-  if (typeof q === "string") return { question: q };
-  const o = (q ?? {}) as { question?: unknown; reason?: unknown };
-  return {
-    ...(typeof o.question === "string" ? { question: o.question } : {}),
-    ...(typeof o.reason === "string" ? { reason: o.reason } : {}),
-  };
-};
-
 export function scanTrackProseAtDelivery(
   rows: { track_key: string; compiled_findings_json?: unknown; questions_to_ask?: unknown }[],
 ): string[] {
@@ -170,9 +161,7 @@ export function scanTrackProseAtDelivery(
       [`${r.track_key}`]: r.compiled_findings_json
         ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
         : null,
-      [`${r.track_key} (questions)`]: Array.isArray(r.questions_to_ask)
-        ? (r.questions_to_ask as unknown[]).map(questionProse)
-        : null,
+      [`${r.track_key} (questions)`]: projectQuestionsForClient(r.questions_to_ask),
     }),
   );
 }

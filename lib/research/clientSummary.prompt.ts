@@ -30,6 +30,36 @@
  * CHEAP — corroboration voice and source-count thresholds are banned in prose written for a
  * reader, while `reasoning_notes` may still say whatever the operator needs it to say.
  */
+// ── ⚠ THE FINDING THAT RESCOPED THIS INSTRUCTION (founder-ruled 2026-08-19) ──────────────────
+//
+// The first version governed A FIELD BY ITS OWN WORDING — "client_summary MUST NOT contain…" —
+// while the SAME prompts separately instruct the model to emit `blocking_weight_key` per question.
+// The model then named that key in the adjacent `reason` sentence. IT WAS OBEYING BOTH
+// INSTRUCTIONS. p002 produced clean summaries and question prose still full of key names, and
+// nothing was wrong with the model's behaviour — the discipline simply had a seam in it.
+//
+// ⛔ THE RULE IS SCOPED TO THE SURFACE, NOT TO A FIELD NAME: everything a client could read.
+// Naming fields one at a time guarantees the next field added is uncovered by default, which is
+// the same class as the four AREA_NAMES copies and the missing questions projection — a rule that
+// enumerates instances instead of defining a boundary.
+export const CLIENT_PROSE_SURFACE_RULE = [
+  "CLIENT-READABLE PROSE — THIS RULE COVERS EVERY FIELD A CLIENT CAN READ, not one named field:",
+  "client_summary, and the `question` and `reason` of every questions_to_ask item. If you add prose",
+  "anywhere a client might see it, it is covered too.",
+  "NONE of that prose may contain: any internal key or field name (weight_key, proposed_weight_key,",
+  "blocking_weight_key, no_enforcement_found, cease_and_desist_distributed, active_ip_complaints,",
+  "confirmed_amazon_restrictions, brand_enforcement_signals, map_policy_present, and anything else in",
+  "snake_case); any narration of your own scoring or classification decisions ('this would determine",
+  "whether X or Y is the correct classification', 'this would support X', 'determinative for the X",
+  "classification'); first person; source ids; or commentary on how many sources agreed.",
+  "⚠ blocking_weight_key IS STILL A REQUIRED FIELD and you must still populate it — it is structured",
+  "data we consume internally. What is forbidden is NAMING it, or any other key, IN PROSE. Put the key",
+  "in the key field; keep it out of the sentence.",
+  "A question's `reason` says WHY THE ANSWER MATTERS TO THE BUYER — 'a published policy would show",
+  "whether the restriction comes from the brand or from the marketplace' — never which classification",
+  "it would let us apply.",
+].join("\n");
+
 export const CLIENT_SUMMARY_INSTRUCTION = [
   "CLIENT_SUMMARY — WRITTEN FOR THE BUYER, NOT FOR YOURSELF. In addition to reasoning_notes, return",
   "client_summary: 2–5 sentences of plain prose that the person who paid for this report will read as",

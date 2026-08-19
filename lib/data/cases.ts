@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
-import { projectClientReport, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, type ClientReport } from "@/lib/portal/clientReport";
+import { projectClientReport, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, projectQuestionsForClient, type ClientReport, type ClientQuestionRow } from "@/lib/portal/clientReport";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
 
@@ -171,7 +171,11 @@ export type Finding = {
   track_key: string;
   finding_certainty: "verified" | "assessed";
   compiled_findings_json: Record<string, unknown> | null;
-  questions_to_ask: QuestionToAsk[] | null; // Phase 5.1c — Track 2 client-facing questions
+  // ⚠ THE CLIENT TYPE, NOT THE INTERNAL CONTRACT. This was QuestionToAsk[], which REQUIRES
+  // blocking_weight_key and priority — so the client shape demanded the very fields that must
+  // never cross, and every consumer duly carried them over the RSC boundary. Reusing an internal
+  // contract as a client type is how internal machinery becomes client payload by default.
+  questions_to_ask: ClientQuestionRow[] | null;
 };
 
 // Findings for a case, scoped via the parent case's ownership. Reads the
@@ -236,7 +240,9 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
         // raw rows and keeps tags and internal names (the operator's source-checking leverage).
         // + the documentation-scoped bank-coordinate filter (ratified 2026-08-14).
         compiled_findings_json: cf ? cleanClientFindingJson(projected, r.track_key) : null,
-        questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
+        // ALLOWLIST PROJECTION, then clean. Before this, blocking_weight_key and priority crossed
+        // the RSC boundary into the browser on every delivered case.
+        questions_to_ask: cleanClientProseDeep(projectQuestionsForClient(r.questions_to_ask)),
       };
     });
 }

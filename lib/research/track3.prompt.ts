@@ -14,7 +14,7 @@ export const BRAND_RISK_KEYS = [
   "confirmed_amazon_restrictions", "cease_and_desist_distributed",
 ] as const;
 
-import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+import { CLIENT_SUMMARY_INSTRUCTION, CLIENT_PROSE_SURFACE_RULE, parseClientSummary } from "@/lib/research/clientSummary.prompt";
 
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack3Item {
@@ -138,6 +138,7 @@ export function buildTrack3Prompt(
     "fact does not belong in this track. If you cannot determine a classification, return",
     "proposed_weight_key: 'UNKNOWN' with your reason. You PROPOSE; the platform validates and scores.",
     CLIENT_SUMMARY_INSTRUCTION,
+    CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
     "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }], brand_risk_finding,",
     "analyst_reading: { most_likely, alternative, confidence, what_would_change_my_mind }, questions_to_ask:",

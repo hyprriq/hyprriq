@@ -13,7 +13,7 @@ import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/researc
 import { scanCategoryAtDelivery } from "@/lib/research/categoryLanguage";
 import {
   cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
-  projectClientReport, projectFindingJsonForClient,
+  projectClientReport, projectFindingJsonForClient, projectQuestionsForClient,
 } from "@/lib/portal/clientReport";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { locateSynthesisMethodLeakage, locateMethodLeakage } from "@/lib/research/methodScanReport";
@@ -219,7 +219,14 @@ export async function POST(
             [r.track_key]: r.compiled_findings_json
               ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
               : null,
-            [`${r.track_key} (questions)`]: r.questions_to_ask ?? null,
+            // ⚠ THE PROJECTION, NOT THE RAW ROW — AND THIS LINE IS WHY THE RULE EXISTS.
+            // The SCANNER above and this LOCATOR are deliberately kept in lockstep so the operator
+            // sees exactly what blocks. Both compositions were written in the same commit; when the
+            // raw-row defect was fixed, it was fixed in the scanner and NOT here, so the panel
+            // reported 16 phrases while only 3 could block — 13 of them `blocking_weight_key`,
+            // a structured field whose value IS a weight key. A gate that over-reports 4x makes a
+            // three-line prose fix look like a systemic failure.
+            [`${r.track_key} (questions)`]: projectQuestionsForClient(r.questions_to_ask),
           },
           r.track_key,
         ),
@@ -253,7 +260,10 @@ export async function POST(
             r.track_key,
           )
         : null,
-      questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
+      // The checkpoint asserts over what the CLIENT receives, so it must see the same projection
+      // getCaseFindings produces — not the raw row. (Found by the new lock: this was a FOURTH
+      // instance of the raw-questions defect, in the same file as the second and third.)
+      questions_to_ask: cleanClientProseDeep(projectQuestionsForClient(r.questions_to_ask)),
     })),
     // `client_notes` are IN SCOPE by ruling.
     client_note: identityNote ? cleanClientProse(identityNote) : null,
