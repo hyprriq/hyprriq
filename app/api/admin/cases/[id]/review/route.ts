@@ -19,8 +19,7 @@ import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { locateSynthesisMethodLeakage, locateMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
-import { sendDeliveryNotification } from "@/lib/email/notify";
-import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
+import { REPORT_PDF_EVENT, type ReportPdfEvent } from "@/lib/inngest/events";
 
 // Phase 4 — Founder Decision. The Intelligence Engine reaches report-ready autonomously; review is
 // OPTIONAL, never required. This route records the founder's decision on the engine's output:
@@ -314,31 +313,28 @@ export async function POST(
     });
   }
 
-  // PRE-DESIGN BATCH (2026-08-08, gap audit 5.2): delivery notification — the marketing promise
-  // ("delivered to your email") gets a sender. Non-fatal like every notify path: delivery already
-  // happened; the outcome (sent / skip reason) is audit-logged, never surfaced as an error.
+  // ── §4 — THE DELIVERY EMAIL MOVED OUT OF THIS ROUTE (founder-ruled sequencing (a), 2026-08-19).
+  //
+  // It used to send here, synchronously. Under the ruled sequencing the email must carry the PDF,
+  // and the PDF is rendered by an Inngest job — so sending here would either BLOCK PUBLISH on a
+  // Chromium render (forbidden: publish is never delayed) or send "your report is ready" with no
+  // attachment while the attachment was still being made. The job now owns BOTH: it renders,
+  // stores, and then sends the email — with the PDF when the render succeeded, without it when it
+  // permanently failed. The operator-house skip and the audit record moved with it.
+  //
+  // ⛔ LOUD-BUT-NON-FATAL, exactly like seedCaseOutcome above: the case is ALREADY delivered. A
+  // failed enqueue is audited and the response still reports success, because the delivery is real
+  // whether or not the artifact job started. Never roll back, never fail the publish.
   {
-    // GAP-CLOSE (2026-08-10): operator-run cases attribute to the house row, whose email is the
-    // undeliverable operator@hyprriq.internal placeholder — never send there; the skip is
-    // audit-logged as skipped:operator_house so the record can't read "sent".
-    const isHouse = c.client_id === OPERATOR_HOUSE_CLIENT_ID;
-    const { data: owner } = isHouse
-      ? { data: null }
-      : await supabaseAdmin.from("clients").select("email").eq("id", c.client_id).maybeSingle();
-    const origin = new URL(req.url).origin;
-    const notified = isHouse
-      ? { sent: false as const, reason: "operator_house" }
-      : await sendDeliveryNotification({
-          to: (owner?.email as string | undefined) ?? null,
-          caseNumber: c.case_number,
-          vendorName: c.vendor_name,
-          caseUrl: `${origin}/portal/cases/${id}`,
-        });
-    await supabaseAdmin.from("audit_log").insert({
-      table_name: "cases", record_id: id, action: "UPDATE",
-      actor_id: userId, actor_type: "admin",
-      new_value: { delivery_email: notified.sent ? "sent" : `skipped:${notified.reason ?? "unknown"}` },
-    });
+    try {
+      await inngest.send({ name: REPORT_PDF_EVENT, data: { case_id: id, attempt } satisfies ReportPdfEvent });
+    } catch (e) {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "cases", record_id: id, action: "UPDATE",
+        actor_id: userId, actor_type: "admin",
+        new_value: { report_pdf_enqueue_failed: e instanceof Error ? e.message : "enqueue failed" },
+      });
+    }
   }
 
   // H5 addendum — echo the case identity so the UI success toast can name WHICH report delivered.

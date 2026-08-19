@@ -240,6 +240,9 @@ export function FindingBody({ text }: { text: string }) {
 export function ReportView({ c, findings, report, preview = false }: { c: CaseDetail; findings: Finding[]; report: ClientReport | null; preview?: boolean }) {
   const [tab, setTab] = useState<TabKey>("findings");
   const [howtoOpen, setHowtoOpen] = useState(true);
+  // §4 — the PDF is rendered by a background job after publish, so "not ready yet" is a real and
+  // normal state a client can click into. It gets a sentence, not a raw error.
+  const [pdfNote, setPdfNote] = useState<string | null>(null);
   const meta = VERDICT_META[(c.verdict ?? "verify_before_purchase") as Verdict] ?? VERDICT_META.verify_before_purchase;
   const orderedFindings = findings; // data layer orders by area already
   // CONDITIONAL TABS (founder-approved 2026-08-14): an empty tab on a paid report is worse than
@@ -415,14 +418,25 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-muted"><span>Source Clear</span><span>Do Not Rely</span></div>
           <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{meta.means}</p>
-          <button
-            type="button"
-            disabled
-            title="Report download is coming — your full report is on this page."
-            className="mt-4 w-full cursor-not-allowed rounded-lg border border-line bg-subtle px-3 py-2 text-[13px] font-semibold text-muted print:hidden"
+          {/* ── §4 — LIVE. "Coming soon" is retired on a $99–$499 product where most clients read
+              the PDF from email and never log in. The href is the AUTHORIZED route, which re-checks
+              ownership and mints a fresh short-lived signed URL per click — never a storage path.
+              The 202 "still being prepared" case is a real state (the render job runs after
+              publish), so the click is handled rather than left to render a raw JSON body. ── */}
+          <a
+            href={`/api/cases/${c.id}/report`}
+            onClick={async (e) => {
+              e.preventDefault();
+              const res = await fetch(`/api/cases/${c.id}/report`, { redirect: "follow" });
+              if (res.status === 202) { setPdfNote("Your PDF is still being prepared — it will arrive by email shortly. The full report is on this page now."); return; }
+              if (!res.ok) { setPdfNote("We could not fetch the PDF just now. The full report is on this page, and it is also emailed to you."); return; }
+              window.location.href = res.url;
+            }}
+            className="mt-4 block w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle print:hidden"
           >
-            Download PDF (coming soon)
-          </button>
+            Download PDF
+          </a>
+          {pdfNote && <p className="mt-2 text-[12px] text-muted print:hidden">{pdfNote}</p>}
         </div>
       </div>
 

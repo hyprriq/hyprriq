@@ -1,7 +1,8 @@
 import { findingText, findingNotes } from "@/lib/portal/finding-view";
+import { isAssessmentArea } from "@/lib/constants/tracks";
 import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import type { Finding } from "@/lib/data/cases";
-import type { ClientReport } from "@/lib/portal/clientReport";
+import type { ClientReport, ClientCategoryCompliance } from "@/lib/portal/clientReport";
 import { DOC_TITLE, ISSUER, confidentialityLine } from "@/lib/content/documentIdentity";
 import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
@@ -27,6 +28,69 @@ export interface ReportContent {
   verdict: string;
   report: ClientReport;
   findings: Finding[];
+}
+
+// ── §4 — THE COUNT DERIVES, IT DOES NOT SAY FIVE (the returning count-derivation debt).
+// Same defect the portal carried: counting RENDERED ROWS makes a Scale PDF claim "6 assessment
+// areas examined" the moment Track 6 lands, and we sell five. Membership in the canonical TRACKS
+// registry is a property of the PRODUCT, answerable without reading a case — a per-case flag never
+// could be (sourcing_logic carries non_voting inconsistently across stored rows).
+export const areaFindings = (c: ReportContent): Finding[] => c.findings.filter((f) => isAssessmentArea(f.track_key));
+export const advisoryFindings = (c: ReportContent): Finding[] => c.findings.filter((f) => !isAssessmentArea(f.track_key));
+
+// ── §4 — TRACK 6 IN THE PDF ($149 and Scale). ────────────────────────────────────────────────
+// The portal and the document must not be two versions of one paid deliverable, so this mirrors
+// components/portal/report-view.tsx: TWO VISIBLY SEPARATE BLOCKS WITH SEPARATE ATTRIBUTION —
+// (a) what OUR RESEARCH found, (b) what OUR REFERENCE TABLE says, led by the same founder copy.
+//
+// ⛔ THE ATTENTION LABEL, NEVER THE RAW risk_level. "HIGH" would claim which category the client's
+// product sits in, which with no ASIN the engine cannot know. The projector already replaced it;
+// this template must never reintroduce it.
+// ⛔ AND NO TOKEN-STRIPPING HERE. The presence checkpoint is the backstop; widening the template
+// into a cleaner is the defect the law forbids. If a token reaches this function, the fix is
+// upstream in the projection.
+//
+// $99 and Growth carry no Track 6 row at all, so this renders NOTHING — no heading, no empty box.
+const CATEGORY_HEAD = "Category compliance";
+const CATEGORY_LEDE =
+  "Advisory only — this section does not affect the verdict. It reflects the product categories our research associated with each brand, and what those categories generally involve.";
+const CATEGORY_TABLE_LEAD = "From our category reference notes for this category:";
+const CATEGORY_FOOTER =
+  "Category requirements change frequently. Check the current marketplace policy before you commit inventory.";
+
+function categorySection(c: ReportContent): string {
+  const data = advisoryFindings(c)
+    .map((f) => (f.compiled_findings_json as { category_compliance?: ClientCategoryCompliance } | null)?.category_compliance)
+    .find(Boolean);
+  if (!data || data.per_brand.length === 0) return "";
+  const brands = data.per_brand.map((b) => {
+    const cats = b.categories_found.length
+      ? b.categories_found.map((cat) => {
+          const meta = [cat.subcategory, cat.confidence ? `${cat.confidence} confidence` : null].filter(Boolean).join(" · ");
+          // The COUNT, never the evidence ids.
+          const count = `${cat.evidence_count} ${cat.evidence_count === 1 ? "source" : "sources"} considered`;
+          const flags = cat.flags.length
+            ? toneBox("navy", CATEGORY_TABLE_LEAD, cat.flags.map((fl) =>
+                // flag_language is FOUNDER COPY, verbatim — never reworded here.
+                `<p style="font-size:9.5pt;margin-bottom:2pt">${esc(fl.flag_language)}</p>
+                 <p style="font-size:9pt;color:${PALETTE_COLOUR.soft};margin-bottom:6pt">${esc(fl.attention)}</p>`).join(""))
+            : "";
+          return `<div style="margin-bottom:8pt">
+            <div style="font-weight:600">${esc(cat.category)}${meta ? ` <span style="font-weight:400;color:${PALETTE_COLOUR.soft}">· ${esc(meta)}</span>` : ""}</div>
+            <div style="font-size:9pt;color:${PALETTE_COLOUR.soft}">${esc(count)}</div>
+            ${flags}
+          </div>`;
+        }).join("")
+      : `<p style="font-size:9.5pt">Our research did not associate this brand with a specific product category.</p>`;
+    const note = b.brand_category_note ? `<p style="font-size:9.5pt">${esc(b.brand_category_note)}</p>` : "";
+    return `<div class="area"><div class="area-head"><span class="n">${esc(b.brand)}</span></div>${cats}${note}</div>`;
+  }).join("");
+  return `<div class="area keep">
+    <div class="area-head"><span class="n">${esc(CATEGORY_HEAD)}</span><span class="s">Advisory</span></div>
+    <p style="font-size:9.5pt">${esc(CATEGORY_LEDE)}</p>
+    ${brands}
+    <p style="font-size:9pt;color:${PALETTE_COLOUR.soft}">${esc(CATEGORY_FOOTER)}</p>
+  </div>`;
 }
 
 export interface Palette {
@@ -88,6 +152,9 @@ const VERDICT_META: Record<string, { name: string; level: number; means: string 
 const AREA_NAMES: Record<string, string> = {
   supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
   brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
+  // §4 — Track 6 is ADVISORY, never a sold assessment area. Without this the PDF printed the raw
+  // internal key to a paying $149/Scale client, exactly as the portal did before §2.
+  category_compliance: "Category compliance",
 };
 const CHIP_DEFS = {
   verified: "Independently corroborated — multiple independent sources confirm this.",
@@ -278,7 +345,7 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
   <div class="sec-rule"></div>
   <div class="tiles">
     <div class="tile"><div class="bar" style="background:${vInk}"></div><div class="inner"><div class="v">${meta.level} / 4</div><div class="c">Verdict level on the four-level scale</div></div></div>
-    <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${c.findings.length}</div><div class="c">Assessment areas examined</div></div></div>
+    <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${areaFindings(c).length}</div><div class="c">Assessment areas examined</div></div></div>
     <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${r.questions.length}</div><div class="c">Verification questions to put to the supplier</div></div></div>
     <div class="tile"><div class="bar" style="background:${P.navy}"></div><div class="inner"><div class="v">${c.brands.length}</div><div class="c">Brands in scope of this research</div></div></div>
   </div>
@@ -294,9 +361,9 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
   <div class="sec-open"><span class="no">02</span><span class="t">${esc(SECTIONS[1].title)}</span></div>
   <div class="sec-rule"></div>
   <table style="margin-bottom:18pt"><thead><tr><th>${esc(AREAS_TABLE.colArea)}</th><th style="width:100pt">${esc(AREAS_TABLE.colStatus)}</th></tr></thead><tbody>
-    ${c.findings.map((f) => { const st = areaStatus(f); return `<tr><td style="font-weight:600">${esc(AREA_NAMES[f.track_key] ?? f.track_key)}</td><td class="status" style="color:${(P.tone[st.tone] ?? P.tone.navy).ink}">${esc(st.label)}</td></tr>`; }).join("")}
+    ${areaFindings(c).map((f) => { const st = areaStatus(f); return `<tr><td style="font-weight:600">${esc(AREA_NAMES[f.track_key] ?? f.track_key)}</td><td class="status" style="color:${(P.tone[st.tone] ?? P.tone.navy).ink}">${esc(st.label)}</td></tr>`; }).join("")}
   </tbody></table>
-  ${c.findings.map((f) => {
+  ${areaFindings(c).map((f) => {
     const { detail } = findingText(f);
     const notes = findingNotes(f);
     const st = areaStatus(f);
@@ -306,6 +373,7 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
     const notesH = notes.length ? toneBox("navy", BOUNDARY_CALLOUT_LABEL, notes.map((n) => `<p style="font-size:9.5pt;margin-bottom:2pt"><strong style="font-family:ISans">${esc(n.label)}:</strong> ${esc(n.text)}</p>`).join("")) : "";
     return `<div class="area${isScope ? " keep" : ""}">${head}${bodyH}${notesH}</div>`;
   }).join("")}
+  ${categorySection(c)}
 </div>
 
 <div class="section pagebody">

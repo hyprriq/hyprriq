@@ -93,9 +93,21 @@ export async function sendDeliveryNotification(opts: {
   caseNumber: string;
   vendorName: string | null;
   caseUrl: string;
+  /**
+   * §4 — the PDF, when the render finished in time. NULL is a normal outcome, not an error: the
+   * ruled sequencing sends this email WITHOUT the attachment if the render failed permanently,
+   * rather than delaying or withholding a delivery the client has already paid for.
+   */
+  attachment?: { filename: string; content: Buffer } | null;
 }): Promise<{ sent: boolean; reason?: string }> {
   const subject = `Your HyprrIQ report ${opts.caseNumber} is ready`;
+  // ⚠ THE COPY MUST MATCH REALITY. Promising "attached" on a mail with no attachment is the kind
+  // of small lie a client notices immediately, so the sentence is chosen from what actually shipped.
+  const attachmentLine = opts.attachment
+    ? `<p>Your full report is attached as a PDF, and it is also in your portal.</p>`
+    : `<p>Your full report is ready to read in your portal.</p>`;
   const html = `<p>Your source intelligence report${opts.vendorName ? ` for ${opts.vendorName}` : ""} (case ${opts.caseNumber}) has been delivered.</p>
+${attachmentLine}
 <p><a href="${opts.caseUrl}">View your report</a> — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal.</p>
 <p>Questions about the report? Use the support page in your portal and we&rsquo;ll pick it up.</p>`;
   if ((await emailGate("delivery_notification", subject, [html])).length > 0) return { sent: false, reason: "banned_language" };
@@ -103,7 +115,12 @@ export async function sendDeliveryNotification(opts: {
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html });
+    await resend.emails.send({
+      from: from(), to: opts.to, subject, html,
+      ...(opts.attachment
+        ? { attachments: [{ filename: opts.attachment.filename, content: opts.attachment.content }] }
+        : {}),
+    });
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
