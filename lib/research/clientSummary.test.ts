@@ -170,31 +170,13 @@ describe("adversarial client_summary content the writer must not pass through un
   it("whitespace-only content is treated as absent, not as a summary", () => {
     expect(parseClientSummary({ client_summary: "   \n  " })).toBe("");
   });
-
-  // ⚠⚠ UNRULED GAP, FOUND BY THIS FIXTURE SET AND DELIBERATELY NOT CLOSED — NEEDS A FOUNDER RULING.
-  //
-  // A BARE WEIGHT-KEY NAME PASSES EVERY EXISTING GATE. "registration_fabricated is not warranted"
-  // is caught by NOTHING: the derivation scanner matches the literal `weight_key`, not the KEY
-  // NAMES themselves (registration_fabricated, no_enforcement_found, scam_reports_corroborated,
-  // keepa_enforcement_cliff…); the checkpoint is ruled to leave snake_case alone; the language gate
-  // has no rule for it. Real prose in the corpus carries exactly this shape (AWI-2607-016,
-  // AWI-2607-023, AWI-2607-030).
-  //
-  // WHY IT IS NOT FIXED HERE: adding the key names to METHOD_PATTERNS is a GATE RULE CHANGE, it
-  // would move the census number mid-lane, and this session's ruling was scoped to the
-  // client_summary contract. It is ALSO largely mooted going forward — CLIENT_SUMMARY_INSTRUCTION
-  // bans internal key names outright, so new prose should not contain them. The gap matters for
-  // STORED prose and as a backstop if the model disobeys.
-  //
-  // The remedy when ruled is cheap and low-risk: the weight keys are a CLOSED, CODE-OWNED set in
-  // lib/research/weights.ts, so an exact-name scan has near-zero false-positive risk — unlike the
-  // grammar-chasing this codebase has ruled against twice.
-  it("UNRULED: a raw weight-key name passes every gate today — this RECORDS that, it does not bless it", () => {
+  // ── CLOSED 2026-08-19 by founder ruling. This fixture found that a bare weight-key name passed
+  // EVERY gate; the derivation scanner now carries the closed, registry-DERIVED key set.
+  it("a raw weight-key name is now CAUGHT — the gap this fixture found, closed by ruling", () => {
     const text = "registration_fabricated is not warranted here.";
-    expect(scanForMethodLeakage({ _: text })).toEqual([]);
-    expect(findInternalTokens({ _: text })).toEqual([]);
-    expect(scanHard(text)).toEqual([]);
-    // The instruction DOES ban it, which is why new prose should not carry it.
+    expect(scanForMethodLeakage({ _: text }).join(" ")).toContain("weight-key name");
+    // The instruction bans it too, so new prose should not contain it in the first place — belt
+    // (the prompt) and braces (the gate).
     expect(CLIENT_SUMMARY_INSTRUCTION).toContain("snake_case");
   });
 });

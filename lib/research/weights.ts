@@ -156,3 +156,15 @@ export function weightKeysForTrack(track: TrackKey): string[] {
   const table = (WEIGHTS as Record<string, Record<string, WeightEntry>>)[track];
   return table ? Object.keys(table) : [];
 }
+
+// ── EVERY WEIGHT KEY, ACROSS EVERY TRACK (founder-ruled 2026-08-19) ──────────────────────────
+// The derivation scanner blocks the WORDS "weight key" but never blocked the KEY NAMES
+// themselves, so "registration_fabricated is not warranted" reached client prose past every gate.
+//
+// ⚠ DERIVED FROM THE REGISTRY, NEVER HAND-LISTED. A copied list is a fifth AREA_NAMES waiting to
+// happen: it would silently stop covering a key the moment one is added here. Read-only; scoring
+// is untouched.
+export function allWeightKeys(): string[] {
+  const tables = WEIGHTS as Record<string, Record<string, WeightEntry>>;
+  return [...new Set(Object.values(tables).flatMap((t) => Object.keys(t)))].sort();
+}

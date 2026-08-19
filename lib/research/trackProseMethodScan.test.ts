@@ -50,25 +50,14 @@ describe("Class 4 — spellings and positions the corpus does NOT contain today"
   });
 });
 
-// ⚠⚠ UNRULED GAP, FOUND BY THIS FIXTURE SET AND DELIBERATELY NOT CLOSED — NEEDS A FOUNDER RULING.
-//
-// `METHOD_PATTERNS` matches `weight[_\s]?key\b`, which does NOT match the PLURAL. The corpus
-// contains plurals: AWI-2607-030 "tied to the relevant blocking weight keys", AWI-2608-034
-// "across all weight key dimensions". So the scanner sees fewer occurrences than exist.
-//
-// WHY IT IS NOT FIXED HERE: adding `s?` WIDENS A GATE RULE. The founder ruled a COVERAGE extension
-// (scan track prose as well as synthesis) — not a change to what the patterns match. Gate rules are
-// editable only under explicit ruling, and slipping a widening in under a coverage commit is
-// exactly the move the "laws attached to plumbing get named" rule exists to stop.
-//
-// CONSEQUENCE FOR THE NUMBERS, so nobody reconciles them wrongly later: the token-leak sweep counts
-// `weight[_\s]?keys?` and reports 9 occurrences across 6 cases; the GATE, with its narrower pattern,
-// sees fewer. The two instruments disagree ON PURPOSE until this is ruled. Do not "fix" one to match
-// the other without the ruling.
-describe("UNRULED — the plural is not matched today; this test RECORDS that, it does not bless it", () => {
-  it("does not block 'weight keys' (plural) — pending founder ruling on widening the pattern", () => {
-    expect(scanTrackProseAtDelivery(row({ summary: "Several weight keys were left unset for this brand." })))
-      .toEqual([]);
+// ── CLOSED 2026-08-19 BY FOUNDER RULING. This fixture set found that `weight[_s]?key` did not
+// match the PLURAL, so the token-leak sweep (which counts `keys?`) and the GATE were counting
+// different things — AWI-2607-030 carries "tied to the relevant blocking weight keys". The rule now
+// carries `s?`. One instrument, one number.
+describe("the PLURAL is matched — founder-ruled 2026-08-19, the sweep and the gate now agree", () => {
+  it("blocks 'weight keys' (plural), which slipped past weight[_\s]?key\b", () => {
+    expect(scanTrackProseAtDelivery(row({ summary: "Several weight keys were left unset for this brand." })).length)
+      .toBeGreaterThan(0);
   });
 });
 

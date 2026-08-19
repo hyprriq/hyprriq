@@ -6,6 +6,7 @@
 // gate names · thresholds/corroboration counts ("two independent sources") · firewall vocabulary. ──
 
 import { projectFindingJsonForClient } from "@/lib/portal/clientReport";
+import { allWeightKeys } from "@/lib/research/weights";
 
 interface MethodPattern {
   name: string;
@@ -54,12 +55,40 @@ function isMethodVoiceCorroboration(text: string, m: RegExpExecArray): boolean {
 // threshold): gate names · corroboration counts/thresholds · firewall vocabulary. The safe
 // paraphrase ("we could not independently verify this") must pass — patterns are scoped to
 // the METHOD, never to honest uncertainty language.
+/**
+ * Every weight key in the registry, as one alternation. Built ONCE at module load and derived —
+ * never copied — so a key added to weights.ts is covered here without anyone remembering to.
+ *
+ * Sorted longest-first so an alternation can never match a shorter key that is a prefix of a
+ * longer one and report the wrong name.
+ */
+function weightKeyNamePattern(): RegExp {
+  const keys = allWeightKeys()
+    .filter((k) => k.includes("_"))            // single words would be far too broad
+    .sort((a, b) => b.length - a.length)
+    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return new RegExp(`\\b(?:${keys.join("|")})\\b`, "i");
+}
+
 const METHOD_PATTERNS: MethodPattern[] = [
   { name: "gate name", re: /\b(grounding|registry|provenance|authority|corroboration|contradiction|consensus)\s+gate\b/i },
   { name: "corroboration vocabulary", re: /\bcorroborat(?:e|ed|es|ion|ing)\b/i, blocks: isMethodVoiceCorroboration },
   { name: "source-count threshold", re: /\b(?:two|three|[0-9]+)\s+(?:independent|distinct)\s+sources?\b/i },
   { name: "source-count threshold", re: /(?:>=|at least)\s*[0-9]+\s+sources?\b/i },
-  { name: "firewall vocabulary", re: /\b(firewall|weight[_\s]?key|hard[_\s]?fail|validation\s+(?:gate|layer|version)|banned[_\s]?language)\b/i },
+  // FOUNDER-RULED 2026-08-19 — the PLURAL now matches. `weight[_\s]?key\b` did not, and the corpus
+  // carries plurals ("tied to the relevant blocking weight keys", AWI-2607-030), so the sweep and
+  // the gate were counting different things. They now count the same thing.
+  { name: "firewall vocabulary", re: /\b(firewall|weight[_\s]?keys?|hard[_\s]?fail|validation\s+(?:gate|layer|version)|banned[_\s]?language)\b/i },
+  // ── WEIGHT-KEY NAMES (founder-ruled 2026-08-19) ──
+  // The rule above blocks the WORDS "weight key"; it never blocked the KEY NAMES, so
+  // "registration_fabricated is not warranted" and "positive ones like no_enforcement_found"
+  // reached client prose past every gate — real corpus shapes (AWI-2607-016, -023, -030).
+  //
+  // ⚠ LOW FALSE-POSITIVE BY CONSTRUCTION, WHICH IS WHY THIS IS NOT THE GRAMMAR-CHASING THE
+  // FOUNDER RULED AGAINST TWICE: the keys are a CLOSED, CODE-OWNED set derived from the weights
+  // registry, matched as exact snake_case identifiers on word boundaries. It cannot match ordinary
+  // English — no client writes "registration_fabricated" in a product description.
+  { name: "weight-key name", re: weightKeyNamePattern() },
 ];
 
 /** Scan named text fields for method leakage. Returns violations as "field: pattern (excerpt)". */
