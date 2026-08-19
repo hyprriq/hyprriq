@@ -29,6 +29,17 @@ export const CATEGORY_CLIENT_SUMMARY =
 // re-derives it: category compliance runs for single_149 AND scale_499 ONLY; growth_279 is
 // DELIBERATELY EXCLUDED (it is a tier differentiator, not a depth default). The gate widens
 // here, in the step, never in the registry.
+//
+// ⛔ WHY GROWTH IS EXCLUDED — FOUNDER-RULED 2026-08-19, RECORDED BECAUSE IT READS LIKE AN
+// OVERSIGHT AND IS NOT. Growth and Scale ALREADY SHARE EVERYTHING ELSE: five assessment areas,
+// five brands per report (PLAN_BRAND_CAPS growth_279 = scale_499 = 5), the same synthesis engine,
+// the same 24h SLA. Track 6 is the ONLY capability separating them. Add it to Growth and the
+// $279/$499 distinction collapses to report volume alone — which does not carry a $220/month gap.
+// The founder's words: "279 no if track 6 then will be no difference at all with 499."
+// Anyone widening this set is not adding depth to a tier; they are deleting the tier boundary.
+// (The ladder is deliberately two-axis: $149 buys DEPTH at 3 brands, Growth buys BREADTH at 5
+// brands without category compliance, Scale buys both. That is why $149 is engine-richer than
+// Growth and it is not a mistake either.)
 const CATEGORY_PLANS = new Set<string>(["scale_499", "single_149"]);
 
 // Live Hop-1 model adapter (mechanical — no frozen touches): proposes categories per brand from

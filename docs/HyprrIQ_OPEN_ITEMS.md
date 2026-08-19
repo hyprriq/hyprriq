@@ -40,6 +40,43 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ TIER LADDER RULED + VERIFIED 2026-08-19 — and TWO SCALE CLAIMS ARE NOT BACKED BY CODE.**
+> Measured from the code, not the pricing page: `CATEGORY_PLANS = ["scale_499","single_149"]`
+> (`categoryStep.ts`), `PLAN_BRAND_CAPS` growth_279 = scale_499 = **5**, `TRACK_CONFIG` gives 5
+> areas to 149/Growth/Scale, and `CASE_SLA_HOURS = 24` is ONE constant for every tier.
+>
+> | | $99 | $149 | Growth $279 | Scale $499 |
+> |---|---|---|---|---|
+> | Assessment areas | 3 | 5 | 5 | 5 |
+> | Category compliance (T6) | ✗ | ✓ | **✗** | ✓ |
+> | Brands per report | 3 | 3 | 5 | 5 |
+> | Synthesis / contradiction | same | same | same | same |
+>
+> **⛔ FOUNDER RULING — GROWTH MUST NOT GET TRACK 6, and the WHY is now in the code
+> (`categoryStep.ts`) because it reads like an oversight and is not.** Growth and Scale already
+> share five areas, five brands, the same engine and the same SLA. **Track 6 is the ONLY capability
+> separating them** — add it to Growth and the $279/$499 distinction collapses to report volume
+> alone, which does not carry a $220/month gap. Founder's words: *"279 no if track 6 then will be
+> no difference at all with 499."* The ladder is deliberately TWO-AXIS: $149 buys DEPTH at 3 brands,
+> Growth buys BREADTH at 5 brands without category compliance, Scale buys both. **$149 being
+> engine-richer than Growth is intentional, not a mistake.**
+>
+> **🔴 TWO SCALE PRICING BULLETS ARE UNBACKED — NEEDS A DECISION BEFORE MARKETING COPY IS WRITTEN.**
+> (a) *"Deep analysis + contradiction checks"* — there is NO plan gating anywhere in synthesis;
+> `scale_499` appears in the engine in exactly two places (the registry arrays and the Track 6 gate).
+> Every tier gets identical synthesis. (b) *"Delivered within 24 hours"* — listed under "Everything
+> in Growth" as though Scale adds it; it is the same `CASE_SLA_HOURS` constant $99 gets. Stripped of
+> both, Scale's honest differentiators are category compliance, 5 brands vs 3, 12 reports, rollover —
+> and against GROWTH specifically, category compliance alone. **NOT changed unilaterally: this is
+> what a client is promised.**
+>
+> **⚠ WITHOUT KEEPA, SCALE'S ENTIRE DIFFERENTIATOR IS ONE ADVISORY SECTION THAT CANNOT STATE A RISK
+> LEVEL** (no ASIN ⇒ the engine cannot know the product's category ⇒ `risk_level` never prints HIGH,
+> by ruling). Keepa is not an add-on, it is what makes $499 a different product: it activates the
+> three inert Track 3 weight keys (`keepa_stable_no_cliff`, `keepa_enforcement_cliff`,
+> `low_seller_count_stable` — brand-risk scoring currently runs with enforcement signals OFF), and
+> an ASIN lets Track 6 stop hedging. See §11 in the pending list.
+
 > **✓ §2 TRACK 6 CLIENT SURFACE + §3 CONCATENATION BUILT 2026-08-19** (`ba63e4d`, `359a3c0`).
 >
 > **⚠ THE CORPUS COULD NOT ANSWER §2, AND THAT IS THE FINDING.** `scripts/track6-surface-probe.ts`:
