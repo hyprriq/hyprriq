@@ -5,6 +5,7 @@ import { buildTrack4Prompt } from "@/lib/research/track4.prompt";
 import { buildCallCPrompt } from "@/lib/research/synthesisCallC.prompt";
 import { IOS } from "@/lib/research/ios";
 import { scanHard } from "@/lib/utils/banned-language";
+import { scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
 import type { WidenedM1Record, SynthesisAssertion, HypothesisSet, RiskGap } from "@/lib/research/contracts";
 
 // ── THE ENGINE-PROSE PASS (founder-ruled 2026-08-17) — ITS ACCEPTANCE LOCK.
@@ -93,19 +94,46 @@ describe("(c) the version bump — stored synthesis from the old prompts can nev
   // maintenance item rather than an invariant. It now asserts THE PROPERTY THAT MATTERS (the
   // version left the placeholder and is not ANY previously-shipped value) plus the current pin,
   // and carries the history so a future pass adds one line instead of rewriting the intent.
-  const SHIPPED_PROMPT_VERSIONS = ["0.0.0", "p001-1.0.0"];
-  const SHIPPED_IOS_VERSIONS = ["HyprrIQ IOS v0.1-skeleton", "HyprrIQ IOS v0.2-prose"];
+  const SHIPPED_PROMPT_VERSIONS = ["0.0.0", "p001-1.0.0", "p002-1.0.0"];
+  const SHIPPED_IOS_VERSIONS = ["HyprrIQ IOS v0.1-skeleton", "HyprrIQ IOS v0.2-prose", "HyprrIQ IOS v0.3-client-summary"];
 
   it("prompt_version has left the inert placeholder and every previously-shipped value", () => {
     for (const old of SHIPPED_PROMPT_VERSIONS) expect(IOS.prompt_version).not.toBe(old);
-    expect(IOS.prompt_version).toBe("p002-1.0.0");
+    expect(IOS.prompt_version).toBe("p002-1.1.0");
   });
   it("ios_version — the memoization key (getSynthesisByEvidenceHash matches on it) — moved in the SAME commit", () => {
     for (const old of SHIPPED_IOS_VERSIONS) expect(IOS.ios_version).not.toBe(old);
-    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.3-client-summary");
+    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.3.1-word-rules");
   });
   it("synthesis_version is NOT touched by a prose pass (the S-2 forward pins stay valid)", () => {
     expect(IOS.synthesis_version).toBe("g005-1.0.0");
+  });
+});
+
+// ── (e) WORD-RULE HARDENING (2026-08-20) — measured, not assumed: AWI-2608-039 attempt 2, the
+// FIRST p002 synthesis to reach the publish gate, blocked on exactly two classes — 'amazon
+// approved' (M9 what_to_verify + an M8 question) and corroboration vocabulary (the first
+// client_summary ever produced). Both are now WORD rules in every prompt of the pass, and the
+// fixtures below pin that the sentences the prompts ban are sentences the UNCHANGED gate blocks. ──
+describe("(e) word-rule hardening — marketplace approval + corroboration, by word, every prompt", () => {
+  for (const [name, system] of Object.entries(PROMPTS)) {
+    it(`${name}: names both banned word classes`, () => {
+      expect(system).toMatch(/amazon approv/i);
+      expect(system).toMatch(/corroborat/i);
+    });
+  }
+
+  it("the question shape that blocked 039 still blocks — H4 has no request-voice carve-out", () => {
+    expect(scanHard("Can you show the vendor is Amazon approved for these listings?")).toContain("amazon approved");
+  });
+
+  it("the threshold-corroboration shape that blocked 039's client_summary still blocks", () => {
+    const hits = scanTrackProseAtDelivery([{
+      track_key: "supplier_identity",
+      compiled_findings_json: { summary: "The address is corroborated by multiple independent sources." },
+      questions_to_ask: null,
+    }]);
+    expect(hits.length).toBeGreaterThan(0);
   });
 });
 

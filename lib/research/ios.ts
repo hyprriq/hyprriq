@@ -14,14 +14,18 @@ export const IOS = {
   // version bump — p002. The ios_version below moves in the SAME edit for the same reason as p001:
   // it is the memoization key (getSynthesisByEvidenceHash matches on it), so synthesis stored
   // under the OLD prompts can never be reused under the new ones.
-  prompt_version: "p002-1.0.0",
+  // WORD-RULE HARDENING (2026-08-20, measured on AWI-2608-039 attempt 2 — the first p002 run to
+  // reach the publish gate): 'Amazon approved/approval' and corroboration vocabulary banned by
+  // word, in every client-readable field, across Call C and the shared track surface rule. The
+  // ios_version moves in the SAME edit (memoization key — old-prompt synthesis never reused).
+  prompt_version: "p002-1.1.0",
   rubric_version: "0.0.0",
   // S-1 FREEZE (S-1f Step 4): the synthesis engine ships. Leaves the inert "0.0.0" placeholder —
   // the FORWARD pins in rerun-batch.ts and dispute-rerun.ts move in this SAME commit (S-2 law).
   synthesis_version: "g005-1.0.0",
   corpus_version: "0.0.0",
   configuration_version: "0.0.0",
-  ios_version: "HyprrIQ IOS v0.3-client-summary",
+  ios_version: "HyprrIQ IOS v0.3.1-word-rules",
 } as const;
 
 export function assembleIosVersion(
