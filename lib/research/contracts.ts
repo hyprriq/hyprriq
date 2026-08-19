@@ -201,7 +201,13 @@ export interface TrackOutput {
   track_key: TrackKey;
   evidence_items: EvidenceItem[];
   evidence_weights_applied: EvidenceWeight[];
-  reasoning_notes: string;
+  reasoning_notes: string;                          // INTERNAL — the operator's scratchpad. NEVER client-facing.
+  // ── CLIENT-FACING (founder-ruled 2026-08-19). Added because `summary` was assigned FROM
+  // reasoning_notes, so clients read the model's workings. The VERDICT NEVER READS THIS FIELD —
+  // that is the boundary that keeps the frozen ruling intact: signals, weights, thresholds and
+  // vetoes are untouched. Optional so older stored outputs still type-check; the writer falls back
+  // to code-owned copy, NEVER to reasoning_notes.
+  client_summary?: string;
   unknowns: Unknown[];
   suggested_signal?: TrackSignal; // QA ONLY — never the verdict input (enhancement #1)
   weight_validation?: WeightValidation[];          // Phase 5.1b — Track 1 firewall audit (plumbed to the row)

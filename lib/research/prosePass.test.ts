@@ -88,13 +88,21 @@ describe("(b) a WORD rule, never a strength rule — the positives-first law sur
 });
 
 describe("(c) the version bump — stored synthesis from the old prompts can never be reused", () => {
-  it("prompt_version has left the inert placeholder", () => {
-    expect(IOS.prompt_version).not.toBe("0.0.0");
-    expect(IOS.prompt_version).toBe("p001-1.0.0");
+  // ⚠ UPDATED 2026-08-19 (client_summary pass). These pinned the 08-17 literals exactly, so the
+  // next prose pass necessarily broke them — which is the lock working, but it made the test a
+  // maintenance item rather than an invariant. It now asserts THE PROPERTY THAT MATTERS (the
+  // version left the placeholder and is not ANY previously-shipped value) plus the current pin,
+  // and carries the history so a future pass adds one line instead of rewriting the intent.
+  const SHIPPED_PROMPT_VERSIONS = ["0.0.0", "p001-1.0.0"];
+  const SHIPPED_IOS_VERSIONS = ["HyprrIQ IOS v0.1-skeleton", "HyprrIQ IOS v0.2-prose"];
+
+  it("prompt_version has left the inert placeholder and every previously-shipped value", () => {
+    for (const old of SHIPPED_PROMPT_VERSIONS) expect(IOS.prompt_version).not.toBe(old);
+    expect(IOS.prompt_version).toBe("p002-1.0.0");
   });
   it("ios_version — the memoization key (getSynthesisByEvidenceHash matches on it) — moved in the SAME commit", () => {
-    expect(IOS.ios_version).not.toBe("HyprrIQ IOS v0.1-skeleton");
-    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.2-prose");
+    for (const old of SHIPPED_IOS_VERSIONS) expect(IOS.ios_version).not.toBe(old);
+    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.3-client-summary");
   });
   it("synthesis_version is NOT touched by a prose pass (the S-2 forward pins stay valid)", () => {
     expect(IOS.synthesis_version).toBe("g005-1.0.0");

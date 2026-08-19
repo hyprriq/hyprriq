@@ -8,14 +8,20 @@ export const IOS = {
   // ios_version below moves in the SAME edit — it is the memoization key
   // (getSynthesisByEvidenceHash matches on it), so stored synthesis from the OLD prompts can never
   // be reused under the new ones. p001 = the first prompt-version bump.
-  prompt_version: "p001-1.0.0",
+  // client_summary PASS (founder-ruled 2026-08-19): the four finding tracks now return a
+  // client-facing field and `compiled_findings_json.summary` is written FROM IT rather than from
+  // reasoning_notes. That changes what a client reads on every new attempt, so it is a prompt
+  // version bump — p002. The ios_version below moves in the SAME edit for the same reason as p001:
+  // it is the memoization key (getSynthesisByEvidenceHash matches on it), so synthesis stored
+  // under the OLD prompts can never be reused under the new ones.
+  prompt_version: "p002-1.0.0",
   rubric_version: "0.0.0",
   // S-1 FREEZE (S-1f Step 4): the synthesis engine ships. Leaves the inert "0.0.0" placeholder —
   // the FORWARD pins in rerun-batch.ts and dispute-rerun.ts move in this SAME commit (S-2 law).
   synthesis_version: "g005-1.0.0",
   corpus_version: "0.0.0",
   configuration_version: "0.0.0",
-  ios_version: "HyprrIQ IOS v0.2-prose",
+  ios_version: "HyprrIQ IOS v0.3-client-summary",
 } as const;
 
 export function assembleIosVersion(

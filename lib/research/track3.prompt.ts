@@ -14,6 +14,8 @@ export const BRAND_RISK_KEYS = [
   "confirmed_amazon_restrictions", "cease_and_desist_distributed",
 ] as const;
 
+import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack3Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
@@ -34,6 +36,8 @@ export interface ParsedTrack3 {
   analyst_reading: AnalystReading | null; // advisory; absence never breaks parsing
   questions_to_ask: QuestionToAsk[];
   reasoning_notes: string;
+  // CLIENT-FACING (2026-08-19). reasoning_notes stays internal; this is what a buyer reads.
+  client_summary: string;
   unknowns: Unknown[];
   parse_failed?: true; // H2 — model produced nothing usable (API error / unparseable)
 }
@@ -133,10 +137,11 @@ export function buildTrack3Prompt(
     "state the facet — 'brand-posture facet for <brand>: …' — a proposal that cannot be phrased as a brand-posture",
     "fact does not belong in this track. If you cannot determine a classification, return",
     "proposed_weight_key: 'UNKNOWN' with your reason. You PROPOSE; the platform validates and scores.",
+    CLIENT_SUMMARY_INSTRUCTION,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
     "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }], brand_risk_finding,",
     "analyst_reading: { most_likely, alternative, confidence, what_would_change_my_mind }, questions_to_ask:",
-    "[{ question, reason, blocking_weight_key, priority, brand }], reasoning_notes, unknowns: [{ unknown,",
+    "[{ question, reason, blocking_weight_key, priority, brand }], reasoning_notes, client_summary, unknowns: [{ unknown,",
     "why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
@@ -169,7 +174,7 @@ export function parseTrack3Output(json: unknown): ParsedTrack3 {
   const o = (json ?? {}) as Record<string, unknown> & { _parse_error?: boolean };
   const empty: ParsedTrack3 = {
     items: [], brand_risk_finding: "", analyst_reading: null, questions_to_ask: [],
-    reasoning_notes: "could not parse model output", unknowns: [],
+    reasoning_notes: "could not parse model output", client_summary: "", unknowns: [],
     parse_failed: true, // H2 — a STATE (→ n_a + hold), never a finding
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
@@ -195,6 +200,7 @@ export function parseTrack3Output(json: unknown): ParsedTrack3 {
     analyst_reading: parseAnalystReading(o.analyst_reading),
     questions_to_ask: parseQuestions(o.questions_to_ask),
     reasoning_notes: typeof o.reasoning_notes === "string" ? o.reasoning_notes : "",
+    client_summary: parseClientSummary(o),
     unknowns: Array.isArray(o.unknowns) ? (o.unknowns as Unknown[]) : [],
   };
 }

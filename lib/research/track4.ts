@@ -199,6 +199,9 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
     evidence_items,
     evidence_weights_applied: [],
     reasoning_notes,
+    // Client-facing prose. NOTE the advisories appended to reasoning_notes above are INTERNAL and
+    // deliberately do NOT reach this field.
+    client_summary: parsed.client_summary,
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,

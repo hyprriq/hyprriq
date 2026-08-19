@@ -172,6 +172,8 @@ export async function runTrack1(ctx: TrackContext): Promise<TrackOutput> {
     evidence_items,
     evidence_weights_applied: [],
     reasoning_notes: parsed.reasoning_notes,
+    // Client-facing prose, carried straight through — the operator's notes above stay internal.
+    client_summary: parsed.client_summary,
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,

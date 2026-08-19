@@ -11,6 +11,8 @@ export const DOC_REVIEW_KEYS = [
   "document_alteration", "retail_receipt_as_wholesale",
 ] as const;
 
+import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack4Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
@@ -23,6 +25,8 @@ export interface ParsedTrack4 {
   analyst_reading: AnalystReading | null; // the quartet — advisory, admin-only (OQ-D rule pre-extended)
   questions_to_ask: QuestionToAsk[];
   reasoning_notes: string;
+  // CLIENT-FACING (2026-08-19). reasoning_notes stays internal; this is what a buyer reads.
+  client_summary: string;
   unknowns: Unknown[];
   parse_failed?: true; // H2 — model produced nothing usable
 }
@@ -116,11 +120,12 @@ export function buildTrack4Prompt(
     "Per item you MUST include: brand (\"\" if not brand-specific), mapping_justification, counter_evidence",
     "('None found' if none), certainty (verified|inferred|unknown), confidence (high|medium|low).",
     "You PROPOSE; the platform validates and scores.",
+    CLIENT_SUMMARY_INSTRUCTION,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
     "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }],",
     "documentation_finding, analyst_reading: { most_likely, alternative, confidence,",
     "what_would_change_my_mind }, questions_to_ask: [{ question, reason, blocking_weight_key, priority,",
-    "brand }], reasoning_notes, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
+    "brand }], reasoning_notes, client_summary, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title}\n${s.snippet}`).join("\n---\n");
   const unreadableLines = ctx.unreadable.map((u) => `- ${u.file_name}: ${u.reason}`).join("\n");
@@ -153,7 +158,7 @@ export function parseTrack4Output(json: unknown): ParsedTrack4 {
   const o = (json ?? {}) as Record<string, unknown> & { _parse_error?: boolean };
   const empty: ParsedTrack4 = {
     items: [], documentation_finding: "", analyst_reading: null, questions_to_ask: [],
-    reasoning_notes: "could not parse model output", unknowns: [],
+    reasoning_notes: "could not parse model output", client_summary: "", unknowns: [],
     parse_failed: true,
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
@@ -179,6 +184,7 @@ export function parseTrack4Output(json: unknown): ParsedTrack4 {
     analyst_reading: parseAnalystReading(o.analyst_reading),
     questions_to_ask: parseQuestions(o.questions_to_ask),
     reasoning_notes: typeof o.reasoning_notes === "string" ? o.reasoning_notes : "",
+    client_summary: parseClientSummary(o),
     unknowns: Array.isArray(o.unknowns) ? (o.unknowns as Unknown[]) : [],
   };
 }

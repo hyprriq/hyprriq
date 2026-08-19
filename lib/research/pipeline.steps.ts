@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { TRACK_CLIENT_COPY } from "@/lib/content/trackClientCopy";
 import type { TrackContext, TrackOutput, TrackSignal, SupplierIdentity } from "@/lib/research/contracts";
 import { SOURCING_CLIENT_SUMMARY } from "@/lib/research/contracts";
 import { type TrackKey, trackByNumber } from "@/lib/constants/tracks";
@@ -128,7 +129,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: false, founder_review_status: "approved",
-      compiled_findings_json: { signal: "n_a", not_implemented: true, summary: out.reasoning_notes },
+      compiled_findings_json: { signal: "n_a", not_implemented: true, summary: TRACK_CLIENT_COPY.not_implemented },
     });
     if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
     return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: true, track_number: n };
@@ -145,7 +146,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       evidence_items: [], reasoning_notes: out.reasoning_notes, unknowns: out.unknowns,
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: false, founder_review_status: "approved",
-      compiled_findings_json: { signal: "n_a", nothing_to_review: true, summary: out.reasoning_notes },
+      compiled_findings_json: { signal: "n_a", nothing_to_review: true, summary: TRACK_CLIENT_COPY.nothing_to_review },
     });
     if (res.error) throw new Error(`${def.track} row persist failed: ${res.error}`);
     return { output: out, signal: "n_a", acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
@@ -188,7 +189,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: true, manual_review_reason: "acquisition produced no sources — could not research",
       founder_review_status: "pending",
-      compiled_findings_json: { signal: "n_a", acquisition_failed: true, summary: out.reasoning_notes },
+      compiled_findings_json: { signal: "n_a", acquisition_failed: true, summary: TRACK_CLIENT_COPY.acquisition_failed },
       weight_validation: out.weight_validation ?? null,
       track_validation_report: out.track_validation_report ?? null,
       classifications_total: 0, classifications_accepted: 0, classifications_rejected: 0, classifications_unknown: 0, acceptance_rate: null,
@@ -208,7 +209,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       track_verdict_signal: "n_a", finding_certainty: "unknown",
       manual_review_required: true, manual_review_reason: "model call failed or returned unparseable output — track not scored",
       founder_review_status: "pending",
-      compiled_findings_json: { signal: "n_a", llm_failed: true, summary: out.reasoning_notes },
+      compiled_findings_json: { signal: "n_a", llm_failed: true, summary: TRACK_CLIENT_COPY.llm_failed },
       weight_validation: out.weight_validation ?? null,
       track_validation_report: out.track_validation_report ?? null,
       classifications_total: 0, classifications_accepted: 0, classifications_rejected: 0, classifications_unknown: 0, acceptance_rate: null,
@@ -244,7 +245,11 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     track_verdict_signal: div.signal, confidence_score: sig.score_0_15, confidence_band: sig.band,
     finding_certainty: "unknown",
     compiled_findings_json: {
-      signal: div.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, summary: out.reasoning_notes,
+      signal: div.signal, score: sig.score_0_15, evidence_count: out.evidence_items.length, // ── THE ROOT-CAUSE FIX (founder-ruled 2026-08-19). This read `out.reasoning_notes`, so the
+      // per-area summary every client has ever read WAS the model's internal scratchpad, verbatim.
+      // reasoning_notes is still stored above, unchanged, for the operator. ⛔ NEVER fall back to it
+      // here: a fallback restores the defect silently and looks like it is working.
+      summary: out.client_summary?.trim() || TRACK_CLIENT_COPY.missing_client_summary,
       // H7 (SO-3) — the cap decision is part of the frozen record (SQL-checkable per attempt).
       source_diversity: { capped: div.capped, cap_reason: div.cap_reason, distinct_sources: div.distinct_sources },
       // H7 (SO-4) — the consensus record is part of the frozen record (null when no veto proposed).

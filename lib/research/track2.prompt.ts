@@ -10,6 +10,8 @@ export const SUPPLY_CHAIN_KEYS = [
   "grey_market_signals", "counterfeit_channel", "conflicting_authorization",
 ] as const;
 
+import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedTrack2Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
@@ -25,6 +27,8 @@ export interface ParsedTrack2 {
   b2b_only_brands: string[];
   questions_to_ask: QuestionToAsk[];
   reasoning_notes: string;
+  // CLIENT-FACING (2026-08-19). reasoning_notes stays internal; this is what a buyer reads.
+  client_summary: string;
   unknowns: Unknown[];
   parse_failed?: true; // H2 — model call produced no usable output (API error / unparseable)
 }
@@ -121,10 +125,11 @@ export function buildTrack2Prompt(
     "geographic-scope justification for the letter grade — the full relationship narrative goes in brand_relationship_finding).",
     "Per item you MUST include: brand, mapping_justification, counter_evidence ('None found' if none), certainty",
     "(verified|inferred|unknown), confidence (high|medium|low).",
+    CLIENT_SUMMARY_INSTRUCTION,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key, supporting_source_ids,",
     "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning,",
     "brand_relationship_finding, b2b_only_detected, b2b_only_brands, questions_to_ask: [{ question, reason,",
-    "blocking_weight_key, priority, brand }], reasoning_notes, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
+    "blocking_weight_key, priority, brand }], reasoning_notes, client_summary, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
   // D2 (ADR-T2-002): tell the model the identity is already resolved so it does not re-litigate it.
@@ -179,7 +184,7 @@ export function parseTrack2Output(json: unknown): ParsedTrack2 {
   const o = (json ?? {}) as Record<string, unknown> & { _parse_error?: boolean };
   const empty: ParsedTrack2 = {
     items: [], auth_level: null, auth_level_reasoning: "", brand_relationship_finding: "", b2b_only_detected: false,
-    b2b_only_brands: [], questions_to_ask: [], reasoning_notes: "could not parse model output", unknowns: [],
+    b2b_only_brands: [], questions_to_ask: [], reasoning_notes: "could not parse model output", client_summary: "", unknowns: [],
     parse_failed: true, // H2 — model output unusable: a STATE (→ n_a + hold), never a finding
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
@@ -208,6 +213,7 @@ export function parseTrack2Output(json: unknown): ParsedTrack2 {
     b2b_only_brands: Array.isArray(o.b2b_only_brands) ? (o.b2b_only_brands as unknown[]).filter((x): x is string => typeof x === "string") : [],
     questions_to_ask: parseQuestions(o.questions_to_ask),
     reasoning_notes: typeof o.reasoning_notes === "string" ? o.reasoning_notes : "",
+    client_summary: parseClientSummary(o),
     unknowns: Array.isArray(o.unknowns) ? (o.unknowns as Unknown[]) : [],
   };
 }

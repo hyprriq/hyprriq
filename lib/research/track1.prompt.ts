@@ -9,6 +9,8 @@ export const SUPPLIER_IDENTITY_KEYS = [
   "website_fraudulent", "scam_reports_corroborated",
 ] as const;
 
+import { CLIENT_SUMMARY_INSTRUCTION, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedEvidenceItem {
   evidence_id: string; statement: string; proposed_weight_key: string;
@@ -17,7 +19,7 @@ export interface ProposedEvidenceItem {
 }
 // H2 — parse_failed marks "the model call produced no usable output" (API error or unparseable
 // text). Distinct from a valid-but-empty response: failure is a STATE (→ n_a + hold), never a finding.
-export interface ParsedTrack1 { items: ProposedEvidenceItem[]; reasoning_notes: string; unknowns: Unknown[]; parse_failed?: true }
+export interface ParsedTrack1 { items: ProposedEvidenceItem[]; reasoning_notes: string; client_summary: string; unknowns: Unknown[]; parse_failed?: true }
 
 export function buildTrack1Prompt(
   // H4 — vendor_name is the RESEARCH identity (resolved entity); research_alias carries the
@@ -67,8 +69,9 @@ export function buildTrack1Prompt(
     "misclassification the firewall will reject anyway.",
     "Per item you MUST include: mapping_justification (why this maps to the key), counter_evidence (what cuts against it;",
     "'None found' if nothing), certainty (verified|inferred|unknown), and confidence (high|medium|low).",
+    CLIENT_SUMMARY_INSTRUCTION,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, statement, proposed_weight_key, supporting_source_ids,",
-    "mapping_justification, counter_evidence, certainty, confidence }], reasoning_notes, unknowns: [{ unknown,",
+    "mapping_justification, counter_evidence, certainty, confidence }], reasoning_notes, client_summary, unknowns: [{ unknown,",
     "why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
@@ -85,7 +88,7 @@ const CONFIDENCES = new Set(["high", "medium", "low"]);
 export function parseTrack1Output(json: unknown): ParsedTrack1 {
   const o = (json ?? {}) as { evidence_items?: unknown; reasoning_notes?: unknown; unknowns?: unknown; _parse_error?: boolean };
   if (o._parse_error || !Array.isArray(o.evidence_items)) {
-    return { items: [], reasoning_notes: "could not parse model output", unknowns: [], parse_failed: true };
+    return { items: [], reasoning_notes: "could not parse model output", client_summary: "", unknowns: [], parse_failed: true };
   }
   const items: ProposedEvidenceItem[] = [];
   for (const raw of o.evidence_items as Record<string, unknown>[]) {
@@ -104,6 +107,7 @@ export function parseTrack1Output(json: unknown): ParsedTrack1 {
   return {
     items,
     reasoning_notes: typeof o.reasoning_notes === "string" ? o.reasoning_notes : "",
+    client_summary: parseClientSummary(o),
     unknowns: Array.isArray(o.unknowns) ? (o.unknowns as Unknown[]) : [],
   };
 }
