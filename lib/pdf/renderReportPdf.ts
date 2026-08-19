@@ -127,11 +127,22 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
 }
 
 // ── Chromium ──
-// THE SERVERLESS SWAP POINT. Local/VM/container: the installed Chrome (below). On a platform
-// with no browser binary (e.g. Vercel functions), replace this one function with
-// @sparticuz/chromium — everything above and below is unchanged. See the handoff doc.
+// THE SERVERLESS SWAP POINT, now two-lane. Serverless (Vercel/Lambda): @sparticuz/chromium — the
+// platform ships NO browser binary, so without this lane the deployed render job fails on every
+// invocation ("No Chrome/Chromium binary found"), which is exactly the state §4 shipped in.
+// Local/VM/container: the installed Chrome (below), unchanged. Fonts are unaffected either way —
+// the template embeds its faces as data URIs (lib/pdf/reportAssets.ts), never system fonts.
 async function launchBrowser() {
   const puppeteer = (await import("puppeteer-core")).default;
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    const executablePath = await chromium.executablePath();
+    return puppeteer.launch({
+      executablePath,
+      headless: true,
+      args: [...chromium.args, "--no-sandbox", "--disable-dev-shm-usage"],
+    });
+  }
   const candidates = [
     process.env.CHROME_PATH,
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",

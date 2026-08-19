@@ -15,6 +15,10 @@ import { reportPdfRender } from "@/lib/inngest/functions/reportPdf";
 // set INNGEST_SERVE_ORIGIN on the staging Vercel env to
 // https://hyprriq-git-staging-hyprrx-hyprriq.vercel.app so functions always register under a URL
 // Inngest can reach on every deploy. Unset → falls back to Host-header inference (local/dev).
+// §4 — the PDF render step launches Chromium inside this function's invocation. The platform
+// default duration cap is far below a cold Chromium boot + render; 300s covers the worst step.
+export const maxDuration = 300;
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [pipelineStart, pipelineWatchdog, outcomeCheckpoints, degradedWritesWatchdog, stalledCaseAlarm, reportPdfRender],
