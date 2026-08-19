@@ -144,6 +144,22 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
   );
 }
 
+// ── §3 — THE READING COLUMN, DEFINED ONCE (2026-08-19) ──────────────────────────────────────
+// THE DEFECT, AND WHY FIXING IT PANEL-BY-PANEL WOULD NEVER END: `max-w-[68ch]` was applied to the
+// TEXT in nine separate places while every enclosing CARD stayed full width. So every prose panel
+// in the report — the risk block, the reading-and-its-limits block, the checklist, the monitor
+// list — rendered a ~520px column of text inside a ~940px card and left the right-hand ~400px
+// empty. The founder saw it on the delivered 034 reading panel; it was never one panel's bug.
+//
+// THE FIX IS ON THE CARD, NOT THE TEXT. A prose card is sized to the measure it contains, so the
+// card hugs its text instead of framing an empty half. `72ch` = the 68ch measure plus the card's
+// own horizontal padding, so the TEXT measure is unchanged — this moves the box, not the typography.
+//
+// APPLIED VIA THIS CONSTANT, NOT COPIED: one name, one value, every prose panel. A future panel
+// gets correct spacing by using it, which is the only version of "fixed for all reports" that
+// survives the next person adding a section.
+const READING_CARD = "max-w-[72ch]";
+
 const CHIP_DEFS = {
   verified: "Independently corroborated — multiple independent sources confirm this.",
   assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
@@ -412,7 +428,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
 
       {/* ════ ALWAYS VISIBLE · THE SINGLE MOST IMPORTANT RISK ════ */}
       {report?.the_real_risk && (
-        <div className="mt-6 rounded-card border border-line border-l-4 border-l-verify-ink bg-surface p-6">
+        <div className={`mt-6 ${READING_CARD} rounded-card border border-line border-l-4 border-l-verify-ink bg-surface p-6`}>
           <h3 className="font-display text-[17px] font-bold text-ink">The single most important risk</h3>
           {/* Reading measure: this paragraph ran the full card width (~110+ characters a line). */}
           <p className="mt-2.5 max-w-[68ch] whitespace-pre-line font-reading text-[15px] leading-[1.7] text-ink-2">{report.the_real_risk}</p>
@@ -524,7 +540,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         {hasHonesty && (
         <div role="tabpanel" className={panelCls("honesty")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">What we confirmed — and what we could not</div>
-          <div className="mt-3 rounded-card border border-line bg-surface p-5">
+          <div className={`mt-3 ${READING_CARD} rounded-card border border-line bg-surface p-5`}>
             <div className="flex items-center gap-2">
               <h4 className="text-[14px] font-bold text-ink">The reading, and its limits</h4>
               <span className="cursor-help text-[12px] text-muted" title="What we looked for but public evidence did not confirm. This marks the limits of the research — not a finding against the supplier. Absence of evidence is not evidence of a problem.">ⓘ</span>
