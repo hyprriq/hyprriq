@@ -10,6 +10,10 @@ import type { Verdict } from "@/components/portal/badges";
 import { isAssessmentArea } from "@/lib/constants/tracks";
 import { splitHeadline, HEADLINE_QUALIFIER_LABEL } from "@/lib/portal/headlineParts";
 import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
+import {
+  VERDICT_COPY, AREA_NAMES, AREA_DEFS, CHIP_DEFS, HOW_TO_READ,
+  CHECKLIST_INTRO, NON_VERDICT_SUBHEAD, NON_VERDICT_SUBHEAD_NOTE, isNonVerdictArea,
+} from "@/lib/content/reportCopy";
 
 // ── THE REPORT (full-build brief §1–§3, approved prototype public/prototype/client/report.html) —
 // decision-first, engine's words. STRUCTURAL RULES (§5): the decision layer (identity, summary,
@@ -24,48 +28,23 @@ import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
 // (KEEPA_LIVE false), working Download PDF (disabled affordance), the "Key points confirmed"
 // list (no structured engine source — the five-areas-at-a-glance list renders instead). ──
 
+// ── COPY IS SHARED, PRESENTATION IS NOT (lib/content/reportCopy.ts). The NAME and what the level
+// MEANS come from the shared module so the portal and the PDF can never say two different things
+// about the same verdict; the Tailwind ink/bg classes stay here because they are this medium's
+// presentation and the PDF's hex palette is its own.
 type VerdictMeta = { name: string; level: number; ink: string; bg: string; means: string };
-const VERDICT_META: Record<string, VerdictMeta> = {
-  source_clear: {
-    name: "Source Clear", level: 1, ink: "text-clear-ink", bg: "bg-clear-bg",
-    means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours.",
-  },
-  usable_with_conditions: {
-    name: "Usable With Conditions", level: 2, ink: "text-conditional-ink", bg: "bg-conditional-bg",
-    means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote.",
-  },
-  verify_before_purchase: {
-    name: "Verify Before Purchase", level: 3, ink: "text-verify-ink", bg: "bg-verify-bg",
-    means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved.",
-  },
-  do_not_rely: {
-    name: "Do Not Rely", level: 4, ink: "text-deny-ink", bg: "bg-deny-bg",
-    means: "The evidence does not support relying on this source. The report explains what drove this.",
-  },
+const VERDICT_TONE: Record<string, { ink: string; bg: string }> = {
+  source_clear: { ink: "text-clear-ink", bg: "bg-clear-bg" },
+  usable_with_conditions: { ink: "text-conditional-ink", bg: "bg-conditional-bg" },
+  verify_before_purchase: { ink: "text-verify-ink", bg: "bg-verify-bg" },
+  do_not_rely: { ink: "text-deny-ink", bg: "bg-deny-bg" },
 };
+const VERDICT_META: Record<string, VerdictMeta> = Object.fromEntries(
+  Object.entries(VERDICT_COPY).map(([k, v]) => [k, { ...v, ...(VERDICT_TONE[k] ?? VERDICT_TONE.verify_before_purchase) }]),
+);
 
 const VERDICT_TOOLTIP =
   "The verdict is one of four levels, strongest to weakest: Source Clear, Usable With Conditions, Verify Before Purchase, Do Not Rely. It reflects what the observable evidence supported at the time of research — not a guarantee. The verdict is the recommendation.";
-
-const AREA_DEFS: Record<string, string> = {
-  supplier_identity: "Whether the supplier is a real, verifiable wholesale business.",
-  supply_chain_relationship: "Whether the supplier credibly sources the brands in scope, and whether an authorization link could be confirmed.",
-  brand_risk_assessment: "The brands' reseller environment and any enforcement signals against resellers of this profile.",
-  documentation_review: "What any documents you provided corroborate. Documents can add support but never raise the verdict above what the research on its own supports.",
-  sourcing_logic: "A consistency check across the assessed areas. Informational — it does not change the verdict.",
-};
-
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy",
-  supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk",
-  documentation_review: "Documentation Review",
-  sourcing_logic: "Sourcing Logic",
-  // §2 — Track 6 is ADVISORY, not a sold assessment area (it is deliberately absent from the
-  // canonical TrackKey union). Without this entry the list rendered the raw internal key
-  // "category_compliance" to a paying Scale client.
-  category_compliance: "Category compliance",
-};
 
 // ── §2 TRACK 6 — THE CATEGORY SECTION (founder-ruled 2026-08-18) ────────────────────────────
 // TWO VISIBLY SEPARATE BLOCKS WITH SEPARATE ATTRIBUTION, AND THE BOUNDARY IS STRUCTURAL, NOT A
@@ -160,15 +139,6 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
 // survives the next person adding a section.
 const READING_CARD = "max-w-[72ch]";
 
-const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
-  not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
-} as const;
-
-const HOW_TO_READ =
-  "This report gives you one clear verdict, the single most important risk in plain language, findings across the assessment areas your plan includes, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit. A few things worth knowing: the verdict is a position on a four-level scale, not a pass/fail — it reflects what the observable evidence supported at the time of research; “could not confirm” is not an accusation — it marks the limits of what public evidence shows; “not assessed” means we did not evaluate that area — it neither helps nor harms the verdict; the decision stays yours — a report is not a guarantee of an outcome; it tells you what the evidence supports.";
-
 const QUESTION_SOURCE_LABEL = { system: "From our research", additional: "From our review team" } as const;
 
 type TabKey = "findings" | "honesty" | "checklist" | "notes";
@@ -257,7 +227,13 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   // The count now derives from the canonical track registry (isAssessmentArea), which is a property
   // of the PRODUCT, not of this case: $99 → 3, $149/Growth/Scale → 5, and an advisory row never
   // moves the number at any tier.
+  // ── SOURCING LOGIC — FOUNDER-RULED OPTION (b), 2026-08-19. The row and the COUNT both stay:
+  // sourcing_logic is one of the areas the pricing page sells BY NAME, so omitting it would show a
+  // $99 client two areas against a page promising three. What changes is that it no longer sits
+  // among the verdict-bearing findings as though it were one.
   const areaFindings = orderedFindings.filter((f) => isAssessmentArea(f.track_key));
+  const verdictBearing = areaFindings.filter((f) => !isNonVerdictArea(f.track_key));
+  const nonVerdict = areaFindings.filter((f) => isNonVerdictArea(f.track_key));
   const advisoryFindings = orderedFindings.filter((f) => !isAssessmentArea(f.track_key));
   // The projector emits `category_compliance` ONLY when it has real per-brand content, so a
   // missing block means "no category section" — never an empty bordered box, which on a paid
@@ -501,7 +477,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <div role="tabpanel" className={panelCls("findings")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">{areasLabel}</div>
           <div className="mt-3 overflow-hidden rounded-card border border-line bg-surface">
-            {areaFindings.map((f) => {
+            {verdictBearing.map((f) => {
               const { detail } = findingText(f);
               const notes = findingNotes(f);
               const chip = areaChip(f);
@@ -541,6 +517,27 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               );
             })}
           </div>
+          {/* ── SOURCING LOGIC, option (b): still an assessment area and still counted, but
+              rendered under its own subhead so a reader is never invited to weigh it as a
+              verdict-bearing finding. Renders only when the plan includes it — at every tier it
+              does, which is all of them. ── */}
+          {nonVerdict.length > 0 && (
+            <div className="mt-5">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{NON_VERDICT_SUBHEAD}</div>
+              <p className="mt-1 max-w-[68ch] text-[12.5px] text-muted">{NON_VERDICT_SUBHEAD_NOTE}</p>
+              <div className="mt-2 overflow-hidden rounded-card border border-line bg-surface">
+                {nonVerdict.map((f) => {
+                  const { detail } = findingText(f);
+                  return (
+                    <div key={f.id} className="flex flex-col gap-1 border-b border-line px-5 py-3 last:border-b-0">
+                      <div className="text-[13.5px] font-semibold text-ink-2">{AREA_NAMES[f.track_key] ?? f.track_key}</div>
+                      {detail && <p className="max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-muted">{detail}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <p className="mt-2 text-[12px] text-muted">
             <b>Verified</b> — {CHIP_DEFS.verified} <b>Assessed</b> — {CHIP_DEFS.assessed} <b>Not assessed</b> — {CHIP_DEFS.not_assessed}
           </p>
@@ -583,7 +580,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <div role="tabpanel" className={panelCls("checklist")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">Verify before you commit</div>
           <div className="mt-3 rounded-card border border-line bg-surface px-5 py-2">
-            <p className="py-2 text-[12.5px] text-ink-2">Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.</p>
+            <p className="py-2 text-[12.5px] text-ink-2">{CHECKLIST_INTRO}</p>
             <ol className="mb-2">
                 {report!.questions.map((q, i) => (
                   <li key={i} className="flex items-start gap-3 border-t border-line py-2.5">

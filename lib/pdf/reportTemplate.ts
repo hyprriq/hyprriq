@@ -9,6 +9,10 @@ import {
   BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine,
 } from "@/lib/content/reportDocument";
 import type { ReportAssets } from "@/lib/pdf/reportAssets";
+import {
+  VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, CHIP_DEFS,
+  CHECKLIST_INTRO, CATEGORY_NOTE, CLOSING_STATEMENT,
+} from "@/lib/content/reportCopy";
 
 // ── THE REPORT DOCUMENT TEMPLATE (pure). One fixed model for every report: same sections, same
 // grammar, same rules — only the projected content differs. No Node APIs, no browser APIs, no
@@ -142,31 +146,13 @@ function toneFor(label: string): string {
   return "navy";
 }
 
-// ── Locked display copy — verbatim from the shipping report (components/portal/report-view.tsx) ──
-const VERDICT_META: Record<string, { name: string; level: number; means: string }> = {
-  source_clear: { name: "Source Clear", level: 1, means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours." },
-  usable_with_conditions: { name: "Usable With Conditions", level: 2, means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote." },
-  verify_before_purchase: { name: "Verify Before Purchase", level: 3, means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved." },
-  do_not_rely: { name: "Do Not Rely", level: 4, means: "The evidence does not support relying on this source. The report explains what drove this." },
-};
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
-  // §4 — Track 6 is ADVISORY, never a sold assessment area. Without this the PDF printed the raw
-  // internal key to a paying $149/Scale client, exactly as the portal did before §2.
-  category_compliance: "Category compliance",
-};
-const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
-  not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
-} as const;
-const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
-const CATEGORY_NOTE = "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";
-const CLOSING = "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.";
+// ── Display copy comes from lib/content/reportCopy.ts — ONE source shared with the portal.
+// It used to be duplicated here verbatim under a comment saying so, which is a promise, not a lock.
+const VERDICT_META = VERDICT_COPY;
+const CLOSING = CLOSING_STATEMENT;
 const RISK_HEAD = "The single most important risk";
 const LIMITS_HEAD = "The reading, and its limits";
-const SCALE_ORDER = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"] as const;
+const SCALE_ORDER = VERDICT_SCALE_ORDER;
 
 function areaStatus(f: Finding): { label: string; tone: string } {
   if (f.track_key === "sourcing_logic") return { label: "Informational", tone: "navy" };

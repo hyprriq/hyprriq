@@ -12,13 +12,10 @@ import { deriveClientCertainty } from "@/lib/portal/certainty";
 // context subordinate. Internal detail (tags, categories, gates) is the operator's leverage and
 // stays raw here — the client cleaner runs ONLY on the client-text field. ──
 
-export const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy",
-  supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk",
-  documentation_review: "Documentation Review",
-  sourcing_logic: "Sourcing Logic",
-};
+// Re-exported from the ONE source (lib/content/reportCopy.ts). This was the fourth copy of
+// these strings; the operator screen must name an area exactly as the client sees it named.
+import { AREA_NAMES } from "@/lib/content/reportCopy";
+export { AREA_NAMES };
 
 export type AreaCause = "assessed" | "plan_excluded" | "nothing_to_review" | "non_voting" | "acquisition_failed" | "llm_failed" | "not_implemented";
 
