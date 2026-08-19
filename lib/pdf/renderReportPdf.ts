@@ -8,6 +8,7 @@ import { getCaseTrackResults } from "@/lib/data/track-results";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
 import { buildClientFindings } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
+import { assertNoInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { SECTIONS } from "@/lib/content/reportDocument";
 import { loadReportAssets } from "@/lib/pdf/reportAssets";
 import {
@@ -92,7 +93,16 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
     clientName = "[Client name missing — internal proof]";
   }
 
-  return {
+  // ── THE PRESENCE CHECKPOINT BINDS HERE (founder-ruled 2026-08-18). It is already inherited
+  // twice over — projectClientReport above and buildClientFindings below both assert at their
+  // tails — but the ruling names PDF RENDER as a binding point, so the assembled content is
+  // asserted as one payload rather than only in the two halves that happened to build it.
+  //
+  // ⛔ THE TEMPLATE MUST NEVER GROW TOKEN-STRIPPING TO SATISFY THIS. If it fires, the leak is
+  // upstream in the projection and that is where it gets fixed. The cleaners are shape-based and
+  // may always miss; this is presence-based and may never be widened into a shape matcher —
+  // teaching the template to strip is exactly the merge the law forbids.
+  const content = {
     caseNumber: row.case_number,
     vendor: row.vendor_name ?? "—",
     brands: row.brands_submitted ?? [],
@@ -102,6 +112,8 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
     report,
     findings: buildClientFindings(rows),
   };
+  assertNoInternalTokens(content, `PDF render ${row.case_number}`);
+  return content;
 }
 
 // ── Chromium ──

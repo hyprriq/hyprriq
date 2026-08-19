@@ -12,20 +12,125 @@
 // - The M8 filter is STRUCTURAL (a question ends with "?"), never a content blocklist — the
 //   known AWI-2607-022 leak ("documentation_review: no documents were provided for review")
 //   fails the structure test; future non-questions fail it too without maintenance.
+import { assertNoInternalTokens } from "./clientTokenCheckpoint";
 
 // Parenthetical groups made ONLY of internal evidence tokens — src_40 / E04 / EV-011 — joined by
 // commas, "and", or "through". Genuine parentheticals (words, e.g., NYSE: SNX, years in prose)
 // never match because they contain non-token words.
-const TOKEN = String.raw`(?:src_\d+|EV?-?\d{1,4})`;
+//
+// ── §1 CLASS 1 WIDENING (founder-ruled 2026-08-18, P0). THE DEFECT THIS FIXES: this file only
+// ever stripped BRACKETED groups, so 169 tokens across 19 cases reached client payloads in four
+// other grammatical positions. It was "verified weeks ago" because THE FIXTURES WERE ALL
+// PARENTHESISED — the instrument only saw the shape it was built to see.
+//
+// TWO TOKEN VOCABULARIES, DELIBERATELY DIFFERENT WIDTHS. Do not merge them:
+//  · GROUPED (inside parens/brackets) keeps the loose historical set including bare E04/E10 — a
+//    bracket containing nothing but tokens is a citation BY CONSTRUCTION, so a wide match is safe.
+//  · BARE (naked in prose) is ANCHORED to src_N and EV-NNN only. Bare `E-\d+` is DROPPED here for
+//    the same reason the presence checkpoint drops it: it collides with real product model
+//    numbers (E-40, EV-2000), and silently deleting a model number out of a client's own product
+//    description is a worse failure than leaving a token in.
+//
+// `A\d{2}` (A01, A05 — the assumption/analysis citation vocabulary that appears alongside E-ids,
+// cf. the E02/E05/A01 fixture in synthesisMethodScan.test.ts) is GROUPED-ONLY, and finding that
+// out is what fixed the P0. AWI-2608-034's leak was `(EV-001, EV-004, EV-005, A05, A08)` — a
+// parenthetical the old matcher SHOULD have caught. It didn't, because the matcher requires EVERY
+// member to be a known token, so the two unrecognised `A` tokens defeated the whole group and
+// carried three EV ids into the client's most-read field. ⚠ ONE UNKNOWN TOKEN SHAPE DISABLES THE
+// MATCH FOR EVERY KNOWN ONE BESIDE IT — that is the failure mode, not "parenthesised only".
+// It is NOT added to the bare vocabulary: `A10` collides with real product model numbers exactly
+// as `E-40` does, and deleting a model number from a client's own product text is worse than
+// leaving a token in. Bare A-NN is the checkpoint's problem, and its collision risk needs a ruling.
+const TOKEN = String.raw`(?:src_\d+|EV?-?\d{1,4}|A\d{2})`;
+const BARE_TOKEN = String.raw`(?:src_\d+|EV-\d{3})`;
+// Joiners observed IN THE CORPUS, not imagined: comma, and/or, "through", slash, and the en-dash
+// RANGE (`src_3–src_6`) that no hand-written fixture set contained — 28 of the 169 occurrences.
+const JOIN = String.raw`(?:\s*(?:,|and|or|through|&|/|[–—-])\s*)`;
 const REF_GROUP = new RegExp(String.raw`\s*\(\s*${TOKEN}(?:\s*(?:,|and|through)\s*${TOKEN})*\s*\)`, "g");
+const REF_BRACKET = new RegExp(String.raw`\s*\[\s*${TOKEN}(?:\s*(?:,|and|through)\s*${TOKEN})*\s*\]`, "g");
+// ⚠ THE BOUNDARY GUARDS ARE LOAD-BEARING AND GO ON THE GROUP, NOT THE TOKEN. Without the trailing
+// `(?!\d)`, `EV-\d{3}` matches the first six characters of the product model "EV-2000" and strips
+// them, leaving a client reading "the 0 charger" — a false strip that corrupts their own product
+// name, which is worse than the leak this file exists to stop. Caught by the corpus fixture, not
+// by review. They cannot go on BARE_TOKEN itself: the en-dash range `src_3-src_6` joins tokens
+// with a hyphen, so a leading guard on the token would end the group at the joiner and orphan the
+// second half.
+const BARE_GROUP = new RegExp(String.raw`(?<![A-Za-z0-9-])${BARE_TOKEN}(?:${JOIN}${BARE_TOKEN})*(?!\d)`, "g");
 
 export function stripInternalRefs(text: string): string {
+  return tidyAfterStrip(
+    text
+      .replace(REF_GROUP, "")
+      .replace(REF_BRACKET, "")
+      .replace(BARE_GROUP, ""),
+  );
+}
+
+// ── GRAMMAR MUST SURVIVE THE STRIP (the ruling's words). Removing a token leaves punctuation and
+// connectors behind that were only ever holding the token; this repairs the seam. It never
+// rewords: every operation here deletes leftover punctuation/whitespace or a connector stranded
+// against a sentence edge. The engine's words stay the engine's words.
+function tidyAfterStrip(text: string): string {
   return text
-    .replace(REF_GROUP, "")
+    .replace(/\(\s*\)|\[\s*\]/g, "")            // brackets emptied by the strip
+    // A MIXED citation — "(A10, unresolved)", "(, A05, A08)" — keeps its surviving words but is
+    // left holding the removed token's commas. Caught on the corpus: stripping the P0's EV ids
+    // produced a literal "(, A05, A08)" until this line existed.
+    .replace(/\(\s*[,;]\s*/g, "(")              // "(, A05" → "(A05"
+    .replace(/\s*[,;]\s*\)/g, ")")              // "A08, )" → "A08)"
+    .replace(/\s*,(\s*,)+/g, ",")               // "a, , b" → "a, b"
+    .replace(/([:;,])\s*(?=[.!?])/g, "")        // "Evidence:." → "Evidence."
+    .replace(/\b(?:and|or)\s*(?=[.!?])/gi, "")  // "cites and." → "cites."
+    .replace(/^[\s,;:]*(?:and|or)\s+/i, "")     // sentence now opening on a stranded connector
+    .replace(/^[\s,;:–—-]+/, "")                // …or on stranded punctuation
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([.,;:!?])/g, "$1")
     .trim();
 }
+
+// ── SENTENCE-LEVEL DROP (the other half of the ruled fix). When the token IS the grammatical
+// subject, no amount of seam repair saves the sentence — "src_4 lists 'Bosch' on the vendor page"
+// strips to " lists 'Bosch' on the vendor page", a wreck with no subject. Those sentences are
+// dropped whole rather than mangled.
+//
+// STRUCTURAL, NOT A VERB LIST: the test is "does the sentence OPEN with a token group" (after an
+// optional ALL-CAPS section label, the shape the engine actually emits — "HPE REFERENCE: src_9
+// and src_10 reference…"). A verb list would be another instrument that only sees what it was
+// built to see.
+const TOKEN_SUBJECT_RE = new RegExp(String.raw`^\s*(?:[A-Z][A-Z0-9\s/&'-]{2,40}:\s*)?${BARE_GROUP.source}\b`);
+
+export function dropTokenSubjectSentences(text: string): string {
+  return text
+    .split(SENTENCE_SPLIT)
+    .filter((s) => !TOKEN_SUBJECT_RE.test(s))
+    .join(" ")
+    .trim();
+}
+
+// A residue that is not a sentence at all — "Evidence:" left behind by "Evidence: src_3, src_4." —
+// is dropped. NOTHING ELSE IS.
+//
+// ⚠ THIS GUARD WAS A WORD COUNT (min 3) FOR ONE ITERATION AND IT DELETED A REAL FINDING: the
+// admin fixture "Enforcement documented (E10)." strips to "Enforcement documented.", a complete
+// two-word finding that the count threw away. There is no reliable way to tell that from the
+// equally-two-word wreck "Reading cites." without doing grammar analysis, so the guard does the
+// only thing it can defend: it removes residues with no words in them, and leaves mild engine
+// imperfection standing. Losing a client's finding is the worse error, and this module's own law
+// already says the prose is the engine's words with the engine's imperfections.
+const NOT_A_SENTENCE = (s: string): boolean =>
+  !/[A-Za-z]/.test(s) ||                 // punctuation and spaces only
+  /^[^.!?]*:$/.test(s.trim());           // a bare label whose list the strip took away
+
+function dropStrippedFragments(text: string, hadToken: boolean): string {
+  if (!hadToken) return text;
+  return text
+    .split(SENTENCE_SPLIT)
+    .filter((s) => !NOT_A_SENTENCE(s))
+    .join(" ")
+    .trim();
+}
+
+const SENTENCE_SPLIT = /(?<=[.!?])\s+/;
 
 // ── FOUNDER RULING 2026-08-13: src_N stripping is CLIENT SIDE ONLY — the operator's view keeps
 // the tags (checking a finding against its cited source is the operator's leverage). This deep
@@ -101,10 +206,65 @@ export function dropSourceDisposalSentences(text: string): string {
   return sentences.filter((s) => !DISPOSAL_RE.test(s)).join(" ").trim();
 }
 
-// The composed client-projection pass: strip refs → substitute internal names → drop the
-// disposal log. Order matters only for readability of intermediates; each step is independent.
+// ── §1 CLASS 2 (founder-ruled 2026-08-18) — dev-era stub provenance. 47 occurrences across 19
+// cases, all ONE shape: "stub track_1 for case 7e2bd898-59d2-4e81-ac4f-a44717b09a99". There is no
+// client-facing content inside it to preserve, so the sentence goes whole.
+//
+// Deliberately narrow: it keys on the stub shape, NOT on "contains a UUID". A UUID anywhere in
+// client prose is a leak, but removing whole sentences on that basis would silently delete real
+// findings that happen to quote an id. Narrow cleaner + presence checkpoint backstop is the ruled
+// architecture — the cleaner removes what it can PROVE is provenance, the checkpoint refuses the
+// rest rather than guessing.
+const STUB_PROVENANCE_RE = /\bstub\s+track_\d+\s+for\s+case\b/i;
+
+export function dropStubProvenanceSentences(text: string): string {
+  return text
+    .split(SENTENCE_SPLIT)
+    .filter((s) => !STUB_PROVENANCE_RE.test(s))
+    .join(" ")
+    .trim();
+}
+
+// ── §1 CLASS 3 (founder-ruled 2026-08-18: CLEANER, substitute, preserve grammar) — the retired
+// scoring vocabulary. The area-claims ruling (`126d440`) replaced "research dimensions" with
+// "assessment areas" across public copy; `substituteInternalDimensionNames` above replaces
+// dimension NAMES, so the bare word survived in 30 occurrences across 15 cases.
+//
+// ⚠ THE COMPOUND RULE MUST RUN FIRST, AND THE CORPUS IS WHY. AWI-2607-030 carries "All five major
+// assessment dimensions (reseller policy, …)". A bare word-for-word substitution turns that into
+// "All five major assessment ASSESSMENT AREAS" — broken output shipped to a client. The corpus
+// also proves the word carries an ordinary-English sense here ("any other dimension of vendor
+// legitimacy"), which substitutes to grammatical prose but is NOT retired vocabulary. Both facts
+// come from reading all 12 distinct corpus sentences; neither is visible in any one of them.
+const RETIRED_AREA_VOCAB: [RegExp, string][] = [
+  [/\b(?:assessment|verification|research|evaluation|scoring)\s+dimensions\b/gi, "assessment areas"],
+  [/\b(?:assessment|verification|research|evaluation|scoring)\s+dimension\b/gi, "assessment area"],
+  [/\bdimensions\b/gi, "assessment areas"],
+  [/\bdimension\b/gi, "assessment area"],
+];
+
+export function substituteRetiredAreaVocabulary(text: string): string {
+  let out = text;
+  for (const [re, replacement] of RETIRED_AREA_VOCAB) {
+    out = out.replace(re, (m) => (/^[A-Z]/.test(m) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement));
+  }
+  return out;
+}
+
+// The composed client-projection pass. ORDER IS NOW LOAD-BEARING — it was not before:
+//   1. dimension NAMES substitute (Track 2 → Supply-Chain Relationship) …
+//   2. … then the retired bare word, so "the documentation_review dimension" resolves in that order
+//   3. sentence-level drops run BEFORE the token strip, because the drops match on text the strip
+//      is about to remove (a disposal sentence whose subject is `src_5` must still look like one)
+//   4. token-level strip last, then the fragment guard over what the strip left behind
 export function cleanClientProse(text: string): string {
-  return dropSourceDisposalSentences(substituteInternalDimensionNames(stripInternalRefs(text)));
+  const hadToken = BARE_GROUP.test(text) || REF_GROUP.test(text) || REF_BRACKET.test(text);
+  BARE_GROUP.lastIndex = REF_GROUP.lastIndex = REF_BRACKET.lastIndex = 0;
+  const named = substituteRetiredAreaVocabulary(substituteInternalDimensionNames(text));
+  const dropped = dropTokenSubjectSentences(
+    dropStubProvenanceSentences(dropSourceDisposalSentences(named)),
+  );
+  return dropStrippedFragments(stripInternalRefs(dropped), hadToken);
 }
 
 export function cleanClientProseDeep<T>(value: T): T {
@@ -175,16 +335,37 @@ export function dropBankCoordinateSentences(text: string): string {
 // The per-finding clean pass used by BOTH client projections (portal getCaseFindings and the
 // admin client-view's buildClientFindings): generic prose cleanup everywhere, plus the
 // documentation-scoped bank-coordinate filter.
-export function cleanClientFindingJson<T>(value: T, trackKey: string): T {
+// ── CHECKPOINT BINDING (founder-ruled 2026-08-18). These two functions are the ONLY sanctioned
+// way to produce client bytes, so binding the presence checkpoint at their tails means everything
+// built on them inherits it BY CONSTRUCTION — including render paths nobody has written yet.
+//
+// THE ESCAPE IS EXPLICIT AND NARROW, AND IT EXISTS FOR ONE REASON: the operator's review screen
+// renders the client's text so a leak can be SEEN and fixed. If the tail threw there too, a leaky
+// case would become unreviewable — the gate would hide the very thing it is complaining about.
+// Modelled on renderReportPdf's `allowMissingClientName`: an explicit parameter at the call site,
+// never an ambient env var, so every bypass is visible in the code that asks for it.
+export interface ClientProjectionOptions {
+  /** Operator surfaces only. Reports instead of refusing, so a leak can be diagnosed. */
+  allowInternalTokens?: boolean;
+}
+
+function checkpoint(value: unknown, context: string, opts?: ClientProjectionOptions): void {
+  if (opts?.allowInternalTokens) return;
+  assertNoInternalTokens(value, context);
+}
+
+export function cleanClientFindingJson<T>(value: T, trackKey: string, opts?: ClientProjectionOptions): T {
   const cleaned = cleanClientProseDeep(value);
-  if (trackKey !== "documentation_review") return cleaned;
-  return deepMapStrings(cleaned, dropBankCoordinateSentences);
+  const out = trackKey !== "documentation_review" ? cleaned : deepMapStrings(cleaned, dropBankCoordinateSentences);
+  checkpoint(out, `cleanClientFindingJson(${trackKey})`, opts);
+  return out;
 }
 
 export function projectClientReport(
   snapshot: Record<string, unknown> | null,
   vendorQuestions: unknown,
   additional: { question?: unknown; source?: string }[],
+  opts?: ClientProjectionOptions,
 ): ClientReport | null {
   if (!snapshot) return null;
   const m8 = Array.isArray(vendorQuestions) ? vendorQuestions : [];
@@ -196,7 +377,7 @@ export function projectClientReport(
       .map((q) => ({ question: cleanClientProse(q.trim()), source: "additional" as const })),
   ];
   const headline = cleanClientProse(str(snapshot.headline));
-  return {
+  const report: ClientReport = {
     headline: headline.trim().length >= MIN_REAL_HEADLINE_CHARS ? headline : "",
     the_real_risk: cleanClientProse(str(snapshot.the_real_risk)),
     leading_interpretation: cleanClientProse(str(snapshot.leading_interpretation)),
@@ -205,4 +386,6 @@ export function projectClientReport(
       .map((s) => cleanClientProse(s)),
     questions,
   };
+  checkpoint(report, "projectClientReport", opts);
+  return report;
 }

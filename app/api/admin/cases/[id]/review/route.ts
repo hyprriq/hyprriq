@@ -10,6 +10,11 @@ import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
 import { scanSynthesisAtDelivery } from "@/lib/research/synthesisMethodScan";
+import {
+  cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
+  projectClientReport, projectFindingJsonForClient,
+} from "@/lib/portal/clientReport";
+import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { locateSynthesisMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
@@ -204,6 +209,56 @@ export async function POST(
       new_value: { blocked: "banned_language", violations, located: summariseHits(findings) },
     });
     return NextResponse.json({ error: "banned_language", violations, findings }, { status: 422 });
+  }
+
+  // ── THE PRESENCE CHECKPOINT (founder-ruled 2026-08-18) — THE REFUSING ENFORCEMENT POINT.
+  //
+  // ⚠ IT SCANS THE PROJECTED PAYLOAD, NOT `rows`. THIS IS THE OPPOSITE SIDE FROM EVERY GATE ABOVE
+  // AND IT IS DELIBERATE. The banned-language and derivation scanners read RAW findings, which is
+  // correct for them: cleaning only removes, so raw is a superset of projected. For internal
+  // tokens it INVERTS — raw ALWAYS legitimately carries `src_N` (the operator's ruled
+  // source-checking leverage), so this same assertion built on `rows` would refuse every case on
+  // day one. Two gates, two surfaces, pinned on purpose. Do not "tidy" them onto one walk: that is
+  // the same defect class as the census/attempt skew, two instruments not pinned to the same thing.
+  //
+  // The payload below is composed the way the CLIENT surfaces compose it (lib/data/cases.ts
+  // getCaseFindings and lib/pdf/renderReportPdf.ts), so what is asserted here is what ships.
+  const projectedForClient = {
+    findings: rows.map((r) => ({
+      compiled_findings_json: r.compiled_findings_json
+        ? cleanClientFindingJson(
+            projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key),
+            r.track_key,
+          )
+        : null,
+      questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
+    })),
+    // `client_notes` are IN SCOPE by ruling.
+    client_note: identityNote ? cleanClientProse(identityNote) : null,
+    report: intel
+      ? projectClientReport(
+          (intel.synthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null,
+          intel.synthesis.module_8_vendor_questions,
+          ((c as { additional_questions?: { question?: unknown; source?: string }[] | null }).additional_questions) ?? [],
+        )
+      : null,
+  };
+  const tokenLeaks = findInternalTokens(projectedForClient);
+  if (tokenLeaks.length > 0) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_track_results", record_id: id, action: "UPDATE",
+      actor_id: userId, actor_type: "admin",
+      new_value: { blocked: "internal_tokens", count: tokenLeaks.length, found: tokenLeaks.slice(0, 20) },
+    });
+    return NextResponse.json({
+      error: "internal_tokens",
+      count: tokenLeaks.length,
+      findings: tokenLeaks,
+      message:
+        `Publish refused: ${tokenLeaks.length} internal reference(s) are present in the payload this client would receive. ` +
+        `This is a BACKSTOP, not a style check — a token here means a cleaner missed a shape nobody had seen. ` +
+        `Fix it in the projection (lib/portal/clientReport.ts) and re-run; do not strip it at the render site.`,
+    }, { status: 422 });
   }
 
   // H1 — pin the attempt that passed the banned-language gate; publishing resolves any pending

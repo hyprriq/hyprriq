@@ -101,7 +101,9 @@ export default async function CaseReviewPage({
       change_request_deadline: null, change_request_used: true,
       supplier_identity: projectSupplierIdentityForClient(c.supplier_identity),
     } as unknown as CaseDetail,
-    findings: buildClientFindings(clientRows),
+    // OPERATOR SURFACE — reports internal tokens instead of refusing. The publish route is the
+    // refusing point; this page has to be able to SHOW the operator the leak it must not ship.
+    findings: buildClientFindings(clientRows, { allowInternalTokens: true }),
     report: projectClientReport(
       (clientSnap?.decision_snapshot ?? null) as Record<string, unknown> | null,
       clientSnap?.vendor_questions ?? [],

@@ -1,7 +1,7 @@
 import type { TrackResultRow } from "@/lib/data/track-results";
 import type { EvidenceItem, Unknown, SourcingLogicOutput, WeightValidation, QuestionToAsk } from "@/lib/research/contracts";
 import type { Finding } from "@/lib/data/cases";
-import { cleanClientProse, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient } from "@/lib/portal/clientReport";
+import { cleanClientProse, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, type ClientProjectionOptions } from "@/lib/portal/clientReport";
 import { narrativeFrom, boundaryNotesFrom } from "@/lib/portal/finding-view";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 
@@ -100,7 +100,14 @@ export function buildAreaViews(rows: TrackResultRow[]): AreaView[] {
 // the rows the review page already fetched. CAVEAT (honest, by design): the page's rows are the
 // LATEST attempt; a delivered case with a pending re-investigation shows the newest research
 // here while the client still sees the delivered attempt.
-export function buildClientFindings(rows: TrackResultRow[]): Finding[] {
+//
+// ⚠ THE CHECKPOINT ESCAPE DEFAULTS TO OFF, AND THAT DEFAULT IS THE SAFETY PROPERTY. This function
+// has TWO callers with opposite needs: the operator's review page must render a leaky case so the
+// leak can be SEEN and fixed (a gate that hides what it is complaining about is useless), while
+// lib/pdf/renderReportPdf.ts produces a client DELIVERABLE and must refuse. Defaulting to refuse
+// means a future third caller inherits the safe behaviour by construction and has to ask, in code,
+// to opt out of it.
+export function buildClientFindings(rows: TrackResultRow[], opts?: ClientProjectionOptions): Finding[] {
   return rows
     .filter((r) => r.track_number >= 1)
     .sort((a, b) => a.track_number - b.track_number)
@@ -111,7 +118,7 @@ export function buildClientFindings(rows: TrackResultRow[]): Finding[] {
         track: r.track,
         track_key: r.track_key,
         finding_certainty: deriveClientCertainty(r.evidence_items),
-        compiled_findings_json: cf ? cleanClientFindingJson(projectFindingJsonForClient(cf, r.track_key), r.track_key) : null,
+        compiled_findings_json: cf ? cleanClientFindingJson(projectFindingJsonForClient(cf, r.track_key), r.track_key, opts) : null,
         questions_to_ask: cleanClientProseDeep((r.questions_to_ask ?? null) as QuestionToAsk[] | null),
       };
     });

@@ -212,7 +212,12 @@ describe("projectClientReport — the exact field list that crosses, nothing els
     const r = projectClientReport(snapshot, [], [])!;
     expect(r.headline).toBe("Headline with a ref inside. — subject to verification of X");
     expect(r.the_real_risk).toBe("The operative risk is real.");
-    expect(r.leading_interpretation).toBe("Reading cites and."); // refs gone; prose imperfection is the engine's, not invented
+    // ⚠ EXPECTATION CHANGED 2026-08-18 (§1, founder-ruled "grammar must survive the strip").
+    // Was "Reading cites and." — the stranded connector is now repaired. The residue itself is
+    // NOT dropped: telling this two-word wreck from the real two-word finding "Enforcement
+    // documented." needs grammar analysis the cleaner deliberately does not do, and deleting a
+    // client's finding is the worse of the two errors. The engine's imperfection stands.
+    expect(r.leading_interpretation).toBe("Reading cites.");
     expect(r.what_to_monitor).toEqual(["Watch the MAP documents for changes."]);
   });
 

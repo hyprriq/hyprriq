@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-18 (END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-18 (§1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -40,7 +40,62 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ §1 BUILT 2026-08-18 — CLEANER FIX + PRESENCE CHECKPOINT + RENDER-PATH INVENTORY, ONE LANE.**
+> Corpus effect, measured over all 35 projected client payloads before and after
+> (`scripts/token-leak-sweep.ts`, read-only): **cases carrying an internal token 34/35 → 6/35.**
+> `src_N` 169 → 0 · `EV-NNN` 3 → 0 · UUID 47 → 0 · `stub track_N` 47 → 0 · bare `dimension` 30 → 0.
+> Residue: one accepted `A-NN` (below) and `weight_key` 9 (Class 4, its own commit by ruling).
+>
+> **⚠ THE ROOT CAUSE ON RECORD ABOVE IS WRONG — FOUNDER-CORRECTED 2026-08-18. It is NOT "REF_GROUP
+> matches parenthesised groups only".** AWI-2608-034's leaked field is
+> `(EV-001, EV-004, EV-005, A05, A08)` — that citation **is** parenthesised, so the recorded cause
+> cannot explain it. The real cause: **the group matcher requires EVERY member to be a known token,
+> so one unrecognised shape (`A05`, `A08`) disabled the match for every known token beside it.**
+> An unknown token does not merely survive — **it PROTECTS the known ones.** The wrong cause on
+> record would have sent the next reader hunting bracket shapes and they would have found nothing.
+>
+> **✓ RULED 2026-08-18 — bare `A-NN` is NOT asserted at the checkpoint. Consistent with the `E-nn`
+> ruling and for the same reason:** `A10` collides with real product model numbers, and a false
+> refusal at publish is the worst failure a backstop can have. The grouped matcher now covers
+> `A\d{2}`, which is the right level. The single residue on AWI-2608-032 (`"(A10, unresolved)"` —
+> a token mixed with a real word, so the all-tokens matcher correctly declines it) is **ACCEPTED,
+> not pending.**
+>
+> **✓ RULED — Class 3 (`dimension`) is a CLEANER job, word-level substitution.** A checkpoint
+> refusal must mean *something internal escaped*, not *we used last month's word*. **The corpus
+> forced a compound rule that no single occurrence reveals:** AWI-2607-030 carries "All five major
+> assessment dimensions", which a bare word-for-word substitution turns into "assessment
+> **assessment areas**" — broken output shipped to a client. Qualifier compounds
+> (assessment/verification/research/evaluation/scoring + dimension) resolve FIRST. The word also
+> carries an ordinary-English sense in this corpus ("any other dimension of vendor legitimacy");
+> all 12 distinct corpus sentences are two-sided fixtures.
+>
+> **THE STANDING RULE CAUGHT TWO OF CLAUDE'S OWN DEFECTS THIS SESSION, BOTH VIA CORPUS FIXTURES:**
+> (1) the "anchored" `EV-\d{3}` had no anchor and matched inside the product model `EV-2000`,
+> shipping "the **0** charger" — a false strip corrupting a client's own product name, which is
+> worse than the leak this module exists to stop; (2) a min-3-word fragment guard deleted
+> "Enforcement documented." — a real two-word finding. Both were invisible to review and visible
+> to the corpus. Recorded because the rule keeps paying for itself.
+>
+> **BINDINGS (built):** tail of `cleanClientFindingJson` + `projectClientReport`
+> (`lib/portal/clientReport.ts`) so anything built on them inherits the backstop BY CONSTRUCTION ·
+> the PUBLISH gate over the fully-assembled PROJECTED payload — the refusing point, 422
+> `internal_tokens` with per-occurrence paths (`app/api/admin/cases/[id]/review/route.ts`) · PDF
+> render (`lib/pdf/renderReportPdf.ts`). **The escape (`allowInternalTokens`) is explicit, defaults
+> to OFF, and exists only for the operator's review page — a gate that hides the leak it is
+> complaining about would make a leaky case unreviewable.**
+> **EMAIL IS NOT BOUND, AND THAT IS A MEASURED FINDING, NOT AN OMISSION:** `lib/email/notify.ts:98`
+> carries case number + vendor name only — no engine prose. It comes into scope when the PDF is
+> attached (§4).
+> **RENDER-PATH INVENTORY (ruled as part of the fix, not assumed):** exactly ONE sanctioned
+> client-byte chain and both client surfaces use it — portal `lib/data/cases.ts:238`, PDF
+> `lib/pdf/renderReportPdf.ts` via `buildClientFindings`. Admin reads raw, correctly. Locked by
+> `lib/portal/clientRenderPaths.lock.test.ts` so a future path cannot quietly bypass it.
+> Gates: 1478/1478 · tsc 0 · eslint 0 · frozen surfaces untouched · `FINDING_CLIENT_ALLOWLIST` unchanged.
+
 > **🔴 P0 LIVE ON A CLIENT ACCOUNT — INTERNAL TOKENS ON DELIVERED AWI-2608-034. TOP OF QUEUE.**
+> **↑ SUPERSEDED BY THE §1 BLOCK ABOVE — including its ROOT CAUSE, which is corrected there.
+> Kept verbatim because the ruling history is the record; read the correction first.**
 > Measured over 034's **PROJECTED** client payload, after every existing cleaner — **THREE leaks, TWO
 > classes**, not the one seen by eye: `src_1, src_18` in `findings[1].summary` (Supplier Legitimacy —
 > the visible one) · `src_3, src_9, src_0` in `findings[3].summary` (**unseen**) · **`EV-001, EV-004,
