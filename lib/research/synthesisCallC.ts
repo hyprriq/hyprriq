@@ -8,6 +8,7 @@ import { deriveCostLevel, deriveGapLevel, computeDoubtLevel, type GapThresholds 
 import { buildCallCPrompt, parseCallCOutput, CALL_C_OUTPUT_SCHEMA, type ParsedCallC } from "@/lib/research/synthesisCallC.prompt";
 import type { DimensionLimitation } from "@/lib/research/synthesisCallB";
 import { runModel } from "@/lib/ai/runModel";
+import { isPhraseShaped, asPhrase, asSentence, hasFocusContent } from "@/lib/research/doubtFocus";
 
 // ── S-1e — Call C (M7+M8+M9) + brand_evidence_status assembly. LLM proposes; CODE decides:
 // doubt_level (the d7-1.0.0 matrix), the derivation scanner (delivery), the financial filter,
@@ -113,7 +114,16 @@ export interface ShapeSnapshotInput {
 
 export function shapeSnapshot(input: ShapeSnapshotInput): DecisionSnapshot {
   const { raw, doubt, verdictSentence } = input;
-  const focus = doubt.doubt_focus || "the unverified items";
+  // A contentless focus ("...", "—") is treated as ABSENT: rendering it looks like the engine had
+  // something to say and lost it, which is worse than the honest generic.
+  const focus = hasFocusContent(doubt.doubt_focus) ? (doubt.doubt_focus as string) : "the unverified items";
+  // ── SHAPE-SAFE FOCUS (founder-ruled 2026-08-19). `focus` is free prose from Module 7 and
+  // NOTHING CONSTRAINS ITS SHAPE, but four slots below assumed a noun phrase. Each now has a
+  // phrase form and a sentence form, chosen deterministically. Nothing is truncated or reworded:
+  // the doubt is load-bearing and survives whole in both. See lib/research/doubtFocus.ts.
+  const phraseShaped = isPhraseShaped(focus);
+  const focusPhrase = asPhrase(focus);
+  const focusSentence = asSentence(focus);
   const limitationLines = [
     ...input.limitations.map(limitationSentence),
     ...input.materialUnresolvable.map((g) => `${g.unknown} (not resolvable before purchase — stated limitation)`),
@@ -133,14 +143,25 @@ export function shapeSnapshot(input: ShapeSnapshotInput): DecisionSnapshot {
       return {
         headline: raw.headline,
         leading_interpretation: lead(raw.leading_interpretation),
-        the_real_risk: `The open question: ${focus}. ${raw.the_real_risk}`,
+        // ⚠ ZERO CORPUS CASES sit at this level, so this slot has never been exercised by real
+        // output — it is fixed on the same rule as the two that were, not left to be discovered.
+        the_real_risk: `${phraseShaped ? `The open question: ${focusPhrase}.` : `The open question: ${focusSentence}`} ${raw.the_real_risk}`,
         what_to_verify: [...input.questions, ...limitationLines],
         what_to_monitor: raw.what_to_monitor,
       };
     case "elevated":
       return {
-        headline: `${raw.headline} — subject to verification of ${focus}`,
-        leading_interpretation: lead(`${raw.leading_interpretation} This reading rests on ${focus} holding.`),
+        // SHAPE-SAFE (2026-08-19). Was `… — subject to verification of ${focus}` / `… rests on
+        // ${focus} holding.` — noun-phrase slots fed free prose. AWI-2608-034 rendered
+        // "This reading rests on The most concentrated doubt lands on … holding." to a client.
+        headline: phraseShaped
+          ? `${raw.headline} — subject to verification of ${focusPhrase}`
+          : `${raw.headline} Subject to verification: ${focusSentence}`,
+        leading_interpretation: lead(
+          phraseShaped
+            ? `${raw.leading_interpretation} This reading rests on ${focusPhrase} holding.`
+            : `${raw.leading_interpretation} What this reading depends on: ${focusSentence}`,
+        ),
         the_real_risk: raw.the_real_risk,
         what_to_verify: [...input.questions, ...limitationLines],
         what_to_monitor: raw.what_to_monitor,
@@ -151,7 +172,12 @@ export function shapeSnapshot(input: ShapeSnapshotInput): DecisionSnapshot {
       // it yet." The verdict sentence is injected identically; the leading reading survives,
       // explicitly framed as not-confirmed; the headline leads with what could NOT be verified.
       return {
-        headline: `Key items could not be verified (${focus}). ${raw.headline}`,
+        // SHAPE-SAFE (2026-08-19): a parenthesised slot cannot hold a sentence. AWI-2607-021
+        // rendered a full clause inside the brackets. The founder's law above is untouched — the
+        // headline still LEADS with what could not be verified in both forms.
+        headline: phraseShaped
+          ? `Key items could not be verified (${focusPhrase}). ${raw.headline}`
+          : `Key items could not be verified. ${focusSentence} ${raw.headline}`,
         leading_interpretation: lead(`Best available reading — not a confirmed account: ${raw.leading_interpretation}`),
         the_real_risk: `What remains unverified drives the risk: ${raw.the_real_risk}`,
         what_to_verify: [...input.questions, ...limitationLines],
