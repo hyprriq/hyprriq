@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { SynthesisOutput, IosVersion } from "@/lib/research/contracts";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlaySynthesisClient } from "@/lib/portal/overlayDelivery";
 
 // case_synthesis data layer (admin/service-role). Modules 1–8 are role-gated IP; only the
 // client-facing Module 9 (decision_snapshot) + Module 8 (vendor_questions) are exposed to
@@ -158,6 +160,8 @@ export async function getCaseIntelligence(
 
 // Client-facing: ONLY Module 9 + vendor questions (reasoning modules never exposed).
 // H1 — client reads are pinned to the DELIVERED attempt (immutability); latest attempt pre-delivery.
+// PROSE OVERRIDES APPLY HERE ("Show + Fix" piece 2): this is the client-bound synthesis read, so
+// the operator's rewording lands on the way OUT — the stored row stays frozen (the overlay law).
 export type ClientSnapshot = { decision_snapshot: unknown; vendor_questions: unknown };
 export async function getClientDecisionSnapshot(caseId: string): Promise<ClientSnapshot | null> {
   const { data: c } = await supabaseAdmin
@@ -165,12 +169,18 @@ export async function getClientDecisionSnapshot(caseId: string): Promise<ClientS
   const deliveredAttempt = (c as { delivered_attempt?: number | null } | null)?.delivered_attempt ?? null;
   let q = supabaseAdmin
     .from("case_synthesis")
-    .select("decision_snapshot, vendor_questions")
+    .select("attempt_number, decision_snapshot, vendor_questions")
     .eq("case_id", caseId)
     .is("deleted_at", null);
   q = deliveredAttempt != null
     ? q.eq("attempt_number", deliveredAttempt)
     : q.order("attempt_number", { ascending: false }).limit(1);
   const { data } = await q.maybeSingle();
-  return (data as ClientSnapshot) ?? null;
+  if (!data) return null;
+  const row = data as ClientSnapshot & { attempt_number: number | null };
+  const overrides = await getProseOverrides(caseId, row.attempt_number ?? deliveredAttempt ?? 1);
+  const overlaid = overlaySynthesisClient(row.decision_snapshot, row.vendor_questions, overrides);
+  // Failures (stale/unmatched) are NOT fatal on the read path — the engine wording renders and the
+  // publish gate is where a non-landing override refuses loudly.
+  return { decision_snapshot: overlaid.decision_snapshot, vendor_questions: overlaid.vendor_questions };
 }

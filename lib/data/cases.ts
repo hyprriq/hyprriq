@@ -3,6 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { findingsVisibleToClient } from "@/lib/portal/case-status";
 import { deriveClientCertainty } from "@/lib/portal/certainty";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlayTrackRows } from "@/lib/portal/overlayDelivery";
 import { projectClientReport, cleanClientProseDeep, cleanClientFindingJson, projectFindingJsonForClient, projectQuestionsForClient, type ClientReport, type ClientQuestionRow } from "@/lib/portal/clientReport";
 import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import type { QuestionToAsk } from "@/lib/research/contracts";
@@ -220,8 +222,11 @@ export async function getCaseFindings(caseId: string): Promise<Finding[]> {
   // narrative fields. FOUNDER-SIGNED exclusions: per-track signal/score (verdict is case-level;
   // raw signals are method exposure — re-adding is a deliberate client-surface-gate decision),
   // consensus/diversity records, research identity, auth_level*, b2b advisory metadata.
-  return rows
-    .filter((r) => (r.attempt_number ?? 1) === chosen)
+  // PROSE OVERRIDES ("Show + Fix" piece 2) — the operator's rewording lands on the client-bound
+  // read, before the allowlist projection. The stored row stays frozen (the overlay law).
+  const overrides = await getProseOverrides(caseId, chosen);
+  const { rows: overlaid } = overlayTrackRows(rows.filter((r) => (r.attempt_number ?? 1) === chosen), overrides);
+  return overlaid
     .map((r): Finding => {
       const cf = r.compiled_findings_json;
       // The allowlist + OQ-D neutral-summary rule live in the PURE projectFindingJsonForClient

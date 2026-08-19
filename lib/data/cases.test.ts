@@ -8,6 +8,9 @@ const { auth, maybeSingle, rowsResult, selectCalls } = vi.hoisted(() => {
   return { auth: vi.fn().mockResolvedValue({ userId: "user_1" }), maybeSingle, rowsResult, selectCalls };
 });
 vi.mock("@clerk/nextjs/server", () => ({ auth }));
+// PROSE OVERRIDES — getCaseFindings loads them via supabaseAdmin (a different client from the
+// mocked server one); default to none so the projection fixtures stay hermetic.
+vi.mock("@/lib/data/proseOverrides", () => ({ getProseOverrides: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: () => ({
     from: () => ({

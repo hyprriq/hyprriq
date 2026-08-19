@@ -7,6 +7,8 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { projectClientReport, projectFindingJsonForClient, cleanClientFindingJson } from "@/lib/portal/clientReport";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlayTrackRows, overlaySynthesisClient } from "@/lib/portal/overlayDelivery";
 
 async function main() {
   const caseNumber = process.env.CASE ?? "AWI-2608-034";
@@ -14,16 +16,28 @@ async function main() {
     .from("cases").select("id, case_number, plan_type, status, delivered_attempt, additional_questions")
     .eq("case_number", caseNumber).maybeSingle();
   if (!c) { console.log(`case ${caseNumber} not found`); return; }
-  const att = (c.delivered_attempt as number | null) ?? 1;
-  console.log(`${c.case_number} (${c.plan_type}, ${c.status}) delivered_attempt=${att}\n`);
+  // Attempt selection MUST mirror lib/data/cases.ts getClientReport (H1): the DELIVERED attempt
+  // once delivered; the LATEST attempt before that. This script previously defaulted to attempt 1
+  // and printed attempt-1 placeholders for any re-run case — the instrument diverged from the
+  // surface it claims to measure.
+  const { data: attRows } = await supabaseAdmin
+    .from("case_track_results").select("attempt_number")
+    .eq("case_id", c.id).gte("track_number", 1).is("deleted_at", null);
+  const latest = Math.max(1, ...(attRows ?? []).map((r) => (r.attempt_number as number | null) ?? 1));
+  const att = (c.delivered_attempt as number | null) ?? latest;
+  console.log(`${c.case_number} (${c.plan_type}, ${c.status}) attempt=${att} (${c.delivered_attempt ? "delivered" : "latest"})\n`);
 
   const { data: snap } = await supabaseAdmin
     .from("case_synthesis").select("decision_snapshot, vendor_questions")
     .eq("case_id", c.id).eq("attempt_number", att).maybeSingle();
 
+  // PROSE OVERRIDES — the client surface applies the overlay, so this instrument does too.
+  const overrides = await getProseOverrides(c.id as string, att);
+  const synthOverlay = overlaySynthesisClient(snap?.decision_snapshot ?? null, snap?.vendor_questions ?? null, overrides);
+
   const report = projectClientReport(
-    (snap?.decision_snapshot ?? null) as Record<string, unknown> | null,
-    snap?.vendor_questions,
+    (synthOverlay.decision_snapshot ?? null) as Record<string, unknown> | null,
+    synthOverlay.vendor_questions,
     (c.additional_questions as { question?: unknown }[] | null) ?? [],
   );
 
@@ -33,9 +47,12 @@ async function main() {
   console.log(`\n[leading_interpretation]\n${report?.leading_interpretation ?? "(none)"}`);
 
   const { data: rows } = await supabaseAdmin
-    .from("case_track_results").select("track_key, compiled_findings_json, attempt_number")
+    .from("case_track_results").select("track_key, compiled_findings_json, questions_to_ask, attempt_number")
     .eq("case_id", c.id).gte("track_number", 1).is("deleted_at", null);
-  const mine = (rows ?? []).filter((r) => (r.attempt_number ?? 1) === att);
+  const { rows: mine } = overlayTrackRows(
+    (rows ?? []).filter((r) => (r.attempt_number ?? 1) === att),
+    overrides,
+  );
 
   console.log(`\n══ PROJECTED FINDINGS (${mine.length} rows) ══`);
   for (const r of mine) {

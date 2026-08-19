@@ -6,6 +6,8 @@ import { pathToFileURL } from "node:url";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlayTrackRows } from "@/lib/portal/overlayDelivery";
 import { buildClientFindings } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
 import { assertNoInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
@@ -72,7 +74,15 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   }
 
   // The DELIVERED attempt, never the latest — a re-investigated case keeps its frozen record (H1).
-  const rows = await getCaseTrackResults(row.id, row.delivered_attempt ?? undefined);
+  const rawRows = await getCaseTrackResults(row.id, row.delivered_attempt ?? undefined);
+  // PROSE OVERRIDES ("Show + Fix" piece 2): the PDF is a client surface, so the operator's
+  // rewording lands here exactly as it does on the portal projection and the publish gate.
+  // (The snapshot side is overlaid inside getClientDecisionSnapshot — one reader per surface.)
+  const overrides = await getProseOverrides(
+    row.id,
+    row.delivered_attempt ?? (rawRows.length ? Math.max(...rawRows.map((r) => r.attempt_number ?? 1)) : 1),
+  );
+  const { rows } = overlayTrackRows(rawRows, overrides);
   const snap = await getClientDecisionSnapshot(row.id);
   const report = projectClientReport(
     (snap?.decision_snapshot ?? null) as Record<string, unknown> | null,

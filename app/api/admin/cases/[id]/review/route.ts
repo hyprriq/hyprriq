@@ -18,6 +18,8 @@ import {
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { locateSynthesisMethodLeakage, locateMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlayTrackRows, overlaySynthesisClient, overlayIdentityNote } from "@/lib/portal/overlayDelivery";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 import { REPORT_PDF_EVENT, type ReportPdfEvent } from "@/lib/inngest/events";
 
@@ -146,6 +148,37 @@ export async function POST(
   // and everything below is read for THAT attempt — synthesis included. ──
   const deliverAttempt = rows.length ? Math.max(...rows.map((r) => r.attempt_number ?? 1)) : 1;
   const intel = await getCaseIntelligence(id, deliverAttempt);
+
+  // ── PROSE OVERRIDES ("Show + Fix" piece 2 — the gate-side reader). The operator's rewording is
+  // applied HERE, before every scanner, so an override can actually close a block — and the SAME
+  // overlay runs on the client projection and the PDF, so what passes the gate is what ships.
+  // A stored override that does NOT land (stale text, vanished path) REFUSES the publish loudly:
+  // this is the one place that must never fail silently (lib/portal/proseOverlay.ts).
+  const overrides = await getProseOverrides(id, deliverAttempt);
+  const { rows: gateRows, failures: trackOverlayFailures } = overlayTrackRows(rows, overrides);
+  const synthOverlay = intel
+    ? overlaySynthesisClient(intel.synthesis.module_9_decision_snapshot, intel.synthesis.module_8_vendor_questions, overrides)
+    : { decision_snapshot: null, vendor_questions: null, failures: [] as string[] };
+  const gateSynthesis = intel
+    ? { ...intel.synthesis, module_9_decision_snapshot: synthOverlay.decision_snapshot as typeof intel.synthesis.module_9_decision_snapshot, module_8_vendor_questions: synthOverlay.vendor_questions as typeof intel.synthesis.module_8_vendor_questions }
+    : null;
+  const identityOverlay = overlayIdentityNote(identityNote, overrides);
+  const gateIdentityNote = identityOverlay.note;
+  const overlayFailures = [...trackOverlayFailures, ...synthOverlay.failures, ...identityOverlay.failures];
+  if (overlayFailures.length > 0) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_prose_overrides", record_id: id, action: "UPDATE",
+      actor_id: userId, actor_type: "admin",
+      new_value: { blocked: "override_not_applied", attempt: deliverAttempt, failures: overlayFailures },
+    });
+    return NextResponse.json({
+      error: "override_not_applied",
+      failures: overlayFailures,
+      message:
+        `Publish refused: ${overlayFailures.length} prose override(s) no longer match the stored text ` +
+        `(a re-run or edit moved on). Re-check each and re-save or clear it — an override must never silently not apply.`,
+    }, { status: 422 });
+  }
   const notDeliverable = checkDeliverable({
     attempt: deliverAttempt,
     rows,
@@ -174,20 +207,20 @@ export async function POST(
     }, { status: 422 });
   }
   const violations = [...new Set([
-    ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
-    ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
-    ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
-    ...(intel ? scanFindingsForBannedLanguage({ decision_snapshot: intel.synthesis.module_9_decision_snapshot, vendor_questions: intel.synthesis.module_8_vendor_questions }) : []),
-    ...(intel ? scanSynthesisAtDelivery(intel.synthesis) : []),
+    ...gateRows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
+    ...gateRows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
+    ...scanFindingsForBannedLanguage(gateIdentityNote ? { client_note: gateIdentityNote } : null),
+    ...(gateSynthesis ? scanFindingsForBannedLanguage({ decision_snapshot: gateSynthesis.module_9_decision_snapshot, vendor_questions: gateSynthesis.module_8_vendor_questions }) : []),
+    ...(gateSynthesis ? scanSynthesisAtDelivery(gateSynthesis) : []),
     // CLASS 4 (founder-ruled 2026-08-18) — the derivation scanner now covers TRACK prose too. It
     // has always covered synthesis while the language scanner covered both; a scanner covering one
     // of two client-facing surfaces is the defect, not the coverage. Cases that block on this today
     // were passing the gate before because nothing looked, not because they were clean.
-    ...scanTrackProseAtDelivery(rows),
+    ...scanTrackProseAtDelivery(gateRows),
     // §2 (founder-ruled 2026-08-18) — the category scanner JOINS the delivery composition.
     // It ran at GENERATION ONLY while `category` and `brand_category_note` are LLM-written and
     // reach a client. It lands inside this merged set, never as a fourth scanner beside it.
-    ...scanCategoryAtDelivery(rows),
+    ...scanCategoryAtDelivery(gateRows),
   ])];
   if (violations.length > 0) {
     // ── "SHOW + FIX" piece 1 (founder-ruled 2026-08-17). The gate's DECISION is untouched — the
@@ -199,21 +232,21 @@ export async function POST(
     // (A label with no finding — e.g. from the derivation-rule method scanner, which reads
     // different fields — still ships in `violations`, so nothing is ever silently dropped.)
     const findings = [
-      ...rows.flatMap((r) => locateBannedLanguage(r.compiled_findings_json, r.track_key)),
-      ...rows.flatMap((r) => locateBannedLanguage(r.questions_to_ask, `${r.track_key} (questions)`)),
-      ...locateBannedLanguage(identityNote ? { client_note: identityNote } : null, "supplier identity"),
-      ...(intel ? locateBannedLanguage({
-        decision_snapshot: intel.synthesis.module_9_decision_snapshot,
-        vendor_questions: intel.synthesis.module_8_vendor_questions,
+      ...gateRows.flatMap((r) => locateBannedLanguage(r.compiled_findings_json, r.track_key)),
+      ...gateRows.flatMap((r) => locateBannedLanguage(r.questions_to_ask, `${r.track_key} (questions)`)),
+      ...locateBannedLanguage(gateIdentityNote ? { client_note: gateIdentityNote } : null, "supplier identity"),
+      ...(gateSynthesis ? locateBannedLanguage({
+        decision_snapshot: gateSynthesis.module_9_decision_snapshot,
+        vendor_questions: gateSynthesis.module_8_vendor_questions,
       }, "synthesis") : []),
       // TWO SCANNERS, ONE WORKLIST (founder-ruled 2026-08-17). The derivation-rule scanner is the
       // OTHER half of this gate and until now returned a label with no sentence — which is why
       // AWI-2608-034 sat held with no actionable diagnosis. Same BannedHit shape, so it lands in
       // the same array and the blocked-publish panel renders it with no change.
-      ...(intel ? locateSynthesisMethodLeakage(intel.synthesis) : []),
+      ...(gateSynthesis ? locateSynthesisMethodLeakage(gateSynthesis) : []),
       // Class 4 gets a sentence too — a label with no sentence is what held AWI-2608-034 with no
       // actionable diagnosis, and shipping the coverage without the locator would repeat it.
-      ...rows.flatMap((r) =>
+      ...gateRows.flatMap((r) =>
         locateMethodLeakage(
           {
             [r.track_key]: r.compiled_findings_json
@@ -253,7 +286,7 @@ export async function POST(
   // The payload below is composed the way the CLIENT surfaces compose it (lib/data/cases.ts
   // getCaseFindings and lib/pdf/renderReportPdf.ts), so what is asserted here is what ships.
   const projectedForClient = {
-    findings: rows.map((r) => ({
+    findings: gateRows.map((r) => ({
       compiled_findings_json: r.compiled_findings_json
         ? cleanClientFindingJson(
             projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key),
@@ -266,11 +299,11 @@ export async function POST(
       questions_to_ask: cleanClientProseDeep(projectQuestionsForClient(r.questions_to_ask)),
     })),
     // `client_notes` are IN SCOPE by ruling.
-    client_note: identityNote ? cleanClientProse(identityNote) : null,
-    report: intel
+    client_note: gateIdentityNote ? cleanClientProse(gateIdentityNote) : null,
+    report: gateSynthesis
       ? projectClientReport(
-          (intel.synthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null,
-          intel.synthesis.module_8_vendor_questions,
+          (gateSynthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null,
+          gateSynthesis.module_8_vendor_questions,
           ((c as { additional_questions?: { question?: unknown; source?: string }[] | null }).additional_questions) ?? [],
         )
       : null,

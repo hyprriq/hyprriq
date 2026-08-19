@@ -21,6 +21,8 @@ import {
   cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
   projectClientReport, projectFindingJsonForClient,
 } from "@/lib/portal/clientReport";
+import { getProseOverrides } from "@/lib/data/proseOverrides";
+import { overlayTrackRows, overlaySynthesisClient, overlayIdentityNote } from "@/lib/portal/overlayDelivery";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
 import { reportObjectKey } from "@/lib/pdf/reportStorage";
 import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
@@ -42,10 +44,30 @@ async function main() {
   }[]) {
     console.log(`══ ${c.case_number} (${c.plan_type}) — status ${c.status}`);
 
-    const rows = await getCaseTrackResults(c.id);
-    const attempt = rows.length ? Math.max(...rows.map((r) => r.attempt_number ?? 1)) : 1;
+    const rawRows = await getCaseTrackResults(c.id);
+    const attempt = rawRows.length ? Math.max(...rawRows.map((r) => r.attempt_number ?? 1)) : 1;
     const intel = await getCaseIntelligence(c.id, attempt);
-    const identityNote = c.supplier_identity?.identity_discrepancy?.client_note ?? null;
+    const rawIdentityNote = c.supplier_identity?.identity_discrepancy?.client_note ?? null;
+
+    // PROSE OVERRIDES — the route applies the overlay before every scanner, so this mirrors it.
+    const overrides = await getProseOverrides(c.id, attempt);
+    const { rows, failures: trackOverlayFailures } = overlayTrackRows(rawRows, overrides);
+    const synthOverlay = intel
+      ? overlaySynthesisClient(intel.synthesis.module_9_decision_snapshot, intel.synthesis.module_8_vendor_questions, overrides)
+      : { decision_snapshot: null, vendor_questions: null, failures: [] as string[] };
+    const gateSynthesis = intel
+      ? { ...intel.synthesis, module_9_decision_snapshot: synthOverlay.decision_snapshot as typeof intel.synthesis.module_9_decision_snapshot, module_8_vendor_questions: synthOverlay.vendor_questions as typeof intel.synthesis.module_8_vendor_questions }
+      : null;
+    const identityOverlay = overlayIdentityNote(rawIdentityNote, overrides);
+    const identityNote = identityOverlay.note;
+    const overlayFailures = [...trackOverlayFailures, ...synthOverlay.failures, ...identityOverlay.failures];
+    if (overrides.length) {
+      console.log(
+        overlayFailures.length
+          ? `  ✗ OVERRIDES NOT APPLIED (${overlayFailures.length}) — publish will refuse: ${overlayFailures.join(" · ")}`
+          : `  ✓ ${overrides.length} prose override(s) applied`,
+      );
+    }
 
     // 1 ── DELIVERABILITY
     const notDeliverable = checkDeliverable({
@@ -60,8 +82,8 @@ async function main() {
       ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
       ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
       ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
-      ...(intel ? scanFindingsForBannedLanguage({ decision_snapshot: intel.synthesis.module_9_decision_snapshot, vendor_questions: intel.synthesis.module_8_vendor_questions }) : []),
-      ...(intel ? scanSynthesisAtDelivery(intel.synthesis) : []),
+      ...(gateSynthesis ? scanFindingsForBannedLanguage({ decision_snapshot: gateSynthesis.module_9_decision_snapshot, vendor_questions: gateSynthesis.module_8_vendor_questions }) : []),
+      ...(gateSynthesis ? scanSynthesisAtDelivery(gateSynthesis) : []),
       ...scanTrackProseAtDelivery(rows),
       ...scanCategoryAtDelivery(rows),
     ])];
@@ -76,7 +98,7 @@ async function main() {
         questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
       })),
       client_note: identityNote ? cleanClientProse(identityNote) : null,
-      report: intel ? projectClientReport((intel.synthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null, intel.synthesis.module_8_vendor_questions, [], { allowInternalTokens: true }) : null,
+      report: gateSynthesis ? projectClientReport((gateSynthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null, gateSynthesis.module_8_vendor_questions, [], { allowInternalTokens: true }) : null,
     };
     const leaks = findInternalTokens(projected);
     console.log(leaks.length ? `  ✗ TOKEN CHECKPOINT REFUSES (${leaks.length}): ${leaks.slice(0, 3).map((l) => `${l.match}@${l.path}`).join(" · ")}` : "  ✓ checkpoint clean");
