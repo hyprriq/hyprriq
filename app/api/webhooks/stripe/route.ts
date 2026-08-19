@@ -132,6 +132,38 @@ export async function POST(req: Request) {
         const email = s.customer_details?.email ?? s.customer_email ?? null;
         const kind = s.metadata?.kind ?? "";
 
+        // ── §5 CLIENT NAME FROM STRIPE (founder-ruled 2026-08-18) — THE PDF BLOCKER.
+        //
+        // `customer_details.name` was collected by Stripe and discarded here, while the email
+        // beside it was kept. A client who never completes onboarding therefore has no name on
+        // file at all — `clients.full_name` is written in exactly ONE other place
+        // (app/api/onboarding/complete/route.ts:23). renderCaseReportPdf refuses with
+        // `no_client_name` rather than address a deliverable to nobody, so this discards the one
+        // field that blocks PDF delivery.
+        //
+        // ⚠ IT IS CAPTURED HERE, ABOVE THE THREE-WAY BRANCH, ON PURPOSE. Below this point the
+        // handler splits into topup / subscription / one-time; putting the capture inside any of
+        // them means two of the three paths still lose the name. That is the same shape as the
+        // bug itself.
+        //
+        // ⚠ SET-IF-NULL ONLY, AND NEVER AN OVERWRITE. Stripe's is a BILLING name; the onboarding
+        // one is what the client asked to be called. The `.is("full_name", null)` predicate does
+        // the guarding in the statement itself rather than in a read-then-write, so a concurrent
+        // onboarding submit cannot lose a race against a webhook retry.
+        {
+          const billingName = s.customer_details?.name?.trim() || null;
+          if (billingName) {
+            const { error: nameErr } = await supabaseAdmin
+              .from("clients")
+              .update({ full_name: billingName })
+              .eq("id", clientId)
+              .is("full_name", null);
+            // Non-fatal, like every enrichment on this path: a paid checkout must never fail
+            // because a display name did not land. Loud in the log, invisible to the payer.
+            if (nameErr) console.error("STRIPE NAME CAPTURE FAILED:", clientId, nameErr);
+          }
+        }
+
         if (kind.startsWith("topup:")) {
           const topupId = kind.slice("topup:".length) as TopupId;
           const credits = TOPUP[topupId]?.credits ?? 0;

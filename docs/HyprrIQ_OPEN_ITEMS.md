@@ -40,6 +40,25 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ §5 CLIENT NAME FROM STRIPE BUILT 2026-08-18 — the `no_client_name` PDF blocker, closed for
+> NEW checkouts.** `app/api/webhooks/stripe/route.ts` — `customer_details.name` is captured ABOVE
+> the three-way branch (topup / subscription / one-time); inside any one of them, two of three paths
+> would still lose it, which is the same shape as the bug. SET-IF-NULL enforced by the statement's
+> own `.is("full_name", null)` predicate rather than a read-then-write, so a concurrent onboarding
+> submit cannot lose a race against a webhook retry. Non-fatal: a paid checkout must never fail
+> because a display name did not land.
+>
+> **⚠ `company_name` HAS NO STRIPE SOURCE — REPORTED, NOT INVENTED.** The ruling said "same for
+> company_name", but Stripe's `customer_details` carries address / email / name / phone / tax only,
+> and this integration configures NO `custom_fields` on the checkout session. There is nothing to
+> capture. To have one, the checkout session must be changed to collect it — a separate decision.
+>
+> **⛔ BACKFILL IS A PROD DATA ACTION — DESCRIBED AND STOPPED, FOUNDER RUNS IT.** Exact SQL and
+> read-backs are in the commit message for `§5`. The webhook fix only helps FUTURE checkouts;
+> existing clients with a null `full_name` stay blocked for PDF until the backfill runs, and the
+> names live in Stripe, not in our DB — so the backfill is a Stripe-side export, not a pure SQL
+> UPDATE. Read the commit before running anything.
+
 > **✓ CLASS 4 BUILT 2026-08-18 — the derivation scanner now covers TRACK PROSE. CENSUS 8/39 (21%)
 > → 17/39 (44%). ⚠ THE RISE IS THE CORRECT OUTCOME AND IS NOT A REGRESSION:** those occurrences
 > pass the publish gate today and always have. Nothing got worse; the instrument stopped being
