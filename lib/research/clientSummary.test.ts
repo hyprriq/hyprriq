@@ -6,6 +6,10 @@ import { buildTrack1Prompt } from "./track1.prompt";
 import { scanForMethodLeakage } from "./synthesisMethodScan";
 import { scanHard } from "@/lib/utils/banned-language";
 import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
+import { TRACK1_OUTPUT_SCHEMA } from "@/lib/research/schemas/track1.schema";
+import { TRACK2_OUTPUT_SCHEMA } from "@/lib/research/schemas/track2.schema";
+import { TRACK3_OUTPUT_SCHEMA } from "@/lib/research/schemas/track3.schema";
+import { TRACK4_OUTPUT_SCHEMA } from "@/lib/research/schemas/track4.schema";
 
 // ── client_summary — THE ROOT-CAUSE FIX.
 // `pipeline.steps.ts` assigned `summary: out.reasoning_notes` on all five write sites, and
@@ -88,6 +92,35 @@ describe("PROOF: the verdict never reads client_summary", () => {
     const src = fs.readFileSync(path.resolve(__dirname, "../..", "lib/research/pipeline.steps.ts"), "utf8");
     expect(src).toContain("reasoning_notes: out.reasoning_notes");
   });
+});
+
+// ⚠⚠ THE LOCK THAT WAS MISSING, AND IT COST A LIVE CASE. The original fixtures proved the
+// INSTRUCTION reached the prompt and that the PARSER handled the field — and never that the model
+// was ALLOWED to return it. Every track uses a structured-output schema with
+// additionalProperties:false, so client_summary was structurally FORBIDDEN: the model could not
+// emit it, the parser correctly saw nothing, and the writer fell back to code-owned copy on every
+// scored area. AWI-2608-039 — the first case ever run on p002 — rendered the placeholder three
+// times instead of prose.
+//
+// A ban with no permission is not a contract. PROMPT, PARSER AND SCHEMA MUST ALL AGREE.
+describe("SCHEMA PERMITS THE FIELD — the three-way contract, not two", () => {
+  const SCHEMAS: [string, { required?: readonly string[]; properties?: Record<string, unknown>; additionalProperties?: boolean }][] = [
+    ["track1", TRACK1_OUTPUT_SCHEMA],
+    ["track2", TRACK2_OUTPUT_SCHEMA],
+    ["track3", TRACK3_OUTPUT_SCHEMA],
+    ["track4", TRACK4_OUTPUT_SCHEMA],
+  ];
+
+  for (const [name, schema] of SCHEMAS) {
+    it(`${name}: additionalProperties is false, so the field MUST be declared to be emittable`, () => {
+      expect(schema.additionalProperties).toBe(false);
+      expect(schema.properties, `${name} schema must declare client_summary`).toHaveProperty("client_summary");
+    });
+
+    it(`${name}: client_summary is REQUIRED, so an omission is a schema violation, not a silent fallback`, () => {
+      expect(schema.required).toContain("client_summary");
+    });
+  }
 });
 
 describe("the instruction reaches every finding track's prompt", () => {

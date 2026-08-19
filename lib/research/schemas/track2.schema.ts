@@ -7,7 +7,7 @@ export const TRACK2_OUTPUT_SCHEMA = {
   additionalProperties: false,
   required: [
     "evidence_items", "auth_level", "auth_level_reasoning", "brand_relationship_finding",
-    "b2b_only_detected", "b2b_only_brands", "questions_to_ask", "reasoning_notes", "unknowns",
+    "b2b_only_detected", "b2b_only_brands", "questions_to_ask", "client_summary", "reasoning_notes", "unknowns",
   ],
   properties: {
     evidence_items: {
@@ -49,6 +49,12 @@ export const TRACK2_OUTPUT_SCHEMA = {
         },
       },
     },
+    // ── CLIENT-FACING (founder-ruled 2026-08-19). ⚠ THE SCHEMA MUST PERMIT IT OR THE MODEL
+    // CANNOT RETURN IT: every track object carries additionalProperties:false, so adding the field
+    // to the prompt and the parser WITHOUT adding it here left the model structurally forbidden
+    // from emitting it — every response omitted it and the writer fell back to code-owned copy.
+    // Proven on AWI-2608-039, the first case ever run on these prompts.
+    client_summary: { type: "string" },
     reasoning_notes: { type: "string" },
     unknowns: {
       type: "array",
