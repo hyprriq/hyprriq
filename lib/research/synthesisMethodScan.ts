@@ -140,6 +140,28 @@ export function scanForMethodLeakage(fields: Record<string, unknown>): string[] 
 // vocabulary and never reach anybody. Scanning it wholesale would manufacture false blocks, and a
 // false refusal at publish is the failure mode this codebase has ruled against twice. No cleaning
 // is applied first: the gate must see what the ENGINE wrote, not what a cleaner happened to hide.
+// ⚠ QUESTIONS ARE PROJECTED TO THEIR PROSE, NOT SCANNED RAW — AND THIS COST A FALSE-REFUSAL BUG.
+// `QuestionToAsk` carries `blocking_weight_key`, a STRUCTURED INTERNAL FIELD WHOSE VALUE IS A
+// WEIGHT KEY BY DESIGN (rendered only on the admin screen; `questions-view.ts` marks it "system
+// only"). Scanning the raw object therefore found a weight-key NAME in every question that has
+// one — which, once the weight-key-name rule landed, blocked essentially every case with
+// questions. The publish preflight caught it on all four tier cases before a publish was attempted.
+//
+// The same principle as the findings surface above: scan what CROSSES, not the machinery. `question`
+// and `reason` are the prose; `blocking_weight_key`, `priority` and `brand` are structure.
+// ⚠ BOTH SHAPES. Questions are RICH OBJECTS today, but older rows store plain strings — and the
+// first version of this projection returned {} for a string, silently dropping every legacy
+// question from the scan. A fixture caught it. Narrowing a scan surface must never narrow it to
+// nothing for a shape the corpus still contains.
+const questionProse = (q: unknown): { question?: string; reason?: string } => {
+  if (typeof q === "string") return { question: q };
+  const o = (q ?? {}) as { question?: unknown; reason?: unknown };
+  return {
+    ...(typeof o.question === "string" ? { question: o.question } : {}),
+    ...(typeof o.reason === "string" ? { reason: o.reason } : {}),
+  };
+};
+
 export function scanTrackProseAtDelivery(
   rows: { track_key: string; compiled_findings_json?: unknown; questions_to_ask?: unknown }[],
 ): string[] {
@@ -148,7 +170,9 @@ export function scanTrackProseAtDelivery(
       [`${r.track_key}`]: r.compiled_findings_json
         ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
         : null,
-      [`${r.track_key} (questions)`]: r.questions_to_ask ?? null,
+      [`${r.track_key} (questions)`]: Array.isArray(r.questions_to_ask)
+        ? (r.questions_to_ask as unknown[]).map(questionProse)
+        : null,
     }),
   );
 }
