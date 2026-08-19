@@ -306,7 +306,17 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             </div>
           </div>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          {/* ── §3 PART 2 — THE SUMMARY / AREAS ROW.
+              WAS: equal halves with `items-stretch` (grid default), so the short column was
+              stretched to the tall one and carried the difference as dead space below its last
+              row. The imbalance is WORST at $99 (3 area rows against the summary) and least at
+              Scale (6 rows) — a 50/50 split cannot be right at both.
+              NOW: `items-start` lets each panel size to its own content at every tier, and the
+              columns are weighted 1.35/1 because the summary is prose and the areas list is a
+              short label column — equal halves gave the list width it never used.
+              Re-looked AFTER the headline split (359a3c0) removed the run-on that was inflating
+              the summary to roughly double its real length, per the ruling to fix that first. ── */}
+          <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
             {/* Summary — the engine's headline, unbounded, never truncated */}
             <div className="rounded-card border border-line bg-surface p-5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Summary</span>
@@ -467,23 +477,36 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               const chip = areaChip(f);
               const quiet = f.track_key === "documentation_review" || f.track_key === "sourcing_logic";
               return (
-                <div key={f.id} className="flex flex-col gap-2 border-b border-line px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-start sm:gap-4">
-                  <div className="min-w-0 flex-1">
+                // ── §3 PART 2 (2026-08-19) — THE DEAD RIGHT-HAND SIDE.
+                // WAS: content `flex-1` (≈880px in a ~940px card) with prose capped at
+                // `max-w-[68ch]` (≈520px) and the chip pinned to the far edge — so every card
+                // carried ~350px of empty space between the text and the chip, on every row of
+                // every report. THE MEASURE WAS NEVER THE PROBLEM; the column was.
+                // NOW: an explicit two-column grid — the prose column IS the measure, and the
+                // remainder is a real meta column that the chip AND the notes occupy, so the
+                // space is used rather than reclaimed. Notes move out of the prose column for the
+                // same reason: they are short labelled asides, not part of the reading measure.
+                // Tier-independent by construction — this is per-row, so it balances identically
+                // at 3 areas ($99), 5 (Growth/$149) and 5 + the advisory row (Scale).
+                <div key={f.id} className="flex flex-col gap-2 border-b border-line px-5 py-3.5 last:border-b-0 sm:grid sm:grid-cols-[minmax(0,68ch)_minmax(160px,1fr)] sm:items-start sm:gap-6">
+                  <div className="min-w-0">
                     <div className={`text-[14px] font-bold ${quiet ? "font-semibold text-ink-2" : "text-ink"}`}>
                       {AREA_NAMES[f.track_key] ?? f.track_key}
                       <span className="ml-1.5 cursor-help text-[12px] font-normal text-muted" title={AREA_DEFS[f.track_key] ?? ""}>ⓘ</span>
                     </div>
                     {detail && <FindingBody text={detail} />}
+                  </div>
+                  <div className="flex min-w-0 flex-col items-start gap-2 sm:pt-0.5">
+                    <span className={`inline-flex shrink-0 cursor-help items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${chip.cls}`} title={chip.def}>
+                      {chip.label}
+                    </span>
                     {notes.map((n) => (
-                      <div key={n.label} className="mt-2">
+                      <div key={n.label} className="min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{n.label}</div>
                         <div className="text-[12px] text-muted">{n.text}</div>
                       </div>
                     ))}
                   </div>
-                  <span className={`inline-flex shrink-0 cursor-help items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${chip.cls}`} title={chip.def}>
-                    {chip.label}
-                  </span>
                 </div>
               );
             })}
