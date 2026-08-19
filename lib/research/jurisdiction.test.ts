@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  inferJurisdiction, countryFromDomain, countryFromAddress,
-  registryQuery, tradeBodyQuery, NEUTRAL_REGISTRY,
+  inferJurisdiction, inferJurisdictionSet, countryFromDomain, countryFromAddress,
+  countriesFromAddress, registryQuery, tradeBodyQuery, NEUTRAL_REGISTRY,
 } from "./jurisdiction";
 import { buildTrack1Requests } from "./tracks/track1.queries";
 import type { TrackContext } from "./contracts";
@@ -116,3 +116,73 @@ describe("the wiring — the real request builder, not just the helpers", () => 
     expect(reg?.input).toContain(NEUTRAL_REGISTRY);
   });
 });
+
+// ── JURISDICTION IS A SET (founder-directed 2026-08-20): a registration in one country and a
+// presence in another is ORDINARY in wholesale. One winner is the mirror of the original defect —
+// resolve to the registration and the presence reads unverified; resolve to the presence and the
+// register is never searched. Every supported jurisdiction gets its question. ──
+describe("jurisdiction as a SET — every supported jurisdiction is asked", () => {
+  it("UK domain + US address → BOTH registries asked, domain first", () => {
+    const js = inferJurisdictionSet({ domain: "acme.co.uk", address: "1200 Brickell Ave, Miami, FL 33131" });
+    expect(js.map((j) => j.code)).toEqual(["uk", "us"]);
+    expect(js[0].source).toBe("domain");
+    expect(js[1].source).toBe("address");
+  });
+
+  it("an address naming two countries supports both", () => {
+    expect(countriesFromAddress("Registered office: London SW1A 1AA; US warehouse: Newark, NJ 07102"))
+      .toEqual(["uk", "us"]);
+  });
+
+  it("agreeing signals dedupe — a US domain with a US address asks once", () => {
+    const js = inferJurisdictionSet({ domain: "acme.us", address: "Huntington Beach, CA 92647" });
+    expect(js.map((j) => j.code)).toEqual(["us"]);
+  });
+
+  it("⛔ marketplace never WIDENS a known set — selling on amazon.com is not a US registration", () => {
+    const js = inferJurisdictionSet({ domain: "acme.co.uk", marketplace: "amazon_us" });
+    expect(js.map((j) => j.code)).toEqual(["uk"]);
+  });
+
+  it("empty set → exactly the neutral member, never a guessed country", () => {
+    const js = inferJurisdictionSet({ domain: "lacacorp.com", marketplace: "amazon_us" });
+    expect(js).toHaveLength(1);
+    expect(js[0].code).toBeNull();
+    expect(js[0].registry).toBe(NEUTRAL_REGISTRY);
+  });
+
+  it("bounded at 3 members — each costs two searches", () => {
+    const js = inferJurisdictionSet({
+      domain: "acme.co.uk",
+      address: "London; also Milano, Italy; also Paris, France; also Berlin, Germany",
+    });
+    expect(js.length).toBeLessThanOrEqual(3);
+  });
+
+  it("the request builder emits ONE registry request PER member (the wiring, not the helper)", () => {
+    const reqs = buildTrack1Requests(ctx2({
+      vendor_website: "https://acme.co.uk",
+      supplier_identity: { resolved_domain: "acme.co.uk", resolved_address: "Miami, FL 33131, United States" } as never,
+    }));
+    const regs = reqs.filter((r) => r.question === "business_registry").map((r) => r.input);
+    expect(regs).toHaveLength(2);
+    expect(regs.join(" | ")).toMatch(/Companies House/);
+    expect(regs.join(" | ")).toMatch(/Secretary of State/i);
+    const trades = reqs.filter((r) => r.question === "bbb_listing").map((r) => r.input);
+    expect(trades.join(" | ")).toMatch(/BBB/);                      // the US member brings the BBB
+    expect(trades.some((t) => !/BBB/i.test(t))).toBe(true);         // the UK member drops it
+  });
+
+  it("identical query strings dedupe even across distinct members", () => {
+    // Two members whose registry name is missing from the table both fall to the neutral phrase —
+    // the request list must not carry it twice.
+    const reqs = buildTrack1Requests(ctx2({ vendor_website: "https://lacacorp.com" }));
+    const regs = reqs.filter((r) => r.question === "business_registry");
+    expect(regs).toHaveLength(1);
+  });
+});
+
+const ctx2 = (over: Partial<TrackContext>): TrackContext => ({
+  case_id: "c", vendor_name: "Acme Ltd", vendor_website: null, brands_submitted: [],
+  marketplace: "amazon_us", plan_type: "growth_279", attempt_number: 1, ...over,
+} as TrackContext);

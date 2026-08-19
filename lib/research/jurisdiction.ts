@@ -86,7 +86,17 @@ export function countryFromDomain(domain: string | null | undefined): string | n
 
 /** Country from a free-text address, for the common cases a TLD cannot tell us. */
 export function countryFromAddress(address: string | null | undefined): string | null {
-  if (!address) return null;
+  return countriesFromAddress(address)[0] ?? null;
+}
+
+/**
+ * EVERY country a free-text address supports — a vendor with a UK registered office and a US
+ * operating address supports BOTH, and picking one winner reproduces the original defect in
+ * mirror form (resolve to the registration and the local presence reads unverified; resolve to
+ * the presence and the register is never searched).
+ */
+export function countriesFromAddress(address: string | null | undefined): string[] {
+  if (!address) return [];
   const a = ` ${address.toLowerCase()} `;
   const HINTS: [RegExp, string][] = [
     [/\bunited kingdom\b|\bengland\b|\bscotland\b|\bwales\b|\blondon\b|\b[a-z]{1,2}\d[a-z\d]?\s*\d[a-z]{2}\b/, "uk"],
@@ -105,10 +115,11 @@ export function countryFromAddress(address: string | null | undefined): string |
     [/\bunited arab emirates\b|\bdubai\b|\babu dhabi\b/, "ae"],
     [/\bunited states\b|\bu\.s\.a?\.\b|\busa\b/, "us"],
   ];
-  for (const [re, code] of HINTS) if (re.test(a)) return code;
+  const out: string[] = [];
+  for (const [re, code] of HINTS) if (re.test(a) && !out.includes(code)) out.push(code);
   // A US state + ZIP is the strongest US signal and the most common shape in this corpus.
-  if (/\b[a-z]{2}\s+\d{5}(-\d{4})?\b/.test(a)) return "us";
-  return null;
+  if (!out.includes("us") && /\b[a-z]{2}\s+\d{5}(-\d{4})?\b/.test(a)) out.push("us");
+  return out;
 }
 
 /**
@@ -118,27 +129,59 @@ export function countryFromAddress(address: string | null | undefined): string |
  */
 export const NEUTRAL_REGISTRY = "company registration official business registry";
 
+// ── JURISDICTION IS A SET, NOT A VALUE (founder-directed 2026-08-20) ─────────────────────────
+//
+// A vendor can hold a registration in one country and a presence in another — ordinary in
+// wholesale. Picking a single winner produces the MIRROR of the original defect: resolve to the
+// registration and the local presence reads unverified; resolve to the presence and the register
+// is never searched. THE RULE, stated generally: every jurisdiction the intake evidence supports
+// gets its registry question asked; the neutral form is used only when the set is EMPTY. Scoring
+// is untouched — evidence found in ANY member feeds the same keys at the same worth.
+//
+// Membership comes from independent signals: the domain's ccTLD, and EVERY country the resolved
+// address supports. Marketplace stays a tie-break ONLY (it never widens a known set): selling on
+// amazon.com is not evidence of a US registration — that misread IS the original bug.
+// Bounded at 3 members: each member costs one registry + one trade-body search.
+const MAX_JURISDICTIONS = 3;
+
+export function inferJurisdictionSet(input: {
+  domain?: string | null;
+  address?: string | null;
+  marketplace?: string | null;
+}): Jurisdiction[] {
+  const out: Jurisdiction[] = [];
+  const seen = new Set<string>();
+  const push = (code: string | null, source: Jurisdiction["source"]) => {
+    if (!code || seen.has(code)) return;
+    seen.add(code);
+    out.push({ code, registry: REGISTRIES[code] ?? NEUTRAL_REGISTRY, source });
+  };
+
+  push(countryFromDomain(input.domain), "domain");
+  for (const c of countriesFromAddress(input.address)) push(c, "address");
+
+  // ⚠ MARKETPLACE IS THE WEAKEST SIGNAL AND IS DELIBERATELY A TIE-BREAK ONLY. A supplier who
+  // SELLS on amazon.com is very often not registered in the US — that is the exact case this file
+  // exists for (a UK supplier shipping to US customers). It contributes only when nothing else
+  // did, and never widens a set another signal established.
+  if (out.length === 0) {
+    const mk = (input.marketplace ?? "").toLowerCase();
+    if (mk.includes("_uk")) push("uk", "marketplace");
+    else if (mk.includes("_de")) push("de", "marketplace");
+    else if (mk.includes("_ca")) push("ca", "marketplace");
+  }
+
+  if (out.length === 0) return [{ code: null, registry: NEUTRAL_REGISTRY, source: "unknown" }];
+  return out.slice(0, MAX_JURISDICTIONS);
+}
+
+/** The single most-confident jurisdiction — the set's first member. Kept for single-value callers. */
 export function inferJurisdiction(input: {
   domain?: string | null;
   address?: string | null;
   marketplace?: string | null;
 }): Jurisdiction {
-  const fromDomain = countryFromDomain(input.domain);
-  if (fromDomain) return { code: fromDomain, registry: REGISTRIES[fromDomain] ?? NEUTRAL_REGISTRY, source: "domain" };
-
-  const fromAddress = countryFromAddress(input.address);
-  if (fromAddress) return { code: fromAddress, registry: REGISTRIES[fromAddress] ?? NEUTRAL_REGISTRY, source: "address" };
-
-  // ⚠ MARKETPLACE IS THE WEAKEST SIGNAL AND IS DELIBERATELY LAST. A supplier who SELLS on
-  // amazon.com is very often not registered in the US — that is the exact case this file exists
-  // for (a UK supplier shipping to US customers). It is used only to break a total tie, and never
-  // overrides a domain or an address.
-  const mk = (input.marketplace ?? "").toLowerCase();
-  if (mk.includes("_uk")) return { code: "uk", registry: REGISTRIES.uk, source: "marketplace" };
-  if (mk.includes("_de")) return { code: "de", registry: REGISTRIES.de, source: "marketplace" };
-  if (mk.includes("_ca")) return { code: "ca", registry: REGISTRIES.ca, source: "marketplace" };
-
-  return { code: null, registry: NEUTRAL_REGISTRY, source: "unknown" };
+  return inferJurisdictionSet(input)[0];
 }
 
 /**
