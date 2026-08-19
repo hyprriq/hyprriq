@@ -40,6 +40,39 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > HISTORY 2026-08-02 append. The binding Q4(b) constraint (`synthesis_input_hash` keying, never
 > `evidence_hash`) and the F5 rollups-on-adoption flag travel with it, preserved verbatim.
 
+> **✓ §2 TRACK 6 CLIENT SURFACE + §3 CONCATENATION BUILT 2026-08-19** (`ba63e4d`, `359a3c0`).
+>
+> **⚠ THE CORPUS COULD NOT ANSWER §2, AND THAT IS THE FINDING.** `scripts/track6-surface-probe.ts`:
+> 39 cases, exactly **ONE** carries a track_6 row (AWI-2608-034), and **ZERO `single_99` or
+> `single_149` cases have ever been run.** Designing the surface from the corpus would have been
+> designing it from one case. Fixtures are therefore derived from the CONTRACT + the plan registry
+> and carry every empty state whether or not a stored case exhibits it.
+>
+> **THE AREA COUNT — TWO WRONG BASES MEASURED AND REJECTED.** (1) counting RENDERED ROWS is the
+> reported bug (Scale reads "6 assessment areas"; we sell five). (2) counting `non_voting !== true`
+> is WORSE — the probe found `sourcing_logic` carrying `non_voting: true` on 5 rows and absent on
+> 11, so the same track would count as an area on some cases and not others. (3) FIX:
+> `isAssessmentArea()` by MEMBERSHIP in the canonical TRACKS registry — a PRODUCT property.
+> $99 → 3 · $149/Growth/Scale → 5 · an advisory row never moves the number at any tier.
+>
+> **A SOURCE-SCAN LOCK CAUGHT MY OWN COMMENT.** `track6.inertia.test.ts` asserts the Track 6 key
+> never appears literally in `lib/constants/tracks.ts` (frozen `synthesisCallB` consumes
+> `Record<TrackKey,…>` exhaustively). My explanatory comment named it and failed the lock.
+> Reworded; the helper answers by membership and needs no name.
+>
+> **⚠ UNRULED:** `"MODERATE-HIGH"` exists in the flags table; the ruling named only HIGH and
+> MODERATE. Mapped to the flagged label (it sits above moderate) — my reading, not a ruling.
+>
+> **§3 — THE CONCATENATION IS NOT TWO FIELDS JOINED. BOTH PRIOR DIAGNOSES WERE WRONG.**
+> `scripts/snapshot-prose-probe.ts` over every delivered snapshot: **7 checked · 0 dangling
+> connectors · 2 RUN-ONS INSIDE A STORED FIELD.** The field is `decision_snapshot.headline`;
+> Module 9 stores ONE string `"<claim>. — subject to verification of <x>"`. Fixed at render by
+> `splitHeadline()`, anchored to the PHRASE not a dash (034's claim contains its own em-dashes —
+> a dash split would cut the supplier's name in half). Nothing truncated; claim + qualifier
+> reconstruct the original.
+> **§3 IS PART 1 OF 2: the LAYOUT re-look is NOT done** — it needs the rendered report at all four
+> tiers, which is the next thing.
+
 > **✓ §5 CLIENT NAME FROM STRIPE BUILT 2026-08-18 — the `no_client_name` PDF blocker, closed for
 > NEW checkouts.** `app/api/webhooks/stripe/route.ts` — `customer_details.name` is captured ABOVE
 > the three-way branch (topup / subscription / one-time); inside any one of them, two of three paths
@@ -601,7 +634,7 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 | # | Item | Status | Owner | Notes |
 |---|---|---|---|---|
 | 1.1 | **Client report — on-screen + PDF** | 🔴 | UX→FA | The gap carried by roadmaps v3 AND v4. Placeholder only today. |
-| 1.2 | **Client-projection layer** | 🔴 | FA | Named gate deliverable. One projection function — not string-by-string, or it leaks. Must strip `src_N`/evidence tags DEFENSIVELY (present in 021's narrative, absent in 022's). |
+| 1.2 | **Client-projection layer** | ✅ | FA | **DONE `cf033f5` (2026-08-19).** One projection function, corpus-measured 34/35 → 6/35 cases carrying an internal token, backed by the presence checkpoint + a render-path lock test. ⚠ Note the original spec wording ("present in 021's narrative, absent in 022's") was itself a TWO-CASE read — the corpus then showed four leak classes and five grammar shapes. The row is closed; the lesson is the standing rule. |
 | 1.3 | **ASIN intake field + one-brand cap** | ✅ | FA | **BUILT 2026-07-30 (dev batch) + MIGRATION APPLIED 2026-07-30.** Code guard `lib/portal/asinIntake.ts` (1 ASIN/brand, ≤ plan cap, format, Scale-only; caps from `PLAN_BRAND_CAPS`, never the NULL DB column) + form (Scale-only progressive disclosure, "the ASIN you're actually planning to buy" copy, graceful at-cap line) + threading via `lib/research/intakeExtras.ts` (contracts.ts FROZEN — additive intersection type). `cases.brand_asins jsonb` live (read-back verified: column present, 0 populated rows). **Executed via Supabase MCP on EXPLICIT one-time founder authorization (chat, 2026-07-30) — the founder-runs-prod law STANDS; this is not a precedent.** **ASIN-optional RULED (founder, 2026-07-30): optional as built; revisit when Keepa ships** (the `asinIntake.ts` header comment still says UNRULED — one-line cleanup rides the next code-touching pass). Keepa is unblocked. |
 | 1.4 | **Mobile layout** | 🟡 | UX→FA | Portal does not load on mobile. Broken surface. **LAYOUT PHASE DONE 2026-08-04:** diagnosis = fixed 248px sidebar w/ no breakpoint + CaseTable fixed-column grid (~610px min) + px-7 paddings; 3 nav-direction mockups in `mockups/mobile-1.4/` (A tab bar / B drawer / C hub-and-spoke; shared card system replaces the table on mobile) — AWAITING FOUNDER RULING on direction before build. Critique note carried to build: `text-muted` fails AA (3.1–3.6:1) at 12–13px on desktop too — global fix candidate, founder to rule scope. **2026-08-05 (FABLE_BRIEF re-scope):** full client-portal PROTOTYPE delivered in `public/prototype/` (moved from `prototype/` for staging URL access) (11 pages, new locked skin, report MOCKED in 3 directions on 022 content, mobile throughout, drawer as interim nav) — production gates waived per brief's authorized deviations; awaiting founder rulings on report direction + mobile nav + two locked-skin AA flags (verdict-pill inks 3.2–3.3:1, `--muted` 3.8–4.1:1). **2026-08-05 later:** report RULED C→C+ (built as `public/prototype/client/report.html`; a/b/c archived) + cool re-skin RULED (TOKENS_CORRECTED_cool applied to tokens.css + DESIGN_SYSTEM_reference, AA flags resolved; two tint-bgs micro-lightened to honor the spec's AA intent — noted in tokens.css). **2026-08-06: mobile nav RULED — DRAWER** (founder; confirmed by the 10-item nav-count critique — tab-bar would force nesting Completed reports/Invoices). **2026-08-06 FINAL PASS (portal LOCKED):** sticky depth tabs w/ all four visible on mobile (2x2 grid, honesty tab marked) · 16px mobile body floor (assets/mobile-type.css, family unchanged) · [hidden] display fix (mobile filter chips now actually filter — root cause of "chips don't work" report) · spacing sweep (invoices num/desc, card sub-lines) · submit = three card-steps + Marketplace selector mirroring the REAL intake field (lib/content/submit.ts MARKETPLACES; CaseIntake.marketplace) · asset links cache-busted ?v=3. **BACKEND FINDING (read-only, engine untouched):** the engine stores marketplace but does NOT vary research by it — no query interpolates it, Serper sends no gl/hl geo params, Track 6 has no per-marketplace variation; only consumer is the eligibility-disclaimer pass-through. **2026-08-06 CONTENT DROP-IN (founder-final copy, rendering-only):** chips = "Verified / Assessed" · how-to-read panel final ("Got it — hide this" dismiss) · 11 tooltips final (verdict scale, both chips, could-not-confirm, not-assessed, five areas incl. documents-never-raise-verdict + sourcing-logic-informational). Meaning checks: verdict-is-the-recommendation preserved, "guarantee" appears only as negation, absence-not-accusation framing throughout. **2026-08-11 SKIN+STRUCTURE PORT phase 1 (into the LIVE app):** ruled cool tokens + Fraunces/Instrument Sans/JetBrains Mono ported to app/globals.css + layout.tsx (utility names unchanged — values only; ONE token layer, admin/marketing share it by design); Clerk colorPrimary mirrored #173e63; portal shell rebuilt (navy sidebar, SVG icons, mobile drawer <lg via thin client ShellChrome — boundary-safe), CaseTable renders cards below md, dashboard emoji icons -> SVG (labels untouched). Mobile portal now WORKS in the real app. Gates: 1146/1146, tsc 0, eslint 0, build clean, frozen diff empty. AA carries over (same hex as verified prototype; muted now 5.5:1 — old desktop failure fixed). REMAINING on 1.4: submit-form stepper structural port (logic-preserving). Report renderer confirmed NET-NEW (status view ≠ report) — stays with the 1.1/1.2 gate, NOT ported. Invoices route flagged: needs a Stripe API, out of scope. STILL OPEN: marketplace-localization decision (backend). |
 | 1.5 | **Credits display (BUG-2)** | ✅ | FA | **FIXED 2026-07-30:** `lib/portal/creditsDisplay.ts` — ONE computation for all render sites (billing ×2, dashboard, sidebar). Balance and plan allotment stated as distinct quantities ("7 credits available · plan renews to 5/cycle · includes 2 extra"); bar hard-capped at 100. Test-locked: can never say "7 of 5". Visual redesign stays UX. |
