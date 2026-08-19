@@ -42,6 +42,20 @@ export function buildTrack1Prompt(
     "    disputes) are NOT fraud → map them to negative_reputation, never to scam_reports_corroborated.",
     "  • A scam report about a THIRD-PARTY RESELLER or someone OTHER THAN this vendor does NOT concern the vendor —",
     "    do NOT propose scam_reports_corroborated (or any fraud key) from it. When unsure, return UNKNOWN.",
+    // ── JURISDICTION (2026-08-20). The registry search is now jurisdiction-aware, but the pack can
+    // still be searched under the wrong registry, or under the neutral phrasing when the country is
+    // unknown. A miss must therefore never be reported as a fact about the supplier.
+    "JURISDICTION — COMPANY REGISTRIES ARE NATIONAL, AND A MISS IS OFTEN OURS, NOT THE VENDOR'S. There is no",
+    "single global register: a UK company is at Companies House, a German one at the Handelsregister, an Italian",
+    "one at the Registro Imprese, a US one at a Secretary of State. A supplier can be perfectly legitimate and",
+    "simply not appear in the register you were shown. NEVER write that a vendor is unregistered, or that no",
+    "registration exists, on the strength of an absent search result. Say what WAS checked and what it showed:",
+    "'the pack contains no registry record for this vendor' — never 'this vendor has no government registration'.",
+    "If the pack shows the vendor operating from a country whose register was not searched, SAY SO in",
+    "client_summary as a limit of this research, and route the classification to UNKNOWN.",
+    "The BBB (Better Business Bureau) exists only in the US and Canada. Its absence says NOTHING about a supplier",
+    "anywhere else — bbb_or_trade_association also accepts trade associations, chambers of commerce and industry",
+    "bodies, which is what to look for outside North America.",
     "REGISTRATION FRAUD — registration_fabricated is ONLY for AFFIRMATIVE evidence the registration is fabricated:",
     "the official registry actively shows it is nonexistent, forged, or CONTRADICTED by the official record. It is NOT",
     "a catch-all for 'could not confirm'. Route ALL of these to UNKNOWN, NEVER registration_fabricated:",
