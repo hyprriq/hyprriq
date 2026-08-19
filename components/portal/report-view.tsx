@@ -8,6 +8,7 @@ import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import { changeRequestOpen } from "@/lib/portal/changeRequest";
 import type { Verdict } from "@/components/portal/badges";
 import { isAssessmentArea } from "@/lib/constants/tracks";
+import { splitHeadline, HEADLINE_QUALIFIER_LABEL } from "@/lib/portal/headlineParts";
 import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
 
 // ── THE REPORT (full-build brief §1–§3, approved prototype public/prototype/client/report.html) —
@@ -309,9 +310,27 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             {/* Summary — the engine's headline, unbounded, never truncated */}
             <div className="rounded-card border border-line bg-surface p-5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Summary</span>
-              <p className="mt-2 font-display text-[16.5px] font-medium leading-relaxed text-ink">
-                {report?.headline || "Your report is ready — the findings below carry the detail."}
-              </p>
+              {/* §3 — the headline is ONE engine string containing a claim and the condition on
+                  that claim ("… — subject to verification of X"). Printed as one paragraph it
+                  reads as a run-on, which is what the founder saw. Split at the engine's own seam
+                  and typeset as two things. The qualifier is LOAD-BEARING — it changes the
+                  meaning — so it is never dropped, only given its own line. */}
+              {(() => {
+                const { claim, qualifier } = splitHeadline(report?.headline ?? "");
+                return (
+                  <>
+                    <p className="mt-2 font-display text-[16.5px] font-medium leading-relaxed text-ink">
+                      {claim || "Your report is ready — the findings below carry the detail."}
+                    </p>
+                    {qualifier && (
+                      <div className="mt-2.5 border-t border-line pt-2.5">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{HEADLINE_QUALIFIER_LABEL}</div>
+                        <p className="mt-1 max-w-[68ch] font-reading text-[14px] leading-relaxed text-ink-2">{qualifier}</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {hasChecklist && (
                 <button type="button" onClick={() => setTab("checklist")} className="mt-3 text-[13px] font-semibold text-brand hover:text-brand-hover print:hidden">
                   What to verify first ↓
