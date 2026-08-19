@@ -50,7 +50,7 @@ export const reportPdfRender = inngest.createFunction(
     triggers: [{ event: REPORT_PDF_EVENT }],
   },
   async ({ event, step }: { event: { data: ReportPdfEvent }; step: InngestStep }) => {
-    const { case_id, attempt } = event.data as ReportPdfEvent;
+    const { case_id, attempt, origin } = event.data as ReportPdfEvent;
 
     const caseRow = await step.run("load-case", async () => {
       const { data } = await supabaseAdmin
@@ -125,7 +125,7 @@ export const reportPdfRender = inngest.createFunction(
         to: caseRow.clients?.email ?? null,
         caseNumber: caseRow.case_number,
         vendorName: caseRow.vendor_name,
-        caseUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/portal/cases/${case_id}`,
+        caseUrl: `${origin ?? process.env.NEXT_PUBLIC_APP_URL ?? ""}/portal/cases/${case_id}`,
         attachment: attachment
           ? { filename: `${caseRow.case_number}-report.pdf`, content: attachment }
           : null,

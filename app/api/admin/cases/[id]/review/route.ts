@@ -327,7 +327,7 @@ export async function POST(
   // whether or not the artifact job started. Never roll back, never fail the publish.
   {
     try {
-      await inngest.send({ name: REPORT_PDF_EVENT, data: { case_id: id, attempt } satisfies ReportPdfEvent });
+      await inngest.send({ name: REPORT_PDF_EVENT, data: { case_id: id, attempt, origin: new URL(req.url).origin } satisfies ReportPdfEvent });
     } catch (e) {
       await supabaseAdmin.from("audit_log").insert({
         table_name: "cases", record_id: id, action: "UPDATE",
