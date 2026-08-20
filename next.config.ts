@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // pdfjs-dist (the §4 TOC read-back) must run UNBUNDLED: Turbopack's chunk rewrote its module
+  // context, so its Node "fake worker" setup could not resolve pdf.worker.mjs at runtime
+  // (`Cannot find module '.../chunks/pdf.worker.mjs'` — third failure layer of the first real
+  // render, 04:20 UTC). Externalized, it loads from node_modules exactly as it does locally;
+  // the tracing include below ships those files.
+  serverExternalPackages: ["pdfjs-dist"],
   // §4 PDF render — lib/pdf/reportAssets.ts reads the font files and the wordmark from disk AT
   // RUNTIME (fs.readFileSync), so they must be traced into the serverless bundle. This include was
   // documented on reportAssets.ts from day one and never added here — without it the deployed
@@ -24,6 +30,8 @@ const nextConfig: NextConfig = {
       "./node_modules/@napi-rs/canvas-linux-x64-gnu/**",
       "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas/**",
       "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-x64-gnu/**",
+      // pdfjs-dist itself — externalized above, so the runtime requires these files directly.
+      "./node_modules/pdfjs-dist/**",
     ],
   },
 };
