@@ -205,7 +205,9 @@ export async function POST(
       actor_id: userId, actor_type: "admin",
       new_value: { blocked: "banned_language", violations: gate.violations, located: summariseHits(gate.findings) },
     });
-    return NextResponse.json({ error: "banned_language", violations: gate.violations, findings: gate.findings }, { status: 422 });
+    // `attempt` rides along so the blocked panel's reword affordance can save an override against
+    // the exact attempt the gate evaluated — overrides are per-attempt by design.
+    return NextResponse.json({ error: "banned_language", violations: gate.violations, findings: gate.findings, attempt: deliverAttempt }, { status: 422 });
   }
 
   // THE PRESENCE CHECKPOINT (founder-ruled 2026-08-18) — over the PROJECTED payload, deliberately

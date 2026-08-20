@@ -8,6 +8,7 @@ import type { TrackSignal, Verdict, AdditionalQuestion, SupplierIdentity } from 
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 import type { AreaView, LastDecision } from "@/lib/admin/reviewView";
 import type { BannedHit } from "@/lib/utils/bannedLanguageReport";
+import { overrideKeyForHit } from "@/lib/portal/overrideKeys";
 import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
 import { ReportView, FindingBody } from "@/components/portal/report-view";
 
@@ -106,7 +107,12 @@ export function CaseReview({
   const [error, setError] = useState<string | null>(null);
   // "SHOW + FIX" piece 1 — a banned-language block is not a one-line error, it is a worklist: the
   // operator needs the sentence, the field it lives in, and what to write instead.
-  const [blocked, setBlocked] = useState<{ violations: string[]; findings: BannedHit[] } | null>(null);
+  // `attempt` rides the 422 so piece 2 (the reword box) saves overrides against the exact attempt
+  // the gate evaluated — overrides are per-attempt by design.
+  const [blocked, setBlocked] = useState<{ violations: string[]; findings: BannedHit[]; attempt: number | null } | null>(null);
+  // "SHOW + FIX" piece 2 (founder-directed 2026-08-20: self-service at 30 reports/day) — per-hit
+  // reword state. Saving posts a prose override; the next publish applies it through the overlay.
+  const [rewords, setRewords] = useState<Record<number, { text: string; saved: boolean; busy: boolean; error: string | null }>>({});
   const [done, setDone] = useState<string | null>(null);
 
   // Gap B — analyst/review-team questions (create/edit/delete against cases.additional_questions).
@@ -144,6 +150,40 @@ export function CaseReview({
     }
   }
 
+  // "SHOW + FIX" piece 2 — save one reword as a prose override. The replacement runs the SAME
+  // scanHard gate server-side (the gate decides, not the operator); a rewording that still trips
+  // comes back as a per-item error, never a silent save.
+  async function saveReword(i: number, f: BannedHit) {
+    const key = overrideKeyForHit(f);
+    const text = rewords[i]?.text?.trim();
+    if (!key || !text || blocked?.attempt == null) return;
+    setRewords((r) => ({ ...r, [i]: { ...r[i], text: r[i]?.text ?? "", busy: true, error: null, saved: false } }));
+    try {
+      const res = await fetch(`/api/admin/cases/${caseId}/prose-override`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attempt_number: blocked.attempt,
+          target: key.target,
+          field_path: key.field_path,
+          original_text: f.field_text,
+          replacement_text: text,
+          reason: `blocked-panel reword: ${f.label}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error === "banned_language"
+          ? `Your rewording still trips the gate: ${(data.violations ?? []).join(", ")}.`
+          : (data?.message || data?.error || "Could not save the rewording.");
+        throw new Error(msg);
+      }
+      setRewords((r) => ({ ...r, [i]: { text, saved: true, busy: false, error: null } }));
+    } catch (e) {
+      setRewords((r) => ({ ...r, [i]: { text: r[i]?.text ?? text ?? "", saved: false, busy: false, error: e instanceof Error ? e.message : "Could not save the rewording." } }));
+    }
+  }
+
   async function send(action: "publish" | "override" | "request_investigation") {
     if (busy) return;
     // H5 addendum — irreversible-delivery guard: confirm the CASE IDENTITY before committing a
@@ -167,7 +207,8 @@ export function CaseReview({
       if (!res.ok) {
         if (data?.error === "banned_language") {
           // Structured, not a string: the panel below names every sentence and where it lives.
-          setBlocked({ violations: data.violations ?? [], findings: data.findings ?? [] });
+          setBlocked({ violations: data.violations ?? [], findings: data.findings ?? [], attempt: typeof data?.attempt === "number" ? data.attempt : null });
+          setRewords({});
           return;
         }
         throw new Error(data?.message || data?.error || "Could not save.");
@@ -803,18 +844,53 @@ export function CaseReview({
               {(blocked.findings.length || blocked.violations.length) === 1 ? "phrase" : "phrases"} cannot ship to a client.
             </p>
             <p className="mt-1 text-[12px] text-muted">
-              Nothing has been delivered and nothing was changed. Fix the wording at the source, then publish again.
+              Nothing has been delivered and nothing was changed. Reword a phrase below (it saves as a
+              per-attempt override — the stored record stays frozen), or fix it at the source. Then publish again.
             </p>
             <ul className="mt-3 space-y-3">
-              {blocked.findings.map((f, i) => (
-                <li key={`${f.where}-${i}`} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{f.where}</p>
-                  <p className="mt-1 text-[13px] text-ink">“{f.sentence}”</p>
-                  <p className="mt-1 text-[12px] text-muted">
-                    <span className="font-semibold text-deny-ink">{f.label}</span> — {f.fix}
-                  </p>
-                </li>
-              ))}
+              {blocked.findings.map((f, i) => {
+                const canReword = blocked.attempt != null && overrideKeyForHit(f) != null;
+                const rw = rewords[i];
+                return (
+                  <li key={`${f.where}-${i}`} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{f.where}</p>
+                    <p className="mt-1 text-[13px] text-ink">“{f.sentence}”</p>
+                    <p className="mt-1 text-[12px] text-muted">
+                      <span className="font-semibold text-deny-ink">{f.label}</span> — {f.fix}
+                    </p>
+                    {/* "SHOW + FIX" piece 2 — the reword box. Prefilled with the WHOLE field (the
+                        override replaces the full field text, byte-matched against the store); the
+                        gate re-checks the replacement server-side before it saves. Hits without a
+                        translatable key (M7 internals) get no box — an override there would
+                        silently not apply, which the overlay law forbids. */}
+                    {canReword && !rw?.saved && (
+                      <div className="mt-2">
+                        <textarea
+                          value={rw?.text ?? f.field_text}
+                          onChange={(e) => setRewords((r) => ({ ...r, [i]: { text: e.target.value, saved: false, busy: false, error: null } }))}
+                          rows={Math.min(6, Math.max(2, Math.ceil(f.field_text.length / 90)))}
+                          className="w-full rounded-lg border border-line bg-base px-2.5 py-2 text-[13px] text-ink outline-none focus:border-brand"
+                        />
+                        <div className="mt-1.5 flex items-center gap-3">
+                          <button
+                            type="button"
+                            disabled={rw?.busy || !(rw?.text ?? f.field_text).trim() || (rw?.text ?? f.field_text) === f.field_text}
+                            onClick={() => saveReword(i, f)}
+                            className="rounded-lg bg-brand px-3 py-1.5 text-[12.5px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                          >
+                            {rw?.busy ? "Saving…" : "Save rewording"}
+                          </button>
+                          <span className="text-[11.5px] text-muted">Applies on the next publish; the engine&rsquo;s original stays on record.</span>
+                        </div>
+                        {rw?.error && <p className="mt-1 text-[12px] text-deny-ink">{rw.error}</p>}
+                      </div>
+                    )}
+                    {rw?.saved && (
+                      <p className="mt-2 text-[12.5px] font-semibold text-clear-ink">✓ Rewording saved — publish again to apply it.</p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             {/* A label with no located sentence comes from the derivation-rule scanner, which reads
                 fields this walk does not — surfaced rather than silently dropped. */}
