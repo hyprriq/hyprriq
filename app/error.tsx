@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Wordmark } from "@/components/brand/wordmark";
 
 // Root error boundary (Next.js App Router). Must be a client component and
@@ -14,7 +15,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Wired to Sentry in a later session (Session J).
+    // Sentry wired 2026-08-20 (tracker 5.3). captureException is a no-op until the DSN env vars
+    // are set — key-safe like every other integration.
+    Sentry.captureException(error);
     console.error(error);
   }, [error]);
 
