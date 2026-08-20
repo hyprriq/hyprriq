@@ -202,6 +202,9 @@ export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
     llm_failed: llmFailed,
     questions_to_ask: parsed.questions_to_ask,
     brand_risk_finding: parsed.brand_risk_finding,
+    // RESOLVED BRAND NAMES (founder-ruled 2026-08-20) — what each submitted token was taken to
+    // mean; the pipeline writes cases.brands_confirmed from this and the PDF cover renders it.
+    resolved_brands: parsed.resolved_brands.length ? parsed.resolved_brands : undefined,
     analyst_reading: parsed.analyst_reading ?? undefined,
     // The account-specific marketplace-eligibility boundary applies to brand risk exactly as it
     // does to authorization — ONE shared code-templated note (the H3 one-fn discipline).

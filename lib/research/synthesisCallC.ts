@@ -154,12 +154,16 @@ export function shapeSnapshot(input: ShapeSnapshotInput): DecisionSnapshot {
         // SHAPE-SAFE (2026-08-19). Was `… — subject to verification of ${focus}` / `… rests on
         // ${focus} holding.` — noun-phrase slots fed free prose. AWI-2608-034 rendered
         // "This reading rests on The most concentrated doubt lands on … holding." to a client.
+        // HEADLINE NUDGE (founder-ruled 2026-08-20): the phrase forms move to COLON joins — "of
+        // ${focus}" and "${focus} holding" wrapped long noun phrases into one clumsy clause on the
+        // first line a client reads (AWI-2608-039 shipped "rests on Supply chain authorization
+        // standing … holding"). A colon carries any phrase, parentheses included, without nesting.
         headline: phraseShaped
-          ? `${raw.headline} — subject to verification of ${focusPhrase}`
+          ? `${raw.headline} — still to verify: ${focusPhrase}`
           : `${raw.headline} Subject to verification: ${focusSentence}`,
         leading_interpretation: lead(
           phraseShaped
-            ? `${raw.leading_interpretation} This reading rests on ${focusPhrase} holding.`
+            ? `${raw.leading_interpretation} This reading depends on verifying: ${focusPhrase}.`
             : `${raw.leading_interpretation} What this reading depends on: ${focusSentence}`,
         ),
         the_real_risk: raw.the_real_risk,
@@ -175,8 +179,11 @@ export function shapeSnapshot(input: ShapeSnapshotInput): DecisionSnapshot {
         // SHAPE-SAFE (2026-08-19): a parenthesised slot cannot hold a sentence. AWI-2607-021
         // rendered a full clause inside the brackets. The founder's law above is untouched — the
         // headline still LEADS with what could not be verified in both forms.
+        // HEADLINE NUDGE (founder-ruled 2026-08-20): the parenthetical becomes a colon. A focus
+        // that itself carries parentheses ("… all three brands (Nintendo, Sony, PlayStation)")
+        // nested brackets on the first line a client reads; a colon carries any phrase shape.
         headline: phraseShaped
-          ? `Key items could not be verified (${focusPhrase}). ${raw.headline}`
+          ? `Key items could not be verified: ${focusPhrase}. ${raw.headline}`
           : `Key items could not be verified. ${focusSentence} ${raw.headline}`,
         leading_interpretation: lead(`Best available reading — not a confirmed account: ${raw.leading_interpretation}`),
         the_real_risk: `What remains unverified drives the risk: ${raw.the_real_risk}`,

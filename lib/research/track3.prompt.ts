@@ -38,6 +38,9 @@ export interface ParsedTrack3 {
   reasoning_notes: string;
   // CLIENT-FACING (2026-08-19). reasoning_notes stays internal; this is what a buyer reads.
   client_summary: string;
+  // RESOLVED BRAND NAMES (2026-08-20): what each submitted token was taken to mean — feeds
+  // cases.brands_confirmed and the PDF cover. Empty when the model omitted it (legacy outputs).
+  resolved_brands: { submitted: string; resolved: string }[];
   unknowns: Unknown[];
   parse_failed?: true; // H2 — model produced nothing usable (API error / unparseable)
 }
@@ -139,10 +142,16 @@ export function buildTrack3Prompt(
     "proposed_weight_key: 'UNKNOWN' with your reason. You PROPOSE; the platform validates and scores.",
     CLIENT_SUMMARY_INSTRUCTION,
     CLIENT_PROSE_SURFACE_RULE,
+    "RESOLVED_BRANDS — for EVERY submitted brand token, return { submitted: the exact token you were",
+    "given, resolved: the brand's real-world proper name as the evidence shows it (correct spelling and",
+    "casing — 'nitendo' → 'Nintendo', 'bio-dema' → 'Bioderma') }. When the evidence does not establish",
+    "which real brand a token means, return the token itself as resolved — never guess a brand the",
+    "evidence does not support. One entry per submitted token, no extras.",
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
     "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }], brand_risk_finding,",
     "analyst_reading: { most_likely, alternative, confidence, what_would_change_my_mind }, questions_to_ask:",
-    "[{ question, reason, blocking_weight_key, priority, brand }], reasoning_notes, client_summary, unknowns: [{ unknown,",
+    "[{ question, reason, blocking_weight_key, priority, brand }], reasoning_notes, client_summary,",
+    "resolved_brands: [{ submitted, resolved }], unknowns: [{ unknown,",
     "why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
@@ -175,7 +184,7 @@ export function parseTrack3Output(json: unknown): ParsedTrack3 {
   const o = (json ?? {}) as Record<string, unknown> & { _parse_error?: boolean };
   const empty: ParsedTrack3 = {
     items: [], brand_risk_finding: "", analyst_reading: null, questions_to_ask: [],
-    reasoning_notes: "could not parse model output", client_summary: "", unknowns: [],
+    reasoning_notes: "could not parse model output", client_summary: "", resolved_brands: [], unknowns: [],
     parse_failed: true, // H2 — a STATE (→ n_a + hold), never a finding
   };
   if (o._parse_error || !Array.isArray(o.evidence_items)) return empty;
@@ -202,6 +211,19 @@ export function parseTrack3Output(json: unknown): ParsedTrack3 {
     questions_to_ask: parseQuestions(o.questions_to_ask),
     reasoning_notes: typeof o.reasoning_notes === "string" ? o.reasoning_notes : "",
     client_summary: parseClientSummary(o),
+    resolved_brands: parseResolvedBrands(o.resolved_brands),
     unknowns: Array.isArray(o.unknowns) ? (o.unknowns as Unknown[]) : [],
   };
+}
+
+/** Tolerant: legacy outputs and malformed entries yield [] / are skipped — absence never breaks parsing. */
+function parseResolvedBrands(raw: unknown): { submitted: string; resolved: string }[] {
+  if (!Array.isArray(raw)) return [];
+  const out: { submitted: string; resolved: string }[] = [];
+  for (const r of raw as Record<string, unknown>[]) {
+    if (typeof r?.submitted !== "string" || typeof r?.resolved !== "string") continue;
+    if (!r.submitted.trim() || !r.resolved.trim()) continue;
+    out.push({ submitted: r.submitted.trim(), resolved: r.resolved.trim() });
+  }
+  return out;
 }

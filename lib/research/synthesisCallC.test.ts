@@ -81,7 +81,8 @@ describe("S-1e — CONSCIENCE 1: the founder's law (identical verdict sentence; 
     const tgt = shapeSnapshot(shapeInput("targeted"));
     expect(tgt.the_real_risk).toContain("the vendor's authorization claim");
     const elv = shapeSnapshot(shapeInput("elevated"));
-    expect(elv.leading_interpretation).toContain("rests on");
+    // headline nudge (founder-ruled 2026-08-20): the dependency is a colon join, not "rests on X holding".
+    expect(elv.leading_interpretation).toContain("This reading depends on verifying:");
     expect(elv.leading_interpretation).toContain("the vendor's authorization claim");
   });
 

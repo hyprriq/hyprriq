@@ -38,7 +38,7 @@ export class ReportNotRenderable extends Error {
 }
 
 interface CaseRow {
-  id: string; case_number: string; vendor_name: string | null; brands_submitted: string[] | null;
+  id: string; case_number: string; vendor_name: string | null; brands_submitted: string[] | null; brands_confirmed: string[] | null;
   status: string; verdict: string | null; delivered_at: string | null; delivered_attempt: number | null;
   additional_questions: { question?: string }[] | null;
   clients: { full_name: string | null; company_name: string | null } | null;
@@ -62,7 +62,7 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(opts.case);
   const { data } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, vendor_name, brands_submitted, status, verdict, delivered_at, delivered_attempt, additional_questions, clients(full_name, company_name)")
+    .select("id, case_number, vendor_name, brands_submitted, brands_confirmed, status, verdict, delivered_at, delivered_attempt, additional_questions, clients(full_name, company_name)")
     .eq(isUuid ? "id" : "case_number", opts.case)
     .is("deleted_at", null)
     .maybeSingle();
@@ -115,7 +115,10 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   const content = {
     caseNumber: row.case_number,
     vendor: row.vendor_name ?? "—",
-    brands: row.brands_submitted ?? [],
+    // RESOLVED brand names on the cover (founder-ruled 2026-08-20) — what was researched, not what
+    // was typed; the submitted spellings render as "Submitted as: …" when any differ.
+    brands: row.brands_confirmed?.length ? row.brands_confirmed : (row.brands_submitted ?? []),
+    brandsSubmitted: row.brands_submitted ?? [],
     clientName,
     deliveredAt: fmt(row.delivered_at),
     verdict: row.verdict ?? "verify_before_purchase",

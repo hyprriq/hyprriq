@@ -94,16 +94,16 @@ describe("(c) the version bump — stored synthesis from the old prompts can nev
   // maintenance item rather than an invariant. It now asserts THE PROPERTY THAT MATTERS (the
   // version left the placeholder and is not ANY previously-shipped value) plus the current pin,
   // and carries the history so a future pass adds one line instead of rewriting the intent.
-  const SHIPPED_PROMPT_VERSIONS = ["0.0.0", "p001-1.0.0", "p002-1.0.0"];
-  const SHIPPED_IOS_VERSIONS = ["HyprrIQ IOS v0.1-skeleton", "HyprrIQ IOS v0.2-prose", "HyprrIQ IOS v0.3-client-summary"];
+  const SHIPPED_PROMPT_VERSIONS = ["0.0.0", "p001-1.0.0", "p002-1.0.0", "p002-1.1.0"];
+  const SHIPPED_IOS_VERSIONS = ["HyprrIQ IOS v0.1-skeleton", "HyprrIQ IOS v0.2-prose", "HyprrIQ IOS v0.3-client-summary", "HyprrIQ IOS v0.3.1-word-rules"];
 
   it("prompt_version has left the inert placeholder and every previously-shipped value", () => {
     for (const old of SHIPPED_PROMPT_VERSIONS) expect(IOS.prompt_version).not.toBe(old);
-    expect(IOS.prompt_version).toBe("p002-1.1.0");
+    expect(IOS.prompt_version).toBe("p002-1.2.0");
   });
   it("ios_version — the memoization key (getSynthesisByEvidenceHash matches on it) — moved in the SAME commit", () => {
     for (const old of SHIPPED_IOS_VERSIONS) expect(IOS.ios_version).not.toBe(old);
-    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.3.1-word-rules");
+    expect(IOS.ios_version).toBe("HyprrIQ IOS v0.3.2-resolved-brands");
   });
   it("synthesis_version is NOT touched by a prose pass (the S-2 forward pins stay valid)", () => {
     expect(IOS.synthesis_version).toBe("g005-1.0.0");

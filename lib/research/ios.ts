@@ -18,14 +18,17 @@ export const IOS = {
   // reach the publish gate): 'Amazon approved/approval' and corroboration vocabulary banned by
   // word, in every client-readable field, across Call C and the shared track surface rule. The
   // ios_version moves in the SAME edit (memoization key — old-prompt synthesis never reused).
-  prompt_version: "p002-1.1.0",
+  // RESOLVED BRANDS (founder-ruled 2026-08-20): Track 3 emits { submitted, resolved } per brand
+  // token → cases.brands_confirmed → the PDF cover. Changes what a client reads → prompt bump;
+  // ios moves in the same edit, as always.
+  prompt_version: "p002-1.2.0",
   rubric_version: "0.0.0",
   // S-1 FREEZE (S-1f Step 4): the synthesis engine ships. Leaves the inert "0.0.0" placeholder —
   // the FORWARD pins in rerun-batch.ts and dispute-rerun.ts move in this SAME commit (S-2 law).
   synthesis_version: "g005-1.0.0",
   corpus_version: "0.0.0",
   configuration_version: "0.0.0",
-  ios_version: "HyprrIQ IOS v0.3.1-word-rules",
+  ios_version: "HyprrIQ IOS v0.3.2-resolved-brands",
 } as const;
 
 export function assembleIosVersion(

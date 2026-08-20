@@ -74,10 +74,13 @@ describe("elevated — the level that shipped the defect", () => {
     expect(s.leading_interpretation).toContain("Black Jax");
   });
 
-  it("PHRASE focus keeps the original inline wording — no regression for the good case", () => {
+  it("PHRASE focus joins with a COLON (headline nudge, founder-ruled 2026-08-20)", () => {
+    // Was "— subject to verification of X" / "rests on X holding." — a long noun phrase wrapped
+    // the first client-read line into one clumsy clause (039 shipped the 'holding' form).
     const s = shapeSnapshot(base("elevated", FOCUS_PHRASE_022));
-    expect(s.headline).toBe("The supplier is real and trading. — subject to verification of Bosch supply chain authorization status for TD SYNNEX");
-    expect(s.leading_interpretation).toContain("This reading rests on Bosch supply chain authorization status for TD SYNNEX holding.");
+    expect(s.headline).toBe("The supplier is real and trading. — still to verify: Bosch supply chain authorization status for TD SYNNEX");
+    expect(s.leading_interpretation).toContain("This reading depends on verifying: Bosch supply chain authorization status for TD SYNNEX.");
+    expect(s.leading_interpretation).not.toMatch(/rests on .* holding/);
   });
 });
 
@@ -89,9 +92,16 @@ describe("broad — a parenthesised slot cannot hold a sentence", () => {
     expect(s.headline).toContain("No channel tier could be established.");
   });
 
-  it("LONG PHRASE focus still uses the bracketed inline form — it was never broken", () => {
+  it("PHRASE focus joins with a COLON — a focus carrying its own parentheses cannot nest brackets", () => {
+    // Headline nudge (founder-ruled 2026-08-20): was `(${focus})` — 039's focus contained
+    // "(Nintendo, Sony, PlayStation)" and the first line a client read carried nested brackets.
     const s = shapeSnapshot(base("broad", FOCUS_LONG_PHRASE_032));
-    expect(s.headline).toContain(`(${FOCUS_LONG_PHRASE_032})`);
+    expect(s.headline).toContain(`Key items could not be verified: ${FOCUS_LONG_PHRASE_032}.`);
+    expect(s.headline).not.toContain(`(${FOCUS_LONG_PHRASE_032})`);
+    const withParens = "Supply chain authorization for Click across all three brands (Nintendo, Sony, PlayStation)";
+    const s2 = shapeSnapshot(base("broad", withParens));
+    expect(s2.headline).toContain(`: ${withParens}.`);
+    expect(s2.headline).not.toMatch(/\([^)]*\(/); // no nested opening bracket anywhere
   });
 
   it("the founder's law survives: broad still LEADS with what could not be verified", () => {

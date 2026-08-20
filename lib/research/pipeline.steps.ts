@@ -305,6 +305,28 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   });
   if (persisted.error) throw new Error(`${def.track} row persist failed: ${persisted.error}`);
 
+  // ── RESOLVED BRAND NAMES → cases.brands_confirmed (founder-ruled 2026-08-20). The column
+  // existed with NO writer; the PDF cover printed submitted misspellings verbatim. Ordered by the
+  // submitted roster; a token the researcher could not resolve keeps its submitted form. Delivered
+  // cases stay frozen (H1) and a dispute re-run never advances case-level pointers. Loud-but-non-
+  // fatal: the track row is already persisted — a miss only leaves the cover on submitted spellings.
+  if (out.resolved_brands?.length && !ctx.dispute_rerun) {
+    const submitted = ctx.brands_submitted ?? [];
+    const byToken = new Map(out.resolved_brands.map((r) => [r.submitted.trim().toLowerCase(), r.resolved]));
+    const confirmed = submitted.map((b) => byToken.get(b.trim().toLowerCase()) ?? b);
+    const { error: bcErr } = await supabaseAdmin
+      .from("cases")
+      .update({ brands_confirmed: confirmed })
+      .not("status", "in", "(delivered,complete)")
+      .eq("id", ctx.case_id);
+    if (bcErr) {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "cases", record_id: ctx.case_id, action: "UPDATE", actor_type: "system",
+        new_value: { brands_confirmed_write_failed: bcErr.message, attempt: ctx.attempt_number ?? 1 },
+      });
+    }
+  }
+
   return { output: out, signal: div.signal, acquisition_failed: false, failed: false, not_implemented: false, track_number: n };
 }
 

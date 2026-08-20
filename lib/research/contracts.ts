@@ -239,6 +239,10 @@ export interface TrackOutput {
   // rendered admin-side only this gate; advisory reasoning, NEVER scored — the LLM↔code boundary holds).
   brand_risk_finding?: string;
   analyst_reading?: { most_likely: string; alternative: string; confidence: "high" | "medium" | "low"; what_would_change_my_mind: string };
+  // Track 3 (founder-ruled 2026-08-20) — resolved brand names: what each submitted token was taken
+  // to mean ("nitendo" → "Nintendo"). Writes cases.brands_confirmed; the PDF cover renders them.
+  // An added output field the verdict never reads (the client_summary ruling's boundary).
+  resolved_brands?: { submitted: string; resolved: string }[];
   // Track 4 (sub-gate A) — documentation narrative (ships like brand_relationship_finding, HARD-scanned at delivery).
   documentation_finding?: string;
   // Track 5 (sub-gate B, founder-ruled) — NON-VOTING arbitration layer. non_voting routes the

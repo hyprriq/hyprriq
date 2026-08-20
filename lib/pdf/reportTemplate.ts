@@ -26,13 +26,24 @@ import {
 export interface ReportContent {
   caseNumber: string;
   vendor: string;
+  /** RESOLVED brand names when the researcher stated them (founder-ruled 2026-08-20); the
+   *  submitted spellings otherwise. What was actually researched, not what was typed. */
   brands: string[];
+  /** The client's own submitted spellings, shown as "Submitted as: …" when any differ — the
+   *  client sees what they typed and what we took it to mean. */
+  brandsSubmitted?: string[];
   clientName: string;
   deliveredAt: string;
   verdict: string;
   report: ClientReport;
   findings: Finding[];
 }
+
+/** True when any resolved brand differs from its submitted form (case-insensitive). */
+export const brandsDiffer = (c: ReportContent): boolean =>
+  !!c.brandsSubmitted &&
+  (c.brandsSubmitted.length !== c.brands.length ||
+    c.brandsSubmitted.some((s, i) => s.trim().toLowerCase() !== (c.brands[i] ?? "").trim().toLowerCase()));
 
 // ── §4 — THE COUNT DERIVES, IT DOES NOT SAY FIVE (the returning count-derivation debt).
 // Same defect the portal carried: counting RENDERED ROWS makes a Scale PDF claim "6 assessment
@@ -237,6 +248,7 @@ ul.dash li::before{content:"–";position:absolute;left:0}
 .cover-rule{width:46pt;height:3.5pt;background:${P.copper};margin:86pt 0 16pt}
 .cover h1{font-family:Fraunces,serif;font-weight:600;font-size:34pt;line-height:1.12;color:#fff;max-width:400pt}
 .cover .who{font-weight:600;font-size:13.5pt;color:#fff;opacity:.9;margin-top:12pt}
+.cover .who-sub{font-size:9.5pt;color:#fff;opacity:.6;margin-top:4pt}
 .vbox{border:1.25pt solid #fff;border-radius:6pt;padding:16pt;margin-top:44pt;max-width:470pt}
 .vbox .k{font-weight:700;font-size:9pt;color:#fff;opacity:.8;letter-spacing:1.5pt;text-transform:uppercase}
 .vbox .name{font-family:Fraunces,serif;font-weight:600;font-size:22pt;color:#fff;margin-top:5pt}
@@ -305,6 +317,7 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
   <div class="cover-rule"></div>
   <h1>${esc(DOC_TITLE)}</h1>
   <div class="who">${esc(c.vendor)} · ${c.brands.map(esc).join(" · ")}</div>
+  ${brandsDiffer(c) ? `<div class="who-sub">Submitted as: ${c.brandsSubmitted!.map(esc).join(" · ")}</div>` : ""}
   <div class="vbox">
     <div class="k">Verdict · Level ${meta.level} of 4</div>
     <div class="name">${esc(meta.name)}</div>

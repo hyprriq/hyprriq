@@ -4,7 +4,7 @@
 export const TRACK3_OUTPUT_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["evidence_items", "brand_risk_finding", "analyst_reading", "questions_to_ask", "client_summary", "reasoning_notes", "unknowns"],
+  required: ["evidence_items", "brand_risk_finding", "analyst_reading", "questions_to_ask", "client_summary", "reasoning_notes", "unknowns", "resolved_brands"],
   properties: {
     evidence_items: {
       type: "array",
@@ -58,6 +58,23 @@ export const TRACK3_OUTPUT_SCHEMA = {
     // from emitting it — every response omitted it and the writer fell back to code-owned copy.
     // Proven on AWI-2608-039, the first case ever run on these prompts.
     client_summary: { type: "string" },
+    // ── RESOLVED BRAND NAMES (founder-ruled 2026-08-20): the researcher states, structurally,
+    // which real-world brand each submitted token was taken to mean — "nitendo" → "Nintendo".
+    // Feeds cases.brands_confirmed (a column that had NO writer) and the PDF cover, which was
+    // printing the submitted misspellings verbatim on a $499 deliverable. Prompt + parser +
+    // THIS SCHEMA move together — the client_summary lesson above is two fields up.
+    resolved_brands: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["submitted", "resolved"],
+        properties: {
+          submitted: { type: "string" },
+          resolved: { type: "string" },
+        },
+      },
+    },
     reasoning_notes: { type: "string" },
     unknowns: {
       type: "array",
