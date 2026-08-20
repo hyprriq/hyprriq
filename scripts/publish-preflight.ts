@@ -14,16 +14,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getCaseTrackResults } from "@/lib/data/track-results";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { checkDeliverable } from "@/lib/research/deliverability";
-import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
-import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
-import { scanCategoryAtDelivery } from "@/lib/research/categoryLanguage";
-import {
-  cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
-  projectClientReport, projectFindingJsonForClient,
-} from "@/lib/portal/clientReport";
 import { getProseOverrides } from "@/lib/data/proseOverrides";
-import { overlayTrackRows, overlaySynthesisClient, overlayIdentityNote } from "@/lib/portal/overlayDelivery";
-import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
+import { composePublishGate } from "@/lib/portal/publishGate";
 import { reportObjectKey } from "@/lib/pdf/reportStorage";
 import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 import type { PlanType } from "@/lib/constants/plans";
@@ -49,22 +41,20 @@ async function main() {
     const intel = await getCaseIntelligence(c.id, attempt);
     const rawIdentityNote = c.supplier_identity?.identity_discrepancy?.client_note ?? null;
 
-    // PROSE OVERRIDES — the route applies the overlay before every scanner, so this mirrors it.
+    // THE GATE — the route's own composition, imported, never re-implemented (composePublishGate).
     const overrides = await getProseOverrides(c.id, attempt);
-    const { rows, failures: trackOverlayFailures } = overlayTrackRows(rawRows, overrides);
-    const synthOverlay = intel
-      ? overlaySynthesisClient(intel.synthesis.module_9_decision_snapshot, intel.synthesis.module_8_vendor_questions, overrides)
-      : { decision_snapshot: null, vendor_questions: null, failures: [] as string[] };
-    const gateSynthesis = intel
-      ? { ...intel.synthesis, module_9_decision_snapshot: synthOverlay.decision_snapshot as typeof intel.synthesis.module_9_decision_snapshot, module_8_vendor_questions: synthOverlay.vendor_questions as typeof intel.synthesis.module_8_vendor_questions }
-      : null;
-    const identityOverlay = overlayIdentityNote(rawIdentityNote, overrides);
-    const identityNote = identityOverlay.note;
-    const overlayFailures = [...trackOverlayFailures, ...synthOverlay.failures, ...identityOverlay.failures];
+    const gate = composePublishGate({
+      rows: rawRows,
+      synthesis: intel?.synthesis ?? null,
+      identityNote: rawIdentityNote,
+      overrides,
+      reportOnly: true, // an instrument reports leaks; only the route asserts
+    });
+    const rows = gate.gateRows;
     if (overrides.length) {
       console.log(
-        overlayFailures.length
-          ? `  ✗ OVERRIDES NOT APPLIED (${overlayFailures.length}) — publish will refuse: ${overlayFailures.join(" · ")}`
+        gate.overlayFailures.length
+          ? `  ✗ OVERRIDES NOT APPLIED (${gate.overlayFailures.length}) — publish will refuse: ${gate.overlayFailures.join(" · ")}`
           : `  ✓ ${overrides.length} prose override(s) applied`,
       );
     }
@@ -77,30 +67,15 @@ async function main() {
     });
     console.log(notDeliverable.length ? `  ✗ NOT DELIVERABLE: ${notDeliverable.join("; ")}` : `  ✓ deliverable (attempt ${attempt}, ${rows.length} track rows)`);
 
-    // 2 ── THE MERGED VIOLATION SET, composed as the route composes it.
-    const violations = [...new Set([
-      ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
-      ...rows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
-      ...scanFindingsForBannedLanguage(identityNote ? { client_note: identityNote } : null),
-      ...(gateSynthesis ? scanFindingsForBannedLanguage({ decision_snapshot: gateSynthesis.module_9_decision_snapshot, vendor_questions: gateSynthesis.module_8_vendor_questions }) : []),
-      ...(gateSynthesis ? scanSynthesisAtDelivery(gateSynthesis) : []),
-      ...scanTrackProseAtDelivery(rows),
-      ...scanCategoryAtDelivery(rows),
-    ])];
-    console.log(violations.length ? `  ✗ GATE BLOCKS (${violations.length}): ${violations.slice(0, 6).join(" · ")}` : "  ✓ gate clean");
+    // 2 ── THE MERGED VIOLATION SET — the gate's own number, printed with the located sentences.
+    console.log(
+      gate.violations.length
+        ? `  ✗ GATE BLOCKS (${gate.violations.length}): ${[...new Set(gate.findings.map((f) => `${f.label} @ ${f.target} › ${f.path}`))].slice(0, 8).join(" · ") || gate.violations.slice(0, 6).join(" · ")}`
+        : "  ✓ gate clean",
+    );
 
-    // 3 ── THE PRESENCE CHECKPOINT over the projected payload.
-    const projected = {
-      findings: rows.map((r) => ({
-        compiled_findings_json: r.compiled_findings_json
-          ? cleanClientFindingJson(projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key), r.track_key, { allowInternalTokens: true })
-          : null,
-        questions_to_ask: cleanClientProseDeep(r.questions_to_ask),
-      })),
-      client_note: identityNote ? cleanClientProse(identityNote) : null,
-      report: gateSynthesis ? projectClientReport((gateSynthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null, gateSynthesis.module_8_vendor_questions, [], { allowInternalTokens: true }) : null,
-    };
-    const leaks = findInternalTokens(projected);
+    // 3 ── THE PRESENCE CHECKPOINT over the projected payload — the gate's own leak list.
+    const leaks = gate.tokenLeaks;
     console.log(leaks.length ? `  ✗ TOKEN CHECKPOINT REFUSES (${leaks.length}): ${leaks.slice(0, 3).map((l) => `${l.match}@${l.path}`).join(" · ")}` : "  ✓ checkpoint clean");
 
     // 4 ── WHAT HAPPENS AFTER A SUCCESSFUL PUBLISH

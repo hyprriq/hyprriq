@@ -64,8 +64,20 @@ describe("LOCK — every consumer reads the ONE projection, none reads the raw r
     ["lib/data/cases.ts", "the RSC boundary"],
     ["lib/admin/reviewView.ts", "the operator's client-view"],
     ["lib/research/synthesisMethodScan.ts", "the blocking scanner"],
-    ["app/api/admin/cases/[id]/review/route.ts", "the publish-route locator"],
+    // 2026-08-20: the route's locator + checkpoint moved into the ONE gate composition — the lock
+    // follows the projection to where it lives now, and a separate lock below pins the route to
+    // that composition so it can never quietly re-inline a raw read.
+    ["lib/portal/publishGate.ts", "the publish-gate composition"],
   ] as const;
+
+  it("the publish route consumes the ONE gate composition — never a hand-rolled scanner set", () => {
+    const src = read("app/api/admin/cases/[id]/review/route.ts");
+    expect(src).toContain("composePublishGate");
+    // The exact raw-questions shapes that shipped the defects must never return to the route.
+    expect(src).not.toMatch(/questions_to_ask\s*\?\?\s*null/);
+    expect(src).not.toMatch(/cleanClientProseDeep\(\s*r\.questions_to_ask\s*\)/);
+    expect(src).not.toContain("scanFindingsForBannedLanguage");
+  });
 
   for (const [file, what] of CONSUMERS) {
     it(`${what} (${file}) projects questions`, () => {

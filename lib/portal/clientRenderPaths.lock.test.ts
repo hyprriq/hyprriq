@@ -70,9 +70,14 @@ describe("LOCK — the checkpoint stays bound to the sanctioned projection entry
   });
 
   it("the publish route asserts over the PROJECTED payload, not the raw rows", () => {
+    // 2026-08-20: the checkpoint composition moved into the ONE shared gate (publishGate.ts); the
+    // route consumes it and still REFUSES. The lock follows: the projection walk lives in the
+    // gate, the refusal lives in the route.
+    const gateSrc = read("lib/portal/publishGate.ts");
+    expect(gateSrc).toContain("findInternalTokens");
+    expect(gateSrc).toContain("projectedForClient");
     const src = read("app/api/admin/cases/[id]/review/route.ts");
-    expect(src).toContain("findInternalTokens");
-    expect(src).toContain("projectedForClient");
+    expect(src).toContain("composePublishGate");
     // The refusal must be a real refusal, not an advisory log.
     expect(src).toMatch(/error:\s*"internal_tokens"/);
   });

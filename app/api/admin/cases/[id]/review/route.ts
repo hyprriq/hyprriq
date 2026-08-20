@@ -3,23 +3,14 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { inngest } from "@/lib/inngest/client";
 import { getCaseTrackResults } from "@/lib/data/track-results";
-import { scanFindingsForBannedLanguage } from "@/lib/utils/banned-language";
-import { locateBannedLanguage, summariseHits } from "@/lib/utils/bannedLanguageReport";
+import { summariseHits } from "@/lib/utils/bannedLanguageReport";
 import { checkDeliverable } from "@/lib/research/deliverability";
 import type { PlanType } from "@/lib/constants/plans";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { caseInScope } from "@/lib/auth/clientScope";
-import { scanSynthesisAtDelivery, scanTrackProseAtDelivery } from "@/lib/research/synthesisMethodScan";
-import { scanCategoryAtDelivery } from "@/lib/research/categoryLanguage";
-import {
-  cleanClientFindingJson, cleanClientProse, cleanClientProseDeep,
-  projectClientReport, projectFindingJsonForClient, projectQuestionsForClient,
-} from "@/lib/portal/clientReport";
-import { findInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
-import { locateSynthesisMethodLeakage, locateMethodLeakage } from "@/lib/research/methodScanReport";
 import { getCaseIntelligence } from "@/lib/data/synthesis";
 import { getProseOverrides } from "@/lib/data/proseOverrides";
-import { overlayTrackRows, overlaySynthesisClient, overlayIdentityNote } from "@/lib/portal/overlayDelivery";
+import { composePublishGate } from "@/lib/portal/publishGate";
 import { seedCaseOutcome } from "@/lib/data/outcomes";
 import { REPORT_PDF_EVENT, type ReportPdfEvent } from "@/lib/inngest/events";
 
@@ -149,33 +140,31 @@ export async function POST(
   const deliverAttempt = rows.length ? Math.max(...rows.map((r) => r.attempt_number ?? 1)) : 1;
   const intel = await getCaseIntelligence(id, deliverAttempt);
 
-  // ── PROSE OVERRIDES ("Show + Fix" piece 2 — the gate-side reader). The operator's rewording is
-  // applied HERE, before every scanner, so an override can actually close a block — and the SAME
-  // overlay runs on the client projection and the PDF, so what passes the gate is what ships.
-  // A stored override that does NOT land (stale text, vanished path) REFUSES the publish loudly:
-  // this is the one place that must never fail silently (lib/portal/proseOverlay.ts).
+  // ── THE PUBLISH GATE — ONE COMPOSITION (lib/portal/publishGate.ts), shared byte-identically
+  // with scripts/publish-preflight.ts and any operator harness, so "what blocks a publish" has
+  // exactly one definition (two hand-kept copies is the scanner/locator drift class). Prose
+  // overrides are applied inside it, before every scanner — an override can close a block, and a
+  // stored override that does NOT land (stale text, vanished path) refuses the publish here:
+  // the one place that must never fail silently (lib/portal/proseOverlay.ts).
   const overrides = await getProseOverrides(id, deliverAttempt);
-  const { rows: gateRows, failures: trackOverlayFailures } = overlayTrackRows(rows, overrides);
-  const synthOverlay = intel
-    ? overlaySynthesisClient(intel.synthesis.module_9_decision_snapshot, intel.synthesis.module_8_vendor_questions, overrides)
-    : { decision_snapshot: null, vendor_questions: null, failures: [] as string[] };
-  const gateSynthesis = intel
-    ? { ...intel.synthesis, module_9_decision_snapshot: synthOverlay.decision_snapshot as typeof intel.synthesis.module_9_decision_snapshot, module_8_vendor_questions: synthOverlay.vendor_questions as typeof intel.synthesis.module_8_vendor_questions }
-    : null;
-  const identityOverlay = overlayIdentityNote(identityNote, overrides);
-  const gateIdentityNote = identityOverlay.note;
-  const overlayFailures = [...trackOverlayFailures, ...synthOverlay.failures, ...identityOverlay.failures];
-  if (overlayFailures.length > 0) {
+  const gate = composePublishGate({
+    rows,
+    synthesis: intel?.synthesis ?? null,
+    identityNote,
+    overrides,
+    additionalQuestions: ((c as { additional_questions?: { question?: unknown; source?: string }[] | null }).additional_questions) ?? [],
+  });
+  if (gate.overlayFailures.length > 0) {
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_prose_overrides", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin",
-      new_value: { blocked: "override_not_applied", attempt: deliverAttempt, failures: overlayFailures },
+      new_value: { blocked: "override_not_applied", attempt: deliverAttempt, failures: gate.overlayFailures },
     });
     return NextResponse.json({
       error: "override_not_applied",
-      failures: overlayFailures,
+      failures: gate.overlayFailures,
       message:
-        `Publish refused: ${overlayFailures.length} prose override(s) no longer match the stored text ` +
+        `Publish refused: ${gate.overlayFailures.length} prose override(s) no longer match the stored text ` +
         `(a re-run or edit moved on). Re-check each and re-save or clear it — an override must never silently not apply.`,
     }, { status: 422 });
   }
@@ -206,121 +195,33 @@ export async function POST(
       message: `This attempt has nothing deliverable: ${notDeliverable.join("; ")}.`,
     }, { status: 422 });
   }
-  const violations = [...new Set([
-    ...gateRows.flatMap((r) => scanFindingsForBannedLanguage(r.compiled_findings_json)),
-    ...gateRows.flatMap((r) => scanFindingsForBannedLanguage(r.questions_to_ask)),
-    ...scanFindingsForBannedLanguage(gateIdentityNote ? { client_note: gateIdentityNote } : null),
-    ...(gateSynthesis ? scanFindingsForBannedLanguage({ decision_snapshot: gateSynthesis.module_9_decision_snapshot, vendor_questions: gateSynthesis.module_8_vendor_questions }) : []),
-    ...(gateSynthesis ? scanSynthesisAtDelivery(gateSynthesis) : []),
-    // CLASS 4 (founder-ruled 2026-08-18) — the derivation scanner now covers TRACK prose too. It
-    // has always covered synthesis while the language scanner covered both; a scanner covering one
-    // of two client-facing surfaces is the defect, not the coverage. Cases that block on this today
-    // were passing the gate before because nothing looked, not because they were clean.
-    ...scanTrackProseAtDelivery(gateRows),
-    // §2 (founder-ruled 2026-08-18) — the category scanner JOINS the delivery composition.
-    // It ran at GENERATION ONLY while `category` and `brand_category_note` are LLM-written and
-    // reach a client. It lands inside this merged set, never as a fourth scanner beside it.
-    ...scanCategoryAtDelivery(gateRows),
-  ])];
-  if (violations.length > 0) {
-    // ── "SHOW + FIX" piece 1 (founder-ruled 2026-08-17). The gate's DECISION is untouched — the
-    // block above is computed exactly as before and still blocks. What changes is what the operator
-    // is handed: until now this returned a bare label ("prohibited language: confirms/certifies
-    // authorization") with no sentence, no field and no track, so the only ways past a blocked
-    // publish were a code deploy or a full case re-run — with a paying client waiting. The locator
-    // re-walks the SAME structures, keeps the path, and localises each label to its sentence.
-    // (A label with no finding — e.g. from the derivation-rule method scanner, which reads
-    // different fields — still ships in `violations`, so nothing is ever silently dropped.)
-    const findings = [
-      ...gateRows.flatMap((r) => locateBannedLanguage(r.compiled_findings_json, r.track_key)),
-      ...gateRows.flatMap((r) => locateBannedLanguage(r.questions_to_ask, `${r.track_key} (questions)`)),
-      ...locateBannedLanguage(gateIdentityNote ? { client_note: gateIdentityNote } : null, "supplier identity"),
-      ...(gateSynthesis ? locateBannedLanguage({
-        decision_snapshot: gateSynthesis.module_9_decision_snapshot,
-        vendor_questions: gateSynthesis.module_8_vendor_questions,
-      }, "synthesis") : []),
-      // TWO SCANNERS, ONE WORKLIST (founder-ruled 2026-08-17). The derivation-rule scanner is the
-      // OTHER half of this gate and until now returned a label with no sentence — which is why
-      // AWI-2608-034 sat held with no actionable diagnosis. Same BannedHit shape, so it lands in
-      // the same array and the blocked-publish panel renders it with no change.
-      ...(gateSynthesis ? locateSynthesisMethodLeakage(gateSynthesis) : []),
-      // Class 4 gets a sentence too — a label with no sentence is what held AWI-2608-034 with no
-      // actionable diagnosis, and shipping the coverage without the locator would repeat it.
-      ...gateRows.flatMap((r) =>
-        locateMethodLeakage(
-          {
-            [r.track_key]: r.compiled_findings_json
-              ? projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key)
-              : null,
-            // ⚠ THE PROJECTION, NOT THE RAW ROW — AND THIS LINE IS WHY THE RULE EXISTS.
-            // The SCANNER above and this LOCATOR are deliberately kept in lockstep so the operator
-            // sees exactly what blocks. Both compositions were written in the same commit; when the
-            // raw-row defect was fixed, it was fixed in the scanner and NOT here, so the panel
-            // reported 16 phrases while only 3 could block — 13 of them `blocking_weight_key`,
-            // a structured field whose value IS a weight key. A gate that over-reports 4x makes a
-            // three-line prose fix look like a systemic failure.
-            [`${r.track_key} (questions)`]: projectQuestionsForClient(r.questions_to_ask),
-          },
-          r.track_key,
-        ),
-      ),
-    ];
+  // "SHOW + FIX" piece 1 (founder-ruled 2026-08-17): the blocked response carries the LOCATED
+  // sentences, not bare labels. Scanner + locator + checkpoint all live in composePublishGate —
+  // their lockstep history (the 16-vs-3 over-report, the two-surfaces-two-gates law) is recorded
+  // there, once.
+  if (gate.violations.length > 0) {
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin",
-      new_value: { blocked: "banned_language", violations, located: summariseHits(findings) },
+      new_value: { blocked: "banned_language", violations: gate.violations, located: summariseHits(gate.findings) },
     });
-    return NextResponse.json({ error: "banned_language", violations, findings }, { status: 422 });
+    return NextResponse.json({ error: "banned_language", violations: gate.violations, findings: gate.findings }, { status: 422 });
   }
 
-  // ── THE PRESENCE CHECKPOINT (founder-ruled 2026-08-18) — THE REFUSING ENFORCEMENT POINT.
-  //
-  // ⚠ IT SCANS THE PROJECTED PAYLOAD, NOT `rows`. THIS IS THE OPPOSITE SIDE FROM EVERY GATE ABOVE
-  // AND IT IS DELIBERATE. The banned-language and derivation scanners read RAW findings, which is
-  // correct for them: cleaning only removes, so raw is a superset of projected. For internal
-  // tokens it INVERTS — raw ALWAYS legitimately carries `src_N` (the operator's ruled
-  // source-checking leverage), so this same assertion built on `rows` would refuse every case on
-  // day one. Two gates, two surfaces, pinned on purpose. Do not "tidy" them onto one walk: that is
-  // the same defect class as the census/attempt skew, two instruments not pinned to the same thing.
-  //
-  // The payload below is composed the way the CLIENT surfaces compose it (lib/data/cases.ts
-  // getCaseFindings and lib/pdf/renderReportPdf.ts), so what is asserted here is what ships.
-  const projectedForClient = {
-    findings: gateRows.map((r) => ({
-      compiled_findings_json: r.compiled_findings_json
-        ? cleanClientFindingJson(
-            projectFindingJsonForClient(r.compiled_findings_json as Record<string, unknown>, r.track_key),
-            r.track_key,
-          )
-        : null,
-      // The checkpoint asserts over what the CLIENT receives, so it must see the same projection
-      // getCaseFindings produces — not the raw row. (Found by the new lock: this was a FOURTH
-      // instance of the raw-questions defect, in the same file as the second and third.)
-      questions_to_ask: cleanClientProseDeep(projectQuestionsForClient(r.questions_to_ask)),
-    })),
-    // `client_notes` are IN SCOPE by ruling.
-    client_note: gateIdentityNote ? cleanClientProse(gateIdentityNote) : null,
-    report: gateSynthesis
-      ? projectClientReport(
-          (gateSynthesis.module_9_decision_snapshot ?? null) as unknown as Record<string, unknown> | null,
-          gateSynthesis.module_8_vendor_questions,
-          ((c as { additional_questions?: { question?: unknown; source?: string }[] | null }).additional_questions) ?? [],
-        )
-      : null,
-  };
-  const tokenLeaks = findInternalTokens(projectedForClient);
-  if (tokenLeaks.length > 0) {
+  // THE PRESENCE CHECKPOINT (founder-ruled 2026-08-18) — over the PROJECTED payload, deliberately
+  // the opposite surface from the raw-reading scanners (see publishGate.ts; do not merge them).
+  if (gate.tokenLeaks.length > 0) {
     await supabaseAdmin.from("audit_log").insert({
       table_name: "case_track_results", record_id: id, action: "UPDATE",
       actor_id: userId, actor_type: "admin",
-      new_value: { blocked: "internal_tokens", count: tokenLeaks.length, found: tokenLeaks.slice(0, 20) },
+      new_value: { blocked: "internal_tokens", count: gate.tokenLeaks.length, found: gate.tokenLeaks.slice(0, 20) },
     });
     return NextResponse.json({
       error: "internal_tokens",
-      count: tokenLeaks.length,
-      findings: tokenLeaks,
+      count: gate.tokenLeaks.length,
+      findings: gate.tokenLeaks,
       message:
-        `Publish refused: ${tokenLeaks.length} internal reference(s) are present in the payload this client would receive. ` +
+        `Publish refused: ${gate.tokenLeaks.length} internal reference(s) are present in the payload this client would receive. ` +
         `This is a BACKSTOP, not a style check — a token here means a cleaner missed a shape nobody had seen. ` +
         `Fix it in the projection (lib/portal/clientReport.ts) and re-run; do not strip it at the render site.`,
     }, { status: 422 });
