@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/constants/site";
 import { Fraunces, Instrument_Sans, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
@@ -33,9 +34,26 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
+  // metadataBase resolves the OG/Twitter image URLs (app/opengraph-image.tsx) absolutely — cards
+  // are broken without it on any host that isn't the canonical origin.
+  metadataBase: new URL(SITE_URL),
   title: "HyprrIQ — Source intelligence for Amazon wholesale",
   description:
     "Before you commit capital, HyprrIQ investigates the vendor and brand behind your next wholesale buy — and hands you a one-page verdict with the exact questions to ask.",
+  openGraph: {
+    type: "website",
+    siteName: "HyprrIQ",
+    title: "HyprrIQ — Source intelligence for Amazon wholesale",
+    description:
+      "A structured verdict on your supplier, the evidence behind it, and the exact questions to ask — within 24 hours.",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HyprrIQ — Source intelligence for Amazon wholesale",
+    description:
+      "A structured verdict on your supplier, the evidence behind it, and the exact questions to ask — within 24 hours.",
+  },
 };
 
 export default function RootLayout({
