@@ -14,7 +14,9 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What exactly do I get?",
-    a: "A one-page Decision Snapshot with one of four plain-English verdicts, the evidence behind it across five assessment areas, and a checklist of what to ask your vendor. Full reports include the detailed findings.",
+    // "across five assessment areas" was plan-dependent ($99 runs three) — plan-neutral per the
+    // 2026-08-14 area-claims ruling; the try-first answer below still names the exact tier split.
+    a: "A one-page Decision Snapshot with one of four plain-English verdicts, the evidence behind it across the assessment areas your plan includes, and a checklist of what to ask your vendor. Full reports include the detailed findings.",
   },
   {
     q: "How do credits work?",

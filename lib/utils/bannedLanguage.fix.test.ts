@@ -180,7 +180,7 @@ const MUST_PASS: [string, string][] = [
   ["settings page sub (reworded)", "Keep your contact and billing details up to date. These are saved to your account for your records."],
   ["settings billing hint (reworded)", "Saved to your account for your records. Separate from your Stripe card details."],
   ["settings tax hint (reworded)", "Saved to your account for your records. Leave blank if not applicable."],
-  ["auth pill (60+ removed)", "Five assessment areas, one clear verdict"],
+  ["auth pill (60+ removed; five→structured 2026-08-20, plan-dependent count)", "Structured assessment areas, one clear verdict"],
   // — humanise pass (2026-08-14) —
   ["dashboard reports-ready sub", "Ready to read"],
   ["onboarding document bullet", "Document review when you upload paperwork"],

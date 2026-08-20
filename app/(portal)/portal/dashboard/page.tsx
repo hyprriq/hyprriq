@@ -75,8 +75,10 @@ function NoPlanDashboard() {
         Choose a plan to start vetting suppliers
       </h2>
       <p className="mx-auto mt-2 max-w-md text-[16px] text-ink-2">
-        Pick a plan to submit your first research request. You&rsquo;ll get a structured,
-        five-dimension verdict on your supplier before you wire any money.
+        {/* "five-dimension" survived the ruled dimensions→assessment-areas pass (126d440), and a
+            five-claim is plan-dependent ($99 runs three) — plan-neutral per that ruling. */}
+        Pick a plan to submit your first research request. You&rsquo;ll get a structured
+        verdict on your supplier before you wire any money.
       </p>
       <div className="mt-6 flex justify-center gap-3">
         <Link href="/portal/billing" className="rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-hover">

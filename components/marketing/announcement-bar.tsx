@@ -23,8 +23,10 @@ export function AnnouncementBar() {
         <span className="text-white/85">
           New — vet a supplier before your next wholesale buy.
         </span>
+        {/* was href="#pricing" — no element with that id exists on any page (tracker 2.11);
+            the pricing page is a route, not an anchor. */}
         <a
-          href="#pricing"
+          href="/pricing"
           className="inline-flex items-center gap-1 font-semibold text-white underline-offset-4 hover:underline"
         >
           See pricing
