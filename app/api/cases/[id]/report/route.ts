@@ -47,14 +47,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   // The render job runs after publish, so a client can legitimately click before the object lands.
   // That is a WAIT, not a failure, and the message says so rather than implying something broke.
+  // "a few minutes" matches the measured Inngest pickup (~5 min, normal); "will be attached" stays
+  // future-tense because at 202-time the delivery email has not been sent yet — and on a permanent
+  // render failure it deliberately goes out WITHOUT the attachment, so "is attached" would lie.
   if (!(await reportExists(key))) {
     return NextResponse.json(
-      { error: "not_ready", message: "Your PDF is still being prepared. It will also arrive by email — the full report is readable in your portal now." },
+      { error: "not_ready", message: "Your PDF is being prepared and will be ready in a few minutes — it will also be attached to your delivery email. The full report is readable on this page now." },
       { status: 202 },
     );
   }
 
-  const url = await signedReportUrl(key);
+  const url = await signedReportUrl(key, `${c.case_number}-report.pdf`);
   if (!url) return NextResponse.json({ error: "sign_failed" }, { status: 500 });
 
   // 302 to a short-lived signed URL: the browser downloads directly from storage and the bytes

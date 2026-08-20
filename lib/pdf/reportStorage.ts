@@ -73,10 +73,12 @@ export async function storeReportPdf(key: string, pdf: Buffer | Uint8Array): Pro
  */
 export const SIGNED_URL_TTL_SECONDS = 300;
 
-export async function signedReportUrl(key: string): Promise<string | null> {
+export async function signedReportUrl(key: string, downloadName?: string): Promise<string | null> {
+  // `download` makes storage answer Content-Disposition: attachment, so a browser that NAVIGATES
+  // to this URL saves the file where it stands instead of replacing the portal with a PDF viewer.
   const { data, error } = await supabaseAdmin.storage
     .from(REPORTS_BUCKET)
-    .createSignedUrl(key, SIGNED_URL_TTL_SECONDS);
+    .createSignedUrl(key, SIGNED_URL_TTL_SECONDS, downloadName ? { download: downloadName } : undefined);
   return error ? null : (data?.signedUrl ?? null);
 }
 

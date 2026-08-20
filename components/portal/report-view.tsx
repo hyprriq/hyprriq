@@ -422,7 +422,19 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                 return;
               }
               if (!res.ok) { setPdfNote("We could not fetch the PDF just now — try again in a moment. The full report is on this page."); return; }
-              window.location.href = res.url;
+              // DOWNLOAD IN PLACE (founder-ruled 2026-08-20): the fetch above already followed the
+              // 302 and holds the bytes — save THOSE, so the portal never navigates away and the
+              // file isn't pulled twice. The bare href stays as the no-JS fallback; the signed URL
+              // it reaches now carries Content-Disposition: attachment, so navigation downloads too.
+              const blob = await res.blob();
+              const objectUrl = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = objectUrl;
+              a.download = `${c.case_number}-report.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
             }}
             className="mt-4 block w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle print:hidden"
           >

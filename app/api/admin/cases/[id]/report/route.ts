@@ -47,7 +47,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       { status: 202 },
     );
   }
-  const url = await signedReportUrl(key);
+  const url = await signedReportUrl(key, `${c.case_number}-report.pdf`);
   if (!url) return NextResponse.json({ error: "sign_failed" }, { status: 500 });
   return NextResponse.redirect(url, { status: 302 });
 }
