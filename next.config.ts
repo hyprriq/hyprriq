@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   // render job throws ENOENT before Chromium is even reached.
   outputFileTracingIncludes: {
     "/api/**": ["./lib/pdf/fonts/**", "./public/brand/**"],
+    // @sparticuz/chromium is on Next's default external list, but its brotli-packed binaries are
+    // opened with dynamic fs paths, so the tracer never sees them — the deployed worker then
+    // throws `input directory ".../@sparticuz/chromium/bin" does not exist` (measured on the
+    // first real render attempt, 2026-08-20). Scoped to the Inngest route: it is the only
+    // function that launches Chromium, and the payload is ~50MB.
+    "/api/inngest": ["./node_modules/@sparticuz/chromium/bin/**"],
   },
 };
 
