@@ -18,6 +18,7 @@ import { AttemptHistory } from "@/components/admin/attempt-history";
 import { buildAreaViews, buildClientFindings, parseLastDecision, slaHoursLeft, escalationReason } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
 import { projectSupplierIdentityForClient, type CaseDetail } from "@/lib/data/cases";
+import { resolveOperatorName, operatorLabel } from "@/lib/data/operatorNames";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
 
 function fmt(iso: string | null) {
@@ -56,6 +57,14 @@ export default async function CaseReviewPage({
   if (!c) notFound();
   // CLIENT PARTITIONING — same 404 rule as the client detail page for out-of-scope cases.
   if (admin.clientScope !== null && !admin.clientScope.includes(c.client_id)) notFound();
+
+  // AUDIT IDENTITY (2026-08-20): "Last decision on file · by <reviewer>" showed the raw Clerk id.
+  // Resolve the reviewer's name from Clerk (one source, no stored copy); fall back to the id.
+  const lastDecision = parseLastDecision(c.internal_notes);
+  if (lastDecision?.reviewed_by) {
+    const resolved = await resolveOperatorName(lastDecision.reviewed_by);
+    lastDecision.reviewed_by_label = operatorLabel(resolved, null, lastDecision.reviewed_by);
+  }
 
   const trackRows = c.plan_type ? await getCaseTrackResults(c.id) : [];
   // ── ATTEMPT PARITY, OPERATOR VIEW (audit 2026-08-18) — the second half of the 2026-08-17 skew
@@ -171,7 +180,7 @@ export default async function CaseReviewPage({
           canRerun={can(admin, "rerun")}
           canPublish={can(admin, "review_publish")}
           areas={areas}
-          lastDecision={parseLastDecision(c.internal_notes)}
+          lastDecision={lastDecision}
           slaHours={slaHoursLeft(c.sla_deadline)}
           escalation={escalationReason((ops?.statuses ?? null) as Record<string, string | null> | null, c.supplier_identity?.resolution_confidence ?? c.supplier_identity?.identity_confidence ?? null)}
           clientView={clientView}

@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getOperator, canManageStaff } from "@/lib/auth/permissions";
 import { grantableBy, fullGrantBy, rolesCreatableBy, type GrantableRole } from "@/lib/auth/grants";
+import { resolveOperatorNames } from "@/lib/data/operatorNames";
 
 // ── PERMISSION HIERARCHY (founder-ruled 2026-08-02) — user management. Super admin creates
 // admins AND staff; admins create STAFF ONLY with a subset of their OWN capabilities. Both
@@ -22,7 +23,17 @@ export async function GET() {
   if (op!.role === "admin") q = q.eq("role", "sub_user");
   const { data, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ users: data ?? [] });
+  // NAME RESOLUTION (2026-08-20): the list showed the raw email as identity. Names live in Clerk
+  // (one source, no drift) — resolve them at request time and enrich each row. Fail-soft: on a
+  // Clerk miss the row keeps name:null and the client falls back to email.
+  const rows = data ?? [];
+  const names = await resolveOperatorNames(rows.map((r) => r.user_id as string));
+  const users = rows.map((r) => ({
+    ...r,
+    name: names.get(r.user_id as string)?.name ?? null,
+    image_url: names.get(r.user_id as string)?.imageUrl ?? null,
+  }));
+  return NextResponse.json({ users });
 }
 
 export async function POST(req: Request) {

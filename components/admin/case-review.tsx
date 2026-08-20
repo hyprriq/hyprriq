@@ -284,7 +284,8 @@ export function CaseReview({
             <>
               {lastDecision.action ?? "—"}
               {lastDecision.reason ? ` — “${lastDecision.reason}”` : ""}
-              {lastDecision.reviewed_by ? ` · by ${lastDecision.reviewed_by}` : ""}
+              {/* the Clerk-resolved name (2026-08-20); the raw id remains the fallback */}
+              {lastDecision.reviewed_by ? ` · by ${lastDecision.reviewed_by_label || lastDecision.reviewed_by}` : ""}
               {lastDecision.at ? ` · ${new Date(lastDecision.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
             </>
           )}

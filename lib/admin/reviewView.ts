@@ -124,7 +124,9 @@ export function buildClientFindings(rows: TrackResultRow[], opts?: ClientProject
 // Last decision on file — the review route writes JSON.stringify({action, reason, notes,
 // reviewed_by, at}) to cases.internal_notes (OVERWRITING the prior one — flagged in the report,
 // not fixable here). Parse defensively: pre-JSON legacy notes render as plain text.
-export interface LastDecision { action: string | null; reason: string | null; reviewed_by: string | null; at: string | null; raw: string | null }
+// reviewed_by is the raw Clerk id as written by the review route. reviewed_by_label is the
+// human name resolved from Clerk at render (2026-08-20) — set by the page, defaulted to the id.
+export interface LastDecision { action: string | null; reason: string | null; reviewed_by: string | null; reviewed_by_label?: string | null; at: string | null; raw: string | null }
 
 export function parseLastDecision(internalNotes: string | null): LastDecision | null {
   if (!internalNotes || !internalNotes.trim()) return null;

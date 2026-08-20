@@ -2,24 +2,40 @@
 // matches the HyprrIQ palette. The (auth) shell provides the heading and the
 // sign-in/up switch link, so Clerk's own header + footer are hidden and the
 // card chrome is stripped — the form sits flush in our right panel.
+// Shared brand variables — a literal palette because Clerk does color math it
+// cannot do on a CSS var. Must mirror --color-brand in globals.css.
+const brandVariables = {
+  colorPrimary: "#173e63",
+  colorText: "#1a1917",
+  colorTextSecondary: "#56544e",
+  colorBackground: "#ffffff",
+  colorInputBackground: "#ffffff",
+  colorInputText: "#1a1917",
+  borderRadius: "0.625rem",
+  fontFamily: "var(--font-instrument), system-ui, sans-serif",
+} as const;
+
 export const clerkAppearance = {
-  variables: {
-    // Must mirror --color-brand in globals.css (Clerk needs a literal; it does
-    // color math it can't do on a CSS var).
-    colorPrimary: "#173e63",
-    colorText: "#1a1917",
-    colorTextSecondary: "#56544e",
-    colorBackground: "#ffffff",
-    colorInputBackground: "#ffffff",
-    colorInputText: "#1a1917",
-    borderRadius: "0.625rem",
-    fontFamily: "var(--font-instrument), system-ui, sans-serif",
-  },
+  variables: brandVariables,
   elements: {
     rootBox: "w-full",
     cardBox: "w-full shadow-none",
     card: "bg-transparent shadow-none border-0 p-0 m-0 w-full",
+    // The (auth) shell owns the heading + the sign-in/up switch, so Clerk's own
+    // header/footer are hidden and the form sits flush in our right panel.
     header: "hidden",
     footer: "hidden",
+  },
+};
+
+// <UserProfile /> is a full multi-section component (Profile / Security), so it
+// KEEPS its own navigation — only the brand variables and a flush, chrome-light
+// card are shared. Hiding the header here would strip the section nav.
+export const clerkProfileAppearance = {
+  variables: brandVariables,
+  elements: {
+    rootBox: "w-full",
+    cardBox: "w-full shadow-none border border-line rounded-card",
+    navbar: "bg-subtle",
   },
 };

@@ -16,6 +16,8 @@ import { GRANTABLE_CAPABILITIES, CAPABILITY_LABELS, type Capability } from "@/li
 
 interface AdminUserRow {
   user_id: string; email: string; role: string; capabilities: string[]; disabled: boolean; created_by: string | null;
+  // Resolved from Clerk by /api/admin/users (2026-08-20); null when Clerk has no name or is unreachable.
+  name?: string | null; image_url?: string | null;
 }
 
 interface InvitationRow {
@@ -262,10 +264,14 @@ export function UsersManager({
               const unassigned = assignableClients.filter((c) => !assigned.includes(c.id));
               return (
                 <div key={u.user_id} className="border-t border-line py-3 first:border-t-0">
-                  {/* line 1 — the person */}
+                  {/* line 1 — the person. Name from Clerk (one source, resolved at request time);
+                      email is the secondary line when a name exists, the identity when it doesn't. */}
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Clerk ID is debugging data — it lives in the tooltip, not on screen */}
-                    <span className="text-[13.5px] font-semibold text-ink" title={u.user_id}>{u.email}</span>
+                    <span className="inline-flex flex-col" title={u.user_id}>
+                      <span className="text-[13.5px] font-semibold text-ink">{u.name?.trim() || u.email}</span>
+                      {u.name?.trim() && <span className="text-[11.5px] text-muted">{u.email}</span>}
+                    </span>
                     <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-ink-2"}`}>
                       {u.role === "super_admin" ? "Founder" : u.role === "admin" ? "Admin" : "Staff"}
                     </span>
