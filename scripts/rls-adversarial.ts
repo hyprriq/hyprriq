@@ -18,13 +18,24 @@
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Every table that carries client-identifiable material. A new client-facing table added without
-// a line here is a gap in the proof, not a pass.
+// EVERY table in the public schema (live-verified 2026-08-20, 34 tables) — not just the ones that
+// look client-facing. A "boring" table is exactly where a leak hides, and a partial list is a
+// proof that silently stops covering whatever was added last.
+// ⚠ MAINTENANCE: a NEW table must be added here. The drift check below fails loudly if the live
+// table count no longer matches this list.
 const CLIENT_TABLES = [
-  "cases", "clients", "case_track_results", "case_synthesis", "case_outcomes",
-  "uploaded_files", "reports", "audit_log", "case_prose_overrides", "support_requests",
-  "case_evidence_packs", "intelligence_events", "billing_audit", "admin_permissions",
+  "clients", "cases", "research_findings", "uploaded_files", "audit_log", "client_events",
+  "case_outcomes", "founder_notes", "prompts", "prompt_runs", "qa_reviews", "reports",
+  "stripe_events", "daily_case_count", "category_flags", "email_log", "national_distributors",
+  "partner_program_brands", "support_requests", "billing_audit", "admin_audit_log",
+  "case_track_results", "case_synthesis", "agencies", "vendor_intelligence", "brand_intelligence",
+  "case_evidence_packs", "case_acquisition_metrics", "intelligence_events", "admin_permissions",
+  "admin_invitations", "staff_client_assignments", "case_prose_overrides", "gate_events",
 ];
+
+// Storage is a data surface too — and `reports` holds delivered client PDFs. A public bucket or a
+// permissive storage policy leaks documents without touching a single table.
+const BUCKETS = ["reports", "case-documents"];
 
 async function main() {
   if (!URL_ || !ANON) { console.error("STOP: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY required"); process.exit(1); }
@@ -63,6 +74,26 @@ async function main() {
     const ok = rows === 0;
     if (!ok) failures++;
     console.log(`  ${ok ? "✓ header ignored" : "✗ IMPERSONATION — P0"} rows=${rows}`);
+  }
+
+  console.log("\n── 4. STORAGE: the buckets holding delivered client PDFs must not list or serve ──");
+  for (const b of BUCKETS) {
+    // LIST: a permissive storage policy exposes filenames (client ids + case numbers) even if the
+    // objects themselves need a signed URL.
+    const listRes = await fetch(`${URL_}/storage/v1/object/list/${b}`, {
+      method: "POST", headers: { ...h, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix: "", limit: 100 }),
+    });
+    const listed = listRes.ok ? ((await listRes.json().catch(() => [])) as unknown[]).length : -1;
+    const listOk = !listRes.ok || listed === 0;
+    if (!listOk) failures++;
+    console.log(`  ${listOk ? "✓" : "✗ LEAK"} ${b.padEnd(16)} list  HTTP ${listRes.status}${listed >= 0 ? ` entries=${listed}` : ""}`);
+
+    // PUBLIC FETCH: if the bucket were public, this path serves the object with no signature.
+    const pubRes = await fetch(`${URL_}/storage/v1/object/public/${b}/probe.pdf`, { headers: h });
+    const pubOk = pubRes.status >= 400; // 400/404 = not public / not found: both mean "not served"
+    if (!pubOk) failures++;
+    console.log(`  ${pubOk ? "✓" : "✗ PUBLIC — P0"} ${b.padEnd(16)} public-get HTTP ${pubRes.status}`);
   }
 
   console.log(`\n${failures === 0 ? "PASS — the anon surface leaks nothing" : `FAIL — ${failures} finding(s)`}`);
