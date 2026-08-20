@@ -394,18 +394,34 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-muted"><span>Source Clear</span><span>Do Not Rely</span></div>
           <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{meta.means}</p>
-          {/* ── §4 — LIVE. "Coming soon" is retired on a $99–$499 product where most clients read
-              the PDF from email and never log in. The href is the AUTHORIZED route, which re-checks
-              ownership and mints a fresh short-lived signed URL per click — never a storage path.
-              The 202 "still being prepared" case is a real state (the render job runs after
-              publish), so the click is handled rather than left to render a raw JSON body. ── */}
+          {/* ── §4 — LIVE. The href is the AUTHORIZED route for THIS VIEWER: the client route
+              re-checks ownership; the ADMIN route (preview mode) re-checks operator capability +
+              scope — before this split, the admin client-view rendered a button that hit the
+              client route and 404'd for the very person reviewing the product (founder-found on
+              the first delivered case). Both mint a fresh short-lived signed URL per click.
+              THREE DISTINCT STATES, THREE SENTENCES (founder-found: one sentence covered all
+              three and claimed an email that operator-house cases never send):
+                202  — the render job hasn't finished; the server's own message is shown.
+                404/403 — this session cannot reach this case's PDF; say so, promise nothing.
+                else — a transient fetch problem; say try again, promise nothing. ── */}
           <a
-            href={`/api/cases/${c.id}/report`}
+            href={preview ? `/api/admin/cases/${c.id}/report` : `/api/cases/${c.id}/report`}
             onClick={async (e) => {
               e.preventDefault();
-              const res = await fetch(`/api/cases/${c.id}/report`, { redirect: "follow" });
-              if (res.status === 202) { setPdfNote("Your PDF is still being prepared — it will arrive by email shortly. The full report is on this page now."); return; }
-              if (!res.ok) { setPdfNote("We could not fetch the PDF just now. The full report is on this page, and it is also emailed to you."); return; }
+              const route = preview ? `/api/admin/cases/${c.id}/report` : `/api/cases/${c.id}/report`;
+              const res = await fetch(route, { redirect: "follow" });
+              if (res.status === 202) {
+                const body = (await res.json().catch(() => null)) as { message?: string } | null;
+                setPdfNote(body?.message ?? "The PDF is still being prepared. The full report is on this page now.");
+                return;
+              }
+              if (res.status === 404 || res.status === 403) {
+                setPdfNote(preview
+                  ? "This PDF is not reachable from this admin session (out of scope, or the case has no delivered PDF)."
+                  : "This PDF is not available for your account.");
+                return;
+              }
+              if (!res.ok) { setPdfNote("We could not fetch the PDF just now — try again in a moment. The full report is on this page."); return; }
               window.location.href = res.url;
             }}
             className="mt-4 block w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle print:hidden"
