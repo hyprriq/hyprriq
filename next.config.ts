@@ -12,7 +12,19 @@ const nextConfig: NextConfig = {
     // throws `input directory ".../@sparticuz/chromium/bin" does not exist` (measured on the
     // first real render attempt, 2026-08-20). Scoped to the Inngest route: it is the only
     // function that launches Chromium, and the payload is ~50MB.
-    "/api/inngest": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/inngest": [
+      "./node_modules/@sparticuz/chromium/bin/**",
+      // pdfjs-dist (the §4 TOC read-back) loads @napi-rs/canvas via a dynamic require the tracer
+      // cannot see; without it the worker dies at import with `DOMMatrix is not defined` (measured
+      // on the second real render attempt, 04:08 UTC — one failure layer deeper than the Chromium
+      // binary). The platform binary lives in a separate scoped package; both must ride.
+      // Both hoisting layouts: this lockfile nests them under pdfjs-dist; a future dedupe may
+      // hoist them to the root. A miss is a silent revert to the DOMMatrix crash.
+      "./node_modules/@napi-rs/canvas/**",
+      "./node_modules/@napi-rs/canvas-linux-x64-gnu/**",
+      "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas/**",
+      "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-x64-gnu/**",
+    ],
   },
 };
 
