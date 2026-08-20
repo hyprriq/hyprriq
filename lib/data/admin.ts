@@ -10,6 +10,7 @@ import type { CaseStatus, Verdict } from "@/components/portal/badges";
 import { PLAN_PRICE_LABEL, type PlanType } from "@/lib/constants/plans";
 import type { AdditionalQuestion } from "@/lib/research/contracts";
 import { buildWeeklyCaseSeries, type WeekBucket } from "@/lib/admin/dashboard-charts";
+import { resolveOperatorName } from "@/lib/data/operatorNames";
 
 // Admin-role guard. The (admin) layout enforces authentication; this enforces
 // the role (clients.is_admin). Non-admins are bounced to their own portal.
@@ -44,7 +45,17 @@ export async function requireAdmin() {
   // string[] = assigned-only (fail-closed empty when none assigned). Pages pass this into the
   // data reads; client-id routes call clientInScope directly.
   const clientScope = await getClientScope(op);
-  return { ...op, email, full_name: c?.full_name ?? null, clientScope };
+  // IDENTITY FROM CLERK (founder-ruled 2026-08-20): the operator's display name and avatar
+  // resolve from Clerk at request time — one source, never stored. Fail-soft: on a Clerk miss
+  // the stored clients.full_name (legacy identities) and the email keep the header rendering.
+  const self = await resolveOperatorName(userId);
+  return {
+    ...op,
+    email,
+    full_name: self?.name ?? c?.full_name ?? null,
+    image_url: self?.imageUrl ?? null,
+    clientScope,
+  };
 }
 
 type AdminCaseRow = {

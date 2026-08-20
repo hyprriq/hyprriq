@@ -8,6 +8,8 @@ import { getCaseTrackResults } from "@/lib/data/track-results";
 import { getClientDecisionSnapshot } from "@/lib/data/synthesis";
 import { getProseOverrides } from "@/lib/data/proseOverrides";
 import { overlayTrackRows } from "@/lib/portal/overlayDelivery";
+import { resolveOperatorName } from "@/lib/data/operatorNames";
+import { composeClientName } from "@/lib/pdf/clientName";
 import { buildClientFindings } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
 import { assertNoInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
@@ -38,7 +40,7 @@ export class ReportNotRenderable extends Error {
 }
 
 interface CaseRow {
-  id: string; case_number: string; vendor_name: string | null; brands_submitted: string[] | null; brands_confirmed: string[] | null;
+  id: string; case_number: string; client_id: string | null; vendor_name: string | null; brands_submitted: string[] | null; brands_confirmed: string[] | null;
   status: string; verdict: string | null; delivered_at: string | null; delivered_attempt: number | null;
   additional_questions: { question?: string }[] | null;
   clients: { full_name: string | null; company_name: string | null } | null;
@@ -62,7 +64,7 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(opts.case);
   const { data } = await supabaseAdmin
     .from("cases")
-    .select("id, case_number, vendor_name, brands_submitted, brands_confirmed, status, verdict, delivered_at, delivered_attempt, additional_questions, clients(full_name, company_name)")
+    .select("id, case_number, client_id, vendor_name, brands_submitted, brands_confirmed, status, verdict, delivered_at, delivered_attempt, additional_questions, clients(full_name, company_name)")
     .eq(isUuid ? "id" : "case_number", opts.case)
     .is("deleted_at", null)
     .maybeSingle();
@@ -92,7 +94,12 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   if (!report) throw new ReportNotRenderable("no_snapshot", `case ${row.case_number} has no decision snapshot for the delivered attempt`);
 
   const cl = row.clients;
-  let clientName = cl?.company_name ? `${cl?.full_name ?? ""} (${cl.company_name})`.trim() : (cl?.full_name ?? "");
+  // RESOLVE-DON'T-STORE (founder-ruled 2026-08-20): the cover name comes from Clerk at render
+  // time — clients.full_name is a first-visit copy that goes stale the moment a client edits
+  // their profile, and this name prints on a paid deliverable. Stored value stays the fallback;
+  // the no_client_name refusal below is unchanged when both are empty.
+  const liveClient = await resolveOperatorName(row.client_id ?? "");
+  let clientName = composeClientName(liveClient?.name, cl?.full_name, cl?.company_name);
   if (!clientName || clientName === "—") {
     if (!opts.allowMissingClientName) {
       throw new ReportNotRenderable(

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { PRIMARY_MARKETPLACE_VALUES } from "@/lib/constants/marketplaces";
 
@@ -56,5 +56,21 @@ export async function PATCH(req: Request) {
   const supa = createServerClient();
   const { error } = await supa.from("clients").update(update).eq("id", userId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // ── NAME WRITE-THROUGH (founder-ruled 2026-08-20, resolve-don't-store). Display surfaces —
+  // the PDF cover above all — now resolve the client's name from CLERK first, with the stored
+  // clients.full_name as fallback. This form is the only in-portal name editor, so an edit here
+  // must reach Clerk too, or it would be shadowed by a stale Clerk name on the next render.
+  // Loud-but-non-fatal: the DB write above already succeeded (the fallback is fresh either way);
+  // a Clerk miss is logged and the response still reports success.
+  if (typeof update.full_name === "string" && update.full_name) {
+    try {
+      const [firstName, ...rest] = update.full_name.split(/\s+/);
+      const cc = await clerkClient();
+      await cc.users.updateUser(userId, { firstName, lastName: rest.join(" ") || "" });
+    } catch (e) {
+      console.error(`[profile] Clerk name write-through failed (non-fatal): ${e instanceof Error ? e.message : e}`);
+    }
+  }
   return NextResponse.json({ ok: true });
 }

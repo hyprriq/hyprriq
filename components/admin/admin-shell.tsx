@@ -89,7 +89,10 @@ export async function AdminShell({
   title: string;
   topRight?: React.ReactNode;
   user?: { initial: string; email: string };
-  operator: Pick<Operator, "role" | "capabilities" | "transitional">;
+  // Every page passes the FULL requireAdmin() return here; the type only narrows what the shell
+  // reads. image_url (Clerk avatar, resolved per request — founder-ruled 2026-08-20) rides that
+  // same object, so the avatar reaches the header with zero per-page changes.
+  operator: Pick<Operator, "role" | "capabilities" | "transitional"> & { image_url?: string | null };
   clientScope: ClientScope;
   children: React.ReactNode;
 }) {
@@ -133,6 +136,7 @@ export async function AdminShell({
               <UserMenu
                 initial={user.initial}
                 email={user.email}
+                imageUrl={operator.image_url ?? null}
                 switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
               />
             )}

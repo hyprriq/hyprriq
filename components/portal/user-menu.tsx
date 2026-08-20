@@ -10,10 +10,13 @@ import { useClerk } from "@clerk/nextjs";
 export function UserMenu({
   initial,
   email,
+  imageUrl,
   switcher,
 }: {
   initial: string;
   email?: string;
+  /** Clerk avatar (founder-ruled 2026-08-20): replaces the initial when present. */
+  imageUrl?: string | null;
   switcher?: { href: string; label: string };
 }) {
   const { signOut } = useClerk();
@@ -36,9 +39,16 @@ export function UserMenu({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-sm font-bold text-brand-ink ring-offset-2 transition hover:ring-2 hover:ring-brand/30"
+        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-brand-tint text-sm font-bold text-brand-ink ring-offset-2 transition hover:ring-2 hover:ring-brand/30"
       >
-        {initial}
+        {imageUrl ? (
+          // Plain <img>, deliberately: a 36px third-party (Clerk-hosted) avatar gains nothing
+          // from next/image and would force a remotePatterns config for img.clerk.com.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          initial
+        )}
       </button>
       {open && (
         <div

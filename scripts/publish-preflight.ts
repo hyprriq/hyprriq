@@ -17,6 +17,8 @@ import { checkDeliverable } from "@/lib/research/deliverability";
 import { getProseOverrides } from "@/lib/data/proseOverrides";
 import { composePublishGate } from "@/lib/portal/publishGate";
 import { reportObjectKey } from "@/lib/pdf/reportStorage";
+import { resolveOperatorName } from "@/lib/data/operatorNames";
+import { composeClientName } from "@/lib/pdf/clientName";
 import { OPERATOR_HOUSE_CLIENT_ID } from "@/lib/data/operatorCase";
 import type { PlanType } from "@/lib/constants/plans";
 
@@ -79,7 +81,10 @@ async function main() {
     console.log(leaks.length ? `  ✗ TOKEN CHECKPOINT REFUSES (${leaks.length}): ${leaks.slice(0, 3).map((l) => `${l.match}@${l.path}`).join(" · ")}` : "  ✓ checkpoint clean");
 
     // 4 ── WHAT HAPPENS AFTER A SUCCESSFUL PUBLISH
-    const name = c.clients?.full_name?.trim() || c.clients?.company_name?.trim();
+    // RESOLVE-DON'T-STORE (founder-ruled 2026-08-20): the render composes Clerk-first via
+    // composeClientName — this instrument runs the SAME composition or the two disagree.
+    const liveClient = await resolveOperatorName(c.client_id ?? "");
+    const name = composeClientName(liveClient?.name, c.clients?.full_name, c.clients?.company_name).trim() || undefined;
     console.log(`  → PDF key: ${c.client_id ? reportObjectKey(c.client_id, c.case_number, attempt) : "(no client)"}`);
     console.log(`  → PDF render: ${name ? `✓ client name "${name}"` : "✗ no_client_name — WILL REFUSE"}`);
     console.log(
