@@ -9,6 +9,12 @@ export const PUBLIC_ROUTES: string[] = [
   "/",
   "/pricing",
   "/how-it-works",
+  // ⚠ CAUGHT IN A BROWSER, NOT IN A TEST (2026-08-20): /sample-report shipped its first render
+  // redirecting to /sign-in. A marketing page behind auth is worse than a missing one — the
+  // highest-converting page in the funnel would have demanded a login from every prospect.
+  // Any NEW marketing route needs a line here; the marketing-route lock in public-routes.test.ts
+  // now fails if one is added without it.
+  "/sample-report",
   "/about",
   "/terms",
   "/privacy",
@@ -17,4 +23,6 @@ export const PUBLIC_ROUTES: string[] = [
   "/api/webhooks/(.*)",
   "/api/health",
   "/api/inngest(.*)",
+  // robots.txt and sitemap.xml are static file routes: the middleware matcher already skips
+  // extensioned paths, so they stay reachable without a line here (verified live).
 ];
