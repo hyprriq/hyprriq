@@ -14,7 +14,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["**/*.test.ts"],
+    // .tsx joined 2026-08-20: component render verification (legal-flag-banner) runs JSX through
+    // react-dom/server — a surface the .ts-only include silently could not cover.
+    include: ["**/*.test.{ts,tsx}"],
     exclude: ["node_modules/**", ".next/**", ".claude/**", ".impeccable/**"],
     // Dummy values so modules that construct a Supabase client at import time
     // (lib/supabase/admin.ts) don't throw. Unit tests are pure — they never hit the DB.
