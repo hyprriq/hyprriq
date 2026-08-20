@@ -469,7 +469,7 @@ export function OnboardingFlow({
                 {[
                   "Tell us the supplier, website, and the brands you're sourcing",
                   "Upload an invoice or LOA if you have one — improves accuracy",
-                  "We research across 5 dimensions, your report goes through quality review, and you receive your verdict",
+                  "We research across the assessment areas your plan includes, your report goes through quality review, and you receive your verdict",
                 ].map((t, i) => (
                   <li key={i} className="flex items-start gap-3 text-[14px] text-ink-2">
                     <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-tint text-[12px] font-bold text-brand-ink">

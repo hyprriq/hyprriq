@@ -6,7 +6,7 @@ export const howItWorks = {
   sub: "A quick overview of our research process from submission to delivery.",
   steps: [
     { icon: "📝", label: "Submit", detail: "supplier & brands" },
-    { icon: "🔍", label: "Research", detail: "5 dimensions" },
+    { icon: "🔍", label: "Research", detail: "assessment areas" },
     { icon: "📍", label: "Founder reviews", detail: "findings" },
     { icon: "📄", label: "Verdict", detail: "delivered" },
   ],
