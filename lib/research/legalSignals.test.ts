@@ -47,9 +47,16 @@ describe("trigger 9 — the wiring (source-scan locks: derive-at-render + intake
   });
 
   it("the admin review page derives the ⚖ LEGAL FLAG banner at render (zero storage)", () => {
-    const src = readFileSync(join(process.cwd(), "app/(admin)/admin/cases/[id]/review/page.tsx"), "utf8");
-    expect(src.includes("findLegalSignals"), "the review page must derive the flag at render").toBe(true);
-    expect(/LEGAL FLAG/i.test(src), "the banner must be loud and named").toBe(true);
+    // 2026-08-20: the banner moved into components/admin/legal-flag-banner.tsx so it could be
+    // RENDER-verified (tracker 4.11) rather than only source-scanned. The lock follows the code:
+    // the page must still MOUNT it, and the component must still derive at render from the notes.
+    const page = readFileSync(join(process.cwd(), "app/(admin)/admin/cases/[id]/review/page.tsx"), "utf8");
+    expect(page.includes("LegalFlagBanner"), "the review page must mount the banner").toBe(true);
+    expect(/notes=\{c\.client_notes\}/.test(page), "the banner must be fed the case's client notes").toBe(true);
+
+    const cmp = readFileSync(join(process.cwd(), "components/admin/legal-flag-banner.tsx"), "utf8");
+    expect(cmp.includes("findLegalSignals"), "the component must derive the flag at render").toBe(true);
+    expect(/LEGAL FLAG/i.test(cmp), "the banner must be loud and named").toBe(true);
   });
 
   it("THE DIRECTION LAW: the submit route never blocks on a legal signal (no early return / thrown error keyed on it)", () => {
