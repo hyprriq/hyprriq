@@ -21,7 +21,10 @@ describe("pipeline registry", () => {
     // design — the version bump records the new pipeline SHAPE, not a judgment change).
     // VALIDATION stays 1.6.0: Track 5 ships ZERO firewall config (no registry entries) — flagged
     // to the founder at the gate, not silently skipped.
-    expect(PIPELINE_VERSION).toBe("1.7.0");
+    // 1.7.0 → 1.8.0 (prose repair, 2026-08-20, founder-directed "flawless execution"): the
+    // generation-time repair step between generation and persist — a new pipeline SHAPE; verdicts
+    // untouched by construction (evidence/signals never enter the repair).
+    expect(PIPELINE_VERSION).toBe("1.8.0");
   });
 
   it("plan gating matches requiredFindingTracks (single source of truth, no drift)", () => {

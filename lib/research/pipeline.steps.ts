@@ -11,6 +11,7 @@ import { runTrack3 } from "@/lib/research/track3";
 import { runTrack4 } from "@/lib/research/track4";
 import { runTrack5 } from "@/lib/research/track5";
 import { deriveTrackSignal } from "@/lib/research/signals";
+import { repairTrackClientProse, repairSynthesisClientProse } from "@/lib/research/proseRepairLoop";
 import { applySourceDiversityCap } from "@/lib/research/sourceDiversity";
 import { normalizeEvidence } from "@/lib/research/normalize";
 import { enrichWithGraph } from "@/lib/research/graph";
@@ -237,6 +238,26 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
   // confirm it: we could neither confirm nor deny the highest-stakes signal, so a person decides.
   const consensusEscalate = out.hard_fail_consensus?.second_call_failed === true;
 
+  // ── PROSE REPAIR AT GENERATION (founder-directed 2026-08-20). The publish gate's own scanners
+  // run over the client-bound prose BEFORE it persists; a violation triggers one bounded rewrite
+  // call and the result is kept only if it scans strictly cleaner. Fail-open — this can never
+  // fail a run. The verdict is untouched by construction: evidence_items never enter the repair.
+  // Loud, never silent: every attempt writes an audit row with what cleared and what remains.
+  const prose = await repairTrackClientProse(def.track_key, {
+    client_summary: out.client_summary ?? null,
+    brand_relationship_finding: out.brand_relationship_finding ?? null,
+    brand_risk_finding: out.brand_risk_finding ?? null,
+    documentation_finding: out.documentation_finding ?? null,
+    questions_to_ask: out.questions_to_ask ?? null,
+  });
+  if (prose.attempted) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_track_results", record_id: ctx.case_id, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { prose_repair: { surface: `track:${def.track_key}`, attempt: ctx.attempt_number ?? 1, cleared: prose.cleared, residual: prose.residual, refused: prose.refused } },
+    });
+  }
+
   const persisted = await upsertTrackResult({
     case_id: ctx.case_id, track: def.track, track_key: def.track_key, track_number: n, attempt_number: ctx.attempt_number ?? 1,
     source_mode: "ai_generated",
@@ -249,7 +270,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       // per-area summary every client has ever read WAS the model's internal scratchpad, verbatim.
       // reasoning_notes is still stored above, unchanged, for the operator. ⛔ NEVER fall back to it
       // here: a fallback restores the defect silently and looks like it is working.
-      summary: out.client_summary?.trim() || TRACK_CLIENT_COPY.missing_client_summary,
+      summary: prose.value.client_summary?.trim() || TRACK_CLIENT_COPY.missing_client_summary,
       // H7 (SO-3) — the cap decision is part of the frozen record (SQL-checkable per attempt).
       source_diversity: { capped: div.capped, cap_reason: div.cap_reason, distinct_sources: div.distinct_sources },
       // H7 (SO-4) — the consensus record is part of the frozen record (null when no veto proposed).
@@ -261,16 +282,16 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
       auth_level: out.auth_level ?? null, auth_level_reasoning: out.auth_level_reasoning ?? null,
       b2b_only_detected: out.b2b_only_detected ?? null, b2b_only_brands: out.b2b_only_brands ?? null,
       // ADR-T2-002 — Track 2 lane-isolated narrative + code-templated boundary notes.
-      brand_relationship_finding: out.brand_relationship_finding ?? null,
+      brand_relationship_finding: prose.value.brand_relationship_finding ?? null,
       identity_scope_note: out.identity_scope_note ?? null,
       authorization_scope_note: out.authorization_scope_note ?? null,
       marketplace_eligibility_disclaimer: out.marketplace_eligibility_disclaimer ?? null,
       // Track 3 (OQ-D) — brand-risk narrative + the analyst quartet: part of the frozen record,
       // rendered ADMIN-side only this gate; advisory, never scored. null on other tracks.
-      brand_risk_finding: out.brand_risk_finding ?? null,
+      brand_risk_finding: prose.value.brand_risk_finding ?? null,
       analyst_reading: out.analyst_reading ?? null,
       // Track 4 — the documentation narrative (ships like brand_relationship_finding; HARD-scanned).
-      documentation_finding: out.documentation_finding ?? null,
+      documentation_finding: prose.value.documentation_finding ?? null,
     },
     founder_review_status: consensusEscalate ? "pending" : "approved",
     manual_review_required: consensusEscalate,
@@ -280,7 +301,7 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
     classifications_rejected: cRejected, classifications_unknown: cUnknown,
     acceptance_rate: cTotal > 0 ? Number((cAccepted / cTotal).toFixed(2)) : null,
     track_validation_report: out.track_validation_report ?? null,
-    questions_to_ask: out.questions_to_ask ?? null,
+    questions_to_ask: prose.value.questions_to_ask ?? null,
   });
   if (persisted.error) throw new Error(`${def.track} row persist failed: ${persisted.error}`);
 
@@ -302,13 +323,26 @@ export async function stageSynthesis(
   // reused across a model change — silent drift in the determinism-versioning layer).
   const synthesisModel = modelFor("synthesis");
   const ios = assembleIosVersion(enriched.evidence_hash, synthesisModel.provider, synthesisModel.model);
-  const { synthesis, artifacts } = await runSynthesis({
+  const { synthesis: rawSynthesis, artifacts } = await runSynthesis({
     trackOutputs,
     identity: ctx.supplier_identity ?? null,
     roster: ctx.brands_submitted ?? [],
     planType: ctx.plan_type,
     signals,
   });
+  // ── PROSE REPAIR AT GENERATION (founder-directed 2026-08-20) — the client-bound synthesis
+  // columns (M9 snapshot + M8 questions) get the same repair the track prose gets, BEFORE persist.
+  // Fail-open; kept only if strictly cleaner; M7 and every reasoning module untouched; the verdict
+  // reads only certified structure (S-0), never these fields.
+  const synthRepair = await repairSynthesisClientProse(rawSynthesis);
+  const synthesis = synthRepair.value;
+  if (synthRepair.attempted) {
+    await supabaseAdmin.from("audit_log").insert({
+      table_name: "case_synthesis", record_id: ctx.case_id, action: "UPDATE",
+      actor_id: "system", actor_type: "system",
+      new_value: { prose_repair: { surface: "synthesis", attempt: ctx.attempt_number ?? 1, cleared: synthRepair.cleared, residual: synthRepair.residual, refused: synthRepair.refused } },
+    });
+  }
   const synthErr = await upsertCaseSynthesis(ctx.case_id, synthesis, ios, ctx.attempt_number ?? 1);
   if (synthErr.error) throw new Error(`synthesis persist failed: ${synthErr.error}`);
   // The extension siblings (module_1_extension, brand_evidence_status, dimension_run_record,

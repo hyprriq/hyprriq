@@ -60,7 +60,12 @@ export const TRACK_REGISTRY: readonly TrackRegistryEntry[] = [
 // non_voting branch (signal n_a by construction). Verdicts byte-identical with Track 5 on vs off
 // (AT-B1) — the bump records a new pipeline SHAPE, not a judgment change. NO companion firewall
 // bump: Track 5 ships zero firewall config (no weight keys by design).
-export const PIPELINE_VERSION = "1.7.0";
+// 1.8.0 (2026-08-20, founder-directed "flawless execution"): generation-time PROSE REPAIR — the
+// publish gate's own scanners run over client-bound prose (track narratives + questions, M9 + M8)
+// BEFORE persist; a violation triggers one bounded rewrite call, kept only if strictly cleaner.
+// Fail-open, verdict untouched by construction (evidence/signals never enter the repair). The
+// bump records a new pipeline SHAPE (a conditional step between generation and persist).
+export const PIPELINE_VERSION = "1.8.0";
 
 // Finding tracks included for a plan, available-only, in execution order.
 export function tracksForPlan(plan: PlanType): TrackRegistryEntry[] {

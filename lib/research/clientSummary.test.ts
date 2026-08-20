@@ -80,8 +80,10 @@ describe("PROOF: the verdict never reads client_summary", () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const src = fs.readFileSync(path.resolve(__dirname, "../..", "lib/research/pipeline.steps.ts"), "utf8");
-    // The single consuming site: compiled_findings_json.summary on the scored path.
-    expect(src).toContain("summary: out.client_summary?.trim() || TRACK_CLIENT_COPY.missing_client_summary");
+    // The single consuming site: compiled_findings_json.summary on the scored path. 2026-08-20:
+    // the field passes through the generation-time prose repair (proseRepairLoop) first — still
+    // client_summary, never reasoning_notes.
+    expect(src).toContain("summary: prose.value.client_summary?.trim() || TRACK_CLIENT_COPY.missing_client_summary");
     // ⛔ And the defect it replaced must not come back anywhere in the file.
     expect(src).not.toContain("summary: out.reasoning_notes");
   });

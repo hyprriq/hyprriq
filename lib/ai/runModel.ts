@@ -1,6 +1,6 @@
 // Provider-agnostic model adapter — the ONLY path to a model. Business logic never
 // imports a vendor SDK; model choice is config, not code (enhancement #4).
-export type ModelTask = "track" | "synthesis";
+export type ModelTask = "track" | "synthesis" | "repair";
 
 export interface RunModelInput {
   task: ModelTask;
@@ -26,6 +26,9 @@ export interface RunModelResult {
 const MODEL_CONFIG: Record<ModelTask, { provider: string; model: string }> = {
   track: { provider: "anthropic", model: "claude-sonnet-4-6" },
   synthesis: { provider: "anthropic", model: "claude-sonnet-4-6" }, // → "claude-opus-4-8" before go-live
+  // Prose repair (lib/research/proseRepair.ts): one small rewrite call, only when the gate's
+  // scanners flag generated prose. Deliberately the track model — it needs style, not reasoning.
+  repair: { provider: "anthropic", model: "claude-sonnet-4-6" },
 };
 
 // S-2 (a), founder-ruled 2026-07-17 — the ONE readable source of the model routing: ios_version

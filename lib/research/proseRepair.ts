@@ -57,7 +57,15 @@ function changedWordRegions(original: string, repaired: string): { start: number
 }
 
 /** Word indices in `original` where the gate actually matched — the only places a repair may touch. */
-function flaggedWordIndices(original: string): Set<number> {
+// ── ADDITIVE FLAG SOURCE 2026-08-20 (UNRULED — flagged for founder review, not slipped in):
+// the sliding-window scan below covers the HARD gate only, so a field flagged by the OTHER half
+// of the publish gate — the derivation/method scanner (corroboration vocabulary, weight-key
+// names) — had ZERO flagged words and invariant (6) refused EVERY repair of it by construction.
+// Rather than widening the scan (which changed this file's own committed fixtures), callers that
+// KNOW the gate's matched sentences pass them via `extraFlaggedSnippets`; their word positions
+// join the flagged set. The LAW is unchanged and the default behavior is byte-identical: an edit
+// may only touch what the gate flagged — the option only tells this check WHERE the gate matched.
+function flaggedWordIndices(original: string, extraFlaggedSnippets: string[] = []): Set<number> {
   const out = new Set<number>();
   const words = original.split(/\s+/);
   // A word is "flagged" when removing it from its 6-word window changes what the gate reports —
@@ -65,6 +73,16 @@ function flaggedWordIndices(original: string): Set<number> {
   for (let i = 0; i < words.length; i++) {
     const window = words.slice(Math.max(0, i - 3), i + 4).join(" ");
     if (scanHard(window).length) out.add(i);
+  }
+  // Caller-supplied gate matches: mark the words of each snippet where it occurs in the original.
+  for (const snippet of extraFlaggedSnippets) {
+    const snipWords = snippet.split(/\s+/).filter(Boolean);
+    if (!snipWords.length) continue;
+    for (let i = 0; i + snipWords.length <= words.length; i++) {
+      if (snipWords.every((w, j) => words[i + j] === w)) {
+        for (let j = 0; j < snipWords.length; j++) out.add(i + j);
+      }
+    }
   }
   return out;
 }
@@ -74,6 +92,12 @@ export type RepairCheckOptions = {
   lengthFloor?: number;
   /** How far from a flagged word an edit may reach, in words. */
   editWindow?: number;
+  /**
+   * ADDITIVE flag source (2026-08-20): sentences the GATE actually matched, from the caller's
+   * locator (both scanner halves). Their word positions join the flagged set — the sixth
+   * invariant's law is unchanged; this only tells it where the gate matched. Never a disable.
+   */
+  extraFlaggedSnippets?: string[];
   /**
    * ⛔ TEST ONLY. The sixth invariant is FOUNDER-RULED LAW (2026-08-17): "Localized-edit
    * enforcement is the ruling, not an option." It exists here for exactly ONE purpose — the
@@ -93,7 +117,7 @@ export function checkRepairInvariants(
   repaired: string,
   opts: RepairCheckOptions = {},
 ): InvariantFailure[] {
-  const { lengthFloor = 0.6, editWindow = 6, TEST_ONLY_disableLocalizedEdit = false } = opts;
+  const { lengthFloor = 0.6, editWindow = 6, extraFlaggedSnippets = [], TEST_ONLY_disableLocalizedEdit = false } = opts;
   const localizedEdit = !TEST_ONLY_disableLocalizedEdit;
   const fails: InvariantFailure[] = [];
 
@@ -120,7 +144,7 @@ export function checkRepairInvariants(
 
   // (6) LOCALIZED EDIT — see the header. The one that catches SUBSTITUTION rather than deletion.
   if (localizedEdit) {
-    const flagged = flaggedWordIndices(original);
+    const flagged = flaggedWordIndices(original, extraFlaggedSnippets);
     for (const region of changedWordRegions(original, repaired)) {
       let touchesFlagged = false;
       for (let i = Math.max(0, region.start - editWindow); i <= region.end + editWindow; i++) {
