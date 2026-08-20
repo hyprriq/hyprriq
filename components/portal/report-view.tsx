@@ -538,7 +538,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               </div>
             </div>
           )}
-          <p className="mt-2 text-[12px] text-muted">
+          {/* §3 tier check 2026-08-20: the two full-width fine-print strips (this legend + the
+              closing disclaimer) were the only text left running the panel's whole ~1030px —
+              ~130 characters a line at 12px. Same rule as every other prose surface: the text
+              takes a measure; the box does not decide the line length. */}
+          <p className="mt-2 max-w-[68ch] text-[12px] text-muted">
             <b>Verified</b> — {CHIP_DEFS.verified} <b>Assessed</b> — {CHIP_DEFS.assessed} <b>Not assessed</b> — {CHIP_DEFS.not_assessed}
           </p>
           {/* §2 — Track 6 sits INSIDE the findings panel, after the five areas and after their
@@ -613,7 +617,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
 
       {/* ════ CLOSING ════ */}
       <div className="mt-8">
-        <p className="text-[12.5px] leading-relaxed text-muted">
+        <p className="max-w-[68ch] text-[12.5px] leading-relaxed text-muted">
           This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval,
           account safety, or brand action. The decision to purchase is yours.
         </p>
