@@ -109,7 +109,9 @@ const PLANS = [
     price: "$279",
     cadence: "/mo",
     credits: "5 reports a month",
-    points: ["Up to 5 brands per report", "Full five-dimension review", "Full portal + case history"],
+    // "five-dimension" → "assessment areas": the ruled public vocabulary (126d440) — this card
+    // was the one survivor of that pass.
+    points: ["Up to 5 brands per report", "All five assessment areas", "Full portal + case history"],
     popular: false,
   },
   {
@@ -117,7 +119,10 @@ const PLANS = [
     price: "$499",
     cadence: "/mo",
     credits: "12 reports a month",
-    points: ["Everything in Growth", "Category compliance + deep analysis", `Delivered within ${CASE_SLA_HOURS} hours`],
+    // CLAIMS STRIP 2026-08-20 (founder-queued): "deep analysis" (no plan gating exists in
+    // synthesis) and "Delivered within N hours" (one constant, same on $99) removed as unbacked
+    // Scale differentiators — see lib/content/pricing.ts for the full note.
+    points: ["Everything in Growth", "Category compliance review", "Credit rollover (up to 4)"],
     popular: true,
   },
 ];

@@ -51,11 +51,15 @@ export const subscriptionPlans: Plan[] = [
     price: "$499",
     cadence: "/mo",
     meta: "12 reports a month",
+    // ── CLAIMS STRIP (founder-queued, executed 2026-08-20). Two bullets removed as UNBACKED:
+    // "Deep analysis + contradiction checks" — no plan gating exists anywhere in synthesis;
+    // contradiction checks run identically on every plan, so selling them as a Scale extra was
+    // false in both directions. "Delivered within N hours" as a Scale bullet — one CASE_SLA_HOURS
+    // constant, same on $99; delivery stays in the comparison table as a same-for-all row.
     points: [
       "Everything in Growth",
       "Category compliance review",
-      "Deep analysis + contradiction checks",
-      `Delivered within ${CASE_SLA_HOURS} hours`,
+      "12 reports a month, top-up packs available",
       "Credit rollover (up to 4)",
     ],
     popular: true,
@@ -109,7 +113,8 @@ export const comparison: {
   { feature: "Assessment areas", values: ["3 of 5", "All 5", "All 5", "All 5"] },
   { feature: "Category compliance review", values: ["—", "Yes", "—", "Yes"] },
   { feature: "Document review", values: ["—", "Yes", "Yes", "Yes"] },
-  { feature: "Deep analysis + contradiction", values: ["—", "—", "—", "Yes"] },
+  // "Deep analysis + contradiction" row removed 2026-08-20 (claims strip): contradiction checks
+  // run on every plan — a Scale-only "Yes" was unbacked by anything in the engine.
   { feature: "Delivery", values: [`${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`] },
   { feature: "Credit rollover", values: ["—", "—", "Up to 2", "Up to 4"] },
   // Stripe-verified 2026-07-23: the top-up price IDs charge $99/$179 — the portal billing page
