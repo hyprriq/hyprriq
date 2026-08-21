@@ -55,16 +55,26 @@ async function rest(jwt: string, path: string, init?: RequestInit) {
 async function main() {
   if (!URL_ || !ANON || !CLERK) { console.error("STOP: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / CLERK_SECRET_KEY required"); process.exit(1); }
 
-  // Service-role read ONLY to choose probe subjects (a client with cases + a different client id).
+  // Service-role read ONLY to choose probe subjects. THE SUBJECT MUST BE role='client': probing
+  // as the founder proves nothing about isolation — elevated-role policies legitimately grant
+  // cross-client reads and role management, so every "leak" check reads as a false P0 (the
+  // probe's third self-found defect: its first post-migration run did exactly that, flipped the
+  // founder's role to admin through the FOUNDER'S OWN legitimate update-all policy, and the
+  // safety-restore put it back).
   const { supabaseAdmin } = await import("@/lib/supabase/admin");
+  const { data: clientRows } = await supabaseAdmin.from("clients").select("id, role");
+  const roleById = new Map((clientRows ?? []).map((c) => [c.id as string, c.role as string]));
   const { data: withCases } = await supabaseAdmin
     .from("cases").select("client_id").not("client_id", "is", null).is("deleted_at", null).limit(200);
   const counts = new Map<string, number>();
   for (const r of withCases ?? []) counts.set(r.client_id as string, (counts.get(r.client_id as string) ?? 0) + 1);
-  const probeUser = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const eligible = [...counts.entries()]
+    .filter(([id]) => id.startsWith("user_") && roleById.get(id) === "client")
+    .sort((a, b) => b[1] - a[1]);
+  const probeUser = eligible[0]?.[0];
   const otherUser = [...counts.keys()].find((id) => id !== probeUser);
-  if (!probeUser) { console.error("STOP: no client with cases found to probe as."); process.exit(1); }
-  console.log(`probe user: ${probeUser} (${counts.get(probeUser)} cases) · other: ${otherUser ?? "(none)"}\n`);
+  if (!probeUser) { console.error("STOP: no role='client' Clerk user with cases found — isolation cannot be proven without one."); process.exit(1); }
+  console.log(`probe user: ${probeUser} (role=client, ${counts.get(probeUser)} cases) · other: ${otherUser ?? "(none)"}\n`);
 
   const jwt = await mintToken(probeUser);
   console.log("✔ minted a VERIFIED Clerk session token (JWKS-verifiable — not a spoof)\n");

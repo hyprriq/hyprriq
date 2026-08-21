@@ -13,6 +13,7 @@ import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
 import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 import { DormantNotice } from "@/lib/email/templates/DormantNotice";
+import { RetentionWarning } from "@/lib/email/templates/RetentionWarning";
 
 // Key-safe email helper. Resend is only instantiated when RESEND_API_KEY is
 // present, so the portal works in environments where email isn't configured yet
@@ -336,6 +337,41 @@ export async function sendRenewalReminderEmail(opts: {
   const dedupKey = `renewal:${opts.clientId}:${opts.renewalDate}`;
   const rendered = await render(createElement(RenewalReminder, {
     name: opts.name, renewalDate: opts.renewalDate, billingUrl: opts.billingUrl,
+  }));
+  if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  const reservation = await reserveSend(template, dedupKey, opts.to);
+  if (!reservation.reserved) return { sent: false, reason: reservation.reason };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    return { sent: true };
+  } catch (e) {
+    await releaseReservation(template, dedupKey);
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── RETENTION WARNING (founder-ruled 2026-08-21: the 30-days-before email that GATES deletion —
+// the sweep removes nothing whose warning has not been on record for 30 days). One send per
+// client per expiry month (dedup retention_warning:{client_id}:{YYYY-MM}); the email_log row's
+// sent_at IS the gate clock the sweep reads. ──
+export async function sendRetentionWarningEmail(opts: {
+  to: string | null;
+  name: string | null;
+  clientId: string;
+  /** YYYY-MM of the files' delete_after — the dedup grain (one warning per client per expiry month). */
+  monthKey: string;
+  fileNames: string[];
+  deletionDate: string;
+  portalUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "Documents you uploaded reach their retention limit soon";
+  const template = "retention_warning";
+  const dedupKey = `retention_warning:${opts.clientId}:${opts.monthKey}`;
+  const rendered = await render(createElement(RetentionWarning, {
+    name: opts.name, fileNames: opts.fileNames, deletionDate: opts.deletionDate, portalUrl: opts.portalUrl,
   }));
   if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };

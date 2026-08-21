@@ -16,6 +16,7 @@ import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
 import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 import { DormantNotice } from "@/lib/email/templates/DormantNotice";
+import { RetentionWarning } from "@/lib/email/templates/RetentionWarning";
 import { scanHard } from "@/lib/utils/banned-language";
 
 async function main() {
@@ -90,6 +91,15 @@ async function main() {
     {
       file: "dormant-notice.html",
       el: createElement(DormantNotice, { name: "Alex", portalUrl: "https://hyprriq.com/portal" }),
+    },
+    {
+      file: "retention-warning.html",
+      el: createElement(RetentionWarning, {
+        name: "Alex",
+        fileNames: ["supplier-invoice-march.pdf", "price-list-2025.pdf"],
+        deletionDate: "September 20, 2026",
+        portalUrl: "https://hyprriq.com/portal",
+      }),
     },
   ];
 
