@@ -28,15 +28,18 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   const source = typeof body.source === "string" && body.source.length <= 64 ? body.source : "site";
 
+  // ── LIVE SCHEMA (founder-run 2026-08-21 via MCP; verified live before this write path shipped):
+  // consent_status ∈ {subscribed, unsubscribed, pending} (CHECK), consent_at timestamptz,
+  // unsubscribed_at timestamptz (null = active). The EXPRESS-consent evidence is the combination
+  // this row records: a labeled signup box (source) + the address + consent_at.
   const { error } = await supabaseAdmin
     .from("marketing_contacts")
     .upsert(
       {
         email,
-        consent_status: "express", // they typed their address into a labeled signup box — express consent
-        consent_ts: new Date().toISOString(),
+        consent_status: "subscribed",
+        consent_at: new Date().toISOString(),
         source,
-        unsubscribe_status: "active",
       },
       { onConflict: "email", ignoreDuplicates: true },
     );

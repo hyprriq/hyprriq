@@ -9,6 +9,9 @@ import { AdminInvitation } from "@/lib/email/templates/AdminInvitation";
 import { OpsAlert } from "@/lib/email/templates/OpsAlert";
 import { BasicNotice } from "@/lib/email/templates/BasicNotice";
 import { Welcome } from "@/lib/email/templates/Welcome";
+import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
+import { LowCredit } from "@/lib/email/templates/LowCredit";
+import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 
 // Key-safe email helper. Resend is only instantiated when RESEND_API_KEY is
 // present, so the portal works in environments where email isn't configured yet
@@ -69,6 +72,42 @@ async function logSend(template: string, recipient: string, caseId?: string | nu
     });
   } catch (e) {
     console.error(`[notify] email_log write failed (${template} → ${recipient}): ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
+// ── RESERVE-THEN-SEND (the dedup_key idempotency, live since the founder ran the migration
+// 2026-08-21). The ledger row is inserted BEFORE the send: a unique-violation on
+// (template, dedup_key) means "already sent" → skip silently — that IS the idempotency, by
+// construction, with no check-then-send race. Failure modes are deliberately asymmetric
+// (CTO-DECIDED): this is the ADR's "dangerous class", where OVER-sending is the harm — so a
+// ledger that can't confirm a reservation means NO send (fail-closed), and a send that fails
+// after reserving soft-deletes its reservation (the founder's `deleted_at is null` index
+// predicate frees the key) so a retry can resend; if even that fails we under-send, never spam.
+type Reservation = { reserved: true } | { reserved: false; reason: "duplicate" | "ledger_unavailable" };
+
+async function reserveSend(template: string, dedupKey: string, recipient: string, caseId?: string | null): Promise<Reservation> {
+  try {
+    const { error } = await supabaseAdmin.from("email_log").insert({
+      recipient, template, dedup_key: dedupKey, case_id: caseId ?? null, sent_at: new Date().toISOString(),
+    });
+    if (!error) return { reserved: true };
+    if (error.code === "23505") return { reserved: false, reason: "duplicate" };
+    console.error(`[notify] reservation failed (${template}/${dedupKey}): ${error.message}`);
+    return { reserved: false, reason: "ledger_unavailable" };
+  } catch (e) {
+    console.error(`[notify] reservation failed (${template}/${dedupKey}): ${e instanceof Error ? e.message : String(e)}`);
+    return { reserved: false, reason: "ledger_unavailable" };
+  }
+}
+
+async function releaseReservation(template: string, dedupKey: string): Promise<void> {
+  try {
+    await supabaseAdmin.from("email_log")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("template", template).eq("dedup_key", dedupKey).is("deleted_at", null);
+  } catch (e) {
+    // Under-send beats spam: an unfreed key after a failed send stays consumed until looked at.
+    console.error(`[notify] reservation release failed (${template}/${dedupKey}): ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -212,6 +251,102 @@ export async function sendDualNotification(opts: {
     if (inbox) await logSend("dual_notification", inbox);
     return { sent: true };
   } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── EMAIL #4 — PAYMENT FAILED (Stripe-driven; built 2026-08-21 after the founder ran the dedup
+// migration). Called from the invoice.payment_failed webhook handler AFTER billing_status is set
+// (the DB record is durable; the email is a courtesy). Idempotency: the webhook's processed-guard
+// plus dedup_key payment_failed:{invoice_id} via reserve-then-send. Non-throwing like every sibling. ──
+export async function sendPaymentFailedEmail(opts: {
+  to: string | null;
+  name: string | null;
+  invoiceId: string;
+  billingUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "Your HyprrIQ payment didn't go through";
+  const template = "payment_failed";
+  const dedupKey = `payment_failed:${opts.invoiceId}`;
+  const rendered = await render(createElement(PaymentFailed, { name: opts.name, billingUrl: opts.billingUrl }));
+  if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  const reservation = await reserveSend(template, dedupKey, opts.to);
+  if (!reservation.reserved) return { sent: false, reason: reservation.reason };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    return { sent: true };
+  } catch (e) {
+    await releaseReservation(template, dedupKey);
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── EMAILS #6a/#6b — LOW CREDIT (scheduled; one send per threshold per cycle BY UNIQUE KEY:
+// low_credit_{threshold}:{client_id}:{cycle_anchor} — the daily job can fire forever and the
+// key absorbs it). ──
+export async function sendLowCreditEmail(opts: {
+  to: string | null;
+  name: string | null;
+  threshold: 0 | 1;
+  clientId: string;
+  /** The cycle anchor for the dedup key — the client's renewal_date, or "none" when unset. */
+  cycleAnchor: string;
+  renewalDate: string | null;
+  portalUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = opts.threshold === 1
+    ? "One report credit left this cycle"
+    : "You've used all your report credits this cycle";
+  const template = "low_credit";
+  const dedupKey = `low_credit_${opts.threshold}:${opts.clientId}:${opts.cycleAnchor}`;
+  const rendered = await render(createElement(LowCredit, {
+    name: opts.name, threshold: opts.threshold, renewalDate: opts.renewalDate, portalUrl: opts.portalUrl,
+  }));
+  if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  const reservation = await reserveSend(template, dedupKey, opts.to);
+  if (!reservation.reserved) return { sent: false, reason: reservation.reason };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    return { sent: true };
+  } catch (e) {
+    await releaseReservation(template, dedupKey);
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── EMAIL #7 — RENEWAL REMINDER (scheduled; founder-ruled: KEEP, pre-charge courtesy ONLY —
+// never a generic engagement nudge). dedup_key renewal:{client_id}:{renewal_date} = one send
+// per renewal, ever. ──
+export async function sendRenewalReminderEmail(opts: {
+  to: string | null;
+  name: string | null;
+  clientId: string;
+  renewalDate: string;
+  billingUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "Your HyprrIQ subscription renews soon";
+  const template = "renewal_reminder";
+  const dedupKey = `renewal:${opts.clientId}:${opts.renewalDate}`;
+  const rendered = await render(createElement(RenewalReminder, {
+    name: opts.name, renewalDate: opts.renewalDate, billingUrl: opts.billingUrl,
+  }));
+  if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  const reservation = await reserveSend(template, dedupKey, opts.to);
+  if (!reservation.reserved) return { sent: false, reason: reservation.reason };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    return { sent: true };
+  } catch (e) {
+    await releaseReservation(template, dedupKey);
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
   }
 }

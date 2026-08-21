@@ -29,9 +29,12 @@ export default async function UnsubscribePage({
   } else if (!email || !token || !verifyUnsubscribeToken(email, token)) {
     message = "This unsubscribe link is not valid. Use the link from your email, or write to support@hyprriq.com and we'll remove you by hand.";
   } else {
+    // LIVE SCHEMA (founder-run 2026-08-21): unsubscribed = consent_status flip + unsubscribed_at
+    // stamp. Irreversible from this route — nothing here (or in the signup path, which inserts
+    // with ignoreDuplicates) can ever flip an unsubscribed address back to subscribed.
     const { error } = await supabaseAdmin
       .from("marketing_contacts")
-      .update({ unsubscribe_status: "unsubscribed" })
+      .update({ consent_status: "unsubscribed", unsubscribed_at: new Date().toISOString() })
       .eq("email", email);
     message = error
       ? "We couldn't process this right now. Write to support@hyprriq.com and we'll remove you by hand."

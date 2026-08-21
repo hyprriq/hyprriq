@@ -59,9 +59,10 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > | **Download in place** + 202 copy re-ruled | ✅ SHIPPED `8db676b` | founder-accepted, incl. the future-tense attachment line |
 > | **Email re-skins + LAYOUT LOCK (same commit) + welcome (create-path idempotency) + email_log ledger seam** | ✅ SHIPPED | 6 previews gate-clean in `public/prototype/email-preview/` |
 > | **Consent capture + tokenized permanent `/unsubscribe`** (fail-soft until migration; new env `UNSUBSCRIBE_TOKEN_SECRET`) | ✅ SHIPPED | app collects, tool sends |
-> | **⛔ F: two migrations, described-and-stopped** — `20260821000000` (email_log.dedup_key — **emails 4–7 BLOCK on it**) + `20260821000100` (marketing_contacts, RLS no-policies) | ⛔ FOUNDER RUNS | read-backs inside each file |
+> | **Two migrations** — `20260821000000` (email_log.dedup_key) + `20260821000100` (marketing_contacts) | ✅ **FOUNDER RAN BOTH 2026-08-21** (via MCP, from the spec) | live shape verified by read-back; repo files rewritten as AS-APPLIED records; three write-breaking diffs reconciled in code (consent_status enum, consent_at, unsubscribed_at) |
+> | **Emails 4–7** — payment-failed (webhook, dedup `payment_failed:{invoice_id}`), low-credit ×2 + renewal reminder (daily `email-reminders` cron, dedup by unique key) | ✅ SHIPPED | reserve-then-send on email_log; fail-closed ledger; 10 previews gate-clean |
 > | **⛔ F: 031 correction** (ruling: verify → usable under the subject-inversion class) | ⛔ FOUNDER RUNS | recommended path: `dispute-rerun.ts` on `5f6a093f-…` — new attempt under 1.8.0, new PDF, H1-clean; a SQL edit of stored evidence would leave portal ≠ frozen PDF |
-> | Emails 4–7 (payment-failed, low-credit ×2, renewal) | ⛔ blocked on the dedup migration, as ruled | cancellation still blocks on the deletion policy |
+> | Email 5 (cancellation) | ⛔ blocks on the deletion policy, as ruled | nothing that promises deletion ships before something deletes |
 
 ---
 

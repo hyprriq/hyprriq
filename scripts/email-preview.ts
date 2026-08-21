@@ -12,6 +12,9 @@ import { SubmissionConfirmation } from "@/lib/email/templates/SubmissionConfirma
 import { Welcome } from "@/lib/email/templates/Welcome";
 import { AdminInvitation } from "@/lib/email/templates/AdminInvitation";
 import { OpsAlert } from "@/lib/email/templates/OpsAlert";
+import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
+import { LowCredit } from "@/lib/email/templates/LowCredit";
+import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 import { scanHard } from "@/lib/utils/banned-language";
 
 async function main() {
@@ -65,6 +68,23 @@ async function main() {
         heading: "Pipeline failed for case AWI-2608-044",
         fragmentHtml: "<p>All retries exhausted; case marked research_failed.</p><p>Timeout acquiring evidence pack.</p>",
       }),
+    },
+    // ── Emails 4–7 (built 2026-08-21, post-migration).
+    {
+      file: "payment-failed.html",
+      el: createElement(PaymentFailed, { name: "Alex", billingUrl: "https://hyprriq.com/portal/billing" }),
+    },
+    {
+      file: "low-credit-1.html",
+      el: createElement(LowCredit, { name: "Alex", threshold: 1, renewalDate: "2026-09-14", portalUrl: "https://hyprriq.com/portal" }),
+    },
+    {
+      file: "low-credit-0.html",
+      el: createElement(LowCredit, { name: null, threshold: 0, renewalDate: null, portalUrl: "https://hyprriq.com/portal" }),
+    },
+    {
+      file: "renewal-reminder.html",
+      el: createElement(RenewalReminder, { name: "Alex", renewalDate: "2026-09-14", billingUrl: "https://hyprriq.com/portal/billing" }),
     },
   ];
 

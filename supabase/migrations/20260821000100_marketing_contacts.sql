@@ -1,27 +1,35 @@
--- ── MARKETING CONSENT LEDGER (ADR-EMAIL-001) — DESCRIBED-AND-STOPPED: the founder runs this. ──
+-- ── MARKETING CONSENT LEDGER (ADR-EMAIL-001) — AS APPLIED. ──
 --
--- The app collects, a tool sends: this table is the consent record the signup box writes
--- (/api/newsletter) and the permanent /unsubscribe route updates. Captured from day one because
--- consent evidence cannot be reconstructed later. The app NEVER sends a campaign.
+-- The founder ran this 2026-08-21 via Supabase MCP from the spec (not this file); this file was
+-- then rewritten to match the LIVE database exactly (verified live: information_schema,
+-- pg_constraint, pg_indexes), so the repo record and production can never disagree. The live
+-- shape supersedes the earlier described draft: consent_status is a CHECKED enum
+-- (subscribed/unsubscribed/pending), the consent timestamp is consent_at, and unsubscription is
+-- unsubscribed_at (null = active) rather than a status string. /api/newsletter and /unsubscribe
+-- write THIS shape.
 --
--- RLS is ENABLED with NO policies — deny-by-default for anon/authenticated; only the
--- service-role server client (the two routes above) reaches it. unsubscribe_status is set to
--- 'unsubscribed' by the tokenized route and NOTHING in the app ever flips it back.
+-- The app collects, a tool sends: the signup box writes the consent record, the tokenized
+-- permanent /unsubscribe flips consent_status + stamps unsubscribed_at, and NOTHING in the app
+-- ever flips an address back. RLS is ENABLED with ZERO policies — service-role only.
 
 create table if not exists public.marketing_contacts (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
-  consent_status text not null,          -- 'express' from the labeled signup box
-  consent_ts timestamptz not null,       -- when consent was given (never overwritten on re-submit)
-  source text not null,                  -- where the address came from (provenance for any future CRM import)
-  unsubscribe_status text not null default 'active',  -- 'active' | 'unsubscribed' (irreversible via the route)
+  consent_status text not null default 'subscribed'
+    check (consent_status in ('subscribed', 'unsubscribed', 'pending')),
+  consent_at timestamptz not null default now(),
+  source text not null,
+  unsubscribed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+create index if not exists idx_marketing_contacts_status on public.marketing_contacts (consent_status);
+
 alter table public.marketing_contacts enable row level security;
 
--- READ-BACKS (run after):
---   select relrowsecurity from pg_class where relname='marketing_contacts';   -- must be true
---   select count(*) from public.marketing_contacts;                            -- 0 on a fresh run
---   select policyname from pg_policies where tablename='marketing_contacts';   -- must return ZERO rows
+-- READ-BACKS (all verified live 2026-08-21):
+--   select relrowsecurity from pg_class where relname='marketing_contacts';   -- true
+--   select policyname from pg_policies where tablename='marketing_contacts';  -- ZERO rows
+--   select conname from pg_constraint where conrelid='public.marketing_contacts'::regclass
+--     and conname='marketing_contacts_consent_status_check';                  -- one row

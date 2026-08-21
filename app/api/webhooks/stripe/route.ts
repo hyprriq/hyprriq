@@ -6,6 +6,8 @@ import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
 import { addClientCredits, rolloverClientCredits } from "@/lib/data/credits";
 import { grantUpgradeCredits, isUpgrade } from "@/lib/billing/upgradeGrant";
+import { sendPaymentFailedEmail } from "@/lib/email/notify";
+import { SITE_URL } from "@/lib/constants/site";
 
 // Stripe webhook — the source of truth for plan/credit state. SCAFFOLDING:
 // signature verification, idempotency (stripe_events.stripe_event_id UNIQUE), and
@@ -307,7 +309,22 @@ export async function POST(req: Request) {
       case "invoice.payment_failed": {
         const inv = event.data.object as Stripe.Invoice;
         const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? null;
-        if (customerId) await supabaseAdmin.from("clients").update({ billing_status: "past_due" }).eq("stripe_customer_id", customerId);
+        if (customerId) {
+          await supabaseAdmin.from("clients").update({ billing_status: "past_due" }).eq("stripe_customer_id", customerId);
+          // EMAIL #4 (ADR-EMAIL-001, Stripe-driven class): the DB record above is the durable
+          // fact; the email is the courtesy on top. Idempotency is two layers by the ADR — this
+          // handler's processed-guard drops same-event retries, and dedup_key
+          // payment_failed:{invoice_id} absorbs distinct events for the same fact. The sender is
+          // non-throwing by contract, so a mail problem can never fail the webhook.
+          const { data: client } = await supabaseAdmin
+            .from("clients").select("email, full_name").eq("stripe_customer_id", customerId).maybeSingle();
+          if (client?.email && inv.id) {
+            await sendPaymentFailedEmail({
+              to: client.email, name: client.full_name ?? null, invoiceId: inv.id,
+              billingUrl: `${SITE_URL}/portal/billing`,
+            });
+          }
+        }
         break;
       }
     }

@@ -6,6 +6,7 @@ import { outcomeCheckpoints } from "@/lib/inngest/functions/outcome-checkpoints"
 import { degradedWritesWatchdog } from "@/lib/inngest/functions/degradedWrites";
 import { stalledCaseAlarm } from "@/lib/inngest/functions/stalledCases";
 import { reportPdfRender } from "@/lib/inngest/functions/reportPdf";
+import { emailReminders } from "@/lib/inngest/functions/emailReminders";
 
 // Inngest serve endpoint. The durable research pipeline (pipeline/run-case) runs here, outside
 // the submit request, so it is not bound by the serverless 60s function cap.
@@ -21,7 +22,7 @@ export const maxDuration = 300;
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [pipelineStart, pipelineWatchdog, outcomeCheckpoints, degradedWritesWatchdog, stalledCaseAlarm, reportPdfRender],
+  functions: [pipelineStart, pipelineWatchdog, outcomeCheckpoints, degradedWritesWatchdog, stalledCaseAlarm, reportPdfRender, emailReminders],
   serveOrigin: process.env.INNGEST_SERVE_ORIGIN,
   servePath: "/api/inngest",
 });
