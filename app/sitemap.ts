@@ -15,5 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/pricing", 0.9),
     page("/sample-report", 0.9),
     page("/how-it-works", 0.8),
+    page("/how-to-read", 0.8),
   ];
 }

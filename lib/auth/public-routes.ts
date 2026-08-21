@@ -15,6 +15,7 @@ export const PUBLIC_ROUTES: string[] = [
   // Any NEW marketing route needs a line here; the marketing-route lock in public-routes.test.ts
   // now fails if one is added without it.
   "/sample-report",
+  "/how-to-read",
   "/about",
   "/terms",
   "/privacy",
