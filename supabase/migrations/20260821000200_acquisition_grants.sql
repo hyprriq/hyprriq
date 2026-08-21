@@ -1,6 +1,6 @@
 -- ⛔ DESCRIBE-AND-STOP — THE FOUNDER RUNS THIS (via Supabase MCP, as usual). Phase 1 of the
--- acquisition-grant build (founder-ruled 2026-08-21). Phase 2 (code) lands only after this is
--- applied and read back.
+-- acquisition-grant build (founder-ruled 2026-08-21; redemption-limit ruling: BOTH layers).
+-- Phase 2 (code) lands only after this is applied and read back.
 --
 -- ── THE RULED DESIGN THIS IMPLEMENTS ─────────────────────────────────────────────────────────
 -- One mechanism, two delivery modes: an INVITE LINK (unguessable token in a URL, auto-applies at
@@ -15,16 +15,18 @@
 -- Attribution now, commission later: redemption stamps clients.referred_by (column already
 -- exists, unwritten until now) with the grant's referrer — a field, not a commission system.
 --
--- ── FRAUD LIMITS (the proposal the founder asked for — both layers, enforced in schema) ──────
---   1. Per grant: max_redemptions (invite links default 1; coupons set per campaign).
---   2. Per account: ONE acquisition grant per client EVER — grant_redemptions.client_id is
---      UNIQUE. This is the enforceable grain (emails alias trivially; the Clerk account is what
---      costs effort to multiply). Someone determined can still make N accounts — accepted at
---      launch scale, and max_redemptions bounds each campaign's blast radius. Relax the unique
---      index deliberately if multi-grant clients are ever ruled.
---   3. A client who already HAS a plan is refused ('already_has_plan'): the grant is an
---      acquisition tool; an existing $99 client redeeming one would either downgrade-shadow
---      their tier or hand a paying client a free credit — neither is the ruled purpose.
+-- ── REDEMPTION LIMITS (founder-ruled 2026-08-21: BOTH) ───────────────────────────────────────
+--   1. Per grant: max_redemptions — a leaked link cannot be redeemed a hundred times. DEFAULT 1
+--      (the tester grants about to be sent); settable at creation per campaign.
+--   2. Per email: ONE grant per email address, ever — one person cannot collect several under
+--      the same address. The redeeming client's email is captured on the redemption row and a
+--      unique index on lower(redeemer_email) enforces it (partial: rows with an empty email —
+--      lazy-provisioned accounts Clerk gave no address — fall through to layer 3 rather than
+--      colliding with each other).
+--   3. Per account: ONE grant per client account, ever — grant_redemptions.client_id is UNIQUE.
+--   4. In the RPC: a client who already HAS a plan is refused ('already_has_plan') — the grant
+--      is an acquisition tool; an existing client redeeming one either downgrade-shadows their
+--      tier or hands a paying client a free credit.
 --
 -- RLS: ENABLED, ZERO policies on both tables — service-role only, like marketing_contacts.
 -- The RPC follows H6: ALL credit arithmetic in atomic SQL; row-locked so two concurrent
@@ -53,12 +55,16 @@ create table if not exists public.grant_redemptions (
   id uuid primary key default gen_random_uuid(),
   grant_id uuid not null references public.acquisition_grants(id),
   client_id text not null references public.clients(id),
+  redeemer_email text not null default '',   -- captured at redemption; the one-per-email grain
   redeemed_at timestamptz not null default now()
 );
 
--- Fraud limit 2: one acquisition grant per client account, EVER.
+-- Limit 3: one acquisition grant per client account, EVER.
 create unique index if not exists grant_redemptions_one_per_client_uidx
   on public.grant_redemptions (client_id);
+-- Limit 2: one acquisition grant per EMAIL, ever (partial: empty emails fall through to limit 3).
+create unique index if not exists grant_redemptions_one_per_email_uidx
+  on public.grant_redemptions (lower(redeemer_email)) where redeemer_email <> '';
 create index if not exists grant_redemptions_grant_idx on public.grant_redemptions (grant_id);
 
 alter table public.acquisition_grants enable row level security;
@@ -67,7 +73,7 @@ alter table public.grant_redemptions enable row level security;
 -- ── THE ATOMIC REDEMPTION (H6 pattern: credit arithmetic lives in SQL, race-free) ────────────
 -- Returns a status word the route maps to client-facing copy:
 --   'ok' · 'invalid_token' · 'disabled' · 'expired' · 'exhausted' · 'no_client' ·
---   'already_has_plan' · 'already_redeemed'
+--   'already_has_plan' · 'already_redeemed' · 'email_already_used'
 create or replace function public.redeem_acquisition_grant(p_token text, p_client_id text)
 returns text
 language plpgsql
@@ -77,6 +83,7 @@ as $function$
 declare
   g public.acquisition_grants%rowtype;
   c_plan text;
+  c_email text;
   redemption_count integer;
 begin
   select * into g from public.acquisition_grants
@@ -89,14 +96,21 @@ begin
   select count(*) into redemption_count from public.grant_redemptions where grant_id = g.id;
   if redemption_count >= g.max_redemptions then return 'exhausted'; end if;
 
-  select plan_type into c_plan from public.clients where id = p_client_id and deleted_at is null for update;
+  select plan_type, lower(trim(coalesce(email, ''))) into c_plan, c_email
+    from public.clients where id = p_client_id and deleted_at is null for update;
   if not found then return 'no_client'; end if;
   if c_plan is not null then return 'already_has_plan'; end if;
   if exists (select 1 from public.grant_redemptions where client_id = p_client_id) then
     return 'already_redeemed';
   end if;
+  if c_email <> '' and exists (
+    select 1 from public.grant_redemptions where lower(redeemer_email) = c_email
+  ) then
+    return 'email_already_used';
+  end if;
 
-  insert into public.grant_redemptions (grant_id, client_id) values (g.id, p_client_id);
+  insert into public.grant_redemptions (grant_id, client_id, redeemer_email)
+    values (g.id, p_client_id, c_email);
 
   -- Plan AND credit together (the ruling): the full-report tier, one-time category (no billing
   -- tail), credits added — and attribution stamped, set-if-null so an existing referrer is
@@ -123,9 +137,10 @@ commit;
 --      select policyname from pg_policies
 --        where tablename in ('acquisition_grants','grant_redemptions');     -- ZERO rows
 --
--- 2. The one-per-client fraud index exists:
+-- 2. BOTH ruled redemption-limit indexes exist:
 --      select indexname from pg_indexes where tablename='grant_redemptions'
---        and indexname='grant_redemptions_one_per_client_uidx';             -- one row
+--        and indexname in ('grant_redemptions_one_per_client_uidx',
+--                          'grant_redemptions_one_per_email_uidx');         -- TWO rows
 --
 -- 3. The RPC exists and refuses garbage without erroring:
 --      select public.redeem_acquisition_grant('no-such-token', 'no-such-client');
