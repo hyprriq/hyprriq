@@ -12,6 +12,7 @@ import { Welcome } from "@/lib/email/templates/Welcome";
 import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
 import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
+import { DormantNotice } from "@/lib/email/templates/DormantNotice";
 
 // Key-safe email helper. Resend is only instantiated when RESEND_API_KEY is
 // present, so the portal works in environments where email isn't configured yet
@@ -336,6 +337,35 @@ export async function sendRenewalReminderEmail(opts: {
   const rendered = await render(createElement(RenewalReminder, {
     name: opts.name, renewalDate: opts.renewalDate, billingUrl: opts.billingUrl,
   }));
+  if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  if (!opts.to) return { sent: false, reason: "no_recipient" };
+  const reservation = await reserveSend(template, dedupKey, opts.to);
+  if (!reservation.reserved) return { sent: false, reason: reservation.reason };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    return { sent: true };
+  } catch (e) {
+    await releaseReservation(template, dedupKey);
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── DORMANT-ACCOUNT NOTICE (retention schedule, founder-ruled 2026-08-21). ONE notice ever per
+// client (dedup dormant_24m:{client_id}, reserve-then-send); the retention sweep selects
+// candidates, the unique key guarantees the "once". Closure after the 30-day window stays a
+// deliberate founder step until closure machinery ships. ──
+export async function sendDormantNoticeEmail(opts: {
+  to: string | null;
+  name: string | null;
+  clientId: string;
+  portalUrl: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "Your HyprrIQ account has been inactive for 24 months";
+  const template = "dormant_notice";
+  const dedupKey = `dormant_24m:${opts.clientId}`;
+  const rendered = await render(createElement(DormantNotice, { name: opts.name, portalUrl: opts.portalUrl }));
   if ((await emailGate(template, subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   if (!opts.to) return { sent: false, reason: "no_recipient" };

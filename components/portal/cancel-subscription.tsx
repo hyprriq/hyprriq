@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 // Cancel-at-period-end control for the Billing page. Active subscription → an
@@ -73,6 +74,17 @@ export function CancelSubscription({
       <p className="mt-1 text-[13px] text-ink-2">
         Your plan stays active until <span className="font-semibold">{renewalLabel}</span>, then
         won&rsquo;t renew. You keep full access until then.
+      </p>
+      {/* DOWNLOAD PROMPT (founder-ruled 2026-08-21): the Terms and the Data Policy tell clients
+          to download before closure — this makes it one click from the cancellation screen. A
+          client who cancels and loses a report they paid for is a fair complaint. */}
+      <p className="mt-2 text-[13px] text-ink-2">
+        Your delivered reports remain yours —{" "}
+        <Link href="/portal/cases" className="font-semibold text-brand underline hover:opacity-80">
+          download your report PDFs
+        </Link>{" "}
+        for anything you want to keep. Under the Data Policy, data is removed on the published
+        retention schedule after an account closes.
       </p>
       {error && <p className="mt-2 text-[13px] text-deny-ink">{error}</p>}
       <div className="mt-3 flex items-center gap-2">

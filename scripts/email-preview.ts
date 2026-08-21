@@ -15,6 +15,7 @@ import { OpsAlert } from "@/lib/email/templates/OpsAlert";
 import { PaymentFailed } from "@/lib/email/templates/PaymentFailed";
 import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
+import { DormantNotice } from "@/lib/email/templates/DormantNotice";
 import { scanHard } from "@/lib/utils/banned-language";
 
 async function main() {
@@ -85,6 +86,10 @@ async function main() {
     {
       file: "renewal-reminder.html",
       el: createElement(RenewalReminder, { name: "Alex", renewalDate: "2026-09-14", billingUrl: "https://hyprriq.com/portal/billing" }),
+    },
+    {
+      file: "dormant-notice.html",
+      el: createElement(DormantNotice, { name: "Alex", portalUrl: "https://hyprriq.com/portal" }),
     },
   ];
 
