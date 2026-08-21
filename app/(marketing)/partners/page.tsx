@@ -21,21 +21,33 @@ const PARTNER_AREAS = ["supplier_identity", "supply_chain_relationship", "brand_
 export default async function PartnersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invited?: string }>;
+  searchParams: Promise<{ invited?: string; code?: string }>;
 }) {
-  const { invited } = await searchParams;
+  const { invited, code } = await searchParams;
+  const safeCode = code && code.length <= 64 ? code : null;
   return (
     <>
       {invited === "1" && (
         <div className="border-b border-line bg-brand-tint/70">
-          <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-5 py-3.5 lg:px-8">
-            <p className="text-[14px] text-ink">
-              <b>Your free full assessment is attached to this link.</b> Create your account and it&rsquo;s
-              applied automatically — nothing to type.
-            </p>
-            <Link href="/sign-up" className="shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90">
-              Create your account
-            </Link>
+          <div className="mx-auto max-w-3xl px-5 py-3.5 lg:px-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[14px] text-ink">
+                <b>Your free full assessment is attached to this link.</b> Create your account in this
+                browser and it&rsquo;s applied automatically — nothing to type.
+              </p>
+              <Link href="/sign-up" className="shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90">
+                Create your account
+              </Link>
+            </div>
+            {/* Cross-device carrier (grant rework, 2026-08-21): the cookie only survives THIS
+                browser — a phone-click / laptop-register path needs the code in hand. */}
+            {safeCode && (
+              <p className="mt-2 text-[13px] text-ink-2">
+                Registering on a different device? Open this same link there, or enter your access code{" "}
+                <span className="rounded bg-surface px-1.5 py-0.5 font-mono text-[12px] text-ink">{safeCode}</span>{" "}
+                on your Billing page after you sign up.
+              </p>
+            )}
           </div>
         </div>
       )}

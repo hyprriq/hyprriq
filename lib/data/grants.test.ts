@@ -24,7 +24,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   },
 }));
 
-import { generateGrantCode, createGrant, redeemGrant } from "./grants";
+import { generateGrantCode, createGrant, redeemGrant, isTerminalRedeemStatus, type RedeemStatus } from "./grants";
 
 beforeEach(() => {
   rpcMock.mockReset();
@@ -93,5 +93,18 @@ describe("redeemGrant — one write path, fail-soft", () => {
   it("an empty code never reaches the database", async () => {
     expect(await redeemGrant("   ", "user_1")).toBe("invalid_code");
     expect(rpcMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("isTerminalRedeemStatus — the attach route's cookie-clearing law", () => {
+  it("terminal statuses clear the cookie: retrying the same code+account can never succeed", () => {
+    for (const s of ["invalid_code", "revoked", "expired", "exhausted", "already_has_plan", "email_already_used"] as RedeemStatus[]) {
+      expect(isTerminalRedeemStatus(s), s).toBe(true);
+    }
+  });
+  it("ok clears too (consumed) but is not 'terminal'; retryable outages keep the cookie alive", () => {
+    expect(isTerminalRedeemStatus("ok")).toBe(false);
+    expect(isTerminalRedeemStatus("unavailable")).toBe(false); // RPC/transport down → next session retries
+    expect(isTerminalRedeemStatus("no_client")).toBe(false);   // provisioning race → next load succeeds
   });
 });

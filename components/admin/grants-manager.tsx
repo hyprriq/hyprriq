@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { AcquisitionGrant, GrantRedemption } from "@/lib/data/grants";
+import type { AcquisitionGrant, GrantRedemption, AttachFailure } from "@/lib/data/grants";
 
 // ── GRANTS MANAGER (founder-ruled 2026-08-21) — create a grant as a link or a code, see who
 // redeemed it and when. The VALUE is ruled and fixed (one free full assessment — 1 credit on
@@ -20,9 +20,10 @@ function grantState(g: AcquisitionGrant): { label: string; tone: string } {
   return { label: "active", tone: "text-verify-ink" };
 }
 
-export function GrantsManager({ grants, redemptions, siteUrl }: {
+export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: {
   grants: AcquisitionGrant[];
   redemptions: GrantRedemption[];
+  attachFailures: AttachFailure[];
   siteUrl: string;
 }) {
   const router = useRouter();
@@ -113,6 +114,26 @@ export function GrantsManager({ grants, redemptions, siteUrl }: {
         </div>
         {error && <p className="mt-2 text-[13px] text-deny-ink">{error}</p>}
       </div>
+
+      {attachFailures.length > 0 && (
+        <div className="rounded-card border border-conditional-ink/40 bg-conditional-bg p-5">
+          <div className="font-display text-sm font-bold text-ink">Failed invite attaches</div>
+          <p className="mt-1 text-[13px] text-ink-2">
+            These accounts followed an invite link but the grant could not apply — the user saw a plain
+            explanation and the typed-code recovery path. Reach out if one of them is someone you invited.
+          </p>
+          <div className="mt-3 space-y-1 text-[13px] text-ink-2">
+            {attachFailures.map((f, i) => (
+              <div key={i} className="flex flex-wrap gap-x-3">
+                <span className="font-mono text-[12px]">{f.code_prefix}…</span>
+                <span className="font-semibold">{f.status}</span>
+                <span>{f.client_id}</span>
+                <span className="text-muted">{fmt(f.at)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-card border border-line bg-surface p-5">
         <div className="font-display text-sm font-bold text-ink">Grants</div>

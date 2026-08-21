@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
-import { GRANT_COOKIE } from "@/lib/constants/grantCookie";
 import type { PlanType } from "@/lib/constants/plans";
 
 // ADR-006: admin access is a role enum, not a boolean. Only 'client' and
@@ -100,24 +99,11 @@ export async function getOrCreateClient(): Promise<Client | null> {
       .maybeSingle());
   }
 
-  // ── INVITE-LINK REDEMPTION (founder-ruled 2026-08-21): the /grant/[code] handler parked the
-  // code in a cookie; the first authenticated portal load of a PLAN-LESS account redeems it
-  // through the same atomic RPC as the typed-coupon path. Idempotent by the RPC's own guards
-  // (already_has_plan / email_already_used are words, not errors), so a lingering cookie can
-  // never double-apply; non-fatal by contract — a failed redemption never breaks a page load.
-  if (data && !(data as Client).plan_type) {
-    try {
-      const { cookies } = await import("next/headers");
-      const grantCode = (await cookies()).get(GRANT_COOKIE)?.value;
-      if (grantCode) {
-        const { redeemGrant } = await import("@/lib/data/grants");
-        const status = await redeemGrant(grantCode, userId);
-        if (status === "ok") {
-          ({ data } = await supa.from("clients").select(select).eq("id", userId).maybeSingle());
-        }
-      }
-    } catch { /* the grant is a courtesy, never a gate */ }
-  }
+  // Invite-link redemption MOVED (grant-carrier rework, 2026-08-21): a server component cannot
+  // clear a cookie, so a failed redemption here would silently re-fire on every load and the
+  // user would never learn their code failed — the exact silent-loss failure the founder named.
+  // The one consumer of the invite cookie is now /api/grants/attach (clears the cookie, audits
+  // failures, returns visible copy), triggered by GrantAttach in the portal shell.
 
   return (data as Client) ?? null;
 }

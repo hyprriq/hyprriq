@@ -47,6 +47,15 @@ export type RedeemStatus =
   | "ok" | "invalid_code" | "revoked" | "expired" | "exhausted"
   | "no_client" | "already_has_plan" | "email_already_used" | "unavailable";
 
+/**
+ * TERMINAL statuses can never succeed on retry with the same code+account — the attach flow
+ * clears its cookie and audits on these. Retryable ones (unavailable = RPC/transport down,
+ * no_client = provisioning race) keep the cookie so the next attempt can succeed.
+ */
+export function isTerminalRedeemStatus(s: RedeemStatus): boolean {
+  return s !== "ok" && s !== "unavailable" && s !== "no_client";
+}
+
 // Link slugs are unguessable (the URL is the secret); coupon codes are human-typeable —
 // unambiguous alphabet (no 0/O/1/I/L), HYPRR- prefix so a screenshot reads as ours.
 const LINK_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -98,6 +107,39 @@ export async function listGrants(): Promise<{ grants: AcquisitionGrant[]; redemp
     supabaseAdmin.from("grant_redemptions").select("*").order("redeemed_at", { ascending: false }),
   ]);
   return { grants: (grants ?? []) as AcquisitionGrant[], redemptions: (redemptions ?? []) as GrantRedemption[] };
+}
+
+export interface AttachFailure {
+  status: string;
+  code_prefix: string;
+  client_id: string;
+  at: string;
+}
+
+/**
+ * Failed invite attaches (grant-carrier rework, 2026-08-21): the attach route audits every
+ * TERMINAL failure — this surfaces the recent ones so the founder can see an invite that
+ * landed on an account but could not apply (the silent-loss failure, made visible).
+ */
+export async function listAttachFailures(limit = 20): Promise<AttachFailure[]> {
+  const { data } = await supabaseAdmin
+    .from("audit_log")
+    .select("new_value, created_at")
+    .eq("table_name", "grant_redemptions")
+    .order("created_at", { ascending: false })
+    .limit(limit * 3); // over-fetch; not every grant_redemptions audit row is an attach failure
+  const out: AttachFailure[] = [];
+  for (const r of data ?? []) {
+    const v = r.new_value as { grant_attach_failed?: boolean; status?: string; code_prefix?: string; client_id?: string } | null;
+    if (v?.grant_attach_failed) {
+      out.push({
+        status: v.status ?? "unknown", code_prefix: v.code_prefix ?? "?", client_id: v.client_id ?? "?",
+        at: r.created_at as string,
+      });
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
 }
 
 export async function revokeGrant(id: string): Promise<{ error: string | null }> {

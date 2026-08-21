@@ -3,6 +3,7 @@ import type { Client } from "@/lib/data/client";
 import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
 import { ShellChrome } from "@/components/portal/shell-chrome";
+import { GrantAttach } from "@/components/portal/grant-attach";
 import { Wordmark } from "@/components/brand/wordmark";
 import {
   PLAN_NAME,
@@ -257,6 +258,10 @@ export function PortalShell({
       sidebar={<Sidebar client={client} active={active} access={access} />}
       header={<TopbarContent client={client} title={title} access={access} showSwitcher={showSwitcher} />}
     >
+      {/* Invite-grant attach (2026-08-21): plan-less accounts only — consumes the parked invite
+          cookie via the attach route and makes every outcome VISIBLE (silent grant loss was the
+          ruled failure). Plan-holders never see it; the RPC refuses them anyway. */}
+      {!client.plan_type && <GrantAttach />}
       {children}
     </ShellChrome>
   );

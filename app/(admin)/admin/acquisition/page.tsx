@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/data/admin";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { GrantsManager } from "@/components/admin/grants-manager";
-import { listGrants } from "@/lib/data/grants";
+import { listGrants, listAttachFailures } from "@/lib/data/grants";
 import { SITE_URL } from "@/lib/constants/site";
 
 // ── ACQUISITION (live 2026-08-21 — the shell from 2026-08-02 becomes the working feature).
@@ -20,10 +20,10 @@ export default async function AdminAcquisitionPage() {
       </AdminShell>
     );
   }
-  const { grants, redemptions } = await listGrants();
+  const [{ grants, redemptions }, attachFailures] = await Promise.all([listGrants(), listAttachFailures()]);
   return (
     <AdminShell active="acquisition" title="Acquisition" {...shellProps}>
-      <GrantsManager grants={grants} redemptions={redemptions} siteUrl={SITE_URL} />
+      <GrantsManager grants={grants} redemptions={redemptions} attachFailures={attachFailures} siteUrl={SITE_URL} />
     </AdminShell>
   );
 }

@@ -12,7 +12,12 @@ import { GRANT_COOKIE } from "@/lib/constants/grantCookie";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const res = NextResponse.redirect(new URL("/partners?invited=1", SITE_URL));
+  // The code rides the redirect too (same secret the clicked URL already carried) so the
+  // partners banner can show it for the cross-device path: register elsewhere → type it on the
+  // billing page. The cookie remains the hands-free same-browser carrier.
+  const dest = new URL("/partners?invited=1", SITE_URL);
+  if (code && code.length <= 64) dest.searchParams.set("code", code);
+  const res = NextResponse.redirect(dest);
   if (code && code.length <= 64) {
     res.cookies.set(GRANT_COOKIE, code, {
       httpOnly: true, sameSite: "lax", secure: true, path: "/",
