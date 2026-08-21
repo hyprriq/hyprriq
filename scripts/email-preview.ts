@@ -8,6 +8,10 @@ import { join } from "node:path";
 import { render } from "@react-email/render";
 import { createElement } from "react";
 import { DeliveryNotification } from "@/lib/email/templates/DeliveryNotification";
+import { SubmissionConfirmation } from "@/lib/email/templates/SubmissionConfirmation";
+import { Welcome } from "@/lib/email/templates/Welcome";
+import { AdminInvitation } from "@/lib/email/templates/AdminInvitation";
+import { OpsAlert } from "@/lib/email/templates/OpsAlert";
 import { scanHard } from "@/lib/utils/banned-language";
 
 async function main() {
@@ -31,6 +35,35 @@ async function main() {
         vendorName: null,
         caseUrl: "https://hyprriq.com/portal/cases/example",
         hasAttachment: false,
+      }),
+    },
+    // ── 2026-08-21 batch (post-approval re-skins + welcome): same fast-feedback loop.
+    {
+      file: "submission-confirmation.html",
+      el: createElement(SubmissionConfirmation, {
+        caseNumber: "AWI-2608-044",
+        vendorName: "Meridian Trade Supply",
+        caseUrl: "https://hyprriq.com/portal/cases/example",
+      }),
+    },
+    {
+      file: "welcome.html",
+      el: createElement(Welcome, { name: "Alex", portalUrl: "https://hyprriq.com/portal" }),
+    },
+    {
+      file: "admin-invitation.html",
+      el: createElement(AdminInvitation, {
+        to: "ops@example.com",
+        signUpUrl: "https://hyprriq.com/admin/sign-up?ticket=example",
+        invitedByEmail: "The HyprrIQ founder",
+        expiresDays: 7,
+      }),
+    },
+    {
+      file: "ops-alert.html",
+      el: createElement(OpsAlert, {
+        heading: "Pipeline failed for case AWI-2608-044",
+        fragmentHtml: "<p>All retries exhausted; case marked research_failed.</p><p>Timeout acquiring evidence pack.</p>",
       }),
     },
   ];

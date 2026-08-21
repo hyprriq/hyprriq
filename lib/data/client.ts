@@ -1,6 +1,8 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
+import { sendWelcomeEmail } from "@/lib/email/notify";
+import { SITE_URL } from "@/lib/constants/site";
 import type { PlanType } from "@/lib/constants/plans";
 
 // ADR-006: admin access is a role enum, not a boolean. Only 'client' and
@@ -72,12 +74,23 @@ export async function getOrCreateClient(): Promise<Client | null> {
     const full_name =
       [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
 
-    await supa
+    // ── WELCOME EMAIL (ADR-EMAIL-001, email #1): `.select()` on the ignore-duplicates upsert
+    // returns rows ONLY for an actual insert — the CREATE path — so under concurrent first-loads
+    // exactly one request sees a row back and exactly one welcome sends. Never the every-visit
+    // path. Non-fatal by contract: a failed send never breaks provisioning.
+    const { data: created } = await supa
       .from("clients")
       .upsert(
         { id: userId, email, full_name, last_active_at: new Date().toISOString() },
         { onConflict: "id", ignoreDuplicates: true },
-      );
+      )
+      .select("id");
+
+    if (created && created.length > 0 && email) {
+      try {
+        await sendWelcomeEmail({ to: email, name: full_name, portalUrl: `${SITE_URL}/portal` });
+      } catch { /* the welcome is a courtesy, never a gate */ }
+    }
 
     ({ data } = await supa
       .from("clients")
