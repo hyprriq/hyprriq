@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/wordmark";
+import { NewsletterSignup } from "@/components/marketing/newsletter-signup";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
@@ -52,6 +53,12 @@ export function SiteFooter() {
             </ul>
           </div>
         ))}
+
+        {/* Consent capture (ADR-EMAIL-001): the app collects; campaigns live in a tool on
+            mail.hyprriq.com. Fails soft until the founder-run marketing_contacts migration. */}
+        <div className="col-span-2 sm:col-span-1">
+          <NewsletterSignup />
+        </div>
       </div>
 
       <div className="border-t border-line">

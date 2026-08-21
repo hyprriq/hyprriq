@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-20 (**§0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-21 (**§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -43,6 +43,25 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > Clerk→GUC wiring lands.** Fix written, founder-run:
 > `supabase/migrations/20260820000000_clients_self_no_role_escalation.sql`. Full proof:
 > `docs/RLS_PROOF_2026-08-20.md`. **FIX BEFORE WIRING.**
+
+---
+
+## 0-B. RULINGS EXECUTED — 2026-08-21 (polarity · manufacturer-direct · download · email batch)
+
+> Four rulings landed the same day they were made, under the new standing authority
+> (build/fix/improve without waiting — recorded in permanent memory 2026-08-21).
+>
+> | Item | State | Where |
+> |---|---|---|
+> | **Polarity census** (941 items read; ~2.9% strict, ~6.4% subject inversion; ZERO delivered verdicts move on the strict class) | ✅ REPORTED `8a19af4` | `docs/POLARITY_CENSUS_2026-08-21.md` + `scripts/polarity-export.ts` |
+> | **Polarity gate ⑧** — per-item polarity+subject declarations, deterministically cross-checked; firewall **1.7.0 → 1.8.0**; census carve-outs in all four track prompts | ✅ SHIPPED `70d8677` | ruling: subject inversion IS in the class |
+> | **Manufacturer-direct** — same-entity detector (acceptance census = exactly {024, 034, 043}), `manufacturer_direct` +8 = pass, code-emitted only; Track 3 keeps voting with same-entity context; rubric **g003-1.2.0** | ✅ SHIPPED `0a5ad5e` | `docs/DESIGN_MANUFACTURER_DIRECT_2026-08-21.md` + `scripts/same-entity-census.ts` |
+> | **Download in place** + 202 copy re-ruled | ✅ SHIPPED `8db676b` | founder-accepted, incl. the future-tense attachment line |
+> | **Email re-skins + LAYOUT LOCK (same commit) + welcome (create-path idempotency) + email_log ledger seam** | ✅ SHIPPED | 6 previews gate-clean in `public/prototype/email-preview/` |
+> | **Consent capture + tokenized permanent `/unsubscribe`** (fail-soft until migration; new env `UNSUBSCRIBE_TOKEN_SECRET`) | ✅ SHIPPED | app collects, tool sends |
+> | **⛔ F: two migrations, described-and-stopped** — `20260821000000` (email_log.dedup_key — **emails 4–7 BLOCK on it**) + `20260821000100` (marketing_contacts, RLS no-policies) | ⛔ FOUNDER RUNS | read-backs inside each file |
+> | **⛔ F: 031 correction** (ruling: verify → usable under the subject-inversion class) | ⛔ FOUNDER RUNS | recommended path: `dispute-rerun.ts` on `5f6a093f-…` — new attempt under 1.8.0, new PDF, H1-clean; a SQL edit of stored evidence would leave portal ≠ frozen PDF |
+> | Emails 4–7 (payment-failed, low-credit ×2, renewal) | ⛔ blocked on the dedup migration, as ruled | cancellation still blocks on the deletion policy |
 
 ---
 
