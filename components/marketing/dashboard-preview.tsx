@@ -1,15 +1,20 @@
 import { VerdictBadge, type Verdict } from "./verdict-badge";
 import { Wordmark } from "@/components/brand/wordmark";
 
-// SWAP POINT (post dashboard-finalization): replace the mock panel below with a
-// real <Image> screenshot of /portal/dashboard. Keep the frame + blur overlay
-// wrapper so the "teaser" treatment is preserved. Mock is intentionally
-// credible, not lorem.
+// ── SYNTHETIC FIXTURE, BY RULING (founder-ruled 2026-08-21 — supersedes the old "swap in a
+// screenshot" note that used to live here): this preview renders the REAL components over an
+// INVENTED client and INVENTED vendors, and stays that way. Never a screenshot (an image drifts
+// the moment a price or layout changes and cannot be grepped), and NEVER a masked real case —
+// visibly synthetic data is the honest teaser, and every SaaS prospect expects it.
+// The fixture below is credible-but-invented: fictional vendor names, a fictional client, case
+// ids from a month the corpus does not use. Keep it that way.
 const ROWS: { id: string; vendor: string; verdict: Verdict; when: string }[] = [
-  { id: "AWI-2606-014", vendor: "Northgate Wholesale Co.", verdict: "conditional", when: "2d ago" },
-  { id: "AWI-2606-011", vendor: "Cedar Supply Partners", verdict: "clear", when: "4d ago" },
-  { id: "AWI-2606-009", vendor: "Atlas Trade Group", verdict: "verify", when: "5d ago" },
-  { id: "AWI-2606-006", vendor: "Harbor Point Dist.", verdict: "deny", when: "1w ago" },
+  // Month "00" cannot exist in the AWI-YYMM series — these ids can never collide with a real
+  // case (the previous fixture reused AWI-2606-0xx numbers that ARE real corpus cases).
+  { id: "AWI-2600-014", vendor: "Northgate Wholesale Co.", verdict: "conditional", when: "2d ago" },
+  { id: "AWI-2600-011", vendor: "Cedar Supply Partners", verdict: "clear", when: "4d ago" },
+  { id: "AWI-2600-009", vendor: "Atlas Trade Group", verdict: "verify", when: "5d ago" },
+  { id: "AWI-2600-006", vendor: "Harbor Point Dist.", verdict: "deny", when: "1w ago" },
 ];
 
 export function DashboardPreview() {

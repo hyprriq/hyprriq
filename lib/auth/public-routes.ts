@@ -16,6 +16,7 @@ export const PUBLIC_ROUTES: string[] = [
   // now fails if one is added without it.
   "/sample-report",
   "/how-to-read",
+  "/partners",
   "/about",
   "/terms",
   "/privacy",

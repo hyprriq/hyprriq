@@ -10,6 +10,7 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
       { label: "Pricing", href: "/pricing" },
       { label: "How to read a report", href: "/how-to-read" },
       { label: "See a real report", href: "/sample-report" },
+      { label: "For agencies & VAs", href: "/partners" },
     ],
   },
   {
