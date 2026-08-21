@@ -98,7 +98,7 @@ export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
   const validations = validateWeights({
     track: "brand_risk_assessment",
     sourceProfileById,
-    proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
+    proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids, declared_polarity: it.polarity, declared_subject_is_target: it.subject_is_target })),
   });
 
   // ── SO-3 (founder-signed) — hard-fail consensus extends to Track 3: the H7 OQ-B rule applied to
@@ -158,6 +158,8 @@ export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
         weight_key: v.validated_weight_key,
         provenance: src?.provenance,
         brand: it?.brand || undefined,
+        polarity: it?.polarity,
+        subject_is_target: it?.subject_is_target,
       });
       accepted.push({ evidence_id: v.evidence_id, validated_weight_key: v.validated_weight_key, certainty: it?.certainty ?? "unknown", confidence: it?.confidence ?? "low", source_profile: profile ?? "inference", source_url: src?.url ?? null });
     } else {

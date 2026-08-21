@@ -156,7 +156,17 @@ export interface EvidenceItem {
   weight_key?: string; // ADR-G003 evidence_type tag the CODE weight engine scores (Phase 5)
   provenance?: Provenance; // Phase 5.1a — full acquisition→verdict provenance chain
   brand?: string; // Phase 5.1c — Track 2 brand isolation (which submitted brand this evidence concerns)
+  // Polarity gate (v1.8.0, founder-ruled 2026-08-21 after the polarity census): the model's own
+  // declaration of the statement's direction and subject, cross-checked deterministically against
+  // the key's sign by the firewall. Optional on STORED items (pre-1.8.0 rows have neither).
+  polarity?: DeclaredPolarity;
+  subject_is_target?: boolean;
 }
+// The declared direction of an evidence statement, relative to the track's TARGET (the vendor for
+// Tracks 1/2/4; the submitted brand's posture toward third-party resellers for Track 3):
+// favorable = the fact improves the picture · adverse = worsens it · neutral_absence = searched-and-
+// nothing-found or no directional content. The firewall requires sign(key) to agree (gate ⑧).
+export type DeclaredPolarity = "favorable" | "adverse" | "neutral_absence";
 export interface EvidenceWeight { evidence_type: string; points: number; note?: string }
 export interface Unknown { unknown: string; why_unresolvable: string; resolvable_by_client: boolean }
 
@@ -261,10 +271,12 @@ export interface TrackOutput {
 export type RejectionReason =
   | "registry" | "track" | "no_valid_citation" | "provenance" | "authority"
   | "corroboration" | "contradiction" | "contradiction_equal_authority" | "llm_returned_unknown"
-  | "consensus"; // H7 SO-4 — hard-fail dropped for lack of two-pass extraction consensus
+  | "consensus" // H7 SO-4 — hard-fail dropped for lack of two-pass extraction consensus
+  | "polarity"; // v1.8.0 — declared polarity/subject contradicts the key's sign (founder-ruled 2026-08-21)
 export type ValidationGate =
   | "grounding" | "registry" | "track" | "provenance" | "authority" | "corroboration" | "contradiction"
-  | "consensus"; // H7 SO-4
+  | "consensus" // H7 SO-4
+  | "polarity"; // v1.8.0
 export interface WeightValidation {
   evidence_id: string;
   proposed_weight_key: string;

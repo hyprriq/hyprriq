@@ -32,7 +32,18 @@ import type { WeightValidation, ValidationGate, RejectionReason } from "@/lib/re
 // config — the enum law, the structural critical/load-bearing conditions (SO-S0-2 split), and the
 // m4c origin cap join the validation layer's contract. Pins updated same commit (rerun-batch,
 // dispute-rerun).
-export const VALIDATION_VERSION = "1.7.0";
+// 1.7.0 → 1.8.0 (POLARITY GATE, founder-ruled 2026-08-21 after the polarity census — 941 items read,
+// ~2.9% strict sign contradictions + ~6.4% subject inversion, both directions on delivered cases,
+// incl. an FDA warning letter earning +4): the model now DECLARES each item's polarity
+// (favorable|adverse|neutral_absence) and subject_is_target; gate ⑧ rejects deterministically when
+// the declaration contradicts the key's sign, or when the fact is declared not-about-the-target.
+// This is a CONSISTENCY check, not a truth check — a model wrong twice consistently still passes
+// (limit stated in the census, accepted in the ruling). UNDECLARED items SKIP the gate (fail-open):
+// the schema makes the fields required on the mainline path, but the schema-less fallback parse may
+// omit them, and zeroing out an entire track's evidence on a fallback would be an outage, not a
+// safety win (CTO-DECIDED 2026-08-21; mirrors the RLS wired-early lesson). Strictly more conservative
+// on the declared path — cannot produce a false PASS it wouldn't have produced before.
+export const VALIDATION_VERSION = "1.8.0";
 
 // ── Gate config (code-owned trust rules; same pattern as weights.ts / source_profile.ts) ──
 // Exported for the H7 registry-coverage lock (firewallRegistry.test.ts) ONLY — read-only there;
@@ -154,9 +165,22 @@ const CORROBORATION_REQUIRED: Record<string, number> = {
 // Authority gate (⑤) runs ONLY for variable-trust profiles; fixed-trust profiles skip it (no audit
 // entry) because authority is already implied by provenance. 'inference' has no external source → skip.
 const VARIABLE_TRUST_PROFILES: SourceProfile[] = ["news", "forum", "social", "marketplace", "user_upload"];
+
+// Gate ⑧ (v1.8.0) — keys whose MEANING is a searched-and-nothing-found result: an honest polarity
+// declaration for them is neutral_absence even when the registry signs them (no_enforcement_found
+// is +2 by ruled registry). They accept neutral_absence in addition to their sign's expectation.
+const ABSENCE_SEMANTICS_KEYS = new Set(["no_enforcement_found", "no_connection_found", "no_documents"]);
 const AUTH_RANK: Record<AuthorityScore, number> = { low: 0, medium: 1, high: 2 };
 
-export interface ProposedMapping { evidence_id: string; proposed_weight_key: string; cited_source_ids: string[] }
+export interface ProposedMapping {
+  evidence_id: string;
+  proposed_weight_key: string;
+  cited_source_ids: string[];
+  // v1.8.0 — the model's own declaration of the statement's direction and subject (gate ⑧).
+  // Optional: undeclared (schema-less fallback parse) skips the gate — see the version note.
+  declared_polarity?: "favorable" | "adverse" | "neutral_absence";
+  declared_subject_is_target?: boolean;
+}
 export interface FirewallInput { track: TrackKey; proposals: ProposedMapping[]; sourceProfileById: Record<string, SourceProfile> }
 
 const rec = (
@@ -194,6 +218,25 @@ export function validateWeights(input: FirewallInput): WeightValidation[] {
     if (VARIABLE_TRUST_PROFILES.includes(profile)) {
       if (AUTH_RANK[authorityFor(profile)] < AUTH_RANK[MIN_AUTHORITY[key] ?? "low"]) { out.push(rec(p.evidence_id, key, null, "authority", "authority")); continue; }
     } // fixed-trust profiles skip authority (no audit entry)
+    // ── Gate ⑧ — POLARITY (v1.8.0). The key's sign and the model's own declaration must agree:
+    //   points > 0            → favorable        · points < 0 or hard_fail → adverse
+    //   points === 0 (absence keys like no_connection_found) → neutral_absence
+    //   ABSENCE_SEMANTICS_KEYS additionally accept neutral_absence whatever their sign —
+    //   no_enforcement_found is +2 by ruled registry, yet an honest declaration of a searched-and-
+    //   nothing-found finding IS neutral_absence; without this allowance the gate would systematically
+    //   reject a legitimate key (the exact fixture-rule failure shape).
+    // In every declared case the fact must be ABOUT THE TARGET (subject_is_target). This is the
+    // census's whole delivered flag-set turned into code: "…reference the seasonings positively" under
+    // a −3, an FDA warning letter under a +4, "not by TD SYNNEX itself" penalising the vendor — in
+    // each, the model's own declaration would contradict its key. Undeclared skips (fallback path).
+    if (p.declared_polarity !== undefined) {
+      const expected: ProposedMapping["declared_polarity"] =
+        w.hard_fail || w.points < 0 ? "adverse" : w.points > 0 ? "favorable" : "neutral_absence";
+      const polarityOk = p.declared_polarity === expected
+        || (ABSENCE_SEMANTICS_KEYS.has(key) && p.declared_polarity === "neutral_absence");
+      const subjectOk = p.declared_subject_is_target !== false; // undeclared subject → not a rejection on its own
+      if (!polarityOk || !subjectOk) { out.push(rec(p.evidence_id, key, null, "polarity", "polarity")); continue; }
+    }
     passed.push({ evidence_id: p.evidence_id, key, profile, sourceId, hardFail: !!w.hard_fail });
   }
 

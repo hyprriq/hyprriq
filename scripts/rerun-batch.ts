@@ -54,8 +54,9 @@ function preflight() {
     console.error(`STOP: this code is synthesis_version "${IOS.synthesis_version}", expected "g005-1.0.0" — aborting so we don't re-score under unexpected synthesis logic.`);
     process.exit(1);
   }
-  if (VALIDATION_VERSION !== "1.7.0") { // H7 (SO-2) — pin tracks the firewall version deliberately
-    console.error(`STOP: this code is VALIDATION_VERSION "${VALIDATION_VERSION}", expected "1.7.0". The fix is NOT deployed here — aborting so we don't re-score under old logic.`);
+  // REPINNED 1.7.0 → 1.8.0 with the polarity gate (same-commit rule the 1.7.0 note states).
+  if (VALIDATION_VERSION !== "1.8.0") { // H7 (SO-2) — pin tracks the firewall version deliberately
+    console.error(`STOP: this code is VALIDATION_VERSION "${VALIDATION_VERSION}", expected "1.8.0". The fix is NOT deployed here — aborting so we don't re-score under old logic.`);
     process.exit(1);
   }
   const missing = REQUIRED_ENV.filter((k) => !process.env[k]);

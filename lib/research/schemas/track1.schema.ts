@@ -13,7 +13,7 @@ export const TRACK1_OUTPUT_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["evidence_id", "statement", "proposed_weight_key", "supporting_source_ids", "mapping_justification", "counter_evidence", "certainty", "confidence"],
+        required: ["evidence_id", "statement", "proposed_weight_key", "supporting_source_ids", "mapping_justification", "counter_evidence", "certainty", "confidence", "polarity", "subject_is_target"],
         properties: {
           evidence_id: { type: "string" },
           statement: { type: "string" },
@@ -23,6 +23,9 @@ export const TRACK1_OUTPUT_SCHEMA = {
           counter_evidence: { type: "string" },
           certainty: { type: "string", enum: ["verified", "inferred", "unknown"] },
           confidence: { type: "string", enum: ["high", "medium", "low"] },
+          // Polarity gate (firewall v1.8.0) — declared direction + subject, cross-checked in code.
+          polarity: { type: "string", enum: ["favorable", "adverse", "neutral_absence"] },
+          subject_is_target: { type: "boolean" },
         },
       },
     },

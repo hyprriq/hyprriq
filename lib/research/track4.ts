@@ -89,7 +89,7 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
   let validations = validateWeights({
     track: "documentation_review",
     sourceProfileById,
-    proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
+    proposals: parsed.items.map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids, declared_polarity: it.polarity, declared_subject_is_target: it.subject_is_target })),
   });
 
   // ── Consensus — the FOURTH call site of the shared helper (SO-A2; the H7 OQ-B rule applied,
@@ -136,7 +136,7 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
         sourceProfileById,
         proposals: parsed.items
           .filter((it) => !droppedIds.has(it.evidence_id))
-          .map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids })),
+          .map((it) => ({ evidence_id: it.evidence_id, proposed_weight_key: it.proposed_weight_key, cited_source_ids: it.supporting_source_ids, declared_polarity: it.polarity, declared_subject_is_target: it.subject_is_target })),
       });
       validations = [...rerun, ...droppedRecords];
     }
@@ -165,6 +165,8 @@ export async function runTrack4(ctx: TrackContext): Promise<TrackOutput> {
         weight_key: v.validated_weight_key,
         provenance: src?.provenance,
         brand: it?.brand || undefined,
+        polarity: it?.polarity,
+        subject_is_target: it?.subject_is_target,
       });
       accepted.push({ evidence_id: v.evidence_id, validated_weight_key: v.validated_weight_key, certainty: it?.certainty ?? "unknown", confidence: it?.confidence ?? "low", source_profile: profile ?? "inference", source_url: src?.url ?? null });
     } else {

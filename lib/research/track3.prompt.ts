@@ -1,6 +1,6 @@
 import type { Unknown, QuestionToAsk } from "@/lib/research/contracts";
 import { aliasGuardLine } from "@/lib/research/researchIdentity";
-import { parseQuestions } from "@/lib/research/track2.prompt";
+import { parseQuestions, POLARITIES } from "@/lib/research/track2.prompt";
 
 // Track 3 — Brand Risk Assessment prompt + tolerant parser. The exact brand_risk_assessment
 // evidence_types the LLM may propose (ALL 12 — the three keepa_* / seller-count keys carry firewall
@@ -21,6 +21,10 @@ export interface ProposedTrack3Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
   supporting_source_ids: string[]; mapping_justification: string; counter_evidence: string;
   certainty: "verified" | "inferred" | "unknown"; confidence: "high" | "medium" | "low";
+  // Polarity gate (firewall v1.8.0) — optional: the schema-less fallback parse may omit them,
+  // and an undeclared item skips gate ⑧ rather than zeroing the track.
+  polarity?: "favorable" | "adverse" | "neutral_absence";
+  subject_is_target?: boolean;
 }
 // The analyst quartet (founder-endorsed, Track 3 native from day one). ADVISORY narrative —
 // stored + rendered admin-side (OQ-D); NEVER scored; the LLM↔code boundary is untouched.
@@ -100,6 +104,24 @@ export function buildTrack3Prompt(
     "UNKNOWN rather than proposing them from commentary.",
     "UNKNOWN ≠ NEGATIVE: no enforcement evidence found after sufficient search → propose no_enforcement_found;",
     "insufficient coverage → 'UNKNOWN'. Absence of enforcement evidence is NOT proof of safety, and is NOT a risk.",
+    // ── POLARITY + SUBJECT DECLARATIONS (firewall v1.8.0, founder-ruled 2026-08-21). Cross-checked
+    // against the key's sign in code; a mismatch rejects the item.
+    "POLARITY DECLARATION (mandatory per item): declare `polarity` — 'favorable' if the fact makes third-party resale",
+    "of this brand LESS risky (reseller programs, open channels), 'adverse' if it makes resale MORE risky (enforcement,",
+    "gating, restrictions), 'neutral_absence' if the finding is searched-and-nothing-found or carries no direction.",
+    "Declare `subject_is_target`: true ONLY when the fact is about THIS BRAND's own posture/policy/actions toward",
+    "third-party resellers — false when it is about another company, the vendor, or generic marketplace behavior.",
+    "The platform rejects any item whose declaration contradicts its key.",
+    "THE BRAND'S OWN CHANNELS ARE NOT RESELLER POSTURE (measured failure class): the brand operating its own DTC",
+    "storefront, its own retail presence, or moving operations in-house says NOTHING about how it treats THIRD-PARTY",
+    "resellers — never propose reseller_friendly from the brand's own selling, and never propose an enforcement key",
+    "from channel strategy alone. reseller_friendly needs evidence the brand WELCOMES third parties (a reseller",
+    "program, an application form, a published partner channel). Another company merely EXISTING as an authorized",
+    "distributor is that company's status, not this brand's enforcement — file the posture fact it actually shows,",
+    "or return UNKNOWN.",
+    "SIGN MAP for the non-obvious keys: map_policy_present is FAVORABLE (a published MAP policy is a structured,",
+    "reseller-tolerant channel signal — it presumes resellers exist); no_enforcement_found is neutral_absence",
+    "(a searched-and-nothing-found result — declare it as the absence it is).",
     "TIME-AWARENESS: enforcement evidence older than 24 months is HISTORICAL — say so in mapping_justification and",
     "downgrade per the rules above; never treat old enforcement as a present risk.",
     "ATTRIBUTION: never state a brand's policy/enforcement status as your own conclusion — attribute it to its source",
@@ -148,7 +170,8 @@ export function buildTrack3Prompt(
     "which real brand a token means, return the token itself as resolved — never guess a brand the",
     "evidence does not support. One entry per submitted token, no extras.",
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
-    "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }], brand_risk_finding,",
+    "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence, polarity,",
+    "subject_is_target }], brand_risk_finding,",
     "analyst_reading: { most_likely, alternative, confidence, what_would_change_my_mind }, questions_to_ask:",
     "[{ question, reason, blocking_weight_key, priority, brand }], reasoning_notes, client_summary,",
     "resolved_brands: [{ submitted, resolved }], unknowns: [{ unknown,",
@@ -202,6 +225,9 @@ export function parseTrack3Output(json: unknown): ParsedTrack3 {
       counter_evidence: typeof raw.counter_evidence === "string" ? raw.counter_evidence : "",
       certainty: CERTAINTIES.has(raw.certainty as string) ? (raw.certainty as ProposedTrack3Item["certainty"]) : "unknown",
       confidence: CONFIDENCES.has(raw.confidence as string) ? (raw.confidence as ProposedTrack3Item["confidence"]) : "low",
+      // v1.8.0 — tolerant: an unrecognized/missing declaration stays undefined (gate ⑧ then skips).
+      polarity: POLARITIES.has(raw.polarity as string) ? (raw.polarity as ProposedTrack3Item["polarity"]) : undefined,
+      subject_is_target: typeof raw.subject_is_target === "boolean" ? raw.subject_is_target : undefined,
     });
   }
   return {

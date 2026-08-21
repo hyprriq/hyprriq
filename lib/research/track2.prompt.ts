@@ -17,6 +17,10 @@ export interface ProposedTrack2Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
   supporting_source_ids: string[]; mapping_justification: string; counter_evidence: string;
   certainty: "verified" | "inferred" | "unknown"; confidence: "high" | "medium" | "low";
+  // Polarity gate (firewall v1.8.0) — optional: the schema-less fallback parse may omit them,
+  // and an undeclared item skips gate ⑧ rather than zeroing the track.
+  polarity?: "favorable" | "adverse" | "neutral_absence";
+  subject_is_target?: boolean;
 }
 export interface ParsedTrack2 {
   items: ProposedTrack2Item[];
@@ -84,6 +88,23 @@ export function buildTrack2Prompt(
     "each side and let the platform resolve them — NEVER self-resolve or suppress a contradiction.",
     "NO-EVIDENCE vs NEGATIVE-EVIDENCE: clearly distinguish 'no authorization evidence found' (absence) from 'evidence of",
     "negative authorization found' (e.g. grey-market / counterfeit signals). NEVER conflate the two.",
+    // ── POLARITY + SUBJECT DECLARATIONS (firewall v1.8.0, founder-ruled 2026-08-21). The platform
+    // cross-checks these against the key's sign in code; a mismatch rejects the item.
+    "POLARITY DECLARATION (mandatory per item): declare `polarity` — 'favorable' if the fact IMPROVES the picture of",
+    "this vendor's relationship to this brand, 'adverse' if it WORSENS it, 'neutral_absence' if the finding is",
+    "searched-and-nothing-found or carries no direction. Declare `subject_is_target`: true ONLY when the fact is about",
+    "THIS VENDOR's own conduct, sourcing, or relationship to this brand — false when it is about the brand's ecosystem,",
+    "other companies, or the market in general. The platform rejects any item whose declaration contradicts its key.",
+    "SUBJECT DISCIPLINE (measured failure class — these are NOT this vendor's grey_market_signals):",
+    "· grey markets EXISTING in the brand's ecosystem, other sellers sourcing grey-market, or generic market warnings",
+    "  — unless a source ties THIS VENDOR to that channel, subject_is_target is false and no key applies;",
+    "· the BRAND's own anti-grey-market / brand-protection program (awareness pages, authentication portals) — that is",
+    "  brand posture, not this vendor's sourcing;",
+    "· ANOTHER COMPANY's authorization or dealer listing is never this vendor's connection — do not propose a positive",
+    "  key from someone else's authorization; if it shows the brand HAS an authorized network that excludes this vendor,",
+    "  say so in the narrative, not through a mis-keyed item.",
+    "SIGN MAP for the non-obvious keys: claims_authorization_unverified is FAVORABLE (the claim existing is the mild",
+    "positive; 'unverified' is why it is mild, not a negative); no_connection_found is neutral_absence.",
     "ATTRIBUTION: never state authorization/approval status as your own conclusion — always attribute it to its",
     "source ('the brand's dealer locator lists…', 'the vendor claims…'). Words like 'authorized distributor' may",
     "appear ONLY inside such attributed descriptions or in questions_to_ask.",
@@ -128,7 +149,7 @@ export function buildTrack2Prompt(
     CLIENT_SUMMARY_INSTRUCTION,
     CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key, supporting_source_ids,",
-    "mapping_justification, counter_evidence, certainty, confidence }], auth_level, auth_level_reasoning,",
+    "mapping_justification, counter_evidence, certainty, confidence, polarity, subject_is_target }], auth_level, auth_level_reasoning,",
     "brand_relationship_finding, b2b_only_detected, b2b_only_brands, questions_to_ask: [{ question, reason,",
     "blocking_weight_key, priority, brand }], reasoning_notes, client_summary, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
@@ -150,6 +171,8 @@ export function buildTrack2Prompt(
 const CERTAINTIES = new Set(["verified", "inferred", "unknown"]);
 const CONFIDENCES = new Set(["high", "medium", "low"]);
 const LEVELS = new Set(["A", "B", "C", "D", "E"]);
+// v1.8.0 — exported so every track parser validates declarations identically (one set, four consumers).
+export const POLARITIES = new Set(["favorable", "adverse", "neutral_absence"]);
 
 const PRIORITIES = new Set(["high", "medium", "low"]);
 // Exported for Track 3 (one tolerant question-parser, every track — the shape-drift fix from
@@ -203,6 +226,9 @@ export function parseTrack2Output(json: unknown): ParsedTrack2 {
       counter_evidence: typeof raw.counter_evidence === "string" ? raw.counter_evidence : "",
       certainty: CERTAINTIES.has(raw.certainty as string) ? (raw.certainty as ProposedTrack2Item["certainty"]) : "unknown",
       confidence: CONFIDENCES.has(raw.confidence as string) ? (raw.confidence as ProposedTrack2Item["confidence"]) : "low",
+      // v1.8.0 — tolerant: an unrecognized/missing declaration stays undefined (gate ⑧ then skips).
+      polarity: POLARITIES.has(raw.polarity as string) ? (raw.polarity as ProposedTrack2Item["polarity"]) : undefined,
+      subject_is_target: typeof raw.subject_is_target === "boolean" ? raw.subject_is_target : undefined,
     });
   }
   return {

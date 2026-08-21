@@ -10,12 +10,17 @@ export const SUPPLIER_IDENTITY_KEYS = [
 ] as const;
 
 import { CLIENT_SUMMARY_INSTRUCTION, CLIENT_PROSE_SURFACE_RULE, parseClientSummary } from "@/lib/research/clientSummary.prompt";
+import { POLARITIES } from "@/lib/research/track2.prompt";
 
 export interface PackSourceForPrompt { source_id: string; url: string | null; title: string; snippet: string }
 export interface ProposedEvidenceItem {
   evidence_id: string; statement: string; proposed_weight_key: string;
   supporting_source_ids: string[]; mapping_justification: string; counter_evidence: string;
   certainty: "verified" | "inferred" | "unknown"; confidence: "high" | "medium" | "low";
+  // Polarity gate (firewall v1.8.0) — optional: the schema-less fallback parse may omit them,
+  // and an undeclared item skips gate ⑧ rather than zeroing the track.
+  polarity?: "favorable" | "adverse" | "neutral_absence";
+  subject_is_target?: boolean;
 }
 // H2 — parse_failed marks "the model call produced no usable output" (API error or unparseable
 // text). Distinct from a valid-but-empty response: failure is a STATE (→ n_a + hold), never a finding.
@@ -77,6 +82,29 @@ export function buildTrack1Prompt(
     "ATTRIBUTION: never state authorization/approval status as your own conclusion — always attribute it to its",
     "source ('the brand's dealer locator lists…', 'the vendor claims…'). Words like 'authorized distributor' may",
     "appear ONLY inside such attributed descriptions.",
+    // ── POLARITY + SUBJECT DECLARATIONS (firewall v1.8.0, founder-ruled 2026-08-21). The platform
+    // cross-checks these against the key's sign in code; a mismatch rejects the item. The carve-outs
+    // below are the census's measured failure classes for THIS track.
+    "POLARITY DECLARATION (mandatory per item): declare `polarity` — 'favorable' if the fact makes this vendor look",
+    "more legitimate/established, 'adverse' if it makes the vendor look worse, 'neutral_absence' if the finding is",
+    "searched-and-nothing-found or carries no direction. Declare `subject_is_target`: true ONLY when the fact is about",
+    "THIS VENDOR's own conduct or attributes — false when it is about a different company, the brand, or third parties.",
+    "The platform rejects any item whose declaration contradicts its key.",
+    "negative_reputation is ONLY for credible negative reputation about THE VENDOR'S OWN conduct. Measured failure",
+    "classes — NONE of these is negative_reputation:",
+    "  • the vendor as the VICTIM of impersonation (job-recruitment scams, fake purchase orders, fake service",
+    "    technicians using the vendor's name, run by third parties) — that is not the vendor's reputation; if the",
+    "    vendor itself warns about the fraud, that is if anything favorable, and subject_is_target is false;",
+    "  • a CLEAN result from a scam-checker or review site ('rated legitimate and safe', 'no indicators of fraud') —",
+    "    that is a FAVORABLE fact and there is no negative key for it; do not file it anywhere negative;",
+    "  • POSITIVE or neutral consumer sentiment ('users reference the products positively', 'mixed but not",
+    "    predominantly negative') — favorable or neutral, never negative_reputation. Track 1 has NO positive-reputation",
+    "    key: when the only finding is good sentiment, return UNKNOWN rather than forcing a key.",
+    "VERIFICATION KEYS EARN ONLY ON SUCCESS: address_verifiable / phone_verifiable / linkedin_company /",
+    "government_registration / bbb_or_trade_association are for VERIFIED facts. 'Not found', 'could not verify',",
+    "'no record in the pack', or another company's profile is NEVER a basis for these keys — return UNKNOWN,",
+    "with polarity 'neutral_absence'. A profile that merely EXISTS with an explicit negative marker (e.g. 'NOT",
+    "accredited') supports at most the existence fact — state exactly what the source shows.",
     "You PROPOSE classifications; the platform validates and scores them — never assume a proposal will count.",
     "If you are unsure which weight_key applies, or none fits, return proposed_weight_key: 'UNKNOWN' with your reason in",
     "mapping_justification, and set counter_evidence to 'N/A — key not proposed'. Do NOT guess — an honest UNKNOWN beats a",
@@ -86,8 +114,8 @@ export function buildTrack1Prompt(
     CLIENT_SUMMARY_INSTRUCTION,
     CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, statement, proposed_weight_key, supporting_source_ids,",
-    "mapping_justification, counter_evidence, certainty, confidence }], reasoning_notes, client_summary, unknowns: [{ unknown,",
-    "why_unresolvable, resolvable_by_client }] }.",
+    "mapping_justification, counter_evidence, certainty, confidence, polarity, subject_is_target }], reasoning_notes,",
+    "client_summary, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
   const user = [
@@ -117,6 +145,9 @@ export function parseTrack1Output(json: unknown): ParsedTrack1 {
       counter_evidence: typeof raw.counter_evidence === "string" ? raw.counter_evidence : "",
       certainty: CERTAINTIES.has(raw.certainty as string) ? (raw.certainty as ProposedEvidenceItem["certainty"]) : "unknown",
       confidence: CONFIDENCES.has(raw.confidence as string) ? (raw.confidence as ProposedEvidenceItem["confidence"]) : "low",
+      // v1.8.0 — tolerant: an unrecognized/missing declaration stays undefined (gate ⑧ then skips).
+      polarity: POLARITIES.has(raw.polarity as string) ? (raw.polarity as ProposedEvidenceItem["polarity"]) : undefined,
+      subject_is_target: typeof raw.subject_is_target === "boolean" ? raw.subject_is_target : undefined,
     });
   }
   return {

@@ -1,5 +1,5 @@
 import type { Unknown, QuestionToAsk } from "@/lib/research/contracts";
-import { parseQuestions } from "@/lib/research/track2.prompt";
+import { parseQuestions, POLARITIES } from "@/lib/research/track2.prompt";
 import type { AnalystReading } from "@/lib/research/track3.prompt";
 
 // Track 4 — Documentation Review prompt + tolerant parser (Master Prompts v2.1 §6: structured
@@ -18,6 +18,10 @@ export interface ProposedTrack4Item {
   evidence_id: string; brand: string; statement: string; proposed_weight_key: string;
   supporting_source_ids: string[]; mapping_justification: string; counter_evidence: string;
   certainty: "verified" | "inferred" | "unknown"; confidence: "high" | "medium" | "low";
+  // Polarity gate (firewall v1.8.0) — optional: the schema-less fallback parse may omit them,
+  // and an undeclared item skips gate ⑧ rather than zeroing the track.
+  polarity?: "favorable" | "adverse" | "neutral_absence";
+  subject_is_target?: boolean;
 }
 export interface ParsedTrack4 {
   items: ProposedTrack4Item[];
@@ -120,10 +124,20 @@ export function buildTrack4Prompt(
     "Per item you MUST include: brand (\"\" if not brand-specific), mapping_justification, counter_evidence",
     "('None found' if none), certainty (verified|inferred|unknown), confidence (high|medium|low).",
     "You PROPOSE; the platform validates and scores.",
+    // ── POLARITY + SUBJECT DECLARATIONS (firewall v1.8.0, founder-ruled 2026-08-21). Cross-checked
+    // against the key's sign in code; a mismatch rejects the item.
+    "POLARITY DECLARATION (mandatory per item): declare `polarity` — 'favorable' if the document fact supports the",
+    "sourcing paperwork's completeness/genuineness, 'adverse' if it shows a gap or manipulation signal,",
+    "'neutral_absence' if the finding carries no direction (e.g. no_documents). Declare `subject_is_target`: true",
+    "ONLY when the fact is about THIS CASE's uploaded documents and the vendor named on them — false otherwise.",
+    "SIGN MAP for the non-obvious keys: screenshot_only and email_correspondence are FAVORABLE (some documentation",
+    "beats none — the key credits its existence, not its weakness); document_missing_fields is ADVERSE;",
+    "no_documents is neutral_absence.",
+    "The platform rejects any item whose declaration contradicts its key.",
     CLIENT_SUMMARY_INSTRUCTION,
     CLIENT_PROSE_SURFACE_RULE,
     "Return STRICT JSON: { evidence_items: [{ evidence_id, brand, statement, proposed_weight_key,",
-    "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence }],",
+    "supporting_source_ids, mapping_justification, counter_evidence, certainty, confidence, polarity, subject_is_target }],",
     "documentation_finding, analyst_reading: { most_likely, alternative, confidence,",
     "what_would_change_my_mind }, questions_to_ask: [{ question, reason, blocking_weight_key, priority,",
     "brand }], reasoning_notes, client_summary, unknowns: [{ unknown, why_unresolvable, resolvable_by_client }] }.",
@@ -177,6 +191,9 @@ export function parseTrack4Output(json: unknown): ParsedTrack4 {
       counter_evidence: typeof raw.counter_evidence === "string" ? raw.counter_evidence : "",
       certainty: CERTAINTIES.has(raw.certainty as string) ? (raw.certainty as ProposedTrack4Item["certainty"]) : "unknown",
       confidence: CONFIDENCES.has(raw.confidence as string) ? (raw.confidence as ProposedTrack4Item["confidence"]) : "low",
+      // v1.8.0 — tolerant: an unrecognized/missing declaration stays undefined (gate ⑧ then skips).
+      polarity: POLARITIES.has(raw.polarity as string) ? (raw.polarity as ProposedTrack4Item["polarity"]) : undefined,
+      subject_is_target: typeof raw.subject_is_target === "boolean" ? raw.subject_is_target : undefined,
     });
   }
   return {
