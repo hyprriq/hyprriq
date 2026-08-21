@@ -15,6 +15,7 @@ import { sendAdminAlert, sendSubmissionConfirmation } from "@/lib/email/notify";
 import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 import { PLAN_PRICE_LABEL } from "@/lib/constants/plans";
 import { sniffFileType, type SniffedFile } from "@/lib/utils/fileSniff";
+import { scanFileForViruses, SCAN_UNAVAILABLE_MESSAGE, SCAN_INFECTED_MESSAGE } from "@/lib/security/virusScan";
 import { validateBrandAsins } from "@/lib/portal/asinIntake";
 import type { TrackContextWithIntake } from "@/lib/research/intakeExtras";
 
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   // ── UPLOAD SECURITY (founder-ruled 2026-08-07) — SERVER-SIDE size + content-sniffed type,
   // rejected BEFORE any storage write and BEFORE charge. The client's extension filter and
   // claimed contentType are UX, never the rule; the sniffed MIME is what storage receives. ──
-  const vetted: { file: File; name: string; buffer: Buffer; sniffed: SniffedFile }[] = [];
+  const vetted: { file: File; name: string; buffer: Buffer; sniffed: SniffedFile; scanStatus?: "clean" }[] = [];
   for (const f of files) {
     if (f.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: "file_too_large", message: FILE_SIZE_MESSAGE }, { status: 400 });
@@ -106,6 +107,29 @@ export async function POST(req: Request) {
       { error: "brand_cap", message: `Your plan allows up to ${cap} brands per credit.` },
       { status: 400 },
     );
+  }
+
+  // ── VIRUS SCAN (founder-ruled: BLOCKING, FAIL-CLOSED) — BEFORE charge, BEFORE storage. ──
+  // Every vetted file is scanned; the verdict is AUDITED either way. No key / scanner down /
+  // timeout → the whole submission refuses with a plain message (an unscanned file never enters
+  // the bucket — the stated consequence is that a Cloudmersive outage stops uploads on the plans
+  // that take them). An infected file → plain refusal, virus names in the audit only, never the UI.
+  for (const v of vetted) {
+    const scan = await scanFileForViruses(v.buffer, v.name);
+    try {
+      await supabaseAdmin.from("audit_log").insert({
+        table_name: "uploaded_files", record_id: null, action: "INSERT",
+        actor_id: userId, actor_type: "client",
+        new_value: { virus_scan: scan, file_name: v.name, file_size_bytes: v.file.size, pre_case: true },
+      });
+    } catch { /* the audit reporter never blocks the verdict from acting */ }
+    if (scan.verdict === "unavailable") {
+      return NextResponse.json({ error: "scan_unavailable", message: SCAN_UNAVAILABLE_MESSAGE }, { status: 503 });
+    }
+    if (scan.verdict === "infected") {
+      return NextResponse.json({ error: "file_rejected", message: SCAN_INFECTED_MESSAGE }, { status: 400 });
+    }
+    v.scanStatus = "clean";
   }
   // ── ASIN intake (tracker §1.3) — the CODE GUARD, pre-charge: one ASIN per brand, max the
   // plan brand cap, valid format, Scale-only. The form hides the field on other tiers; this
@@ -215,6 +239,8 @@ export async function POST(req: Request) {
           file_type: v.sniffed.kind === "pdf" ? "invoice_pdf" : "invoice_image",
           storage_path: path,
           file_size_bytes: v.file.size,
+          // Only scanned-clean files reach this insert (the blocking scan above refused everything else).
+          virus_scan_status: v.scanStatus ?? "clean",
         });
       }
     } catch {
