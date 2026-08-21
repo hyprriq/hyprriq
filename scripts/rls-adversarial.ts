@@ -31,6 +31,10 @@ const CLIENT_TABLES = [
   "case_track_results", "case_synthesis", "agencies", "vendor_intelligence", "brand_intelligence",
   "case_evidence_packs", "case_acquisition_metrics", "intelligence_events", "admin_permissions",
   "admin_invitations", "staff_client_assignments", "case_prose_overrides", "gate_events",
+  // 2026-08-21: marketing_contacts (founder-run) + the acquisition-grant pair (described-and-
+  // stopped; pre-listed so the drift check passes the moment the founder runs the migration —
+  // a table that does not exist yet answers 404, which this suite already accepts).
+  "marketing_contacts", "acquisition_grants", "grant_redemptions",
 ];
 
 // Storage is a data surface too — and `reports` holds delivered client PDFs. A public bucket or a
