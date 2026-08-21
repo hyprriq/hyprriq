@@ -93,8 +93,10 @@ export function EmailLayout({
 
           {/* footer — shared, non-negotiable; no unsubscribe on transactional mail, by ruling */}
           <Section style={{ backgroundColor: "#FFFFFF", borderRadius: "0 0 10px 10px", border: "1px solid #E3E1DC", borderTop: "1px solid #ECEAE6", padding: "16px 28px 20px" }}>
+            {/* Postal address required in the footer per the locked legal build note (CAN-SPAM
+                requires it on commercial mail; transactional carries it too, no unsubscribe). */}
             <Text style={{ margin: 0, color: P.soft, fontSize: 12, lineHeight: "1.6" }}>
-              Hyprr Retail LLC ·{" "}
+              Hyprr Retail LLC · 30 N Gould St, Ste R, Sheridan, WY 82801 ·{" "}
               <Link href={`${SITE_URL}/terms`} style={{ color: P.soft, textDecoration: "underline" }}>Terms</Link> ·{" "}
               <Link href={`${SITE_URL}/privacy`} style={{ color: P.soft, textDecoration: "underline" }}>Privacy</Link>
             </Text>

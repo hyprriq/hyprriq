@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/constants/site";
+import { CookieNotice } from "@/components/marketing/cookie-notice";
 import { Fraunces, Instrument_Sans, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
@@ -69,7 +70,12 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${instrument.variable} ${jetbrainsMono.variable} ${sourceSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* First-visit cookie notice (locked legal build note): strictly necessary cookies only,
+            so a dismissible NOTICE, not a consent banner; dismissal lives in localStorage. */}
+        <CookieNotice />
+      </body>
     </html>
   );
 }

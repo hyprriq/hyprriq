@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/wordmark";
 import { NewsletterSignup } from "@/components/marketing/newsletter-signup";
+import { LEGAL_PAGES } from "@/lib/content/legal";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
@@ -15,8 +16,9 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
   },
   {
     heading: "Company",
-    // About/Terms/Privacy REMOVED 2026-08-08 (founder-ruled: no dead href="#" links) — they
-    // return with the legal-pages ruling (tracker 1.6) and the About page (2.7).
+    // About stays absent until its page exists (no dead links, founder-ruled 2026-08-08). The
+    // legal set returned 2026-08-21 with the locked legal pages — rendered from LEGAL_PAGES in
+    // the bottom bar so all six appear on every page, per the locked build note.
     links: [{ label: "Contact", href: "mailto:hello@hyprriq.com" }],
   },
 ];
@@ -66,6 +68,15 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p>&copy; {new Date().getFullYear()} Hyprr Retail LLC. All rights reserved.</p>
+          {/* The six legal pages, on every page (locked build note: Terms · Privacy · Data ·
+              Refunds · Payment · Cookies). Stripe live mode points at /terms and /privacy. */}
+          <p className="flex flex-wrap gap-x-3 gap-y-1">
+            {LEGAL_PAGES.map((l) => (
+              <Link key={l.href} href={l.href} className="transition-colors hover:text-ink">
+                {l.label}
+              </Link>
+            ))}
+          </p>
           <p>
             HyprrIQ reports observable signals. We never confirm vendor
             authorization — we help you verify it.

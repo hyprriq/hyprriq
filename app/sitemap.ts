@@ -17,5 +17,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/how-it-works", 0.8),
     page("/how-to-read", 0.8),
     page("/partners", 0.8),
+    page("/terms", 0.3),
+    page("/privacy", 0.3),
+    page("/data-policy", 0.3),
+    page("/refund-policy", 0.3),
+    page("/payment-policy", 0.3),
+    page("/cookie-policy", 0.3),
   ];
 }

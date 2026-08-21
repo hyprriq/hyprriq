@@ -18,8 +18,14 @@ export const PUBLIC_ROUTES: string[] = [
   "/how-to-read",
   "/partners",
   "/about",
+  // The six legal pages (locked copy, built 2026-08-21). /terms and /privacy are PERMANENT —
+  // Stripe live mode points at them and those URLs must never move.
   "/terms",
   "/privacy",
+  "/data-policy",
+  "/refund-policy",
+  "/payment-policy",
+  "/cookie-policy",
   "/sign-in(.*)",
   "/sign-up(.*)",
   // Invite links (acquisition grants, 2026-08-21): the URL is handed to people who have no
