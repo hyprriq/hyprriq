@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireOnboardedClient } from "@/lib/data/client";
 import { getInvoices } from "@/lib/data/billing";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -149,6 +150,14 @@ export default async function BillingPage() {
                   </div>
                 ))}
               </div>
+              {/* Acceptance at checkout (legal build, 2026-08-21): stated beside the purchase
+                  action, links working — standard, unobtrusive, honest. */}
+              <p className="mt-3 text-center text-[12px] text-muted">
+                Purchases are subject to the{" "}
+                <Link href="/terms" className="underline hover:text-ink">Terms of Service</Link>,{" "}
+                <Link href="/payment-policy" className="underline hover:text-ink">Payment Policy</Link> and{" "}
+                <Link href="/refund-policy" className="underline hover:text-ink">Refund &amp; Cancellation Policy</Link>.
+              </p>
             </div>
           )}
         </Card>

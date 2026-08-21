@@ -93,6 +93,20 @@ export function AuthShell({
 
           <div className="mt-6">{children}</div>
 
+          {/* ── ACCEPTANCE AT REGISTRATION (legal build, 2026-08-21): browsewrap-plus — the
+              standard, unobtrusive form: creating the account IS the acceptance, stated plainly
+              beside the action with working links. Also carries the US-only confirmation the
+              Terms §2A requires at signup (locked build note #8). Sign-in shows nothing —
+              returning users already accepted. ── */}
+          {variant === "signup" && (
+            <p className="mt-4 text-[12px] leading-relaxed text-muted">
+              By creating an account you agree to the{" "}
+              <Link href="/terms" className="underline hover:text-ink">Terms of Service</Link> and{" "}
+              <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>, and confirm
+              you are acting on behalf of a US-based business.
+            </p>
+          )}
+
           <p className="mt-6 text-sm text-ink-2">
             {c.switch.text}{" "}
             <Link href={c.switch.href} className="font-semibold text-brand hover:text-brand-hover">
