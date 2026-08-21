@@ -50,7 +50,7 @@ export interface ParsedTrack3 {
 }
 
 export function buildTrack3Prompt(
-  ctx: { vendor_name: string | null; brands: string[]; research_alias?: string | null },
+  ctx: { vendor_name: string | null; brands: string[]; research_alias?: string | null; same_entity_brands?: string[] },
   sources: PackSourceForPrompt[],
 ): { system: string; user: string } {
   const system = [
@@ -178,10 +178,17 @@ export function buildTrack3Prompt(
     "why_unresolvable, resolvable_by_client }] }.",
   ].join("\n");
   const packLines = sources.map((s) => `- ${s.source_id}: ${s.title} (${s.url ?? "no-url"}) — ${s.snippet}`).join("\n");
+  // ── SAME-ENTITY CONTEXT (founder-ruled 2026-08-21): when the platform has determined the vendor
+  // IS a submitted brand, the model must not misread the brand's own channels as reseller posture
+  // (the measured 043 defect: reseller_friendly fired on the brand's own DTC storefront).
+  const sameEntityLine = ctx.same_entity_brands?.length
+    ? `SAME-ENTITY CONTEXT: for the following brand(s), the platform has determined the VENDOR AND THE BRAND ARE THE SAME BUSINESS: ${ctx.same_entity_brands.join(", ")}. Your question is UNCHANGED — assess the brand's posture toward third-party resellers, because the client would still resell as a third party. But the brand's own storefront, site, and channels are the vendor's own operations: NEVER read them as reseller-friendliness or as enforcement. Only evidence about how the brand treats OTHER, third-party sellers counts.`
+    : null;
   const user = [
     `Vendor (context only — NOT your subject): ${ctx.vendor_name ?? "unknown"}`,
     ...(ctx.research_alias ? [aliasGuardLine(ctx.research_alias)] : []),
     `Brands (assess each brand's posture separately): ${ctx.brands.length ? ctx.brands.join(", ") : "(none submitted)"}`,
+    ...(sameEntityLine ? [sameEntityLine] : []),
     "Evidence Pack:", packLines || "(empty)",
   ].join("\n");
   return { system, user };

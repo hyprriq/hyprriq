@@ -17,11 +17,21 @@ export interface DiversityCapResult {
 
 export function applySourceDiversityCap(
   signal: TrackSignal,
-  evidenceItems: Pick<EvidenceItem, "source_url">[],
+  evidenceItems: Pick<EvidenceItem, "source_url" | "weight_key">[],
 ): DiversityCapResult {
   const distinct = new Set(
     evidenceItems.map((e) => canonicalUrl(e.source_url ?? null)).filter((k): k is string => !!k),
   ).size;
+  // manufacturer_direct exemption (g003-1.2.0, CTO-DECIDED 2026-08-21, fixture-locked): the cap
+  // exists to stop single-source LLM-extraction credulity; manufacturer_direct is CODE-emitted and
+  // already rests on two independent systems agreeing (identity resolution: "the vendor's domain";
+  // source profiling: "the brand's own site"). One evidence item = one URL by construction, so
+  // without this the ruled +8→pass would silently cap to infer at every derivation site. The
+  // exemption lives HERE — the one shared composition — so pipeline, track and rejudge can never
+  // disagree (the F4 three-site agreement property).
+  if (evidenceItems.some((e) => e.weight_key === "manufacturer_direct")) {
+    return { signal, capped: false, cap_reason: null, distinct_sources: distinct };
+  }
   if (signal !== "pass" || distinct >= 2) return { signal, capped: false, cap_reason: null, distinct_sources: distinct };
   return {
     signal: "infer",

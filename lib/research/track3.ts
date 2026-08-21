@@ -16,6 +16,8 @@ import { buildValidationReport, type ReportAccepted, type ReportRejected } from 
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource, EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition/types";
 import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
+import { detectSameEntity } from "@/lib/research/sameEntity";
+import { canonicalDomain } from "@/lib/research/host";
 import { TRACK3_OUTPUT_SCHEMA } from "@/lib/research/schemas/track3.schema";
 import { MARKETPLACE_ELIGIBILITY_DISCLAIMER } from "@/lib/research/track2.disclaimers";
 import { containsProcurementLanguage } from "@/lib/research/procurementLanguage";
@@ -81,7 +83,23 @@ export async function runTrack3(ctx: TrackContext): Promise<TrackOutput> {
 
   // H4 — the vendor context is the RESOLVED entity; the SUBJECT is each brand (Amendment 2).
   const rid = researchIdentityFor(ctx);
-  const { system, user } = buildTrack3Prompt({ vendor_name: rid.name, brands: ctx.brands_submitted ?? [], research_alias: rid.alias }, promptSources);
+  // ── SAME-ENTITY CONTEXT (founder-ruled 2026-08-21): Track 3 KEEPS voting when the vendor IS the
+  // brand — the client still resells on Amazon as a third party, so gating/enforcement posture is
+  // exactly their risk. What the detector fixes here is INTERPRETATION: without this context the
+  // brand's own DTC storefront scored reseller_friendly on 043. Detected from THIS track's own pack.
+  const t3Resolved = ctx.supplier_identity?.resolved_domain ?? ctx.vendor_website ?? null;
+  const t3BrandHosts = pack.sources.filter((s) => s.provenance.source_profile === "official_brand")
+    .map((s) => canonicalDomain(s.url ?? "")).filter((h): h is string => !!h);
+  const t3CompanyHosts = pack.sources.filter((s) => s.provenance.source_profile === "official_company")
+    .map((s) => canonicalDomain(s.url ?? "")).filter((h): h is string => !!h);
+  const sameEntityBrands = (ctx.brands_submitted ?? [])
+    .map((brand) => detectSameEntity({
+      resolved_domain: t3Resolved, vendor_name: rid.name, brand,
+      official_brand_hosts: t3BrandHosts, official_company_hosts: t3CompanyHosts,
+    }))
+    .filter((r) => r.status === "confirmed")
+    .map((r) => r.brand);
+  const { system, user } = buildTrack3Prompt({ vendor_name: rid.name, brands: ctx.brands_submitted ?? [], research_alias: rid.alias, same_entity_brands: sameEntityBrands }, promptSources);
   let parsed: ReturnType<typeof parseTrack3Output>;
   let llmCost = 0;
   try {

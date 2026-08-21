@@ -7,7 +7,9 @@ import type { TrackKey } from "@/lib/constants/tracks";
 // g003-1.1.0 (2026-07-10, Track 3 SO-4 founder-signed): b2b_only_confirmed −5+hard_fail → 0-point
 // pure veto — the only hard-fail key that double-counted (veto + score drag); the drag only ever
 // affected the confidence score of an already-vetoed track. Convention: every hard_fail is 0-point.
-export const RUBRIC_VERSION = "g003-1.1.0";
+// g003-1.2.0 (founder-ruled 2026-08-21): manufacturer_direct joins Track 2 at +8 (pass alone) —
+// the vendor-IS-brand case, code-emitted only, never LLM-proposable. See the key's own comment.
+export const RUBRIC_VERSION = "g003-1.2.0";
 
 export interface WeightEntry { points: number; hard_fail?: boolean }
 
@@ -32,6 +34,12 @@ const WEIGHTS: Record<Exclude<TrackKey, "intake_scope_guard" | "sourcing_logic">
     scam_reports_corroborated: { points: 0, hard_fail: true },
   },
   supply_chain_relationship: {
+    // g003-1.2.0 (founder-ruled 2026-08-21): the vendor IS the brand — manufacturer-direct. +8 by
+    // ruling ("pass, not infer — the question genuinely dissolves"). CODE-EMITTED ONLY: the LLM can
+    // never propose it (no ALLOWED_PROFILES entry — every proposal dies at the provenance gate, the
+    // loa_legitimate pattern); track2.ts emits it when the same-entity detector CONFIRMS
+    // (lib/research/sameEntity.ts; acceptance census = exactly {024, 034, 043} over the stored corpus).
+    manufacturer_direct: { points: 8 },
     dealer_page_listed: { points: 5 },
     loa_legitimate: { points: 4 },
     invoice_matches_distributor: { points: 3 },
@@ -100,6 +108,7 @@ export const EVIDENCE_LABELS: Record<string, string> = {
   website_quality: "Established website",
   bbb_or_trade_association: "BBB / trade-association listing",
   // supply_chain_relationship
+  manufacturer_direct: "Manufacturer-direct (the vendor is the brand)",
   dealer_page_listed: "Listed on the brand's dealer page",
   loa_legitimate: "Legitimate Letter of Authorization",
   invoice_matches_distributor: "Invoice matching the distributor",

@@ -16,6 +16,8 @@ import { buildValidationReport, type ReportAccepted, type ReportRejected } from 
 import { EVIDENCE_PACK_SCHEMA_VERSION } from "@/lib/research/acquisition/pack";
 import type { RawSource, EvidencePack, AcquisitionMetric } from "@/lib/research/acquisition/types";
 import { normalizeBrandToken, type SourceProfile } from "@/lib/research/source_profile";
+import { detectSameEntity } from "@/lib/research/sameEntity";
+import { canonicalDomain } from "@/lib/research/host";
 import { TRACK2_OUTPUT_SCHEMA } from "@/lib/research/schemas/track2.schema";
 import { IDENTITY_SCOPE_NOTE, AUTHORIZATION_SCOPE_NOTE, MARKETPLACE_ELIGIBILITY_DISCLAIMER } from "@/lib/research/track2.disclaimers";
 import { containsProcurementLanguage } from "@/lib/research/procurementLanguage";
@@ -87,16 +89,49 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     : null;
   // H4 — the vendor under analysis is the RESOLVED entity (same selector as the query builders).
   const rid = researchIdentityFor(ctx);
-  const { system, user } = buildTrack2Prompt({ vendor_name: rid.name, brands: ctx.brands_submitted ?? [], identity, research_alias: rid.alias }, promptSources);
+
+  // ── SAME-ENTITY / MANUFACTURER-DIRECT (founder-ruled 2026-08-21; design doc + acceptance census
+  // = exactly {024, 034, 043} over the stored corpus). Per brand: when the detector CONFIRMS the
+  // vendor IS the brand, the Track 2 question dissolves — asking whether a brand is connected to
+  // itself produced the measured nonsense (024's no_connection_found against its own brand). For
+  // confirmed brands CODE emits `manufacturer_direct` (+8 → pass); the LLM researches only the
+  // remaining brands, and runs not at all when every brand is confirmed.
+  const resolvedForSameEntity = si?.resolved_domain ?? ctx.vendor_website ?? null;
+  const officialBrandHosts = pack.sources
+    .filter((s) => s.provenance.source_profile === "official_brand")
+    .map((s) => canonicalDomain(s.url ?? "")).filter((h): h is string => !!h);
+  const officialCompanyHosts = pack.sources
+    .filter((s) => s.provenance.source_profile === "official_company")
+    .map((s) => canonicalDomain(s.url ?? "")).filter((h): h is string => !!h);
+  const sameEntityConfirmed = (ctx.brands_submitted ?? [])
+    .map((brand) => detectSameEntity({
+      resolved_domain: resolvedForSameEntity, vendor_name: rid.name, brand,
+      official_brand_hosts: officialBrandHosts, official_company_hosts: officialCompanyHosts,
+    }))
+    .filter((r) => r.status === "confirmed");
+  const llmBrands = (ctx.brands_submitted ?? []).filter((b) => !sameEntityConfirmed.some((r) => r.brand === b));
+
+  const { system, user } = buildTrack2Prompt({ vendor_name: rid.name, brands: llmBrands, identity, research_alias: rid.alias }, promptSources);
   let parsed: ReturnType<typeof parseTrack2Output>;
   let llmCost = 0;
-  try {
-    // H7 (OQ-C) — schema-constrained extraction; runAnthropic falls back schema-less if rejected.
-    const res = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK2_OUTPUT_SCHEMA });
-    parsed = parseTrack2Output(res.json);
-    llmCost = res.cost_usd;
-  } catch {
-    parsed = parseTrack2Output({ _parse_error: true });
+  if (llmBrands.length === 0) {
+    // Every submitted brand is the vendor itself — there is no third-party relationship to research.
+    // A deliberate, successful empty extraction (NOT parse_failed — nothing failed).
+    parsed = {
+      items: [], auth_level: null, auth_level_reasoning: "", brand_relationship_finding: "",
+      b2b_only_detected: false, b2b_only_brands: [], questions_to_ask: [],
+      reasoning_notes: "Same-entity: every submitted brand is the vendor itself; the supply-chain-relationship question dissolves and no extraction ran.",
+      client_summary: "", unknowns: [],
+    };
+  } else {
+    try {
+      // H7 (OQ-C) — schema-constrained extraction; runAnthropic falls back schema-less if rejected.
+      const res = await runModel({ task: "track", system, user, temperature: 0, schema: TRACK2_OUTPUT_SCHEMA });
+      parsed = parseTrack2Output(res.json);
+      llmCost = res.cost_usd;
+    } catch {
+      parsed = parseTrack2Output({ _parse_error: true });
+    }
   }
   // H2 — thrown API call OR unparseable text: the model produced nothing usable → a STATE, never a finding.
   const llmFailed = parsed.parse_failed === true;
@@ -171,6 +206,30 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     }
   }
 
+  // ── Code-emitted manufacturer_direct items for same-entity-CONFIRMED brands. Never proposed by
+  // the LLM (no ALLOWED_PROFILES entry — any proposal dies at the provenance gate); the audit trail
+  // gets a synthetic accepted record so weight_validation stays a complete account of every key.
+  for (const r of sameEntityConfirmed) {
+    const eid = `SE-${r.brand.trim().replace(/\s+/g, "-")}`;
+    const url = r.matched_host ? `https://${r.matched_host}` : null;
+    evidence_items.push({
+      evidence_id: eid,
+      statement: `Same-entity determination (code-derived): the vendor's resolved domain ${resolvedForSameEntity ?? ""} is the brand's own official domain for ${r.brand} (signals: ${r.signals.join(", ")}). The vendor and the brand are the same business — sourcing is manufacturer-direct, with no third party between the maker and the buyer.`,
+      certainty: "verified",
+      source_type: "third_party",
+      source_url: url,
+      claimant: "third_party",
+      claimant_benefits: false,
+      supports: "supply_chain_relationship",
+      weight_key: "manufacturer_direct",
+      brand: r.brand,
+      polarity: "favorable",
+      subject_is_target: true,
+    });
+    validations.push({ evidence_id: eid, proposed_weight_key: "manufacturer_direct", validated_weight_key: "manufacturer_direct", gate: null, rejection_reason: null, validation_version: VALIDATION_VERSION });
+    accepted.push({ evidence_id: eid, validated_weight_key: "manufacturer_direct", certainty: "verified", confidence: "high", source_profile: "official_brand", source_url: url });
+  }
+
   // Dedupe so each evidence_type scores once (matches the pipeline's signal derivation; anti-gaming).
   const foundKeys = [...new Set(evidence_items.map((e) => e.weight_key).filter((k): k is string => !!k))];
   // H7 (SO-3) — same shared cap as stageFindingTrack so the report signal can never disagree with the row.
@@ -196,14 +255,29 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     ? `${parsed.reasoning_notes}${advisories.map((a) => `\n[ADVISORY: ${a}]`).join("")}`
     : parsed.reasoning_notes;
 
+  // ── Same-entity narrative (client-visible prose for the confirmed brands, prepended so a strong
+  // verified finding leads; vocabulary rules observed — no confirm/authorized pairings). The LLM's
+  // narrative (remaining brands) follows unchanged.
+  const sameEntityFinding = sameEntityConfirmed.map((r) =>
+    `For ${r.brand}: the vendor and the brand are the same business — ${resolvedForSameEntity ?? "the vendor's own domain"} is the brand's own site, so the products come directly from the business that makes them and the supply chain has no third party for this brand. This finding covers the supply-chain relationship only: the vendor's operational legitimacy is assessed under Supplier Identity, and how the brand treats third-party marketplace sellers is assessed under Brand Risk.`,
+  ).join("\n\n");
+  const sameEntitySummary = sameEntityConfirmed.map((r) =>
+    `Our research shows the vendor and ${r.brand} are the same business — you would be buying directly from the maker of the products, so the usual middleman questions about this brand's supply chain do not apply.`,
+  ).join(" ");
+  const mergedFinding = [sameEntityFinding, parsed.brand_relationship_finding].filter(Boolean).join("\n\n");
+  const mergedSummary = [sameEntitySummary, parsed.client_summary].filter(Boolean).join(" ");
+  const mergedReasoning = sameEntityConfirmed.length
+    ? `${reasoning_notes}${reasoning_notes ? "\n" : ""}[SAME-ENTITY: ${sameEntityConfirmed.map((r) => `${r.brand} (${r.signals.join("+")})`).join(", ")} — manufacturer_direct code-emitted]`
+    : reasoning_notes;
+
   return {
     track_key: "supply_chain_relationship",
     evidence_items,
     evidence_weights_applied: [],
-    reasoning_notes,
+    reasoning_notes: mergedReasoning,
     // Client-facing prose. The advisories appended to reasoning_notes above are INTERNAL and
     // deliberately do NOT reach this field.
-    client_summary: parsed.client_summary,
+    client_summary: mergedSummary,
     unknowns: parsed.unknowns,
     weight_validation: validations,
     track_validation_report,
@@ -214,7 +288,7 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
     b2b_only_brands: parsed.b2b_only_brands,
     questions_to_ask: parsed.questions_to_ask,
     // ADR-T2-002 — lane-isolated narrative + code-templated boundary notes (deterministic, never LLM-varied).
-    brand_relationship_finding: parsed.brand_relationship_finding,
+    brand_relationship_finding: mergedFinding,
     identity_scope_note: IDENTITY_SCOPE_NOTE,
     authorization_scope_note: AUTHORIZATION_SCOPE_NOTE,
     marketplace_eligibility_disclaimer: MARKETPLACE_ELIGIBILITY_DISCLAIMER,

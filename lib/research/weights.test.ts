@@ -8,7 +8,8 @@ import { weightKeyExistsInAnyTrack, weightFor, RUBRIC_VERSION, weightKeysForTrac
 // stored rubric_version keeps historical results reproducible.
 describe("SO-4 — hard-fail keys are pure vetoes (rubric g003-1.1.0)", () => {
   it("pins the rubric version (bump deliberately on any weight change)", () => {
-    expect(RUBRIC_VERSION).toBe("g003-1.1.0");
+    // REPINNED g003-1.1.0 → g003-1.2.0 with manufacturer_direct (founder-ruled 2026-08-21).
+    expect(RUBRIC_VERSION).toBe("g003-1.2.0");
   });
   it("b2b_only_confirmed is a 0-point pure veto", () => {
     expect(weightFor("brand_risk_assessment", "b2b_only_confirmed")).toEqual({ points: 0, hard_fail: true });

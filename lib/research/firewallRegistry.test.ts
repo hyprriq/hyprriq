@@ -27,7 +27,11 @@ const RULED_EXCLUSIONS: Record<string, string[]> = {
   // ADR-T2-001 — loa_legitimate is deliberately NOT proposable in Track 2 (an LOA is post-
   // relationship, private, unverifiable; it routes to the Compliance Documentation layer). The
   // firewall rejects it by design, so it carries no provenance/authority entries.
-  supply_chain_relationship: ["loa_legitimate"],
+  // Founder-ruled 2026-08-21 — manufacturer_direct is CODE-EMITTED ONLY (the same-entity detector
+  // confirms; track2.ts writes the item). The LLM must never earn it, so it deliberately has no
+  // provenance/authority entries — any LLM proposal dies at the provenance gate (fixture-locked in
+  // sameEntity.test.ts). Remove this row only if the key ever becomes proposable, with a ruling.
+  supply_chain_relationship: ["loa_legitimate", "manufacturer_direct"],
   // Founder-signed 2026-07-11 — the Keepa keys are firewall-INERT until the Keepa plugin gate
   // ships direct marketplace observation ("no marketplace-observation capability means no key
   // asserting it, veto or positive" — the positive-key twin of the OQ-B ruling). The gate that

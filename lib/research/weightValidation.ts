@@ -64,6 +64,8 @@ export const ALLOWED_PROFILES: Record<string, SourceProfile[]> = {
   // Track 2 — supply_chain_relationship. loa_legitimate is intentionally ABSENT: an LOA is NOT an
   // authorization-discovery signal here (pre-purchase, unverifiable) — it routes to the Compliance
   // Documentation layer (ADR-T2-001). It remains a Track 4 (documentation_review) key.
+  // manufacturer_direct is intentionally ABSENT (founder-ruled 2026-08-21): CODE-EMITTED ONLY by
+  // the same-entity path in track2.ts — an LLM proposal of it must die here at the provenance gate.
   // dealer_page_listed = the BRAND's own page lists/recognises the vendor → official_brand ONLY.
   // A vendor self-claim ("we are an authorized distributor") is official_company → it must map to
   // claims_authorization_unverified instead (vendor self-assertion), not dealer_page_listed.
