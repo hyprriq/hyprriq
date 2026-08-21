@@ -101,3 +101,5 @@ async function main() {
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
+
+export {}; // module scope - keeps this global script from colliding with sibling scripts (rls-jwt-probe) under tsc

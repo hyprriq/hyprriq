@@ -1,5 +1,3 @@
-import { clerkClient } from "@clerk/nextjs/server";
-
 // ── OPERATOR DISPLAY NAMES — RESOLVED FROM CLERK, NEVER STORED (founder-directed 2026-08-20) ──
 //
 // THE PROBLEM THIS FIXES: an operator's display name today is their EMAIL (the users list, the
@@ -30,6 +28,13 @@ export async function resolveOperatorNames(userIds: string[]): Promise<Map<strin
   const ids = [...new Set(userIds.filter((id) => typeof id === "string" && id.startsWith("user_")))];
   if (ids.length === 0) return out;
   try {
+    // LAZY import (fixed 2026-08-21): a top-level `@clerk/nextjs/server` import drags Clerk's
+    // client-context chain (next/navigation → React.createContext) into every importer's module
+    // graph, which CRASHES the founder-script instruments run under --conditions=react-server
+    // (publish-preflight found dead on 031's adoption preflight — the first run since this module
+    // joined its imports). Deferring the import to call time keeps the module graph server-clean;
+    // behavior at call sites is identical.
+    const { clerkClient } = await import("@clerk/nextjs/server");
     const cc = await clerkClient();
     // getUserList accepts up to 100 ids per call; the operator set is small (staff × admins), so
     // one page is enough. If it ever exceeds 100, this silently covers the first 100 — acceptable
