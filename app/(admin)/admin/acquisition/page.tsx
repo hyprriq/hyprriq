@@ -1,13 +1,14 @@
 import { requireAdmin } from "@/lib/data/admin";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { AdminPlaceholder } from "@/components/admin/admin-placeholder";
+import { GrantsManager } from "@/components/admin/grants-manager";
+import { listGrants } from "@/lib/data/grants";
+import { SITE_URL } from "@/lib/constants/site";
 
-// ── ACQUISITION SHELL (2026-08-02) — blank-but-present by founder ruling. The working feature
-// (grant creation, invite-link/coupon redemption through Stripe + credits, affiliate linkage)
-// is DEFERRED backend (DEFERRED_acquisition_system_spec.md); the data model is design-final in
-// docs/ADMIN_FOUNDATIONS.md section 7a (acquisition_grants + grant_redemptions — tables NOT yet
-// migrated, so this shell deliberately queries nothing). Super-admin only (money-adjacent). ──
+// ── ACQUISITION (live 2026-08-21 — the shell from 2026-08-02 becomes the working feature).
+// Grants as invite links or coupon codes: create, share, see who redeemed, revoke. Value is
+// ruled and fixed (one free full assessment); attribution lands on clients.referred_by_grant_id
+// at redemption. Super-admin only (money-adjacent), same gate as before. ──
 
 export default async function AdminAcquisitionPage() {
   const admin = await requireAdmin();
@@ -19,12 +20,10 @@ export default async function AdminAcquisitionPage() {
       </AdminShell>
     );
   }
+  const { grants, redemptions } = await listGrants();
   return (
     <AdminShell active="acquisition" title="Acquisition" {...shellProps}>
-      <AdminPlaceholder
-        title="Acquisition — invite links, coupons, affiliate"
-        blurb="Invite links and coupon codes — create a grant, share it, and see who redeemed it. Nothing here works yet; this section is planned but not functional."
-      />
+      <GrantsManager grants={grants} redemptions={redemptions} siteUrl={SITE_URL} />
     </AdminShell>
   );
 }

@@ -4,6 +4,7 @@ import { PortalShell } from "@/components/portal/portal-shell";
 import { StripePortalButton } from "@/components/portal/stripe-portal-button";
 import { CheckoutButton } from "@/components/portal/checkout-button";
 import { CancelSubscription } from "@/components/portal/cancel-subscription";
+import { GrantCodeBox } from "@/components/portal/grant-code-box";
 import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
@@ -126,6 +127,9 @@ export default async function BillingPage() {
           ) : (
             <div>
               <p className="text-center text-sm text-ink-2">You don&rsquo;t have an active plan yet — choose one to start.</p>
+              {/* Coupon-mode grant redemption (2026-08-21) — plan-less accounts only; the RPC
+                  refuses plan-holders regardless (defense in depth on both sides). */}
+              <GrantCodeBox />
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {PLAN_TYPES.map((p) => (
                   <div key={p} className="flex flex-col rounded-lg border border-line bg-base p-4">

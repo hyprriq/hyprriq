@@ -21,6 +21,10 @@ export const PUBLIC_ROUTES: string[] = [
   "/privacy",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  // Invite links (acquisition grants, 2026-08-21): the URL is handed to people who have no
+  // account yet BY DESIGN — behind auth it would demand a login from the exact person it exists
+  // to acquire. The slug is the secret; every real check lives in the redemption RPC.
+  "/grant/(.*)",
   "/api/webhooks/(.*)",
   "/api/health",
   "/api/inngest(.*)",
