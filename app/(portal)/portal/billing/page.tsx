@@ -15,12 +15,17 @@ import {
   PLAN_ROLLOVER_LIMIT,
   PLANS_ON_SALE,
   planOnSale,
+  TOPUPS_ON_SALE,
   type PlanType,
 } from "@/lib/constants/plans";
 import { creditsView } from "@/lib/portal/creditsDisplay";
 
 // Credit top-up packs (one-time). Both subscription plans can buy either the
 // 3-credit ($99) or 6-credit ($179) pack — no reason to restrict by plan.
+// ⛔ OFF SALE (founder-locked 2026-08-22): the card renders ONLY while TOPUPS_ON_SALE — kept
+// wired (webhook lands top-ups as protected purchased_credits) so the return to sale is the
+// one-flag ruling in lib/constants/plans.ts, not a rebuild. The checkout route refuses top-ups
+// regardless of this card (the route is the control).
 const TOPUP_PACKS = [
   { id: "growth_topup", label: "Buy 3 credits — $99" },
   { id: "scale_topup", label: "Buy 6 credits — $179" },
@@ -169,7 +174,7 @@ export default async function BillingPage() {
           )}
         </Card>
 
-        {plan && TOPUPS_FOR_PLAN[plan] && (
+        {TOPUPS_ON_SALE && plan && TOPUPS_FOR_PLAN[plan] && (
           <Card title="Top-Up Credits">
             <p className="mb-3 text-[14px] text-ink-2">Need more this cycle? Add credits without changing your plan.</p>
             <div className="flex flex-wrap gap-2">

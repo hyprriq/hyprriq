@@ -4,7 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
-import { addClientCredits, rolloverClientCredits } from "@/lib/data/credits";
+import { addPurchasedCredits, rolloverClientCredits } from "@/lib/data/credits";
 import { grantUpgradeCredits, isUpgrade } from "@/lib/billing/upgradeGrant";
 import { sendPaymentFailedEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
@@ -170,7 +170,10 @@ export async function POST(req: Request) {
           const topupId = kind.slice("topup:".length) as TopupId;
           const credits = TOPUP[topupId]?.credits ?? 0;
           if (credits > 0) {
-            const { error: creditErr } = await addClientCredits(clientId, credits);
+            // PURCHASED, not plan-class (founder-locked 2026-08-22, item 2b): paid top-ups land
+            // through add_purchased_credits so the renewal rollover can never clip them — built
+            // while top-ups are off sale, so the first pack ever sold lands protected.
+            const { error: creditErr } = await addPurchasedCredits(clientId, credits);
             // B2 — a paid top-up that fails to land must FAIL LOUD: throw → stripe_events.error is
             // written below → Stripe retries → the unprocessed-duplicate path reprocesses (B3 fix).
             if (creditErr) throw new Error(`top-up credit grant failed: ${creditErr}`);

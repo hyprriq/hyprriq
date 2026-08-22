@@ -13,6 +13,20 @@ export async function addClientCredits(clientId: string, amount: number): Promis
   return { balance: data as number, error: null };
 }
 
+/**
+ * PAID top-ups land HERE (founder-run 20260822300000): balance AND the purchased_credits floor
+ * together, so the renewal rollover can never clip what the client paid for. addClientCredits
+ * stays for grants/corrections — plan-class credits that may expire. Wired 2026-08-22 while
+ * top-ups are OFF SALE (TOPUPS_ON_SALE=false): built now, sold later — the first pack ever sold
+ * lands protected.
+ */
+export async function addPurchasedCredits(clientId: string, amount: number): Promise<{ balance: number | null; error: string | null }> {
+  const { data, error } = await supabaseAdmin.rpc("add_purchased_credits", { p_client_id: clientId, p_amount: amount });
+  if (error) return { balance: null, error: error.message };
+  if (data === null || data === undefined) return { balance: null, error: `add_purchased_credits: no client row for ${clientId}` };
+  return { balance: data as number, error: null };
+}
+
 export async function rolloverClientCredits(stripeCustomerId: string, plan: PlanType): Promise<{ balance: number | null; error: string | null }> {
   const { data, error } = await supabaseAdmin.rpc("rollover_client_credits", {
     p_stripe_customer_id: stripeCustomerId,

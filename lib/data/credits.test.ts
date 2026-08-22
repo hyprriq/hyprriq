@@ -1,9 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/admin", () => ({ supabaseAdmin: { rpc } }));
-import { addClientCredits, rolloverClientCredits } from "./credits";
+import { addClientCredits, addPurchasedCredits, rolloverClientCredits } from "./credits";
 
 beforeEach(() => { rpc.mockReset().mockResolvedValue({ data: 7, error: null }); });
+
+describe("addPurchasedCredits (item 2b, 2026-08-22 — paid top-ups land protected)", () => {
+  it("calls add_purchased_credits — NEVER add_client_credits — with the exact args", async () => {
+    const r = await addPurchasedCredits("client_1", 3);
+    expect(rpc).toHaveBeenCalledWith("add_purchased_credits", { p_client_id: "client_1", p_amount: 3 });
+    expect(r).toEqual({ balance: 7, error: null });
+  });
+  it("B2 — surfaces the DB error; unknown client is loud (a payment must never vanish silently)", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    const r = await addPurchasedCredits("ghost", 3);
+    expect(r.balance).toBeNull();
+    expect(r.error).toMatch(/no client row/);
+  });
+});
 
 describe("addClientCredits (N6 — atomic top-up)", () => {
   it("calls the add_client_credits RPC with the exact args", async () => {
