@@ -6,6 +6,7 @@ import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/resear
 import { clientNote } from "@/lib/research/websiteAnchor";
 import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison, COMING_SOON_LABEL, COMING_SOON_NOTE } from "@/lib/content/pricing";
 import { PARTNER_REQUEST_COPY, INVITE_LINK_INACTIVE_COPY, GRANT_CODE_ENTRY_COPY } from "@/lib/content/partnerRequest";
+import { VERDICT_ABSENT_TITLE, VERDICT_ABSENT_BODY, VERDICT_ABSENT_PREVIEW_NOTE } from "@/lib/portal/verdictPresence";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
 import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
 
@@ -113,6 +114,10 @@ const MUST_PASS: [string, string][] = [
   ["pricing coming-soon chip", COMING_SOON_LABEL],
   ["pricing coming-soon note", COMING_SOON_NOTE],
   ["dashboard upgrade CTA (tier-naming retired 2026-08-22)", "Move to a monthly plan →"],
+  // — verdict-absence refusals (2026-08-22 — standing rule 8: same commit; imported) —
+  ["verdict-absent refusal title", VERDICT_ABSENT_TITLE],
+  ["verdict-absent refusal body", VERDICT_ABSENT_BODY],
+  ["verdict-absent operator preview note", VERDICT_ABSENT_PREVIEW_NOTE],
   // "plan-change card copy" pin REMOVED 2026-08-22: the Change Plan card is gone — its only
   // function was the Growth↔Scale portal switch, and Scale is off sale.
   // — 24h SLA copy ruling (2026-08-12): every client-facing delivery statement, as rendered —

@@ -11,6 +11,7 @@ import type { BannedHit } from "@/lib/utils/bannedLanguageReport";
 import { overrideKeyForHit } from "@/lib/portal/overrideKeys";
 import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
 import { ReportView, FindingBody } from "@/components/portal/report-view";
+import { presentVerdict, VERDICT_ABSENT_PREVIEW_NOTE } from "@/lib/portal/verdictPresence";
 
 // Phase 4 — the admin review surface. Renders the deterministic reasoning flow assembled by
 // buildVerdictViewModel(): Executive Intelligence Summary → Verdict Panel → Cross-Track
@@ -299,7 +300,17 @@ export function CaseReview({
           <div className="mb-4 text-[11px] font-bold uppercase tracking-wider text-brand">
             Client view — rendered exactly as the client&rsquo;s report page renders it
           </div>
-          <ReportView c={clientView.c} findings={clientView.findings} report={clientView.report} preview />
+          {/* ABSENCE IS NOT A VALUE (2026-08-22): a mid-review case can have no verdict yet —
+              the old path let ReportView fabricate "Verify Before Purchase" HERE, on the exact
+              screen an operator rules from. A wrong preview becomes a wrong report; the note
+              names the truth instead. */}
+          {presentVerdict(clientView.c.verdict) ? (
+            <ReportView c={clientView.c} findings={clientView.findings} report={clientView.report} preview />
+          ) : (
+            <p className="rounded-lg border border-line bg-base px-4 py-3 text-[13px] text-ink-2">
+              {VERDICT_ABSENT_PREVIEW_NOTE}
+            </p>
+          )}
         </div>
       ) : (
       <>

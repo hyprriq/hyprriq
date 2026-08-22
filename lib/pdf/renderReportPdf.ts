@@ -18,6 +18,8 @@ import { loadReportAssets } from "@/lib/pdf/reportAssets";
 import {
   buildReportHtml, footerText, PALETTE_COLOUR, type Palette, type ReportContent,
 } from "@/lib/pdf/reportTemplate";
+import { presentVerdict } from "@/lib/portal/verdictPresence";
+import { logVerdictAbsent } from "@/lib/portal/verdictAbsent.server";
 
 // ── THE REPORT PDF RENDERER — the integration entry point (see docs/PDF_INTEGRATION_HANDOFF.md).
 // Loads a delivered case through the SAME projection chain the portal uses, builds the document
@@ -33,7 +35,7 @@ import {
 // ──
 
 export class ReportNotRenderable extends Error {
-  constructor(public readonly reason: "not_found" | "not_delivered" | "no_snapshot" | "no_client_name", message: string) {
+  constructor(public readonly reason: "not_found" | "not_delivered" | "no_snapshot" | "no_client_name" | "no_verdict", message: string) {
     super(message);
     this.name = "ReportNotRenderable";
   }
@@ -119,6 +121,20 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
   // upstream in the projection and that is where it gets fixed. The cleaners are shape-based and
   // may always miss; this is presence-based and may never be widened into a shape matcher —
   // teaching the template to strip is exactly the merge the law forbids.
+  // ── ABSENCE IS NOT A VALUE (founder-locked 2026-08-22): the old fallback-to-VBP here would
+  // have attached a verdict the engine never issued to a delivered, FROZEN document — forever.
+  // A missing/unrecognized verdict now refuses in the exact no_client_name pattern:
+  // loud (console + audit_log + ops pager), then ReportNotRenderable("no_verdict") — the PDF job
+  // treats it like every other refusal (alarm; delivery email goes out WITHOUT an attachment).
+  const verdict = presentVerdict(row.verdict);
+  if (!verdict) {
+    await logVerdictAbsent({ caseRef: row.case_number, surface: "pdf_render", raw: row.verdict });
+    throw new ReportNotRenderable(
+      "no_verdict",
+      `case ${row.case_number} is delivered but carries no usable verdict (${JSON.stringify(row.verdict)}) — refusing to freeze a fabricated verdict into a permanent document; an upstream invariant is broken (publish requires a verdict)`,
+    );
+  }
+
   const content = {
     caseNumber: row.case_number,
     vendor: row.vendor_name ?? "—",
@@ -128,7 +144,7 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
     brandsSubmitted: row.brands_submitted ?? [],
     clientName,
     deliveredAt: fmt(row.delivered_at),
-    verdict: row.verdict ?? "verify_before_purchase",
+    verdict,
     report,
     findings: buildClientFindings(rows),
   };

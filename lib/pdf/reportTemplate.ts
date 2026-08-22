@@ -9,6 +9,7 @@ import {
   BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine,
 } from "@/lib/content/reportDocument";
 import type { ReportAssets } from "@/lib/pdf/reportAssets";
+import { requireVerdict } from "@/lib/portal/verdictPresence";
 import {
   VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, CHIP_DEFS,
   CHECKLIST_INTRO, CATEGORY_NOTE, CLOSING_STATEMENT,
@@ -222,12 +223,17 @@ export interface BuildOptions {
 export function buildReportHtml(c: ReportContent, opts: BuildOptions): string {
   const P = opts.palette ?? PALETTE_COLOUR;
   const toc = opts.toc ?? {};
-  const meta = VERDICT_META[c.verdict] ?? VERDICT_META.verify_before_purchase;
-  const vInk = P.verdict[c.verdict] ?? P.verdict.verify_before_purchase;
-  const vTone = ({ source_clear: "green", usable_with_conditions: "amber", verify_before_purchase: "amber", do_not_rely: "red" } as Record<string, string>)[c.verdict] ?? "amber";
+  // ABSENCE IS NOT A VALUE (2026-08-22): the three lookups below used to fall back to
+  // verify_before_purchase/amber — a fabricated verdict INSIDE the permanent document. The
+  // typed verdict makes every lookup total; loadReportContent already refused (loudly) before
+  // this runs, so a throw here means someone routed content past the loader.
+  const verdict = requireVerdict(c.verdict, { caseRef: c.caseNumber, surface: "pdf_template" });
+  const meta = VERDICT_META[verdict];
+  const vInk = P.verdict[verdict];
+  const vTone = ({ source_clear: "green", usable_with_conditions: "amber", verify_before_purchase: "amber", do_not_rely: "red" } as const)[verdict];
   const r = c.report;
   const scale = SCALE_ORDER.map((k) => {
-    const active = k === c.verdict;
+    const active = k === verdict;
     return `<div class="slot"><div class="bar" style="${active ? `background:${vInk};border:0` : `background:${P.paper};border:1px solid ${P.hairline}`}"></div><div class="slot-label" style="${active ? `color:${vInk};font-weight:700` : `color:${P.soft}`}">${VERDICT_META[k].name}</div></div>`;
   }).join("");
 

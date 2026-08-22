@@ -6,7 +6,6 @@ import type { CaseDetail, Finding, ClientReport } from "@/lib/data/cases";
 import { findingText, findingNotes } from "@/lib/portal/finding-view";
 import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import { changeRequestOpen } from "@/lib/portal/changeRequest";
-import type { Verdict } from "@/components/portal/badges";
 import { isAssessmentArea } from "@/lib/constants/tracks";
 import { splitHeadline, HEADLINE_QUALIFIER_LABEL } from "@/lib/portal/headlineParts";
 import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
@@ -14,6 +13,7 @@ import {
   VERDICT_COPY, AREA_NAMES, AREA_DEFS, CHIP_DEFS, HOW_TO_READ,
   CHECKLIST_INTRO, NON_VERDICT_SUBHEAD, NON_VERDICT_SUBHEAD_NOTE, isNonVerdictArea,
 } from "@/lib/content/reportCopy";
+import { requireVerdict } from "@/lib/portal/verdictPresence";
 
 // ── THE REPORT (full-build brief §1–§3, approved prototype public/prototype/client/report.html) —
 // decision-first, engine's words. STRUCTURAL RULES (§5): the decision layer (identity, summary,
@@ -40,7 +40,14 @@ const VERDICT_TONE: Record<string, { ink: string; bg: string }> = {
   do_not_rely: { ink: "text-deny-ink", bg: "bg-deny-bg" },
 };
 const VERDICT_META: Record<string, VerdictMeta> = Object.fromEntries(
-  Object.entries(VERDICT_COPY).map(([k, v]) => [k, { ...v, ...(VERDICT_TONE[k] ?? VERDICT_TONE.verify_before_purchase) }]),
+  Object.entries(VERDICT_COPY).map(([k, v]) => {
+    // ABSENCE IS NOT A VALUE (2026-08-22): a verdict with copy but no tone is a build-time
+    // drift between the two maps — fail at module load (tests catch it), never paint one
+    // verdict in another verdict's colors.
+    const tone = VERDICT_TONE[k];
+    if (!tone) throw new Error(`verdict "${k}" has copy but no tone — VERDICT_TONE and VERDICT_COPY have drifted`);
+    return [k, { ...v, ...tone }];
+  }),
 );
 
 const VERDICT_TOOLTIP =
@@ -213,7 +220,12 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   // §4 — the PDF is rendered by a background job after publish, so "not ready yet" is a real and
   // normal state a client can click into. It gets a sentence, not a raw error.
   const [pdfNote, setPdfNote] = useState<string | null>(null);
-  const meta = VERDICT_META[(c.verdict ?? "verify_before_purchase") as Verdict] ?? VERDICT_META.verify_before_purchase;
+  // ABSENCE IS NOT A VALUE (2026-08-22): the old double-fallback here fabricated "Verify Before
+  // Purchase" for a verdictless case. Both routed callers now guard before mounting this
+  // component (the portal page's refusal panel; the review screen's preview note), so this
+  // throwing form is the belt — reaching it verdictless means someone routed around the guards,
+  // and the error boundary is the honest outcome, never an invented verdict.
+  const meta = VERDICT_META[requireVerdict(c.verdict, { caseRef: c.case_number, surface: "report_view" })];
   const orderedFindings = findings; // data layer orders by area already
   // CONDITIONAL TABS (founder-approved 2026-08-14): an empty tab on a paid report is worse than
   // no tab — Checklist and Could-not-confirm render only when they carry content. Print output
