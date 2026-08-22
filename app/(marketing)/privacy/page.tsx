@@ -139,9 +139,10 @@ export default function PrivacyPage() {
       <H2>8. How long we keep it</H2>
       <P>
         See the <Link href="/data-policy" className="underline">Data Protection &amp; Retention Policy</Link>{" "}
-        for the full table. In summary: uploaded documents 12 months or 30 days after closure, whichever is
-        sooner · delivered reports while your account is active, then 30 days after closure · case and audit
-        records 180 days after delivery · account details 30 days after closure ·{" "}
+        for the full table. In summary: uploaded documents at most 12 months, or within 30 days after your
+        account closes, whichever is sooner · delivered reports while your account is active, then within 30
+        days after closure · case and audit records while your account is active · account details within 30
+        days after closure ·{" "}
         <b>transaction records 7 years, as tax and accounting law requires.</b>
       </P>
 

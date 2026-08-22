@@ -36,7 +36,8 @@ export default function RefundPolicyPage() {
         end of the paid period, and your credits stay usable until then.
       </P>
       <P>
-        <b>Download your reports before the account closes.</b> They are removed 30 days after closure.
+        <b>Download your reports before the account closes.</b> They are removed within 30 days after
+        closure.
       </P>
 
       <H2>2. Refunds — how they work</H2>

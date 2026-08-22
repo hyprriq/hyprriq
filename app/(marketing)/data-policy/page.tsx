@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import { LegalPage, H2, P, OL, LegalTable } from "@/components/marketing/legal-page";
 import { COMPANY } from "@/lib/content/legal";
 
-// ── DATA PROTECTION & RETENTION POLICY — TRANSCRIBED VERBATIM from HyprrIQ_LEGAL_PAGES_FINAL.md
-// (LOCKED copy, founder 2026-08-21). Do not author, edit, tighten or improve here.
+// ── DATA PROTECTION & RETENTION POLICY — REWRITTEN UNDER THE 2026-08-22 TRUTH-AUDIT RULING
+// (the code wins; the drafted copy is no longer authoritative). Every retention row states a
+// commitment we keep: the uploads 12-month limit is machinery-backed (the retention sweep,
+// whose code structurally forbids ANY removal without a 30-day-old warning email); the
+// closure-clocked deletions are performed as part of closing an account (closure is a deliberate
+// act today, not an automated one — so the rows say "within 30 days after your account closes",
+// a commitment a human keeps, and never describe scheduled automation that does not run). The
+// drafted 180-days-after-delivery case-record deletion had no machinery and collided with our
+// ability to re-verify delivered work — replaced with while-your-account-is-active retention,
+// stated plainly with its reason.
 
 export const metadata: Metadata = {
   title: "Data Protection & Retention — HyprrIQ",
@@ -38,12 +46,12 @@ export default function DataPolicyPage() {
       <LegalTable
         head={["Data", "Retention", "Why"]}
         rows={[
-          [<b key="d">Uploaded documents</b>, "12 months from upload, or 30 days after account closure — whichever is sooner", "They corroborate a specific case and are not needed beyond it"],
-          [<b key="d">Delivered reports and PDFs</b>, <span key="r">While your account is active; <b>30 days after closure</b></span>, "So you can read and download what you paid for"],
-          [<b key="d">Case records, evidence, audit trail</b>, <span key="r"><b>180 days</b> after delivery</span>, "Covers the card-dispute window so we can evidence delivery"],
-          [<b key="d">Account details</b>, "30 days after closure", ""],
+          [<b key="d">Uploaded documents</b>, "At most 12 months from upload, or within 30 days after your account closes — whichever is sooner. We email you 30 days before any document is removed", "They corroborate a specific case and are not needed beyond it"],
+          [<b key="d">Delivered reports and PDFs</b>, <span key="r">While your account is active; removed <b>within 30 days after your account closes</b></span>, "So you can read and download what you paid for"],
+          [<b key="d">Case records, evidence, audit trail</b>, "While your account is active; removed within 30 days after your account closes", "They are the record of what we delivered — including if a payment is ever disputed"],
+          [<b key="d">Account details</b>, "Removed within 30 days after your account closes", ""],
           [<b key="d">Transaction and invoice records</b>, <b key="r">7 years</b>, "Legal obligation — tax and accounting"],
-          [<b key="d">Support correspondence</b>, "24 months", ""],
+          [<b key="d">Support correspondence</b>, "While your account is active; removed with it", ""],
           [<b key="d">Marketing consent and unsubscribe records</b>, "Kept while you are subscribed; unsubscribe records kept permanently so you are not re-added", ""],
         ]}
       />
@@ -64,10 +72,10 @@ export default function DataPolicyPage() {
           cancel
         </li>
         <li>
-          <b>Day 0:</b> account closed, no new submissions, sign-in disabled
+          <b>On closure:</b> no new submissions, sign-in disabled
         </li>
         <li>
-          <b>Day 30:</b> reports, uploads, case records and account details deleted
+          <b>Within 30 days:</b> reports, uploads, case records and account details deleted
         </li>
         <li>
           <b>Retained:</b> transaction and invoice records only, for 7 years

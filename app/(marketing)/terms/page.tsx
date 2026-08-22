@@ -130,7 +130,7 @@ export default function TermsPage() {
           expire at renewal
         </li>
         <li>
-          <b>Top-up credits do not expire</b> and are used after your plan credits
+          <b>Top-up credits join the same balance</b> and follow the same rollover rule
         </li>
         <li>
           <b>Delivery target: within 24 hours of submission</b>, all plans
@@ -209,9 +209,9 @@ export default function TermsPage() {
         end of the paid period.
       </P>
       <P>
-        <b>Download your reports before your account closes.</b> Reports are removed 30 days after account
-        closure — see the <Link href="/data-policy" className="underline">Data Protection &amp; Retention
-        Policy</Link>.
+        <b>Download your reports before your account closes.</b> Reports are removed within 30 days after
+        your account closes — see the <Link href="/data-policy" className="underline">Data Protection &amp;
+        Retention Policy</Link>.
       </P>
       <P>
         We may suspend or terminate an account for breach of these Terms, non-payment, or where required by
