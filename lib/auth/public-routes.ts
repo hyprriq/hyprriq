@@ -41,6 +41,9 @@ export const PUBLIC_ROUTES: string[] = [
   "/unsubscribe",
   "/api/newsletter",
   "/api/partner-request",
+  // Typed-code validation at registration (2026-08-22): the person checking a code has no
+  // account yet, by definition. Only /check is public — redeem and attach stay authenticated.
+  "/api/grants/check",
   "/api/webhooks/(.*)",
   "/api/health",
   "/api/inngest(.*)",

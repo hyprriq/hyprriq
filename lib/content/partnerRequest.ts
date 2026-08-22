@@ -56,6 +56,22 @@ export const PARTNER_REQUEST_COPY = {
 export const INVITE_LINK_INACTIVE_COPY =
   "This invite link is no longer active. If it was sent to you directly, reply to whoever sent it — or request an assessment below.";
 
+// ── CODE ENTRY AT REGISTRATION (founder-locked 2a/2b, 2026-08-22): someone arriving with a
+// typed code and someone arriving with a link end up in the SAME state — the code is validated
+// BEFORE the account exists (never "register first, then discover the code was dead") and
+// parked in the same cookie the link path uses, so the same attach flow applies it on first
+// portal load. "In this browser" is load-bearing: the cookie is browser-bound, exactly like a
+// clicked link. Dead-code messages come from the server (REDEEM_COPY — the same pinned words
+// the billing box shows), never re-typed here.
+export const GRANT_CODE_ENTRY_COPY = {
+  toggle: "Have an access code?",
+  hint: "Enter it here and your free full assessment applies automatically when you create your account.",
+  apply: "Apply code",
+  accepted: "Code accepted — create your account in this browser and your free full assessment applies automatically.",
+  error: "That didn't go through — try again in a moment.",
+  rateLimited: "Too many attempts from this connection — try again in an hour.",
+} as const;
+
 const roleValues = ROLE_OPTIONS.map((o) => o.value);
 const bandValues = CLIENTS_BAND_OPTIONS.map((o) => o.value);
 

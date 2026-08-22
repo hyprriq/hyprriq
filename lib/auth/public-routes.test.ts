@@ -62,4 +62,9 @@ describe("PUBLIC_ROUTES", () => {
   it("keeps the partner request intake public (a cold VA has no account — that's the point)", () => {
     expect(PUBLIC_ROUTES).toContain("/api/partner-request");
   });
+  it("keeps the pre-registration code check public — and ONLY /check (redeem/attach stay authed)", () => {
+    expect(PUBLIC_ROUTES).toContain("/api/grants/check");
+    expect(PUBLIC_ROUTES).not.toContain("/api/grants/(.*)");
+    expect(PUBLIC_ROUTES.some((r) => r.startsWith("/api/grants/redeem") || r.startsWith("/api/grants/attach"))).toBe(false);
+  });
 });

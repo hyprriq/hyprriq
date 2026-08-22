@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { grantDisplayState, grantLinkOpen, type GrantLinkFields, type GrantDisplayState } from "@/lib/data/grantLink";
+import { grantDisplayState, type GrantLinkFields, type GrantDisplayState } from "@/lib/data/grantLink";
+import { REDEEM_COPY } from "@/lib/data/grants";
 
 // ── THE ONE COURTESY LOOKUP (item 1b/1c, founder-locked 2026-08-22) ──────────────────────────
 //
@@ -14,9 +15,11 @@ import { grantDisplayState, grantLinkOpen, type GrantLinkFields, type GrantDispl
 // via logGrantCheckFailOpen (console + audit_log), because a fail-open's symptom is identical
 // to the pre-fix bug (a banner for a dead link) and the founder must be able to tell them apart.
 
+export type ClosedGrantState = Exclude<GrantDisplayState, "active"> | "no_such_code";
+
 export type GrantCheck =
   | { outcome: "open" }
-  | { outcome: "closed"; state: GrantDisplayState | "no_such_code" }
+  | { outcome: "closed"; state: ClosedGrantState }
   | { outcome: "unavailable"; error: string };
 
 export async function checkGrantCode(code: string): Promise<GrantCheck> {
@@ -36,7 +39,22 @@ export async function checkGrantCode(code: string): Promise<GrantCheck> {
   if (error) return { outcome: "unavailable", error: error.message };
   if (!data) return { outcome: "closed", state: "no_such_code" };
   const g = data as GrantLinkFields;
-  return grantLinkOpen(g) ? { outcome: "open" } : { outcome: "closed", state: grantDisplayState(g) };
+  const state = grantDisplayState(g);
+  return state === "active" ? { outcome: "open" } : { outcome: "closed", state };
+}
+
+/**
+ * A closed state in the words the gate would use — REUSES the pinned REDEEM_COPY (the billing
+ * box's exact strings), so a dead code reads the same wherever it is typed (2c: one validation
+ * path, one vocabulary).
+ */
+export function closedStateCopy(state: ClosedGrantState): string {
+  switch (state) {
+    case "revoked": return REDEEM_COPY.revoked;
+    case "expired": return REDEEM_COPY.expired;
+    case "fully_redeemed": return REDEEM_COPY.exhausted;
+    case "no_such_code": return REDEEM_COPY.invalid_code;
+  }
 }
 
 /** The 1c record: every fail-open writes console + audit_log (fail-soft — the reporter never blocks). */

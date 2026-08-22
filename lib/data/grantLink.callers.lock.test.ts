@@ -21,6 +21,7 @@ const CALLERS = [
   "app/grant/[code]/route.ts",
   "app/(marketing)/partners/page.tsx",
   "components/admin/grants-manager.tsx",
+  "app/api/grants/check/route.ts",
 ];
 
 const SHARED = new Set(["lib/data/grantLink.ts", "lib/data/grantCheck.ts"]);
