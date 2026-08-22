@@ -12,8 +12,36 @@ import type { AdditionalQuestion } from "@/lib/research/contracts";
 import { buildWeeklyCaseSeries, type WeekBucket } from "@/lib/admin/dashboard-charts";
 import { resolveOperatorName } from "@/lib/data/operatorNames";
 
-// Admin-role guard. The (admin) layout enforces authentication; this enforces
-// the role (clients.is_admin). Non-admins are bounced to their own portal.
+/**
+ * THE LAYOUT BOUNDARY (closed 2026-08-22 — the Session-1 TODO that outlived its session).
+ *
+ * app/(admin)/layout.tsx enforced AUTHENTICATION ONLY: `await auth.protect()` and a TODO where
+ * the role check belonged, under a comment warning "do not expose real admin data behind this
+ * guard until that role check is in place" — while eighteen admin pages proceeded to do exactly
+ * that. The pages each call requireAdmin() (verified: all 18), so nothing was actually exposed;
+ * but the DENY-BY-DEFAULT boundary was one forgotten call away from being real, and a boundary
+ * that only works because every page remembers is not a boundary.
+ *
+ * This is the layout's guard: the same operator test and the same invitation claim as
+ * requireAdmin (a brand-new invited operator must still materialize on first admin visit — a
+ * naive getOperator-and-redirect would bounce them before their row exists), WITHOUT the
+ * display-field and client-scope reads the pages do for themselves. Cheap enough to run on
+ * every admin render; complete enough that the boundary holds on its own.
+ */
+export async function requireOperatorAccess(): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  let op = await getOperator(userId);
+  if (!op) {
+    const claimed = await claimAdminInvitation(userId);
+    if (claimed) op = await getOperator(userId);
+  }
+  if (!op) redirect("/portal/dashboard");
+}
+
+// Admin-role guard. The (admin) layout enforces authentication AND the operator boundary
+// (requireOperatorAccess above); this enforces the role again at the page and returns the
+// operator's display fields + client scope. Non-admins are bounced to their own portal.
 // ── ADMIN ACCESS FIX (2026-07-30) — admin PAGE access = getOperator(userId) !== null. The
 // super-admin identity has NO clients row by founder ruling; the old clients-row gate would
 // bounce it before any admin screen rendered. getOperator carries the transitional legacy
