@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { devValidationRoutesArmed } from "@/lib/auth/devRoutes";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Orchestrator } from "@/lib/research/acquisition/orchestrator";
 import { whoisPlugin } from "@/lib/research/acquisition/plugins/whois";
@@ -30,6 +31,10 @@ function hostOf(website: string | null): string | null {
 }
 
 export async function POST(req: Request) {
+  // Disarmed unless DEV_VALIDATION_ROUTES=1 (CTO audit 2026-08-22): this route spends real
+  // research budget and seeds throwaway cases. 404, not 403 — a disabled dev tool does not
+  // advertise itself. Never arm this in Production.
+  if (!devValidationRoutesArmed()) return NextResponse.json({ error: "not_found" }, { status: 404 });
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });

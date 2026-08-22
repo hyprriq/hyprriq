@@ -53,3 +53,36 @@ describe("LOCK — the admin boundary is enforced by the layout, not only by eve
     expect(missing, `these admin pages do not call requireAdmin():\n${missing.join("\n")}`).toEqual([]);
   });
 });
+
+// ── DEV VALIDATION ROUTES STAY DISARMED (CTO audit 2026-08-22). Both spend real research budget
+// (AI tokens, Serper, WHOIS) and seed throwaway cases. They are kept — they are the instruments
+// that prove the stack after an engine change — but they must never be reachable without being
+// deliberately armed by env, and they must not carry a private admin check.
+describe("LOCK — /api/admin/dev routes are disarmed by default", () => {
+  const DEV_ROUTES = [
+    "app/api/admin/dev/validate-track1/route.ts",
+    "app/api/admin/dev/validate-acquisition/route.ts",
+  ];
+
+  it("every dev route checks devValidationRoutesArmed() before doing any work", () => {
+    for (const f of DEV_ROUTES) {
+      const src = read(f);
+      expect(src.includes("devValidationRoutesArmed"), `${f} must be arm-gated`).toBe(true);
+    }
+  });
+
+  it("the arming flag is env-driven and off unless explicitly set to 1", () => {
+    const src = read("lib/auth/devRoutes.ts");
+    expect(src).toContain('process.env.DEV_VALIDATION_ROUTES === "1"');
+  });
+
+  it("no dev route re-derives admin from clients.role — getOperator is the one notion", () => {
+    for (const f of DEV_ROUTES) {
+      const src = read(f);
+      expect(
+        /select\("role"\)[\s\S]{0,120}role !== "client"/.test(src),
+        `${f} must authorize through getOperator, not a private clients.role read`,
+      ).toBe(false);
+    }
+  });
+});

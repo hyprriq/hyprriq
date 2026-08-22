@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { getOperator } from "@/lib/auth/permissions";
+import { devValidationRoutesArmed } from "@/lib/auth/devRoutes";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { runPipeline } from "@/lib/research/pipeline";
 import { finalizePack } from "@/lib/research/acquisition/pack";
@@ -16,12 +18,18 @@ import type { PlanType } from "@/lib/constants/plans";
 // Reads back the five outputs + an evidence_hash stability check + the dedup view for inspection.
 // NOT a product surface; remove or keep behind admin once Track 1 is frozen.
 
+// ADMIN ACCESS FIX (2026-07-30) applied here 2026-08-22 — this route was the one site the
+// original sweep missed: it still read clients.role directly, so the super-admin identity (no
+// clients row, by founder ruling) was refused by its own tool. getOperator is the one notion.
 async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
+  return (await getOperator(userId)) !== null;
 }
 
 export async function POST(req: Request) {
+  // Disarmed unless DEV_VALIDATION_ROUTES=1 (CTO audit 2026-08-22): this route spends real
+  // research budget and seeds throwaway cases. 404, not 403 — a disabled dev tool does not
+  // advertise itself. Never arm this in Production.
+  if (!devValidationRoutesArmed()) return NextResponse.json({ error: "not_found" }, { status: 404 });
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
