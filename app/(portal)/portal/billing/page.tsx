@@ -10,9 +10,11 @@ import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
   PLAN_CADENCE,
+  PLAN_CATEGORY,
   PLAN_CREDITS_PER_CYCLE,
   PLAN_ROLLOVER_LIMIT,
-  PLAN_TYPES,
+  PLANS_ON_SALE,
+  planOnSale,
   type PlanType,
 } from "@/lib/constants/plans";
 import { creditsView } from "@/lib/portal/creditsDisplay";
@@ -81,17 +83,19 @@ export default async function BillingPage() {
                   <StripePortalButton className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle">
                     Manage subscription →
                   </StripePortalButton>
-                ) : (
+                ) : planOnSale(plan) ? (
                   /* Gap audit 5.3 (2026-08-08): rebuy the client's OWN one-time tier — the
                      hardcoded single_99 charged a Single Deep Report ($149) client $99 AND
-                     activatePlan downgraded their plan_type. */
+                     activatePlan downgraded their plan_type.
+                     Sale gate (2026-08-22): an off-sale tier gets no rebuy button — the route
+                     would refuse it; the upgrade card below offers what IS buyable. */
                   <CheckoutButton
                     plan={plan}
                     className="rounded-lg border border-line bg-surface px-4 py-2 text-[14px] font-semibold text-ink-2 hover:bg-subtle"
                   >
                     Buy another report →
                   </CheckoutButton>
-                )}
+                ) : null}
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-line bg-base p-3">
@@ -131,8 +135,11 @@ export default async function BillingPage() {
               {/* Coupon-mode grant redemption (2026-08-21) — plan-less accounts only; the RPC
                   refuses plan-holders regardless (defense in depth on both sides). */}
               <GrantCodeBox />
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {PLAN_TYPES.map((p) => (
+              {/* ON-SALE ONLY (founder-locked 2026-08-22): the portal picker offers what can be
+                  bought — the coming-soon roadmap lives on the marketing pricing page, and the
+                  checkout route refuses off-sale tiers regardless of what any UI shows. */}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {PLANS_ON_SALE.map((p) => (
                   <div key={p} className="flex flex-col rounded-lg border border-line bg-base p-4">
                     <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
                     <div className="mt-0.5 text-[13px] text-muted">
@@ -179,22 +186,12 @@ export default async function BillingPage() {
           </Card>
         )}
 
-        {/* Gap audit 5.4 (2026-08-08): the dashboard's "Upgrade to Scale" CTA used to dead-end
-            here with no subscriber upgrade control. The real switch mechanism is the Stripe
-            portal — say so and hand over the button. ⚠ Founder ledger: portal plan-switch
-            config is UNVERIFIED — confirm in Stripe before announcing to clients. */}
-        {plan === "growth_279" && (
-          <Card title="Change Plan">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-md text-[14px] text-ink-2">
-                Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans.
-              </p>
-              <StripePortalButton className="shrink-0 rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover">
-                Change plan in Stripe →
-              </StripePortalButton>
-            </div>
-          </Card>
-        )}
+        {/* "Change Plan" card REMOVED (founder-locked 2026-08-22): its only function was the
+            Growth↔Scale switch via the Stripe customer portal, and Scale is off sale — offering
+            the switch was the same off-sale door through a different frame. NOTE the door itself
+            is STRIPE PORTAL CONFIG, not code: if the portal's update-subscription list still
+            carries the Scale price, a client can reach it without any button here — founder
+            dashboard item, flagged in the 2026-08-22 session deliverable. */}
 
         {plan && client.plan_category === "one_time" && (
           <Card title="Upgrade to a subscription">
@@ -202,7 +199,8 @@ export default async function BillingPage() {
               Ready for more? Move to a monthly plan for recurring reports and credit rollover.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {(["growth_279", "scale_499"] as const).map((p) => (
+              {/* On-sale subscriptions only (2026-08-22) — derived, never a second list. */}
+              {PLANS_ON_SALE.filter((p) => PLAN_CATEGORY[p] === "subscription").map((p) => (
                 <div key={p} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-base p-4">
                   <div>
                     <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>

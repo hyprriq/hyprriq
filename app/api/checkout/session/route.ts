@@ -4,7 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import { priceIdForPlan, topupPriceId, type TopupId } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_TYPES, type PlanType } from "@/lib/constants/plans";
-import { checkoutStateError } from "@/lib/billing/checkoutGuard";
+import { checkoutStateError, checkoutSaleError } from "@/lib/billing/checkoutGuard";
 
 // Creates a Stripe Checkout Session for a plan purchase or a credit top-up and
 // returns its URL for the browser to redirect to. SCAFFOLDING: fully wired except
@@ -33,6 +33,14 @@ export async function POST(req: Request) {
   const plan = body.plan as PlanType | undefined;
   if (!isTopup && (!plan || !PLAN_TYPES.includes(plan))) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
+  }
+
+  // ── SALE GATE FIRST (founder-locked 2026-08-22): the page hiding a button is not a control —
+  // THIS is. Coming-soon tiers and off-sale top-ups are refused before any Stripe call, for
+  // every caller, whatever the UI showed. Rule + fixtures: lib/billing/checkoutGuard. ──
+  const offSale = checkoutSaleError(isTopup ? { kind: "topup" } : { kind: "plan", plan: plan as PlanType });
+  if (offSale) {
+    return NextResponse.json({ error: offSale.error, message: offSale.message }, { status: offSale.status });
   }
 
   const price = isTopup

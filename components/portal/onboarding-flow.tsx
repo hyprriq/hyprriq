@@ -13,7 +13,7 @@ import {
   PLAN_BRAND_CAPS,
   CASE_SLA_HOURS,
   PLAN_ROLLOVER_LIMIT,
-  PLAN_TYPES,
+  PLANS_ON_SALE,
   type PlanType,
 } from "@/lib/constants/plans";
 import { requiredFindingTracks } from "@/lib/constants/tracks";
@@ -414,7 +414,9 @@ export function OnboardingFlow({
             ) : (
               <>
                 <div className="mt-5 grid gap-3">
-                  {PLAN_TYPES.map((p) => (
+                  {/* On-sale plans only (founder-locked 2026-08-22) — the checkout route
+                      refuses off-sale tiers regardless; this picker simply tells the truth. */}
+                  {PLANS_ON_SALE.map((p) => (
                     <div key={p} className="flex items-center justify-between gap-3 rounded-card border border-line bg-base p-4">
                       <div>
                         <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>

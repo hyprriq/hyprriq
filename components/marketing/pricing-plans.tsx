@@ -7,23 +7,32 @@ import {
   subscriptionPlans,
   oneTimePlans,
   creditExplainer,
+  COMING_SOON_LABEL,
+  COMING_SOON_NOTE,
   type Plan,
 } from "@/lib/content/pricing";
 
+// Coming-soon cards (founder-locked 2026-08-22): tiers off sale while Keepa is unbuilt render
+// as a ROADMAP — visible, plainly labeled, no purchase path (and no broken button: the CTA is
+// replaced by the honest note, not disabled). The route is the real control; this is honesty.
 function PlanCard({ plan }: { plan: Plan }) {
   return (
     <div
       className={`flex h-full flex-col rounded-[var(--radius-card)] border bg-surface p-7 ${
         plan.popular ? "border-brand shadow-[0_0_0_1px_var(--color-brand)]" : "border-line"
-      }`}
+      } ${plan.comingSoon ? "opacity-80" : ""}`}
     >
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl font-bold text-ink">{plan.name}</h3>
-        {plan.popular && (
+        {plan.comingSoon ? (
+          <span className="rounded-full border border-line bg-subtle px-2.5 py-1 text-xs font-semibold text-muted">
+            {COMING_SOON_LABEL}
+          </span>
+        ) : plan.popular ? (
           <span className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-semibold text-brand-ink">
             Most popular
           </span>
-        )}
+        ) : null}
       </div>
       <p className="mt-4 flex items-baseline gap-1">
         <span className="font-display text-4xl font-bold text-ink">{plan.price}</span>
@@ -38,17 +47,23 @@ function PlanCard({ plan }: { plan: Plan }) {
           </li>
         ))}
       </ul>
-      <Link
-        href="/sign-up"
-        className={`mt-7 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold transition-colors ${
-          plan.popular
-            ? "bg-brand text-white hover:bg-brand-hover"
-            : "border border-line-strong bg-surface text-ink hover:bg-subtle"
-        }`}
-      >
-        Get started
-        <ArrowRight size={18} aria-hidden="true" />
-      </Link>
+      {plan.comingSoon ? (
+        <p className="mt-7 rounded-lg border border-line bg-base px-4 py-3 text-center text-[13px] leading-relaxed text-muted">
+          {COMING_SOON_NOTE}
+        </p>
+      ) : (
+        <Link
+          href="/sign-up"
+          className={`mt-7 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold transition-colors ${
+            plan.popular
+              ? "bg-brand text-white hover:bg-brand-hover"
+              : "border border-line-strong bg-surface text-ink hover:bg-subtle"
+          }`}
+        >
+          Get started
+          <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+      )}
     </div>
   );
 }

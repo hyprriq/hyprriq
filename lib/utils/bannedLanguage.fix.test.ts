@@ -4,7 +4,7 @@ import { VERDICT_SENTENCES } from "@/lib/research/synthesisEngine";
 import { CATEGORY_CLIENT_SUMMARY } from "@/lib/research/categoryStep";
 import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/research/categoryFlagsTable";
 import { clientNote } from "@/lib/research/websiteAnchor";
-import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
+import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison, COMING_SOON_LABEL, COMING_SOON_NOTE } from "@/lib/content/pricing";
 import { PARTNER_REQUEST_COPY, INVITE_LINK_INACTIVE_COPY, GRANT_CODE_ENTRY_COPY } from "@/lib/content/partnerRequest";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
 import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
@@ -99,7 +99,6 @@ const MUST_PASS: [string, string][] = [
   ["delivery email body line 1", "Your source intelligence report for Acme Distribution (case AWI-2607-022) has been delivered."],
   ["delivery email body line 2", "View your report — the verdict, the evidence behind it, and the questions to ask your supplier are ready in your portal."],
   ["delivery email body line 3", "Questions about the report? Use the support page in your portal and we'll pick it up."],
-  ["plan-change card copy", "Moving between Growth and Scale is handled securely in Stripe — open your subscription to switch plans."],
   // — submission confirmation email (2026-08-10 gap-close — standing rule 8: same commit) —
   ["submission email subject", "We received your case AWI-2608-030"],
   ["submission email body line 1", "Your research request for Acme Distribution (case AWI-2608-030) has been submitted and is now in the queue."],
@@ -108,6 +107,14 @@ const MUST_PASS: [string, string][] = [
   // — checkout state-guard messages (2026-08-10 gap-close) —
   ["checkout guard: already subscribed", "You already have a subscription. Plan changes and payment updates are handled in Stripe — use Manage subscription on the Billing page."],
   ["checkout guard: topup requires subscription", "Top-up packs are part of the subscription plans. On a one-time plan, buy another report instead."],
+  // — sale gate (2026-08-22 money-surfaces ruling — standing rule 8: same commit) —
+  ["checkout sale gate: plan coming soon", "This plan isn't available for purchase yet — it's coming soon."],
+  ["checkout sale gate: topups off sale", "Top-up packs aren't available right now."],
+  ["pricing coming-soon chip", COMING_SOON_LABEL],
+  ["pricing coming-soon note", COMING_SOON_NOTE],
+  ["dashboard upgrade CTA (tier-naming retired 2026-08-22)", "Move to a monthly plan →"],
+  // "plan-change card copy" pin REMOVED 2026-08-22: the Change Plan card is gone — its only
+  // function was the Growth↔Scale portal switch, and Scale is off sale.
   // — 24h SLA copy ruling (2026-08-12): every client-facing delivery statement, as rendered —
   ["submit estimated completion", "Within 24 hours"],
   ["onboarding plan bullet", "Delivered within 24 hours"],
@@ -198,7 +205,9 @@ const MUST_PASS: [string, string][] = [
   // Top-up sentence removed from the FAQ answer (founder-ruled 2026-08-22, item 2 — supersedes
   // the 2026-08-14 wording on this one point; the rest of the vocab ruling stands verbatim).
   ["FAQ credits answer (vocab ruling 2026-08-14; top-up sentence removed 2026-08-22)", "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. A single report is just one credit's worth, bought on its own."],
-  ["FAQ try-first answer (vocab ruling 2026-08-14)", "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five assessment areas, to see the depth before committing to a monthly plan."],
+  // $149 offer removed from the try-first answer (sale ruling 2026-08-22 — supersedes the
+  // 2026-08-14 wording on that clause; the tier is off sale while Keepa is unbuilt).
+  ["FAQ try-first answer (vocab 2026-08-14; $149 offer removed 2026-08-22)", "Yes. Buy a Single Report for $99 to see how we work before committing to a monthly plan."],
   // — partner request flow (2026-08-22 item 1 — standing rule 8: same commit; imported, never copied) —
   ...Object.entries(PARTNER_REQUEST_COPY).map(([k, v]): [string, string] => [`partner request copy: ${k}`, v]),
   ["inactive invite-link landing (click-time honesty 2026-08-22)", INVITE_LINK_INACTIVE_COPY],

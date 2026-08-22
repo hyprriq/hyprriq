@@ -1,4 +1,29 @@
 import { describe, it, expect } from "vitest";
+import { checkoutSaleError } from "./checkoutGuard";
+
+// ── SALE GATE (founder-locked 2026-08-22): sellability precedes state — refused for everyone,
+// whatever the UI showed. The route applies this before checkoutStateError.
+describe("checkoutSaleError — the route is the control, not the page", () => {
+  it("coming-soon tiers are refused with the honest message", () => {
+    for (const plan of ["single_149", "scale_499"] as const) {
+      const r = checkoutSaleError({ kind: "plan", plan });
+      expect(r).toMatchObject({ error: "plan_not_on_sale", status: 403 });
+      expect(r?.message).toBe("This plan isn't available for purchase yet — it's coming soon.");
+    }
+  });
+
+  it("on-sale tiers pass", () => {
+    for (const plan of ["single_99", "growth_279"] as const) {
+      expect(checkoutSaleError({ kind: "plan", plan })).toBeNull();
+    }
+  });
+
+  it("top-ups are refused while off sale — for every client, including active subscribers", () => {
+    const r = checkoutSaleError({ kind: "topup" });
+    expect(r).toMatchObject({ error: "topup_not_on_sale", status: 403 });
+    expect(r?.message).toBe("Top-up packs aren't available right now.");
+  });
+});
 import { checkoutStateError } from "./checkoutGuard";
 
 describe("checkoutStateError — the /api/checkout/session state guard (gap-close 2026-08-10)", () => {

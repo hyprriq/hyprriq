@@ -9,7 +9,14 @@
 
 // COPY RULING 2026-08-12: every delivery statement derives from CASE_SLA_HOURS — 24 hours on
 // every plan, no per-plan variation, no "typically"/"up to", priority framing retired.
-import { CASE_SLA_HOURS } from "@/lib/constants/plans";
+import { CASE_SLA_HOURS, PLANS_ON_SALE, type PlanType } from "@/lib/constants/plans";
+
+// ── COMING SOON (founder-locked 2026-08-22): tiers with category compliance are off sale while
+// Keepa is unbuilt. DERIVED from the one on-sale registry, never a second list — the cards stay
+// visible as a roadmap; the checkout route is the control.
+const onSale = (id: PlanType) => PLANS_ON_SALE.includes(id);
+export const COMING_SOON_LABEL = "Coming soon";
+export const COMING_SOON_NOTE = "Opens when category compliance research goes live. Not available for purchase yet.";
 
 export const pricingHero = {
   title: "Costs less than one bad buy.",
@@ -27,6 +34,8 @@ export type Plan = {
   meta: string;
   points: string[];
   popular: boolean;
+  /** Derived from PLANS_ON_SALE — a roadmap card: visible, never buyable. */
+  comingSoon: boolean;
 };
 
 export const subscriptionPlans: Plan[] = [
@@ -43,7 +52,10 @@ export const subscriptionPlans: Plan[] = [
       "Full portal + case history",
       "Credit rollover (up to 2)",
     ],
-    popular: false,
+    // "Most popular" moved off Scale with the 2026-08-22 sale ruling — a chip on a card you
+    // cannot buy is an anti-pattern; the buyable subscription carries it.
+    popular: true,
+    comingSoon: !onSale("growth_279"),
   },
   {
     id: "scale_499",
@@ -63,7 +75,8 @@ export const subscriptionPlans: Plan[] = [
       "Category compliance review",
       "Credit rollover (up to 4)",
     ],
-    popular: true,
+    popular: false,
+    comingSoon: !onSale("scale_499"),
   },
 ];
 
@@ -80,7 +93,8 @@ export const oneTimePlans: Plan[] = [
       "Supplier questions checklist",
       `Ready in your portal within ${CASE_SLA_HOURS} hours`,
     ],
-    popular: false,
+    popular: true,
+    comingSoon: !onSale("single_99"),
   },
   {
     id: "single_149",
@@ -96,7 +110,8 @@ export const oneTimePlans: Plan[] = [
       "Document review included",
       `Ready in your portal within ${CASE_SLA_HOURS} hours`,
     ],
-    popular: true,
+    popular: false,
+    comingSoon: !onSale("single_149"),
   },
 ];
 

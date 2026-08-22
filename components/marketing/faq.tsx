@@ -34,7 +34,9 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I try it before subscribing?",
-    a: "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five assessment areas, to see the depth before committing to a monthly plan.",
+    // "$149 Single Deep Report" offer removed (founder-locked 2026-08-22): the tier is off sale
+    // while Keepa is unbuilt — the FAQ offers only what checkout will accept.
+    a: "Yes. Buy a Single Report for $99 to see how we work before committing to a monthly plan.",
   },
 ];
 

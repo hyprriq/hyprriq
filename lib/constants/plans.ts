@@ -15,6 +15,28 @@ export const PLAN_TYPES: PlanType[] = ["single_99", "single_149", "growth_279", 
 // Flips in exactly one place when the integration lands. ──
 export const KEEPA_LIVE = false;
 
+// ── WHAT IS ON SALE (founder-locked 2026-08-22, money-surfaces ruling) — THE single source of
+// truth for sellability. single_149 and scale_499 include category compliance, category
+// compliance depends on Keepa, and KEEPA_LIVE is false: a customer buying either today would
+// pay for a report section that cannot answer its own question. They are COMING SOON — visible
+// on the pricing page as a roadmap, refused by /api/checkout/session as a control (a hidden
+// button is not a control; the route is). Every purchase surface — pricing cards, portal plan
+// pickers, upgrade cards, the checkout route — reads THIS list; a page-level list that could
+// drift from a route-level list is the defect this constant exists to prevent (fixture-locked:
+// no category-compliance tier may appear here while KEEPA_LIVE is false).
+// Returning a tier to sale is a founder ruling recorded here, not an edit.
+export const PLANS_ON_SALE: readonly PlanType[] = ["single_99", "growth_279"];
+
+export function planOnSale(plan: PlanType): boolean {
+  return PLANS_ON_SALE.includes(plan);
+}
+
+// Top-ups are OFF SALE (same ruling): purchasable-today packs fed a rollover that destroyed
+// paid credits. The DB fix is live (purchased_credits, founder-run 2026-08-22) and the webhook
+// lands top-ups as protected purchased credits — but they return to sale only by ruling,
+// recorded here. The billing card and the checkout route both read this flag.
+export const TOPUPS_ON_SALE = false;
+
 // Brand cap = max brands researched per credit (one case = one supplier + up to
 // this many brands = 1 credit). Read from HERE everywhere it's shown so a
 // confirmed number is a one-line change, not a find-and-replace.

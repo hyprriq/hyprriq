@@ -253,9 +253,12 @@ export default async function DashboardPage() {
                 <div className="h-full rounded-full bg-brand" style={{ width: `${cv.pct}%` }} />
               </div>
               <div className="mt-1.5 text-[13px] text-muted">{cv.headline}{cv.detail ? ` · ${cv.detail}` : ""}</div>
-              {plan !== "scale_499" && (
+              {/* Sale ruling 2026-08-22: "Upgrade to Scale" named a tier that is off sale — the
+                  CTA now exists only where an on-sale upgrade actually awaits (one-time clients
+                  → Growth, offered on Billing), and names no tier. */}
+              {PLAN_CATEGORY[plan] === "one_time" && (
                 <Link href="/portal/billing" className="mt-3 block rounded-lg bg-brand px-3 py-2 text-center text-[14px] font-semibold text-white hover:bg-brand-hover">
-                  Upgrade to Scale →
+                  Move to a monthly plan →
                 </Link>
               )}
             </div>
