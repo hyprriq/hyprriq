@@ -51,9 +51,10 @@ export default function PaymentPolicyPage() {
 
       <H2>Failed payments</H2>
       <P>
-        If a payment fails we will tell you by email and retry. Your account moves to a past-due state and new
-        submissions are paused until payment succeeds.{" "}
-        <b>We do not suspend access to reports you have already received</b> during this period.
+        If a payment fails we tell you by email, and the charge is retried. Your account moves to a past-due
+        state and new research submissions are paused until payment succeeds — your credits are preserved,
+        nothing is forfeited.{" "}
+        <b>Reports you have already received stay available</b> throughout.
       </P>
 
       <H2>Changing plans</H2>

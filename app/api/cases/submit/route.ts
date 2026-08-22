@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   const supa = createServerClient();
   const { data: client } = await supa
     .from("clients")
-    .select("plan_type, credits_available, email")
+    .select("plan_type, credits_available, email, billing_status")
     .eq("id", userId)
     .maybeSingle();
 
@@ -87,6 +87,26 @@ export async function POST(req: Request) {
   if (!plan) {
     return NextResponse.json(
       { error: "no_plan", message: "You need an active plan to submit research." },
+      { status: 402 },
+    );
+  }
+
+  // ── PAST-DUE BLOCK (founder-ruled 2026-08-22, the legal truth-audit build): the Payment
+  // Policy says submissions pause when payment fails — this makes it true. A past-due account
+  // with leftover credits could previously submit, spending research money on an unpaid account.
+  // Credits are PRESERVED (nothing deducted, nothing forfeited); no case is created, no research
+  // fires. Delivered reports stay readable — only NEW submissions pause. `cancelled` blocks too
+  // (CTO-DECIDED): the Refund Policy says credits stay usable "until the end of the paid period",
+  // and cancelled means that period has ended.
+  if (client.billing_status === "past_due") {
+    return NextResponse.json(
+      { error: "billing_past_due", message: "Your last payment didn't go through, so new submissions are paused — your credits are safe and your reports stay available. Update your payment method on the Billing page to continue." },
+      { status: 402 },
+    );
+  }
+  if (client.billing_status === "cancelled") {
+    return NextResponse.json(
+      { error: "billing_cancelled", message: "Your plan has ended, so new submissions are paused. Choose a plan on the Billing page to continue — your reports stay available." },
       { status: 402 },
     );
   }
