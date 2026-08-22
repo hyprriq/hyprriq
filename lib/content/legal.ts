@@ -4,9 +4,10 @@
 // TRANSCRIBE it — nothing there is authored, edited, tightened or improved in code. Wording
 // concerns are flagged in reports, never fixed in place.
 //
-// ⚠ EFFECTIVE DATE — founder-set 2026-08-21 as "22-05-2026" (read here as May 22, 2026, and
-// FLAGGED in the build report: that date is in the past relative to the build; if August 22 or
-// the production go-live date was meant, this constant is the one line to change).
+// EFFECTIVE DATE — RULED DELIBERATE (founder, 2026-08-22): May 22, 2026 is the date development
+// of HyprrIQ began, and the policies are dated from it intentionally — buyers should see an
+// operation that has been running, not one that appeared yesterday. NOT an error; do not
+// "fix" this to a launch or push date. One line to change if the founder ever re-rules.
 export const LEGAL_EFFECTIVE_DATE = "May 22, 2026";
 
 export const COMPANY = {
