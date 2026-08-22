@@ -4,6 +4,10 @@ import { clientInScope } from "@/lib/auth/clientScope";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getOperator } from "@/lib/auth/permissions";
 
+// OPERATOR RUNBOOK: docs/runbooks/RUNBOOK_ACCOUNT_CLOSURE_DELETION.md — the by-hand procedure
+// that keeps the published 30-days-after-closure deletion promise (this route is its step 3; the
+// runbook carries the intelligence_events RESTRICT workaround and the email_log scrub this route
+// does not do).
 // Item 4 — admin-only HARD delete of a client account (GDPR right-to-erasure).
 // This is the ONE exception to the never-hard-delete rule. Double-confirmed in
 // the UI (type the client email). NOT reachable by clients. NOT on client Settings.

@@ -12,6 +12,8 @@ import { COMPANY } from "@/lib/content/legal";
 // drafted 180-days-after-delivery case-record deletion had no machinery and collided with our
 // ability to re-verify delivered work — replaced with while-your-account-is-active retention,
 // stated plainly with its reason.
+// OPERATOR RUNBOOK: docs/runbooks/RUNBOOK_ACCOUNT_CLOSURE_DELETION.md — the by-hand procedure
+// that keeps every closure-clocked row on this page (this commitment breaches by forgetting).
 
 export const metadata: Metadata = {
   title: "Data Protection & Retention — HyprrIQ",

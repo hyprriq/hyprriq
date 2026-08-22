@@ -10,6 +10,8 @@ import { PLAN_TYPES, PLAN_NAME, PLAN_PRICE_LABEL, PLAN_CADENCE, PLAN_CREDITS_PER
 // lib/constants/plans.ts — the one price source — so this page can never disagree with pricing.
 // NO refund code exists anywhere (verified: refunds are Stripe-dashboard-only, STOP-3); this
 // page is the formula's only encoding.
+// OPERATOR RUNBOOK: docs/runbooks/RUNBOOK_REFUND_BY_FORMULA.md — the by-hand procedure that
+// keeps this section's promise (classify → count used → compute → Stripe → credits → read-back).
 
 // Plan prices come from the registry's own labels ("$279" → 279) — never a second copy.
 function planPriceNumber(p: PlanType): number {
