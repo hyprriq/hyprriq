@@ -40,3 +40,38 @@ export function topupForPriceId(priceId: string): { id: TopupId; credits: number
   }
   return null;
 }
+
+// ══ THE B2 LAW, AS FUNCTIONS (founder-locked 2026-08-22, item 3): on a PAID event, a lookup
+// miss NEVER resolves to zero/null/skip — it THROWS, so the webhook's catch writes
+// stripe_events.error, Stripe retries, and the failure is visible like every other money
+// failure. "A write of zero is not a success." The pre-fix shape — `TOPUP[id]?.credits ?? 0`
+// — took the money and granted nothing, recording "Top-up: 0 credits" as though that were the
+// product. These helpers exist so the law is FIXTURE-ENFORCED (plans.paidLookups.test.ts), not
+// comment-enforced; the webhook calls them and nothing else on paid paths. ══
+
+/** Paid top-up → its credit count. Unrecognized id = a paid purchase we cannot attribute: throw. */
+export function creditsForPaidTopup(topupId: string): number {
+  // Object.hasOwn, not truthiness: "constructor" et al. resolve through the prototype chain and
+  // would smuggle an inherited function past a `!topup` check (caught by the fixture).
+  if (!Object.hasOwn(TOPUP, topupId)) {
+    throw new Error(`B2: unrecognized top-up id "${topupId}" on a PAID session — money accepted, no known product; refusing to record a zero-credit success`);
+  }
+  return TOPUP[topupId as TopupId].credits;
+}
+
+/** Paid subscription price → its plan. Unmapped price = a paid subscription we cannot provision: throw. */
+export function planForPaidPrice(priceId: string): PlanType {
+  const plan = planForPriceId(priceId);
+  if (!plan) {
+    throw new Error(`B2: no plan maps to price "${priceId}" on a PAID event — money accepted, nothing would provision; check the STRIPE_PRICE_* env mapping`);
+  }
+  return plan;
+}
+
+/** Paid one-time session's metadata kind ("plan:x") → a REGISTERED plan. Anything else: throw. */
+export function planForPaidKind(kind: string): PlanType {
+  const candidate = kind.startsWith("plan:") ? kind.slice(5) : null;
+  // Object.hasOwn, not `in`: "toString" is `in` every object via the prototype chain.
+  if (candidate && Object.hasOwn(PLAN_PRICE_ENV, candidate)) return candidate as PlanType;
+  throw new Error(`B2: unattributable PAID checkout session (metadata kind "${kind}") — money accepted, nothing would provision`);
+}

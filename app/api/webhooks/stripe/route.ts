@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { planForPriceId, TOPUP, type TopupId } from "@/lib/stripe/plans";
+import { planForPriceId, planForPaidPrice, planForPaidKind, creditsForPaidTopup } from "@/lib/stripe/plans";
 import { PLAN_CATEGORY, PLAN_CREDITS_PER_CYCLE, type PlanType } from "@/lib/constants/plans";
 import { addPurchasedCredits, rolloverClientCredits } from "@/lib/data/credits";
 import { grantUpgradeCredits, isUpgrade } from "@/lib/billing/upgradeGrant";
@@ -166,41 +166,39 @@ export async function POST(req: Request) {
           }
         }
 
+        // ── THE B2 LAW ON EVERY PAID BRANCH (founder-locked 2026-08-22, item 3): checkout
+        // COMPLETED means money moved. A lookup miss below is never a skip — the throwing
+        // helpers (lib/stripe/plans.ts, fixture-enforced) turn "unknown id/price/kind" into a
+        // throw → stripe_events.error → Stripe retries → visible. The pre-fix shape granted
+        // 0 credits for an unrecognized top-up and recorded it as the product. ──
         if (kind.startsWith("topup:")) {
-          const topupId = kind.slice("topup:".length) as TopupId;
-          const credits = TOPUP[topupId]?.credits ?? 0;
-          if (credits > 0) {
-            // PURCHASED, not plan-class (founder-locked 2026-08-22, item 2b): paid top-ups land
-            // through add_purchased_credits so the renewal rollover can never clip them — built
-            // while top-ups are off sale, so the first pack ever sold lands protected.
-            const { error: creditErr } = await addPurchasedCredits(clientId, credits);
-            // B2 — a paid top-up that fails to land must FAIL LOUD: throw → stripe_events.error is
-            // written below → Stripe retries → the unprocessed-duplicate path reprocesses (B3 fix).
-            if (creditErr) throw new Error(`top-up credit grant failed: ${creditErr}`);
-          }
+          const credits = creditsForPaidTopup(kind.slice("topup:".length)); // throws on unknown id
+          // PURCHASED, not plan-class (item 2b): paid top-ups land through add_purchased_credits
+          // so the renewal rollover can never clip them — sold later, protected already.
+          const { error: creditErr } = await addPurchasedCredits(clientId, credits);
+          // B2 — a paid top-up that fails to land must FAIL LOUD: throw → stripe_events.error is
+          // written below → Stripe retries → the unprocessed-duplicate path reprocesses (B3 fix).
+          if (creditErr) throw new Error(`top-up credit grant failed: ${creditErr}`);
           if (customerId) await supabaseAdmin.from("clients").update({ stripe_customer_id: customerId }).eq("id", clientId);
           await recordBillingEvent(clientId, { event: "one_time_purchase", stripeEventId: event.id, notes: `Top-up: ${credits} credit${credits === 1 ? "" : "s"}` });
         } else if (s.mode === "subscription" && s.subscription) {
           const subId = typeof s.subscription === "string" ? s.subscription : s.subscription.id;
           const sub = await stripe.subscriptions.retrieve(subId);
           const priceId = sub.items.data[0]?.price.id ?? "";
-          const plan = planForPriceId(priceId);
-          if (plan) {
-            await activatePlan(clientId, plan, {
-              customerId,
-              subscriptionId: subId,
-              renewalDate: iso((sub as unknown as { current_period_end: number }).current_period_end),
-              email,
-            });
-            await recordBillingEvent(clientId, { event: "new_subscription", newPlan: plan, stripeEventId: event.id });
-          }
+          const plan = planForPaidPrice(priceId); // throws on an unmapped price — a paid sub must provision
+          await activatePlan(clientId, plan, {
+            customerId,
+            subscriptionId: subId,
+            renewalDate: iso((sub as unknown as { current_period_end: number }).current_period_end),
+            email,
+          });
+          await recordBillingEvent(clientId, { event: "new_subscription", newPlan: plan, stripeEventId: event.id });
         } else {
-          // one-time (Single Report)
-          const plan = kind.startsWith("plan:") ? (kind.slice(5) as PlanType) : null;
-          if (plan) {
-            await activatePlan(clientId, plan, { customerId, email });
-            await recordBillingEvent(clientId, { event: "one_time_purchase", newPlan: plan, stripeEventId: event.id });
-          }
+          // one-time (Single Report). planForPaidKind throws on garbage/absent metadata — an
+          // unattributable PAID session is a failure to investigate, never a silent ACK.
+          const plan = planForPaidKind(kind);
+          await activatePlan(clientId, plan, { customerId, email });
+          await recordBillingEvent(clientId, { event: "one_time_purchase", newPlan: plan, stripeEventId: event.id });
         }
         break;
       }
@@ -226,6 +224,19 @@ export async function POST(req: Request) {
         // the existing rollover path. No new billing logic — mapping only. ──
         const priceId = sub.items?.data?.[0]?.price?.id ?? null;
         const newPlan = priceId ? planForPriceId(priceId) : null;
+        // Item 3b (2026-08-22): an UNMAPPED price here is not a paid-provisioning miss (money is
+        // Stripe's side on this event; status tracking below must keep working), so it doesn't
+        // throw — but it must never be silent either: plan_type goes stale the moment this fires.
+        if (priceId && !newPlan) {
+          console.error(`[webhook] subscription ${sub.id} carries price "${priceId}" that maps to NO plan — plan_type will go stale until the STRIPE_PRICE_* mapping is fixed`);
+          try {
+            await supabaseAdmin.from("audit_log").insert({
+              table_name: "clients", record_id: null, action: "INSERT",
+              actor_id: "system", actor_type: "system",
+              new_value: { stripe_price_unmapped: true, subscription_id: sub.id, price_id: priceId, event_id: event.id },
+            });
+          } catch { /* the reporter never blocks status tracking */ }
+        }
         // Read prior state first so we only log a Billing History row on an actual
         // transition (subscription.updated fires for many non-status changes).
         const { data: prior } = await supabaseAdmin
@@ -296,16 +307,19 @@ export async function POST(req: Request) {
 
         const priceRef = inv.lines?.data?.[0]?.pricing?.price_details?.price;
         const priceId = typeof priceRef === "string" ? priceRef : priceRef?.id ?? "";
-        const plan = priceId ? planForPriceId(priceId) : null;
         const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? null;
-        if (plan && customerId) {
-          // Capped rollover (decision 2026-06-20), now ATOMIC (N6): unused credits carry over up
-          // to the plan's cap, then the cycle's allotment lands on top — one SQL statement, no
-          // read-modify-write window against a concurrent submit deduction.
-          const { error: rolloverErr } = await rolloverClientCredits(customerId, plan);
-          if (rolloverErr) throw new Error(`renewal rollover failed: ${rolloverErr}`);
-          await supabaseAdmin.from("clients").update({ billing_status: "active" }).eq("stripe_customer_id", customerId);
-        }
+        // B2 (item 3b, 2026-08-22): this is a PAID renewal — the client's card was charged.
+        // The pre-fix `if (plan && customerId)` skipped SILENTLY on a lookup miss: money taken,
+        // zero cycle credits granted, event marked processed. A paid renewal that cannot roll
+        // credits is a failure to surface, never a success to record.
+        if (!customerId) throw new Error(`B2: paid renewal invoice ${inv.id} carries no customer — cannot credit the cycle`);
+        const plan = planForPaidPrice(priceId); // throws on an unmapped price
+        // Capped rollover (decision 2026-06-20), now ATOMIC (N6): unused credits carry over up
+        // to the plan's cap, then the cycle's allotment lands on top — one SQL statement, no
+        // read-modify-write window against a concurrent submit deduction.
+        const { error: rolloverErr } = await rolloverClientCredits(customerId, plan);
+        if (rolloverErr) throw new Error(`renewal rollover failed: ${rolloverErr}`);
+        await supabaseAdmin.from("clients").update({ billing_status: "active" }).eq("stripe_customer_id", customerId);
         break;
       }
 
