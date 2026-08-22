@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
+import { PartnerRequestForm } from "@/components/marketing/partner-request-form";
 import { AREA_NAMES, AREA_DEFS } from "@/lib/content/reportCopy";
 
 export const metadata: Metadata = {
@@ -100,27 +101,29 @@ export default async function PartnersPage({
         </div>
       </section>
 
-      <section className="border-t border-line bg-base">
-        <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
-          <Reveal>
-            <h2 className="text-2xl font-bold text-ink">Try it on a real supplier, free</h2>
-            <p className="mt-2 max-w-2xl text-[15px] text-ink-2">
-              We give sourcing professionals a <b>free full assessment</b> — every assessment area, one
-              complete report on a supplier you&rsquo;re actually evaluating. No card, no subscription. If the
-              report earns a place in your workflow, we should talk about referrals.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <a
-                href="mailto:hello@hyprriq.com?subject=Partner%20free%20assessment"
-                className="rounded-lg bg-ink px-5 py-2.5 text-[14px] font-semibold text-surface hover:opacity-90"
-              >
-                Request your free assessment
-              </a>
-              <p className="text-[13px] text-muted">Already have an invite link? It applies itself when you register.</p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {/* THE TWO VISITORS NEVER COLLIDE (ruled 1g, 2026-08-22): an ?invited=1 arrival already
+          holds a grant — the banner above is their whole path, and this request section does not
+          render for them (asking them to request what they hold was the old mailto section's
+          quiet collision). Cold visitors get the in-page request form — the mailto is dead: it
+          failed silently without a mail client and captured nothing (ruled 1a/1b). */}
+      {invited !== "1" && (
+        <section className="border-t border-line bg-base">
+          <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
+            <Reveal>
+              <h2 className="text-2xl font-bold text-ink">Try it on a real supplier, free</h2>
+              <p className="mt-2 max-w-2xl text-[15px] text-ink-2">
+                We give sourcing professionals a <b>free full assessment</b> — every assessment area, one
+                complete report on a supplier you&rsquo;re actually evaluating. No card, no subscription. If the
+                report earns a place in your workflow, we should talk about referrals.
+              </p>
+              <div className="mt-6">
+                <PartnerRequestForm />
+              </div>
+              <p className="mt-3 text-[13px] text-muted">Already have an invite link? It applies itself when you register.</p>
+            </Reveal>
+          </div>
+        </section>
+      )}
     </>
   );
 }

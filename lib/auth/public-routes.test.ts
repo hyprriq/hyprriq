@@ -47,4 +47,19 @@ describe("PUBLIC_ROUTES", () => {
   it("keeps the Stripe webhook public (verified via STRIPE_WEBHOOK_SECRET)", () => {
     expect(PUBLIC_ROUTES).toContain("/api/webhooks/(.*)");
   });
+
+  // ── THE COLD-VISITOR CLASS (2026-08-22, found while killing the /partners mailto): endpoints
+  // that exist FOR people with no account. /unsubscribe lives outside app/(marketing), so the
+  // filesystem walk above never sees it — it and the capture APIs shipped behind Clerk: the
+  // footer signup 401'd for every logged-out visitor, and a campaign unsubscribe click would
+  // have bounced to sign-in (a CAN-SPAM problem on the ADR's permanent URL). Locked by name. ──
+  it("keeps /unsubscribe public — a campaign recipient is logged out BY DEFINITION", () => {
+    expect(PUBLIC_ROUTES).toContain("/unsubscribe");
+  });
+  it("keeps the newsletter consent capture public (the footer box serves logged-out visitors)", () => {
+    expect(PUBLIC_ROUTES).toContain("/api/newsletter");
+  });
+  it("keeps the partner request intake public (a cold VA has no account — that's the point)", () => {
+    expect(PUBLIC_ROUTES).toContain("/api/partner-request");
+  });
 });

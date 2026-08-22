@@ -5,6 +5,7 @@ import { CATEGORY_CLIENT_SUMMARY } from "@/lib/research/categoryStep";
 import { CATEGORY_FLAGS_TABLE, CATEGORY_FLAGS_GOVERNING_LAW } from "@/lib/research/categoryFlagsTable";
 import { clientNote } from "@/lib/research/websiteAnchor";
 import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparison } from "@/lib/content/pricing";
+import { PARTNER_REQUEST_COPY } from "@/lib/content/partnerRequest";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
 import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
 
@@ -196,6 +197,8 @@ const MUST_PASS: [string, string][] = [
   ...comparison.map((r): [string, string] => [`comparison row: ${r.feature}`, `${r.feature}: ${r.values.join(" / ")}`]),
   ["FAQ credits answer (vocab ruling 2026-08-14)", "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own."],
   ["FAQ try-first answer (vocab ruling 2026-08-14)", "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five assessment areas, to see the depth before committing to a monthly plan."],
+  // — partner request flow (2026-08-22 item 1 — standing rule 8: same commit; imported, never copied) —
+  ...Object.entries(PARTNER_REQUEST_COPY).map(([k, v]): [string, string] => [`partner request copy: ${k}`, v]),
   ["help areas sub (claims ruling 2026-08-14)", "Which areas run depends on your plan — your report states exactly what it covered."],
   ["report areas header ($99 case)", "The 3 assessment areas in this report"],
   // — the spec §6 explicit denials —

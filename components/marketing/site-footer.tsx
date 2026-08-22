@@ -19,7 +19,10 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
     // About stays absent until its page exists (no dead links, founder-ruled 2026-08-08). The
     // legal set returned 2026-08-21 with the locked legal pages — rendered from LEGAL_PAGES in
     // the bottom bar so all six appear on every page, per the locked build note.
-    links: [{ label: "Contact", href: "mailto:hello@hyprriq.com" }],
+    // The address IS the label (2026-08-22, mailto-class fix): a bare "Contact" mailto failed
+    // silently for anyone without a mail client — showing the address means the worst case is
+    // "read it and write to it", never a dead click. A /contact page (blueprint) stays parked.
+    links: [{ label: "hello@hyprriq.com", href: "mailto:hello@hyprriq.com" }],
   },
 ];
 

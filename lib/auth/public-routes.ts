@@ -32,6 +32,15 @@ export const PUBLIC_ROUTES: string[] = [
   // account yet BY DESIGN — behind auth it would demand a login from the exact person it exists
   // to acquire. The slug is the secret; every real check lives in the redemption RPC.
   "/grant/(.*)",
+  // ⚠ CLASS FIX (2026-08-22, found during the /partners mailto replacement): /unsubscribe and
+  // /api/newsletter shipped WITHOUT public entries — the marketing-route lock only walks
+  // app/(marketing), so neither was caught. A logged-out footer signup died on a Clerk 401
+  // ("that didn't go through"), and a campaign unsubscribe click would have bounced to sign-in —
+  // a CAN-SPAM problem, on the exact URL the ADR calls permanent. Both are locked by name in
+  // public-routes.test.ts now; /api/partner-request (same cold-visitor class) joins them.
+  "/unsubscribe",
+  "/api/newsletter",
+  "/api/partner-request",
   "/api/webhooks/(.*)",
   "/api/health",
   "/api/inngest(.*)",
