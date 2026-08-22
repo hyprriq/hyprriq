@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
 import { PartnerRequestForm } from "@/components/marketing/partner-request-form";
+import { INVITE_LINK_INACTIVE_COPY } from "@/lib/content/partnerRequest";
 import { AREA_NAMES, AREA_DEFS } from "@/lib/content/reportCopy";
 
 export const metadata: Metadata = {
@@ -22,12 +23,21 @@ const PARTNER_AREAS = ["supplier_identity", "supply_chain_relationship", "brand_
 export default async function PartnersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invited?: string; code?: string }>;
+  searchParams: Promise<{ invited?: string; invite?: string; code?: string }>;
 }) {
-  const { invited, code } = await searchParams;
+  const { invited, invite, code } = await searchParams;
   const safeCode = code && code.length <= 64 ? code : null;
   return (
     <>
+      {/* Click-time honesty (2026-08-22): a revoked/expired/used/garbage invite link lands here
+          instead of the banner — the promise is never made, and the request form stays open. */}
+      {invite === "inactive" && (
+        <div className="border-b border-line bg-subtle">
+          <div className="mx-auto max-w-3xl px-5 py-3.5 lg:px-8">
+            <p className="text-[14px] text-ink-2">{INVITE_LINK_INACTIVE_COPY}</p>
+          </div>
+        </div>
+      )}
       {invited === "1" && (
         <div className="border-b border-line bg-brand-tint/70">
           <div className="mx-auto max-w-3xl px-5 py-3.5 lg:px-8">

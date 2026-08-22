@@ -51,6 +51,11 @@ export const PARTNER_REQUEST_COPY = {
   consentLabel: "Also send me occasional notes on supplier verification and sourcing. Unsubscribe any time.",
 } as const;
 
+// Shown when an invite link is clicked after it was revoked, expired, or fully used (click-time
+// honesty, 2026-08-22): no banner, no false promise — just the truth and the open path.
+export const INVITE_LINK_INACTIVE_COPY =
+  "This invite link is no longer active. If it was sent to you directly, reply to whoever sent it — or request an assessment below.";
+
 const roleValues = ROLE_OPTIONS.map((o) => o.value);
 const bandValues = CLIENTS_BAND_OPTIONS.map((o) => o.value);
 
