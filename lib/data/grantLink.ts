@@ -1,12 +1,20 @@
-// ── INVITE-LINK STATE AT CLICK TIME (founder-found 2026-08-22: a REVOKED link still showed the
-// "your free full assessment is attached" banner and a sign-up push — the money was safe (the
-// redemption RPC is the real gate and refuses revoked/expired/exhausted codes), but the visitor
-// was promised at the door what the counter would refuse). This pure check lets /grant/[code]
-// answer honestly BEFORE the promise is made. It is a COURTESY CHECK, not the gate: the RPC
-// keeps every real decision, and a lookup failure fails SOFT to the old behavior — a transient
-// DB blip must never brick a working invite link.
+// ── THE ONE TS NOTION OF GRANT VALIDITY (founder-locked 2026-08-22, item 1b) ─────────────────
 //
-// Deliberately pure and dependency-free so the fixtures cover it without mocking a client.
+// Every TypeScript surface that answers "is this grant usable / what state is it in" reads THIS
+// module — the landing route, the /partners banner, the sign-up code check, and the admin
+// manager's status labels. A caller growing its own revoked/expired/exhausted logic is the
+// defect this collapse removed (the admin manager had an independent copy until 2026-08-22);
+// grantLink.callers.lock.test.ts fails the build if a caller re-derives instead of importing.
+//
+// TWO NOTIONS EXIST BY DESIGN, ONE PER LAYER — and only two: this module is the COURTESY
+// mirror (honest UI before any promise is made), and the redeem_acquisition_grant RPC
+// (20260821000400) is the GATE — row-locked, atomic, the only thing that ever grants value.
+// The RPC's checks (lines 36–38 of its migration) and grantDisplayState below must agree; the
+// fixtures pin this module to the RPC's exact semantics (expires_at <= now() is closed AT the
+// boundary instant).
+//
+// Deliberately pure and dependency-free so the fixtures cover every caller's cases without
+// mocking a client.
 
 export interface GrantLinkFields {
   revoked_at: string | null;
@@ -15,11 +23,20 @@ export interface GrantLinkFields {
   max_redemptions: number;
 }
 
-/** Mirrors grantState() in the admin manager: revoked, expired (<= now), or fully redeemed = closed. */
+export type GrantDisplayState = "revoked" | "expired" | "fully_redeemed" | "active";
+
+/**
+ * The one state derivation. Precedence mirrors the RPC: revoked → expired → exhausted → active.
+ * (A grant both revoked and expired reads "revoked" — the deliberate act outranks the clock.)
+ */
+export function grantDisplayState(g: GrantLinkFields, now = Date.now()): GrantDisplayState {
+  if (g.revoked_at) return "revoked";
+  if (new Date(g.expires_at).getTime() <= now) return "expired";
+  if (g.redemption_count >= g.max_redemptions) return "fully_redeemed";
+  return "active";
+}
+
+/** Usable = exists and active. null = definitively no such code — never earns a promise. */
 export function grantLinkOpen(g: GrantLinkFields | null, now = Date.now()): boolean {
-  if (!g) return false; // definitively no such code — the banner would promise a credit that cannot exist
-  if (g.revoked_at) return false;
-  if (new Date(g.expires_at).getTime() <= now) return false;
-  if (g.redemption_count >= g.max_redemptions) return false;
-  return true;
+  return g !== null && grantDisplayState(g, now) === "active";
 }

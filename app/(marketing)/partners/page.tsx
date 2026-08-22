@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
 import { PartnerRequestForm } from "@/components/marketing/partner-request-form";
 import { INVITE_LINK_INACTIVE_COPY } from "@/lib/content/partnerRequest";
+import { checkGrantCode, logGrantCheckFailOpen } from "@/lib/data/grantCheck";
 import { AREA_NAMES, AREA_DEFS } from "@/lib/content/reportCopy";
 
 export const metadata: Metadata = {
@@ -27,18 +28,37 @@ export default async function PartnersPage({
 }) {
   const { invited, invite, code } = await searchParams;
   const safeCode = code && code.length <= 64 ? code : null;
+
+  // ── THE BANNER CHECKS BEFORE IT PROMISES (item 1b, 2026-08-22): this render was the last
+  // point that trusted a query param — /partners?invited=1 typed by hand, or bookmarked after
+  // the grant died, showed "your assessment is attached" unverified. Now: invited=1 without a
+  // code renders the plain page (nothing to verify → no promise), and invited=1 with a code
+  // re-checks it through the ONE shared validity path. Fail-open on lookup error (1c,
+  // founder-accepted) — and never silently: logged to console + audit_log. ──
+  let inviteState: "banner" | "inactive" | "none" = "none";
+  if (invite === "inactive") inviteState = "inactive";
+  else if (invited === "1" && safeCode) {
+    const check = await checkGrantCode(safeCode);
+    if (check.outcome === "unavailable") {
+      await logGrantCheckFailOpen("partners_banner", safeCode, check.error);
+      inviteState = "banner";
+    } else {
+      inviteState = check.outcome === "open" ? "banner" : "inactive";
+    }
+  }
+
   return (
     <>
       {/* Click-time honesty (2026-08-22): a revoked/expired/used/garbage invite link lands here
           instead of the banner — the promise is never made, and the request form stays open. */}
-      {invite === "inactive" && (
+      {inviteState === "inactive" && (
         <div className="border-b border-line bg-subtle">
           <div className="mx-auto max-w-3xl px-5 py-3.5 lg:px-8">
             <p className="text-[14px] text-ink-2">{INVITE_LINK_INACTIVE_COPY}</p>
           </div>
         </div>
       )}
-      {invited === "1" && (
+      {inviteState === "banner" && (
         <div className="border-b border-line bg-brand-tint/70">
           <div className="mx-auto max-w-3xl px-5 py-3.5 lg:px-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -116,7 +136,7 @@ export default async function PartnersPage({
           render for them (asking them to request what they hold was the old mailto section's
           quiet collision). Cold visitors get the in-page request form — the mailto is dead: it
           failed silently without a mail client and captured nothing (ruled 1a/1b). */}
-      {invited !== "1" && (
+      {inviteState !== "banner" && (
         <section className="border-t border-line bg-base">
           <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
             <Reveal>

@@ -3,21 +3,28 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AcquisitionGrant, GrantRedemption, AttachFailure } from "@/lib/data/grants";
+import { grantDisplayState, type GrantDisplayState } from "@/lib/data/grantLink";
 
 // ── GRANTS MANAGER (founder-ruled 2026-08-21) — create a grant as a link or a code, see who
-// redeemed it and when. The VALUE is ruled and fixed (one free full assessment — 1 credit on
-// the full-report tier), so the form only asks mode, note, cap, and expiry (≤30 days, the
-// ruled ceiling). Super-admin only (the page + API both gate).
+// redeemed it and when. The VALUE is ruled and fixed (one free full assessment, 1 credit; the
+// tier is fixed in lib/data/grants.ts, never chosen here), so the form only asks
+// mode, note, cap, and expiry (≤30 days, the ruled ceiling). Super-admin only (page + API gate).
 
 function fmt(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
 }
 
+// Status derives from the ONE shared validity module (item 1b, 2026-08-22 — this file's private
+// copy was one of the independent notions the collapse removed). Only label/tone live here.
+const STATE_VIEW: Record<GrantDisplayState, { label: string; tone: string }> = {
+  revoked: { label: "revoked", tone: "text-deny-ink" },
+  expired: { label: "expired", tone: "text-muted" },
+  fully_redeemed: { label: "fully redeemed", tone: "text-muted" },
+  active: { label: "active", tone: "text-verify-ink" },
+};
+
 function grantState(g: AcquisitionGrant): { label: string; tone: string } {
-  if (g.revoked_at) return { label: "revoked", tone: "text-deny-ink" };
-  if (new Date(g.expires_at).getTime() <= Date.now()) return { label: "expired", tone: "text-muted" };
-  if (g.redemption_count >= g.max_redemptions) return { label: "fully redeemed", tone: "text-muted" };
-  return { label: "active", tone: "text-verify-ink" };
+  return STATE_VIEW[grantDisplayState(g)];
 }
 
 export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: {
