@@ -59,5 +59,14 @@ describe("creditsView â€” honest credits framing (BUG-2)", () => {
   it("bar never exceeds 100 for any balance", () => {
     for (const n of [6, 10, 50, 999]) expect(creditsView(n, "growth_279").pct).toBe(100);
   });
+
+  // Item 2 (founder-ruled 2026-08-22): top-ups aren't for sale, and "carry until used" was false
+  // above the rollover cap — the extra line states only what is independently true.
+  it("the extra line never mentions top-ups or promises credits carry until used", () => {
+    const v = creditsView(7, "growth_279", 1);
+    expect(v.detail).toBe("plan renews to 5/cycle · includes 2 extra · 1 used this cycle");
+    expect(v.detail).not.toMatch(/top.?up/i);
+    expect(v.detail).not.toContain("carry until used");
+  });
 });
 

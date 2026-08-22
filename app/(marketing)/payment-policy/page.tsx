@@ -5,6 +5,9 @@ import { COMPANY } from "@/lib/content/legal";
 
 // ── PAYMENT POLICY — TRANSCRIBED VERBATIM from HyprrIQ_LEGAL_PAGES_FINAL.md (LOCKED copy,
 // founder 2026-08-21). Do not author, edit, tighten or improve here.
+// TOP-UP LANGUAGE REMOVED (founder-ruled 2026-08-22, item 2): top-ups are not for sale at
+// launch — the "Top-up credits are charged once" paragraph described a product nobody can buy
+// and is gone, not hedged (same ruling as Terms §5).
 
 export const metadata: Metadata = {
   title: "Payment Policy — HyprrIQ",
@@ -28,9 +31,6 @@ export default function PaymentPolicyPage() {
         <b>Subscriptions</b> are charged at the start of each billing period and renew automatically until
         cancelled. The price and billing date are shown before you confirm, and on your billing page
         thereafter.
-      </P>
-      <P>
-        <b>Top-up credits</b> are charged once at the price shown.
       </P>
       <P>
         Prices are in <b>US dollars</b>. Applicable taxes are calculated and shown at checkout.

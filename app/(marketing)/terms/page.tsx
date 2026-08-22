@@ -7,6 +7,12 @@ import { COMPANY } from "@/lib/content/legal";
 // founder 2026-08-21). Do not author, edit, tighten or improve here — wording concerns go in
 // reports. The two solicitor-review placeholders were removed per the founder's build note;
 // the draft clauses they annotated remain. PERMANENT PATH: /terms (Stripe points at it).
+//
+// TOP-UP LANGUAGE REMOVED (founder-ruled 2026-08-22, item 2 — LOCKED): top-ups are not for sale
+// at launch, so §5 no longer describes them at all — removed, not hedged, and not to be
+// restored by copy alone: selling top-ups again first requires the rollover RPC fix (purchased
+// credits must never expire; see the item-3 describe-and-stop record), THEN a ruling on the
+// returning sentence.
 
 export const metadata: Metadata = {
   title: "Terms of Service — HyprrIQ",
@@ -128,9 +134,6 @@ export default function TermsPage() {
         <li>
           <b>Unused subscription credits roll over</b> up to your plan&rsquo;s limit. Credits beyond that limit
           expire at renewal
-        </li>
-        <li>
-          <b>Top-up credits join the same balance</b> and follow the same rollover rule
         </li>
         <li>
           <b>Delivery target: within 24 hours of submission</b>, all plans

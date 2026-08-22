@@ -195,7 +195,9 @@ const MUST_PASS: [string, string][] = [
     p.points.map((pt): [string, string] => [`pricing point (${p.id})`, pt]),
   ),
   ...comparison.map((r): [string, string] => [`comparison row: ${r.feature}`, `${r.feature}: ${r.values.join(" / ")}`]),
-  ["FAQ credits answer (vocab ruling 2026-08-14)", "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own."],
+  // Top-up sentence removed from the FAQ answer (founder-ruled 2026-08-22, item 2 — supersedes
+  // the 2026-08-14 wording on this one point; the rest of the vocab ruling stands verbatim).
+  ["FAQ credits answer (vocab ruling 2026-08-14; top-up sentence removed 2026-08-22)", "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. A single report is just one credit's worth, bought on its own."],
   ["FAQ try-first answer (vocab ruling 2026-08-14)", "Yes. Buy a Single Report for $99, or the Single Deep Report for $149 with all five assessment areas, to see the depth before committing to a monthly plan."],
   // — partner request flow (2026-08-22 item 1 — standing rule 8: same commit; imported, never copied) —
   ...Object.entries(PARTNER_REQUEST_COPY).map(([k, v]): [string, string] => [`partner request copy: ${k}`, v]),

@@ -32,8 +32,12 @@ export function creditsView(available: number, plan: PlanType | null | undefined
   const detail =
     perCycle === 0
       ? null
+      // "(top-ups & rollover carry until used)" cut (founder-ruled 2026-08-22, item 2): top-ups
+      // aren't for sale, and "carry until used" was FALSE above the cap — rollover clips the
+      // balance at renewal (audit finding #6 class). Cut, not softened: "includes N extra" is
+      // independently true; the renewal arithmetic isn't this line's promise to make.
       : extra > 0
-        ? `plan renews to ${perCycle}/cycle · includes ${extra} extra (top-ups & rollover carry until used)${usedSuffix}`
+        ? `plan renews to ${perCycle}/cycle · includes ${extra} extra${usedSuffix}`
         // Copy fix 2026-08-15: the old "plan includes N/cycle" echoed the balance when they
         // matched ("12 / plan includes 12/cycle"). "Adds at renewal" states what renewal DOES.
         : `plan adds ${perCycle} at renewal${usedSuffix}`;

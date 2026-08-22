@@ -20,7 +20,9 @@ export const FAQ_ITEMS = [
   },
   {
     q: "How do credits work?",
-    a: "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. Busy month? Add a top-up pack anytime. A single report is just one credit's worth, bought on its own.",
+    // "Busy month? Add a top-up pack anytime." removed (founder-ruled 2026-08-22, item 2):
+    // top-ups are not for sale at launch — no client-facing surface describes them.
+    a: "One credit = one report — one supplier, up to your plan's brand limit, across the assessment areas your plan includes. Subscriptions include a set number of credits each month, and unused credits roll over up to your plan's limit. A single report is just one credit's worth, bought on its own.",
   },
   {
     q: "How long does a report take?",

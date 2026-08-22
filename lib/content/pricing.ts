@@ -56,10 +56,11 @@ export const subscriptionPlans: Plan[] = [
     // contradiction checks run identically on every plan, so selling them as a Scale extra was
     // false in both directions. "Delivered within N hours" as a Scale bullet — one CASE_SLA_HOURS
     // constant, same on $99; delivery stays in the comparison table as a same-for-all row.
+    // "12 reports a month, top-up packs available" bullet removed (founder-ruled 2026-08-22,
+    // item 2): top-ups are not for sale at launch, and the 12/mo half already lives in `meta`.
     points: [
       "Everything in Growth",
       "Category compliance review",
-      "12 reports a month, top-up packs available",
       "Credit rollover (up to 4)",
     ],
     popular: true,
@@ -117,7 +118,6 @@ export const comparison: {
   // run on every plan — a Scale-only "Yes" was unbacked by anything in the engine.
   { feature: "Delivery", values: [`${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`, `${CASE_SLA_HOURS} hours`] },
   { feature: "Credit rollover", values: ["—", "—", "Up to 2", "Up to 4"] },
-  // Stripe-verified 2026-07-23: the top-up price IDs charge $99/$179 — the portal billing page
-  // was right, this table was wrong. Retired figures locked out by retiredPricing.lock.test.ts.
-  { feature: "Top-up packs", values: ["—", "—", "+3 / $99", "+6 / $179"] },
+  // "Top-up packs" row removed (founder-ruled 2026-08-22, item 2): top-ups are not for sale at
+  // launch — the pricing page advertises nothing a client cannot buy.
 ];
