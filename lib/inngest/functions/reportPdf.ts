@@ -32,10 +32,30 @@ export { REPORT_PDF_EVENT };
 // Mirrors the pipeline function's local step type (the real step.run returns Promise<Jsonify<T>>).
 interface InngestStep { run<T>(id: string, fn: () => T | Promise<T>): Promise<T> }
 
-/** PURE — should this case get a client email at all? Kept testable and out of the step body. */
-export function shouldEmailClient(clientId: string | null, email: string | null): { send: boolean; reason?: string } {
+/**
+ * PURE — should this case get a client email at all? Kept testable and out of the step body.
+ *
+ * ── AN EMAIL NEVER ANNOUNCES A REPORT THE CLIENT CANNOT READ (founder-authorised 2026-08-22).
+ * The delivery email says "your report is ready — view it in your portal". That is TRUE when the
+ * PDF is missing but the portal page renders (no_client_name: the page has its verdict and
+ * findings; no_snapshot: the page still renders the verdict and per-area findings). It is FALSE
+ * for `no_verdict`, where the portal page REFUSES — the client would open the link and find the
+ * holding-back panel. So the render's refusal reason is an input to this decision, and the one
+ * reason that makes the sentence a lie suppresses the send. The ops alert still fires either
+ * way; silence toward the founder is never the trade.
+ */
+const REASONS_CLIENT_CANNOT_READ = ["no_verdict"] as const;
+
+export function shouldEmailClient(
+  clientId: string | null,
+  email: string | null,
+  renderFailureReason?: string | null,
+): { send: boolean; reason?: string } {
   if (clientId === OPERATOR_HOUSE_CLIENT_ID) return { send: false, reason: "skipped:operator_house" };
   if (!email) return { send: false, reason: "skipped:no_recipient" };
+  // The reason arrives prefixed ("no_verdict: case AWI-… is delivered but carries no…").
+  const blocked = REASONS_CLIENT_CANNOT_READ.find((r) => (renderFailureReason ?? "").startsWith(r));
+  if (blocked) return { send: false, reason: `skipped:${blocked}_unreadable` };
   return { send: true };
 }
 
@@ -109,7 +129,9 @@ export const reportPdfRender = inngest.createFunction(
           `Report PDF render failed — ${caseRow.case_number}`,
           `<p>The delivered report for <b>${caseRow.case_number}</b> (attempt ${attempt}) could not be rendered.</p>
 <p><b>Reason:</b> ${render.reason}</p>
-<p>The delivery email is being sent WITHOUT the attachment; the client can read the report in their portal. The case is delivered and unaffected.</p>`,
+${shouldEmailClient(caseRow.client_id, caseRow.clients?.email ?? null, render.reason).send
+  ? `<p>The delivery email is being sent WITHOUT the attachment; the client can read the report in their portal. The case is delivered and unaffected.</p>`
+  : `<p><b>NO delivery email is being sent.</b> The portal page cannot render this report either, so an email announcing it would be a false promise. The client has NOT been told the report is ready — decide what they are told, and fix the upstream cause first.</p>`}`,
         );
       });
     }
@@ -118,7 +140,7 @@ export const reportPdfRender = inngest.createFunction(
     // it is there, without it when it is not. Non-fatal like every notify path: delivery already
     // happened, and a mail failure must never look like a delivery failure.
     const emailed = await step.run("send-delivery-email", async () => {
-      const gate = shouldEmailClient(caseRow.client_id, caseRow.clients?.email ?? null);
+      const gate = shouldEmailClient(caseRow.client_id, caseRow.clients?.email ?? null, render.ok ? null : render.reason);
       if (!gate.send) return { sent: false, reason: gate.reason };
       const attachment = render.ok ? await downloadReportPdf(key) : null;
       const res = await sendDeliveryNotification({

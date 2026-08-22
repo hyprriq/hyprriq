@@ -45,6 +45,39 @@ describe("who gets the delivery email", () => {
   it("a real client with an address gets it", () => {
     expect(shouldEmailClient("cli_1", "buyer@example.com").send).toBe(true);
   });
+
+  // ── AN EMAIL NEVER ANNOUNCES A REPORT THE CLIENT CANNOT READ (2026-08-22). The email says
+  // "ready — view it in your portal"; for no_verdict the portal REFUSES, so the sentence is a
+  // lie and the send is suppressed. Every other refusal leaves a readable portal page.
+  it("SUPPRESSED when the portal page cannot render either (no_verdict) — the sentence would be false", () => {
+    const r = shouldEmailClient("cli_1", "buyer@example.com", "no_verdict: case AWI-2608-099 is delivered but carries no usable verdict (null)");
+    expect(r.send).toBe(false);
+    expect(r.reason).toBe("skipped:no_verdict_unreadable");
+  });
+
+  it("STILL SENT for refusals that leave a readable portal page — the client's report is genuinely there", () => {
+    for (const reason of [
+      "no_client_name: case AWI-1 has no client name on file",
+      "no_snapshot: case AWI-2 has no decision snapshot for the delivered attempt",
+    ]) {
+      expect(shouldEmailClient("cli_1", "buyer@example.com", reason).send, reason).toBe(true);
+    }
+  });
+
+  it("a successful render (no failure reason) is unaffected, however the argument arrives", () => {
+    for (const reason of [null, undefined]) {
+      expect(shouldEmailClient("cli_1", "buyer@example.com", reason).send).toBe(true);
+    }
+  });
+
+  it("the operator-house and no-recipient skips still win over a render reason (order is stable)", () => {
+    expect(shouldEmailClient(OPERATOR_HOUSE_CLIENT_ID, "x@y.com", "no_verdict: …").reason).toBe("skipped:operator_house");
+    expect(shouldEmailClient("cli_1", null, "no_verdict: …").reason).toBe("skipped:no_recipient");
+  });
+
+  it("a reason that merely CONTAINS the word does not suppress — the match is anchored at the reason code", () => {
+    expect(shouldEmailClient("cli_1", "buyer@example.com", "no_snapshot: upstream said no_verdict earlier").send).toBe(true);
+  });
 });
 
 // ── SOURCE-LEVEL LOCKS. These are route/job properties that no unit test can reach without a live
