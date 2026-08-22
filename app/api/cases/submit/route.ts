@@ -259,8 +259,12 @@ export async function POST(req: Request) {
           file_type: v.sniffed.kind === "pdf" ? "invoice_pdf" : "invoice_image",
           storage_path: path,
           file_size_bytes: v.file.size,
-          // Only scanned-clean files reach this insert (the blocking scan above refused everything else).
-          virus_scan_status: v.scanStatus ?? "clean",
+          // Only scanned-clean files reach this insert (the blocking scan above refused
+          // everything else). NO fallback here (3d sweep, 2026-08-22): the old `?? "clean"`
+          // would have FABRICATED a clean stamp on exactly the row where the invariant broke —
+          // if scanStatus is ever unset, the field is omitted and the column's own DEFAULT
+          // 'pending' states the truth ("not confirmed clean"), which OQ-A2 already admits.
+          virus_scan_status: v.scanStatus,
         });
       }
     } catch {

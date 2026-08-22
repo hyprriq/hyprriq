@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── GRANTS DATA LAYER — fixture-locked. The shapes deliberately covered: code generation for
 // both modes (link slugs unguessable, coupon codes unambiguous + prefixed), the redeem status
 // mapping including 'unavailable' when the founder-run RPC is absent (fail-soft, never a
-// throw), the lowercase-coupon retry, and the ruled defaults (1 redemption, 30 days, the
-// full-report tier) on creation.
+// throw), the lowercase-coupon retry, and the RULED grant value on creation (growth_279 ·
+// 1 credit — constants, never defaults; item 3, founder-locked 2026-08-22).
 
 const { rpcMock, insertReturning, billingInsert } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   },
 }));
 
-import { generateGrantCode, createGrant, redeemGrant, isTerminalRedeemStatus, type RedeemStatus } from "./grants";
+import { generateGrantCode, createGrant, redeemGrant, isTerminalRedeemStatus, GRANT_PLAN_TYPE, GRANT_CREDITS, type RedeemStatus } from "./grants";
 
 beforeEach(() => {
   rpcMock.mockReset();
@@ -45,18 +45,37 @@ describe("code generation", () => {
   });
 });
 
-describe("createGrant — the ruled defaults", () => {
-  it("defaults: full-report tier, 1 credit, 1 redemption, 30-day expiry", async () => {
-    const { grant, error } = await createGrant({ mode: "link", note: "tester", createdBy: "user_admin" });
+describe("createGrant — the ruled value, never a default (item 3, founder-locked 2026-08-22)", () => {
+  it("writes GRANT_PLAN_TYPE + GRANT_CREDITS and the caller's explicit cap/expiry", async () => {
+    const { grant, error } = await createGrant({ mode: "link", note: "tester", createdBy: "user_admin", expiresDays: 30, maxRedemptions: 1 });
     expect(error).toBeNull();
     const row = insertReturning.mock.calls[0][0] as Record<string, unknown>;
-    expect(row.grant_plan_type).toBe("scale_499");
-    expect(row.grant_credits).toBe(1);
+    expect(row.grant_plan_type).toBe(GRANT_PLAN_TYPE);
+    expect(row.grant_credits).toBe(GRANT_CREDITS);
     expect(row.max_redemptions).toBe(1);
     const days = (new Date(row.expires_at as string).getTime() - Date.now()) / 86_400_000;
     expect(days).toBeGreaterThan(29.5);
     expect(days).toBeLessThan(30.5);
     expect(grant?.id).toBe("g1");
+  });
+
+  // ── THE RULING LOCK (3b/3c): a tester must never receive category compliance (Track 6 needs
+  // Keepa, unbuilt), and tiers not sold must not be grantable. The constant IS the app layer's
+  // whole surface — no API accepts a plan input — so pinning it pins everything.
+  it("the ruled tier is growth_279 — never the coming-soon tiers, never category-compliance-bearing", () => {
+    expect(GRANT_PLAN_TYPE).toBe("growth_279");
+    expect(["scale_499", "single_149"]).not.toContain(GRANT_PLAN_TYPE);
+    expect(GRANT_CREDITS).toBe(1);
+  });
+
+  it("createGrant writes the constant regardless of caller — no parameter can steer the tier", async () => {
+    await createGrant({ mode: "coupon", note: "x", createdBy: "u", expiresDays: 7, maxRedemptions: 5 });
+    const row = insertReturning.mock.calls[0][0] as Record<string, unknown>;
+    expect(row.grant_plan_type).toBe("growth_279");
+    expect(row.max_redemptions).toBe(5);
+    const days = (new Date(row.expires_at as string).getTime() - Date.now()) / 86_400_000;
+    expect(days).toBeGreaterThan(6.5);
+    expect(days).toBeLessThan(7.5);
   });
 });
 

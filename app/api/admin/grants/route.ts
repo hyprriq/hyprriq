@@ -40,9 +40,11 @@ export async function POST(req: Request) {
   const expiresDays = Math.min(30, Math.max(1, Number(body.expiresDays) || 30)); // 30 = the ruled ceiling
   const maxRedemptions = Math.min(1000, Math.max(1, Number(body.maxRedemptions) || 1));
 
-  // The grant value is RULED (one free full report — grant_plan_type scale_499, 1 credit) and
-  // deliberately NOT settable from this form: a campaign that needs a different value is a new
-  // ruling, not a dropdown.
+  // The grant value is RULED (one free full assessment — GRANT_PLAN_TYPE growth_279, 1 credit;
+  // founder-locked 2026-08-22, superseding the scale_499 this comment previously called "ruled"
+  // — that value was in fact a data-layer fallback the founder never chose) and deliberately NOT
+  // settable from this form: a campaign that needs a different value is a new ruling, not a
+  // dropdown. Unsold tiers are structurally ungrantable — no plan input exists on any API.
   const { grant, error } = await createGrant({ mode, note, createdBy: gate.userId!, expiresDays, maxRedemptions });
   if (error || !grant) return NextResponse.json({ error: error ?? "create_failed" }, { status: 500 });
 

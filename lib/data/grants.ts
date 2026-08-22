@@ -16,9 +16,24 @@ import type { PlanType } from "@/lib/constants/plans";
 // redemption answers 'unavailable' (fail-soft, the newsletter pattern) and nothing breaks.
 //
 // FRAMING (ruled): a grant is described as a FULL ASSESSMENT — never by tier name. The tier it
-// technically grants (scale_499 → all five areas + category compliance) is a mechanism, not copy.
+// technically grants is a mechanism, not copy.
+//
+// ── THE GRANT VALUE IS A RULING, NOT A DEFAULT (founder-locked 2026-08-22, item 3) ──
+// grant_plan_type = growth_279: all five assessment areas, NO category compliance — Track 6
+// gates on scale_499/single_149 and depends on Keepa, which is not built; a tester must never
+// receive a section that exists unable to answer its own question. The previous value
+// (scale_499) reached production as a `??` FALLBACK the founder discovered by reading a
+// database row — which is why createGrant now takes NO plan, credit, cap, or expiry defaults:
+// every product-facing value is either a named ruled constant or an explicit caller argument.
+// Tiers not sold are NOT grantable: no API accepts a plan input, and this module writes only
+// GRANT_PLAN_TYPE.
 
 export type GrantMode = "link" | "coupon";
+
+// The ruled grant value (founder-locked 2026-08-22): one free full assessment on growth_279.
+// Not parameters, not defaults — changing either is a new ruling, not an edit.
+export const GRANT_PLAN_TYPE: PlanType = "growth_279";
+export const GRANT_CREDITS = 1;
 
 export interface AcquisitionGrant {
   id: string;
@@ -76,11 +91,10 @@ export async function createGrant(opts: {
   mode: GrantMode;
   note: string;
   createdBy: string;
-  /** Ruled default: 30 days from issue. The admin form can shorten, never remove. */
-  expiresDays?: number;
-  maxRedemptions?: number;
-  credits?: number;
-  planType?: PlanType;
+  /** REQUIRED — the admin route clamps to the ruled 30-day ceiling; no silent default here. */
+  expiresDays: number;
+  /** REQUIRED — the admin route decides the cap explicitly; no silent default here. */
+  maxRedemptions: number;
 }): Promise<{ grant: AcquisitionGrant | null; error: string | null }> {
   const code = generateGrantCode(opts.mode);
   const { data, error } = await supabaseAdmin
@@ -88,10 +102,10 @@ export async function createGrant(opts: {
     .insert({
       code,
       mode: opts.mode,
-      grant_plan_type: opts.planType ?? "scale_499", // the ruled full-report tier
-      grant_credits: opts.credits ?? 1,
-      max_redemptions: opts.maxRedemptions ?? 1,     // ruled default for the tester grants
-      expires_at: new Date(Date.now() + (opts.expiresDays ?? 30) * 86_400_000).toISOString(),
+      grant_plan_type: GRANT_PLAN_TYPE, // ruled, never chosen (item 3, 2026-08-22)
+      grant_credits: GRANT_CREDITS,
+      max_redemptions: opts.maxRedemptions,
+      expires_at: new Date(Date.now() + opts.expiresDays * 86_400_000).toISOString(),
       created_by: opts.createdBy,
       note: opts.note || null,
     })
