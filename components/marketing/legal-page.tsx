@@ -10,7 +10,11 @@ export function LegalPage({ title, children }: { title: string; children: React.
     <section className="bg-surface">
       <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8 lg:py-16">
         <h1 className="text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold leading-tight text-ink">{title}</h1>
-        <p className="mt-2 text-[14px] font-semibold text-muted">Effective {LEGAL_EFFECTIVE_DATE}</p>
+        {/* Unset until launch (the founder sets the constant at the domain move) — an unset date
+            renders honestly as "on launch" rather than shipping a past or placeholder date. */}
+        <p className="mt-2 text-[14px] font-semibold text-muted">
+          Effective {LEGAL_EFFECTIVE_DATE ?? "on launch"}
+        </p>
         <article className="mt-8">{children}</article>
         <nav className="mt-12 border-t border-line pt-5 text-[13px] text-muted">
           <span className="font-semibold">Policies: </span>

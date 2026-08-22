@@ -4,11 +4,12 @@
 // TRANSCRIBE it — nothing there is authored, edited, tightened or improved in code. Wording
 // concerns are flagged in reports, never fixed in place.
 //
-// EFFECTIVE DATE — RULED DELIBERATE (founder, 2026-08-22): May 22, 2026 is the date development
-// of HyprrIQ began, and the policies are dated from it intentionally — buyers should see an
-// operation that has been running, not one that appeared yesterday. NOT an error; do not
-// "fix" this to a launch or push date. One line to change if the founder ever re-rules.
-export const LEGAL_EFFECTIVE_DATE = "May 22, 2026";
+// ── EFFECTIVE DATE — UNSET UNTIL LAUNCH (founder-ruled 2026-08-22, superseding the May-22
+// ruling of the previous day): the date is set to the day the pages go live on the PRODUCTION
+// domain — not a staging push, not a development date. THE FOUNDER SETS IT AT THE DOMAIN MOVE:
+// replace null with e.g. "August 30, 2026". While null, the pages render "Effective on launch"
+// instead of a date — a past or placeholder date structurally cannot ship. ──
+export const LEGAL_EFFECTIVE_DATE: string | null = null;
 
 export const COMPANY = {
   legalName: "Hyprr Retail LLC",

@@ -14,7 +14,11 @@ const SCANNED_DIRS = [
   "lib/content", "components/marketing", "components/portal",
   "app/(marketing)", "app/(portal)",
 ];
-const RETIRED = /\$(?:79|129|239|197|249)\b/;
+// (?!\.\d) — sharpened 2026-08-22: the lock hunts retired PRICE figures, and \b alone also
+// matched refund ARITHMETIC that shares digits (the founder-locked Refund §2 worked example
+// "$239.94" tripped on the substring "$239"). A dollar amount continuing into cents is not a
+// price tag; a bare "$239" still fails exactly as before. Faithful to the ruling's intent.
+const RETIRED = /\$(?:79|129|239|197|249)\b(?!\.\d)/;
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
