@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalPage, H2, P, LegalTable } from "@/components/marketing/legal-page";
 
-// ── COOKIE POLICY — TRANSCRIBED VERBATIM from HyprrIQ_LEGAL_PAGES_FINAL.md (LOCKED copy,
-// founder 2026-08-21). Do not author, edit, tighten or improve here. NOTE (flagged in the build
-// report, not fixed here): the live site also sets a functional invite-code cookie
-// (hyprriq_grant) that this locked table does not list.
+// ── COOKIE POLICY — REWRITTEN UNDER THE 2026-08-22 TRUTH-AUDIT RULING: the table below lists
+// what the app ACTUALLY sets, verified against the code (the only first-party app cookie is
+// hyprriq_grant, set by app/grant/[code]/route.ts and cleared by /api/grants/attach; Clerk sets
+// the auth cookies via middleware; NO Stripe cookie is set on our domain — checkout happens on
+// Stripe's own pages). The old table's "Security tokens — HyprrIQ (CSRF)" and "Payment session
+// — Stripe" rows described cookies we do not set and were removed.
 
 export const metadata: Metadata = {
   title: "Cookie Policy — HyprrIQ",
@@ -16,17 +18,21 @@ export default function CookiePolicyPage() {
     <LegalPage title="Cookie Policy">
       <H2>What we use</H2>
       <P>
-        <b>Strictly necessary cookies only.</b> These keep you signed in and keep the service secure. The
-        service cannot work without them.
+        <b>Only the cookies the service needs to work:</b> the cookies that keep you signed in, and one
+        functional cookie that remembers an invite you clicked.
       </P>
       <LegalTable
         head={["Cookie", "Set by", "Purpose", "Duration"]}
         rows={[
           ["Session and authentication", "Clerk", "Keeps you signed in; protects the session", "Session"],
-          ["Security tokens", "HyprrIQ", "Protects forms against cross-site request forgery", "Session"],
-          ["Payment session", "Stripe", "Completes checkout securely", "Session"],
+          ["Invite code (hyprriq_grant)", "HyprrIQ", "Remembers an invite link you clicked so your free assessment applies when you register", "7 days, removed as soon as it is used"],
         ]}
       />
+      <P>
+        Checkout happens on Stripe&rsquo;s own payment pages, which set their own cookies there — not on
+        this site. We also store a small flag in your browser&rsquo;s local storage when you dismiss the
+        cookie notice, so it doesn&rsquo;t reappear; local storage is not sent to us.
+      </P>
 
       <H2>What we do not use</H2>
       <P>
