@@ -5,14 +5,18 @@
 // Shared brand variables — a literal palette because Clerk does color math it
 // cannot do on a CSS var. Must mirror --color-brand in globals.css.
 const brandVariables = {
-  colorPrimary: "#173e63",
-  colorText: "#1a1917",
-  colorTextSecondary: "#56544e",
+  // Mirrors lib/design/palette.ts: colorPrimary = BRAND.action, text = NEUTRAL.ink / ink2.
+  // The old values were the pre-2026-08-23 navy #173e63 with warm-grey text (#1a1917 / #56544e),
+  // which now reads visibly warm against the cool-neutral shell around it.
+  // palette.lock.test.ts asserts these three stay equal to the registry.
+  colorPrimary: "#005a68",
+  colorText: "#0e191d",
+  colorTextSecondary: "#3d484d",
   colorBackground: "#ffffff",
   colorInputBackground: "#ffffff",
-  colorInputText: "#1a1917",
+  colorInputText: "#0e191d",
   borderRadius: "0.625rem",
-  fontFamily: "var(--font-instrument), system-ui, sans-serif",
+  fontFamily: "var(--font-inter), system-ui, sans-serif",
 } as const;
 
 export const clerkAppearance = {

@@ -1,79 +1,174 @@
 @import "tailwindcss";
 
-/* HyprrIQ design tokens — synthesis direction (locked 2026-06-17, see DESIGN.md).
-   Light-first, warm-neutral base; deep-blue brand; verdict colors are the
-   loudest moment on any screen. */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   HyprrIQ DESIGN TOKENS — ruled 2026-08-23 (HyprrIQ_DEV_BRIEF.md), built 2026-08-24.
+
+   ⛔ THIS FILE MIRRORS lib/design/palette.ts. IT IS NOT THE SOURCE.
+      Every value below is asserted equal to the TypeScript registry by
+      lib/design/palette.lock.test.ts, which also RECOMPUTES every contrast ratio on each run.
+      Edit palette.ts, then mirror here — never the other way, and never one without the other.
+      A CSS comment claiming a ratio is not evidence; three such comments in this repo's history
+      were wrong, one of them on the verdict ramp.
+
+   ⛔ THE ORGANISING RULE: warm hues belong to the verdict, cool hues belong to the brand.
+      Green, amber, orange and red may only ever mean a verdict. Violet, indigo, blue, cyan and
+      fuchsia may never mean one. This is why the anchor moved navy → petrol without touching a
+      single verdict value.
+
+   WHAT THIS REPLACES: the 2026-06-17 "synthesis" direction — warm-neutral base #f5f7f9, trust-navy
+   brand #173e63, copper accent #9a551f (defined, never used, and warm: deleted), and the
+   Fraunces / Instrument Sans / JetBrains Mono type stack. One token layer still serves marketing,
+   portal and admin by design: utility NAMES are unchanged, so every existing component re-skins
+   without an edit.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
 @theme {
-  /* CLIENT SKIN PORT (2026-08-11) — ruled cool tokens from public/prototype/assets/tokens.css.
-     Utility NAMES unchanged (bg-base, text-ink, verdict tokens…) so every component re-skins
-     without edits; only VALUES move. One token layer — admin + marketing share it by design. */
-
-  /* Base — cool near-white, never cream, never stark white */
-  --color-base: #f5f7f9;
+  /* ── Neutrals — cool grey, near-zero chroma. Not warm paper, not violet. ──────────────────── */
+  --color-base: #f6f9fb;
   --color-surface: #ffffff;
-  --color-subtle: #eef1f4;
-  --color-ink: #161b22;
-  --color-ink-2: #3d454f;
-  --color-muted: #5c6570;   /* 5.5:1 on base — fixes the old 3.5:1 AA failure */
-  --color-line: #e2e6eb;
-  --color-line-strong: #cbd2da;
+  --color-subtle: #ecf1f3;
+  /* Tinted section grounds. They alternate rhythm; none of them carries meaning. */
+  --color-mist: #edf4f5;
+  --color-pale: #f0f6f7;
+  --color-sand: #f5f3ee;
 
-  /* Brand — trust navy (ruled; supersedes #1b4b8a). Clerk colorPrimary mirrors this. */
-  --color-brand: #173e63;
-  --color-brand-hover: #0e2b47;
-  --color-brand-ink: #0e2b47;
-  --color-brand-tint: #e5edf3;
-  --color-accent-warm: #9a551f;  /* copper, demoted — wordmark-only emphasis */
-  /* Cool signal accent — structural UI emphasis (quick actions, counts) */
-  --color-accent-data: #1e6e8c;
-  --color-accent-data-tint: color-mix(in srgb, #1e6e8c 10%, white);
+  --color-ink: #0e191d; /* 16.89:1 on base */
+  --color-ink-2: #3d484d; /* 8.89:1 on base */
+  /* CORRECTED from the brief's #687276 (4.33:1 on subtle, 4.43 on mist, 4.44 on sand — all under
+     the brief's own floor). #666f73 is the minimum darkening that clears 4.5:1 on all six grounds. */
+  --color-muted: #666f73;
 
-  /* Verdict semantics — ranked spectrum, AA at pill size (verified 4.6–5.9:1) */
-  --color-clear-bg: #e4efea;
-  --color-clear-ink: #256b4c;
-  --color-conditional-bg: #f7f0e2;
-  --color-conditional-ink: #8f6416;
-  --color-verify-bg: #f8ede2;
-  --color-verify-ink: #a5560f;
-  --color-deny-bg: #f3e0de;
-  --color-deny-ink: #9a2f2a;
+  /* Decorative hairlines. WCAG 1.4.11 exempt — they identify no component. */
+  --color-line: #d9dfe2;
+  --color-line-strong: #bfcbd0;
+  /* The edge of a CONTROL (button, input, select) — 1.4.11 applies, 3:1 floor. The brief's --ln2
+     measures 1.65:1 on surface: a secondary button whose outline is not perceivably there. */
+  --color-control-border: #848c90;
 
-  /* sidebar text tones on brand-hover(navy-deep) surfaces */
-  --color-nav-fg: #c4d2e0;
-  --color-nav-fg-dim: #7e93a8;
+  /* ── Brand — petrol. `action` is what a client clicks; `anchor` is the deep ground. ───────── */
+  --color-anchor: #003d48; /* 11.27:1 on base · white on it 11.92:1 */
+  --color-action: #005a68; /* 7.46:1 on base · white on it 7.88:1 */
 
-  --radius-card: 10px;
+  /* Compatibility aliases — the pre-existing utility names, now pointing at the petrol pair so the
+     ~30 admin/portal files using bg-brand / hover:bg-brand-hover re-skin without an edit.
+     NEW CODE USES anchor/action. These are deprecated and exist to avoid a rename churn. */
+  --color-brand: var(--color-action);
+  --color-brand-hover: var(--color-anchor);
+  --color-brand-ink: var(--color-anchor);
+  --color-brand-tint: #e3eff1;
 
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  /* ── Accents — COOL ONLY. Wayfinding, never a verdict. ────────────────────────────────────── */
+  --color-blue: #006fc0;
+  --color-blue-tint: #e5f2ff;
+  /* CORRECTED from #007983 (4.43:1 on the hero gradient's darkest stop, the exact ground the ruled
+     homepage puts the hero kicker on). */
+  --color-cyan: #007881;
+  --color-cyan-tint: #daf6fa;
+  --color-plum: #a7439d;
+  --color-plum-tint: #fde9f9;
+  --color-violet: #6b58d9;
+  --color-violet-tint: #eeeeff;
+
+  /* accent-data kept as an alias: portal KPI chips and the admin chart already use it. */
+  --color-accent-data: var(--color-cyan);
+  --color-accent-data-tint: var(--color-cyan-tint);
+
+  /* ── Verdict ramp — RESERVED. These eight values appear nowhere else, ever. ───────────────── */
+  /* Measured on every ground they render against; see palette.lock.test.ts. Badge label is
+     12-14px — normal text, 4.5:1 floor, never the 3:1 large-text allowance. */
+  --color-clear-ink: #007e46; /* Source Clear           — 4.57:1 on its tint */
+  --color-clear-bg: #e0f7e7;
+  --color-conditional-ink: #8a6700; /* Usable With Conditions — 4.57:1 on its tint */
+  --color-conditional-bg: #faefd8;
+  --color-verify-ink: #b05100; /* Verify Before Purchase — 4.56:1 on its tint */
+  --color-verify-bg: #ffece2;
+  --color-deny-ink: #c13c3b; /* Do Not Rely            — 4.60:1 on its tint */
+  --color-deny-bg: #ffebe9;
+
+  /* ── Text on the two dark grounds ────────────────────────────────────────────────────────── */
+  --color-nav-fg: #a9cbd1; /* 6.89:1 on anchor */
+  --color-nav-fg-dim: #8fbac1; /* 5.65:1 on anchor — the old #7e93a8 fell to 3.76:1 on petrol */
+  --color-ink-muted: #758286; /* 4.50:1 on --ink — footer fine print */
+
+  /* ── Radius ──────────────────────────────────────────────────────────────────────────────── */
+  --radius-chip: 5px;
+  --radius-field: 7px;
+  --radius-control: 8px;
+  --radius-card: 10px; /* dense operator + portal surfaces — deliberately unchanged */
+  --radius-card-lg: 14px; /* the marketing register, per the ruled homepage */
+
+  /* ── Motion ──────────────────────────────────────────────────────────────────────────────── */
+  --ease-entrance: cubic-bezier(0.32, 0.72, 0, 1); /* entrances, expansions, reveals */
+  --ease-position: cubic-bezier(0.65, 0, 0.35, 1); /* position changes */
+
+  /* The brief bans the browser's default curves outright. A ban nobody can enforce is a
+     preference — so Tailwind's own defaults are overridden here, and every bare `transition-*`
+     already in the codebase becomes on-system without a component edit. */
+  --default-transition-duration: 140ms;
+  --default-transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-instrument);
-  --font-mono: var(--font-jetbrains-mono);
-  /* Reading serif — report prose only (founder-ruled single exception, 2026-08-14). */
+  --font-display: var(--font-newsreader);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
+  /* Reading serif — report prose only (founder-ruled single exception, 2026-08-14). Untouched by
+     the type ruling: the report is not a marketing surface. */
   --font-reading: var(--font-source-serif), Georgia, serif;
 }
 
 :root {
   color-scheme: light;
+
+  /* Durations as plain properties: Tailwind v4 has no `--duration-*` theme namespace, so these are
+     used as `duration-[var(--dur-base)]` or in component CSS. `--dur-fast` is already the default
+     for a bare `transition-*` via the override above. */
+  --dur-fast: 140ms; /* hover, focus, press */
+  --dur-base: 220ms; /* dropdowns, popovers */
+  --dur-slow: 380ms; /* page-level and scroll-triggered */
+
+  /* Focus ring, CONTEXTUAL. No single hue clears 3:1 on both a white card and the petrol section:
+     cyan measures 5.24:1 on surface but 2.30:1 on --anchor. Rather than a rule someone has to
+     remember, the dark ground redefines the variable and controls inherit the right ring. */
+  --color-focus: var(--color-cyan);
+}
+
+/* Any dark section declares itself; every control inside inherits a ring that clears 3:1. */
+[data-ground="dark"] {
+  --color-focus: var(--color-cyan-tint); /* 10.52:1 on anchor · 15.77:1 on ink */
 }
 
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--color-base);
   color: var(--color-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-feature-settings: "cv01", "ss01";
+  /* cv11 = single-storey `a`, ss03 = disambiguated l/I. Small, and it matters when someone is
+     reading a case ID or a supplier name carefully. */
+  font-feature-settings: "cv11", "ss03";
 }
 
-h1, h2, h3, h4 {
+/* h1/h2 are the serif; h3/h4 are Inter at 650. The serif does the differentiating, Inter does
+   legibility — Inter at display size is the SaaS look this palette exists to avoid. */
+h1,
+h2 {
   font-family: var(--font-display), Georgia, serif;
-  letter-spacing: -0.01em; /* Fraunces is a serif — the grotesk's tight tracking read cramped */
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+h3,
+h4 {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
   text-wrap: balance;
 }
 
@@ -81,20 +176,11 @@ p {
   text-wrap: pretty;
 }
 
-/* Visible focus ring on every interactive element (WCAG 2.1 AA) */
+/* Visible focus ring on every interactive element (WCAG 2.1 AA + 1.4.11). */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 /* Numeric / case-id figures align in tables */
@@ -102,8 +188,10 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
-/* Scroll-reveal: visible by default (no JS / no observer = full content).
-   The client <Reveal> arms the hidden state on mount, then releases it in view. */
+/* ── Reveal ───────────────────────────────────────────────────────────────────────────────────
+   Visible by DEFAULT. The client <Reveal> arms the hidden state on mount and releases it in view,
+   so no-JS, a headless renderer or a background tab still gets the content — a reveal that gates
+   visibility on a class ships the section blank wherever the transition never fires. */
 [data-reveal="hidden"] {
   opacity: 0;
   transform: translateY(18px);
@@ -112,8 +200,8 @@ html {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.7s var(--ease-out-quint),
-    transform 0.7s var(--ease-out-quint);
+    opacity var(--dur-slow) var(--ease-entrance),
+    transform var(--dur-slow) var(--ease-entrance);
 }
 
 /* Hero artifact load choreography */
@@ -141,13 +229,13 @@ html {
   }
 }
 .hq-rise {
-  animation: hq-rise 0.6s var(--ease-out-quint) both;
+  animation: hq-rise var(--dur-slow) var(--ease-entrance) both;
 }
 .hq-verdict {
-  animation: hq-verdict-settle 0.7s var(--ease-out-quint) 0.5s both;
+  animation: hq-verdict-settle 0.7s var(--ease-entrance) 0.5s both;
 }
 
-/* Announcement bar — premium subtle motion: a slow light sweep + soft dot pulse */
+/* Announcement bar — a slow light sweep + soft dot pulse */
 @keyframes hq-sweep {
   0% {
     transform: translateX(-120%);
@@ -157,7 +245,7 @@ html {
   }
 }
 .hq-sweep {
-  animation: hq-sweep 7s ease-in-out infinite;
+  animation: hq-sweep 7s var(--ease-position) infinite;
 }
 @keyframes hq-pulse-dot {
   0%,
@@ -171,10 +259,21 @@ html {
   }
 }
 .hq-pulse-dot {
-  animation: hq-pulse-dot 2.4s ease-in-out infinite;
+  animation: hq-pulse-dot 2.4s var(--ease-position) infinite;
 }
 
+/* scale(.97) on press, for everything pressable. The highest-value single motion detail in the
+   system, and the one most easily lost — so it is a base rule, not a utility to remember. */
+:where(button, a[role="button"], .btn):active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────────────────────────
+   A fully legible static alternative, never a broken one. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
@@ -185,5 +284,8 @@ html {
   .hq-sweep,
   .hq-pulse-dot {
     animation: none !important;
+  }
+  :where(button, a[role="button"], .btn):active:not(:disabled) {
+    transform: none;
   }
 }
