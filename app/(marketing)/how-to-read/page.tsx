@@ -123,10 +123,10 @@ export default function HowToReadPage() {
             questions to put to your supplier.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <Link href="/sample-report" className="rounded-lg bg-ink px-5 py-2.5 text-[14px] font-semibold text-surface hover:opacity-90">
+            <Link href="/sample-report" className="inline-flex min-h-11 items-center justify-center rounded-control bg-action px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-anchor">
               See a real report
             </Link>
-            <Link href="/pricing" className="rounded-lg border border-line bg-surface px-5 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-subtle">
+            <Link href="/pricing" className="inline-flex min-h-11 items-center justify-center rounded-control border border-control-border bg-surface px-5 py-2.5 text-[14px] font-semibold text-ink-2 transition-colors hover:bg-subtle">
               Pricing
             </Link>
           </div>
