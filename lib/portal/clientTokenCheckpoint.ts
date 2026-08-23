@@ -27,12 +27,23 @@
 //                         REFUSAL AT PUBLISH IS THE WORST FAILURE MODE A BACKSTOP CAN HAVE.
 //   · snake_case keys   — NOT asserted. They are safe in prose and the cleaners substitute them.
 //
-// ⚠ NOT YET ASSERTED, PENDING A FOUNDER RULING: the `A\d{2}` citation vocabulary (A01, A05, A10).
-// It is a real internal token — it is what defeated the cleaner's group matcher and carried three
-// EV ids onto AWI-2608-034's delivered report — and AWI-2608-032 carries a residue the cleaner
-// deliberately declines to touch ("(A10, unresolved)"). But `A10` collides with product model
-// numbers exactly as `E-40` does, so asserting it trades a leak risk for a false-refusal risk.
-// That trade is the founder's call, not this module's. Recorded, not silently decided either way.
+// ── A-NN AND RG-NN ARE ASSERTED (founder-locked 2026-08-22 — the open question, settled with
+// numbers rather than judgement). The trade was a leak risk against a false-refusal risk from
+// product-model collisions. A census over all 45 cases through the REAL client projection
+// (scripts/marker-shape-census.ts) measured both sides:
+//   · GENUINE LEAKS: 17 internal markers reaching a client surface across 4 cases — including
+//     THREE ALREADY-DELIVERED reports (AWI-2608-033 "(RG02)", -038 "(A-010)", -039 "(A-014,
+//     RG-002)"). Not theoretical. Two vocabularies the enumerated list never knew about did it:
+//     the HYPHENATED A-NNN form, and RG entirely.
+//   · FALSE POSITIVES in the A/RG space: ZERO — not one legitimate A-NN or RG-NN in 45 cases.
+//   · REAL COLLISIONS EXIST, BUT IN OTHER PREFIXES: "(S-1, S-3, 10-K)" (true SEC filing names in
+//     a true sentence) and the ASIN "B007EARF3O". That is precisely why this stays an ENUMERATED
+//     corpus-derived vocabulary and must never become a general [A-Z]+-?\d+ matcher — that rule
+//     would delete a client's own filings and SKUs to remove a marker.
+// The cleaner strips these in grouped AND mixed citations now, so the corpus projects clean;
+// these patterns are the BACKSTOP for the next shape, in the two prefixes measured collision-free.
+// A false refusal is recoverable (operator edits prose via the override path, republishes); a
+// marker on a paid report is not.
 import { deepStrings } from "./deepStrings";
 
 // PRESENCE patterns. There is no grammar here and there must never be any.
@@ -40,6 +51,11 @@ const CHECKPOINT_TOKENS: { name: string; re: RegExp }[] = [
   { name: "src_N", re: /src_\d+/ },
   // (?!\d) anchors the three-digit form so EV-2000 (a model number) does not trip the gate.
   { name: "EV-NNN", re: /\bEV-\d{3}(?!\d)/ },
+  // Corpus-measured 2026-08-22 (see the header): ZERO legitimate occurrences in 45 cases, while
+  // the leaks that reached three DELIVERED reports lived here. The leading guard keeps these off
+  // the tail of a longer identifier (an ASIN, a SKU); the trailing guard keeps A-1 out of A-1000.
+  { name: "A-NN", re: /(?<![A-Za-z0-9_-])A-?\d{1,3}(?![A-Za-z0-9])/ },
+  { name: "RG-NN", re: /(?<![A-Za-z0-9_-])RG-?\d{1,3}(?![A-Za-z0-9])/i },
 ];
 
 export interface TokenPresence {

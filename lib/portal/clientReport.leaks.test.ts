@@ -61,9 +61,19 @@ describe("§1 Class 1 — THE P0 ITSELF: one unknown token shape must not disabl
   // that was wider than its evidence. Stopping this occurrence is the presence checkpoint's job,
   // and whether the checkpoint asserts bare A-NN at all is a FOUNDER RULING (collision risk vs.
   // leak risk), not a call this module gets to make quietly.
-  it("leaves a token mixed with real words alone — the residue the checkpoint must catch", () => {
+  // ── EXPECTATION CHANGED BY RULING (2026-08-22), not bent to fit a build. This case previously
+  // asserted the OPPOSITE — that a marker mixed with real words was deliberately LEFT for the
+  // checkpoint. The corpus census then measured what that trade actually cost: 17 markers on a
+  // client surface across 4 cases, three of them ALREADY DELIVERED. The founder ruled the leaks
+  // closed, so the mixed group now loses its marker and KEEPS its word: the meaning survives,
+  // the citation does not. The old string is kept verbatim as the fixture so the change of
+  // behaviour is legible in the diff rather than hidden behind a reworded test.
+  it("a token mixed with real words loses the TOKEN and keeps the WORD (was: left for the checkpoint)", () => {
     const s = "The seller account may already be gated for Sterilite on Amazon (A10, unresolved), which would make the inventory unsellable.";
-    expect(cleanClientProse(s)).toBe(s);
+    const out = cleanClientProse(s);
+    expect(out).not.toContain("A10");
+    expect(out).toContain("(unresolved)");
+    expect(out).toBe("The seller account may already be gated for Sterilite on Amazon (unresolved), which would make the inventory unsellable.");
   });
 });
 

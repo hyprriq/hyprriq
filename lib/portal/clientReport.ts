@@ -41,7 +41,20 @@ import { assertNoInternalTokens } from "./clientTokenCheckpoint";
 // It is NOT added to the bare vocabulary: `A10` collides with real product model numbers exactly
 // as `E-40` does, and deleting a model number from a client's own product text is worse than
 // leaving a token in. Bare A-NN is the checkpoint's problem, and its collision risk needs a ruling.
-const TOKEN = String.raw`(?:src_\d+|EV?-?\d{1,4}|A\d{2})`;
+// ── CORPUS-MEASURED VOCABULARY (item 1a/1c, founder-locked 2026-08-22). A census over all 45
+// cases, run through the REAL projection, found internal markers surviving onto THREE DELIVERED
+// reports — not a theoretical hole: AWI-2608-033 `(RG02)`, AWI-2608-038 `(A-010)`, AWI-2608-039
+// `(A-014, RG-002)`, plus eight on AWI-2608-032 awaiting review. Two vocabularies the enumerated
+// list never knew about did it: `RG-?\d{1,3}` (research gaps) and the HYPHENATED `A-\d{3}` form
+// (A-009, A-015) that `A\d{2}` could not match. Both are added HERE, to the grouped vocabulary
+// only, exactly as A\d{2} was — a bracket of nothing but tokens is a citation by construction.
+//
+// ⛔ WHAT THE CENSUS ALSO FOUND, AND WHY THIS IS NOT A GENERAL SHAPE MATCHER: the same corpus
+// carries `(S-1, S-3, 10-K)` — real SEC filing names in a true sentence about a vendor's filings
+// — and the ASIN `B007EARF3O`. A general `[A-Z]{1,3}-?\d+` rule would strip both, corrupting the
+// client's own content to remove a marker. The vocabulary stays ENUMERATED and corpus-derived;
+// the collision risk the original ruling worried about is real and measured, just not in A/RG.
+const TOKEN = String.raw`(?:src_\d+|EV?-?\d{1,4}|A-?\d{1,3}|RG-?\d{1,3})`;
 const BARE_TOKEN = String.raw`(?:src_\d+|EV-\d{3})`;
 // Joiners observed IN THE CORPUS, not imagined: comma, and/or, "through", slash, and the en-dash
 // RANGE (`src_3–src_6`) that no hand-written fixture set contained — 28 of the 169 occurrences.
@@ -57,12 +70,41 @@ const REF_BRACKET = new RegExp(String.raw`\s*\[\s*${TOKEN}(?:\s*(?:,|and|through
 // second half.
 const BARE_GROUP = new RegExp(String.raw`(?<![A-Za-z0-9-])${BARE_TOKEN}(?:${JOIN}${BARE_TOKEN})*(?!\d)`, "g");
 
+// ── MIXED GROUPS (the leak the all-token matcher structurally cannot reach, 2026-08-22).
+// REF_GROUP/REF_BRACKET require EVERY member to be a token, so a citation sitting beside a real
+// word — "(A10, unresolved)", "(E2, Brand Risk; A2)" — was left whole, marker and all. That is
+// the same failure mode the P0 taught (one unknown member disables the match for every known one
+// beside it), one level up. This pass walks each innermost group, drops the members that are
+// ONLY internal tokens, and KEEPS the words — "(A10, unresolved)" becomes "(unresolved)", never
+// an empty parenthesis where a real qualifier used to be. A group with no internal token in it
+// (the SEC-filing case "(S-1, S-3, 10-K)") is returned untouched, byte for byte.
+const GROUP_SCAN = /\(([^()]*)\)|\[([^\[\]]*)\]/g;
+const TOKEN_ONLY = new RegExp(String.raw`^${TOKEN}$`);
+const TOKEN_IN_PART = new RegExp(String.raw`(?<![A-Za-z0-9_-])${TOKEN}(?![A-Za-z0-9])`, "g");
+
+function stripTokensInMixedGroups(text: string): string {
+  return text.replace(GROUP_SCAN, (whole, paren?: string, brack?: string) => {
+    const inner = paren ?? brack ?? "";
+    const open = paren !== undefined ? "(" : "[";
+    const close = paren !== undefined ? ")" : "]";
+    if (!TOKEN_IN_PART.test(inner)) { TOKEN_IN_PART.lastIndex = 0; return whole; }
+    TOKEN_IN_PART.lastIndex = 0;
+    const kept = inner
+      .split(/[,;]/)
+      .map((part) => (TOKEN_ONLY.test(part.trim()) ? "" : part.replace(TOKEN_IN_PART, "").trim()))
+      .filter((part) => part.length > 0);
+    return kept.length === 0 ? "" : `${open}${kept.join(", ")}${close}`;
+  });
+}
+
 export function stripInternalRefs(text: string): string {
   return tidyAfterStrip(
-    text
-      .replace(REF_GROUP, "")
-      .replace(REF_BRACKET, "")
-      .replace(BARE_GROUP, ""),
+    stripTokensInMixedGroups(
+      text
+        .replace(REF_GROUP, "")
+        .replace(REF_BRACKET, "")
+        .replace(BARE_GROUP, ""),
+    ),
   );
 }
 
