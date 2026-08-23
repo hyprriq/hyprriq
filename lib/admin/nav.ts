@@ -26,6 +26,7 @@ export type AdminNavKey =
   | "outcomes"
   | "revenue"
   | "prompts"
+  | "design"
   | "settings"
   | "run"
   | "users"
@@ -94,6 +95,10 @@ const GROUPS: NavGroup[] = [
       // see whether the checks over them are passing.
       { key: "integrity", label: "System health", icon: "✓", href: "/admin/integrity" },
       { key: "prompts", label: "Prompts", icon: "📄", href: "/admin/prompts" },
+      // The component sheet. Operator tooling, not a client surface — it renders the real
+      // tokens and the real components with contrast computed at render, so it cannot drift
+      // from the product the way a static reference file does.
+      { key: "design", label: "Design system", icon: "◐", href: "/admin/design-system" },
       { key: "settings", label: "Settings", icon: "⚙", href: "/admin/settings" },
     ],
   },
