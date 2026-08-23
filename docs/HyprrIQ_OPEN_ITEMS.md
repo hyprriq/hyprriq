@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-22 (**§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-22 (**§0-G THE AUDITS RUN THEMSELVES — every hand-run census is now a standing BLOCK/ALERT/SURFACE check with a measured zero false-positive rate, nightly sweep paging once per NEW finding, and /admin/integrity where green means measured green. Prior: **§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -102,6 +102,42 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > | **② Top-ups off sale + unclippable when they return** — billing card flag-gated (one-flag return-to-sale); webhook lands paid packs via `add_purchased_credits` (balance + floor). AS-APPLIED records for the founder-run SQL, both live-verified by read-only MCP before writing: `20260822300000_purchased_credits.sql` + `20260822300100_acquisition_grants_growth_only.sql`. Cycle fixture-locked two-layer (SQL expressions verbatim + numeric proof: buy-3 → renewal → paid 3 survive, plan clips, plan-burns-first, 3-renewal survival) | ✅ SHIPPED | re-sale preconditions listed in the 2026-08-22 session deliverable |
 > | **③ Silent zeros in the money path DEAD** — the `?? 0` was one of FOUR: unknown paid top-up id (0 credits granted, "Top-up: 0 credits" recorded), paid subscription checkout with unmapped price (provisioned NOTHING, marked processed), paid one-time with garbage metadata kind (silent ACK), paid RENEWAL with lookup miss (card charged, zero cycle credits). All four throw via fixture-enforced helpers → `stripe_events.error` → retried + visible; `subscription.updated` deliberately logs-not-throws (status must survive) with an audit row on unmapped prices. B2 is fixtures now (`plans.paidLookups.test.ts`), incl. prototype-chain shapes that caught a real hole in the first draft | ✅ SHIPPED | |
 > | **④ Fabricated verdict** — CLOSED by the follow-up ruling same day (verdict-ADJACENT authority: display of absence only, never computation): **ABSENCE IS NOT A VALUE.** One shared presence notion (`lib/portal/verdictPresence.ts`, keys derived from `VERDICT_SCALE_ORDER`) + one loud reporter (console + `audit_log` `{verdict_absent_at_render}` + ops pager). PDF first: `no_verdict` joins the `no_client_name` refusal pattern; the template's three fallbacks (meta/ink/tone) are total lookups now. On-screen: the portal case page refuses with an honest panel (refusal state over a 500 — "Try again" would be false advice); report-view keeps the throwing belt; the admin review preview no longer shows a fabricated VBP client screen for a verdictless mid-review case (the live item-7 catch — a wrong preview becomes a wrong report). Filesystem lock over the render layers: no fallback TO a verdict value; honest non-verdicts ("pending", "—") stay legal. Engine untouched | ✅ SHIPPED | fixtures + caller lock |
+
+---
+
+## 0-G. THE AUDITS RUN THEMSELVES — 2026-08-22 (systemic pass)
+
+> Every census run by hand this week became a STANDING CHECK. Hand-auditing works at 45 cases
+> with one person reading everything; it does not work at 500.
+>
+> | Check | Shape | Where | Measured across 45 cases |
+> |---|---|---|---|
+> | Internal citation markers in a client report | **BLOCK** + ALERT | publish gate refuses 422 · nightly sweep re-checks delivered | CLEAN 45/45 (after 17 leaks on 4 cases, 3 delivered, were closed) |
+> | Internal vocabulary in a client report (the 1e class) | **BLOCK** + ALERT | presence checkpoint · nightly sweep | CLEAN 45/45 (after `(brand_risk)` was found on a DELIVERED report) |
+> | Delivered verdict vs current engine replay | ALERT | nightly sweep (only visible corpus-wide) | 1 finding — AWI-2607-022, genuine and known |
+> | Delivered case with no verdict | ALERT | nightly sweep (render surfaces already refuse) | CLEAN 45/45 |
+> | Live-shaped case IDs on presentation surfaces | **BLOCK** | the build (filesystem-walking lock) | 5 surfaces corrected; **verified it catches a NEW surface** via a probe file |
+>
+> **False positives across every new check: ZERO.** A check that fires on healthy cases did not
+> ship — a false-alarm system is worse than none.
+>
+> **The 1e root cause was the marker class one level up:** `SNAKE_NAMES` was a HAND-ENUMERATED
+> list that knew `brand_risk_assessment` but not the short alias `brand_risk`. It now DERIVES
+> from `AREA_NAMES`, longest-key-first, with a measured alias table.
+>
+> **ALERTING (`lib/inngest/functions/integritySweep.ts`):** nightly 06:20 UTC, **one page per NEW
+> finding, never a digest** — dedup by finding key against the previous run stored in `audit_log`
+> (deliberately NO migration; a health dashboard must not wait on one). Zero external spend: DB
+> reads plus pure replays. Seven fixtures pin the dedup contract.
+>
+> **SURFACE — `/admin/integrity`:** every check in plain English, when it last ran, what it found,
+> which cases. **Green means MEASURED green with a timestamp**; "never checked" and "stale (>36h)"
+> are their own states, and unevaluated cases are shown separately, never folded into clean.
+>
+> ⛔ **THE DIVERGENCE LAW (founder-locked):** a delivered verdict that no longer matches the engine
+> is INVESTIGATED, never smoothed — never rebaselined away, never regenerated to make a suite go
+> green, never removed from the pinned list. Recorded in `docs/goldenCases.md`; the pin and the
+> nightly sweep report it independently, so deleting the pin only makes two records disagree.
 
 ---
 
