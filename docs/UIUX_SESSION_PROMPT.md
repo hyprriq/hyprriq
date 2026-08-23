@@ -5,24 +5,36 @@
 
 Everything below is standing instruction for that session. Written 2026-08-02 at `c97963a` (dev lane closed).
 
-> ## ⛔ STOP — VISUAL SYSTEM IS UNDER ACTIVE RULING (2026-08-22)
+> ## ✅ THE RULING LANDED — VISUAL SYSTEM IS BUILT (2026-08-23 ruled, 2026-08-24 built)
 >
-> **This file's VISUAL guidance is SUPERSEDED pending a founder ruling in the planning thread.**
-> The palette, typography and motion described below predate this week's design work. Building
-> from them today would inherit **three verdict badges that fail contrast** and a **base colour
-> the founder has rejected**. Do not treat §4 ("the existing design system") or any colour,
-> token, type or motion instruction in this file as current.
+> The STOP marker that stood here from 2026-08-22 is **discharged**. The founder's ruling is
+> `HyprrIQ_DEV_BRIEF.md`, and it is implemented. Removed on the founder's explicit written
+> instruction in the sitting-one deliverables ("DOC-DELTA, including marking
+> UIUX_SESSION_PROMPT.md's visual guidance superseded") — not by a design session's own decision.
 >
-> **What DOES still stand, and is not affected by that ruling:**
-> - §5 THE SURFACE MAP — including the acquisition-funnel queue (invite landing, /partners
->   request form + confirmation, inactive-invite notice, admin partner-requests panel).
-> - The copy MUST_PASS locks and every "restyle, don't rewire" instruction. Copy and structure
->   are content decisions, already ruled; they are not part of the visual system under review.
-> - §2 (layouts-first workflow), §3 (hard laws), §6 (session-end gates), §7 (voice & copy bar).
+> **§4 OF THIS FILE ("THE EXISTING DESIGN SYSTEM") IS SUPERSEDED AND MUST NOT BE BUILT FROM.**
+> It describes the pre-ruling skin: `bg-base` as a warm-neutral, a trust-navy brand, a copper
+> accent, Fraunces for display. The utility NAMES it lists are still correct — that was the point
+> of the one-token-layer design, and every one of them re-skinned without an edit. The VALUES,
+> the fonts and the "deep blue brand" framing are not.
 >
-> **Before starting a visual session:** get the current palette/type ruling from the founder and
-> work from that. This marker is removed by the founder when the ruling lands — not by a design
-> session, and not by whoever finds it inconvenient.
+> **Where the visual system actually lives now:**
+> - `lib/design/palette.ts` — the source. Values in TypeScript, because a CSS comment cannot be
+>   tested and three of this repo's contrast comments were false.
+> - `app/globals.css` — mirrors it. Drift in either direction fails the build.
+> - `lib/design/palette.lock.test.ts` — 90 assertions, every ratio recomputed each run.
+> - **`/admin/design-system`** — the component sheet, rendering the real tokens and the real
+>   components with contrast computed at render. Read this, not a document.
+>
+> **One correction to the marker this replaces:** it warned that building from §4 would inherit
+> "three verdict badges that fail contrast". Measured across every palette in the repo
+> (`app/globals.css`, `public/prototype/assets/tokens.css`, `DESIGN_SYSTEM_reference.html`, the
+> PDF template), **all four verdict pairs passed** — 5.42, 4.62, 4.62 and 5.87:1. The real defect
+> in that class was not contrast but MAPPING: `/how-to-read` rendered three of the four verdicts
+> in the wrong colour outright. That is fixed and now locked.
+>
+> Everything else in this file stands: §5 the surface map, the copy MUST_PASS locks, §2 the
+> layouts-first workflow, §3 the hard laws, §6 the session-end gates, §7 the voice and copy bar.
 
 
 ---

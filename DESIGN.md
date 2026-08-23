@@ -1,5 +1,26 @@
 # Design
 
+> ## SUPERSEDED IN PART — VISUAL RULING 2026-08-23, BUILT 2026-08-24
+>
+> **The palette, typography and motion below are NO LONGER CURRENT.** They describe the
+> 2026-06-17 "synthesis" direction: a warm-neutral base, a trust-navy brand, a copper accent,
+> and the Fraunces / Instrument Sans / JetBrains Mono stack. All of it was replaced by the
+> founder's ruling in `HyprrIQ_DEV_BRIEF.md` — cool neutrals, a petrol anchor/action pair, four
+> cool wayfinding accents, a reserved warm verdict ramp, and Newsreader / Inter / IBM Plex Mono.
+>
+> **The current source of truth is `lib/design/palette.ts`**, mirrored into `app/globals.css`
+> and enforced by `lib/design/palette.lock.test.ts`, which recomputes every contrast ratio on
+> every build. Read the rendered version at **`/admin/design-system`** — it imports the real
+> tokens and the real components, so unlike this file it cannot go stale silently.
+>
+> **What below still stands:** the visual THEME paragraph's intent (advisor's office, not a
+> security operations center; verdicts are the loudest moment; restraint), the Components,
+> Layout, Accessibility and Information-architecture sections, and the v2 narrative arc. What
+> does NOT stand: every hex value, every font name, and the "warm-neutral base" instruction —
+> the base is cool now, and warm hues are reserved to the verdict alone.
+>
+> Do not re-derive a colour from this file. If you need one, import it.
+
 *Direction LOCKED 2026-06-17: **Synthesis** — resolved the warm/electric-blue (old DESIGN.md) vs cool/navy (`hyprriq_ux_v2.html`) conflict. This file is now the single source of truth; the v2 HTML and the old warm-only tokens are superseded by what's below. Re-run `/impeccable document` once real components exist to replace any remaining hypotheses with extracted tokens.*
 
 ## Visual Theme

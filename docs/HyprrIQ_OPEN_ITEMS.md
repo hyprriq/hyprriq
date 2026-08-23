@@ -105,6 +105,54 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-H. THE VISUAL SYSTEM IS BUILT AND LOCKED — 2026-08-24 (design sitting one of three)
+
+> The founder's visual ruling (`HyprrIQ_DEV_BRIEF.md`, 2026-08-23) is implemented as a token
+> layer that is MEASURED on every build rather than described in a comment. The 2026-08-22 STOP
+> marker on `docs/UIUX_SESSION_PROMPT.md` is discharged; its §4 is superseded.
+
+| # | Item | State | Enforcement |
+|---|---|---|---|
+| **H1** | **The token layer moved to TypeScript.** `lib/design/palette.ts` is the source; `app/globals.css` mirrors it. Cool neutrals, petrol `--anchor`/`--action`, four cool wayfinding accents, the reserved warm verdict ramp, Newsreader / Inter / IBM Plex Mono, two motion curves and three durations. Replaces the 2026-06-17 synthesis direction; `--color-accent-warm` (copper — defined, never used, warm) deleted. Utility NAMES unchanged, so ~30 admin/portal files re-skinned without an edit | ✅ SHIPPED | `palette.lock.test.ts` — CSS↔TS equality, token by token |
+| **H2** | **Three ruled values corrected by measurement**, each the minimum lightness shift clearing the brief's own 4.5 floor on a ground the ruled homepage renders it against: `--mut` #687276→#666F73 (was 4.33:1 on sunk, 4.43 mist, 4.44 sand — half its grounds); `--cyan` #007983→#007881 (4.43:1 on the hero gradient stop); footer fine print #6E7B80→#758286 (4.09:1 on ink). Two of the three are visually identical | ✅ SHIPPED | solver `scripts/solve-token.ts`; contracts recomputed each run |
+| **H3** | **Two tokens the brief did not have.** `--control-border` #848C90 (a control's edge needs 3:1 per WCAG 1.4.11; the brief's `--ln2` measures 1.65:1 — the secondary button's outline is not perceivably there). `--color-focus` **contextual**: cyan is 5.24:1 on surface but 2.30:1 on the petrol section, so `[data-ground="dark"]` redefines it and the control inherits the right ring instead of someone remembering | ✅ SHIPPED | both in the contrast contracts |
+| **H4** | **VERDICT COLOUR DEFECT, live and client-facing.** `/how-to-read` — the public page that teaches a client to read the verdict — hand-wrote its own map and got **three of four wrong**: Source Clear wearing the VERIFY orange, Usable With Conditions wearing the brand navy, Verify Before Purchase wearing `amber-600` from Tailwind's DEFAULT palette. `/portal/help` held a second hand-written map (correct — which is the risk) and `verdict-badge.tsx` a third. All three now read `VERDICT_CLASSES` | ✅ FIXED | lock check 7 fails any file building its own map |
+| **H5** | **The lock — the answer to "what stops the next session getting a verdict colour wrong".** 90 assertions, every ratio computed at run time; the file contains no number a human typed. Fails on: a verdict with no colour or a colour with no verdict · any pair under 4.5:1 · two verdicts sharing a hue · CSS/TS drift · a broken contrast contract · a text token in NO contract · a hardcoded reserved hex · a self-built verdict map · a Tailwind default-palette colour on a presentation surface · a stale Clerk brand mirror · a keyframe animation in the operator console | ✅ SHIPPED | `lib/design/palette.lock.test.ts` (+90 tests → 2093) |
+| **H6** | **The component sheet is a ROUTE, not a file.** `/admin/design-system`, behind the operator boundary (the launch URL map is closed; a public `/design-system` would be an invented route). Imports the real tokens and real components with contrast computed at render, so it cannot go stale the way `public/prototype/DESIGN_SYSTEM_reference.html` did. Admin nav gains a 19th item, pinned fixture updated same commit | ✅ SHIPPED | `lib/admin/nav.test.ts` |
+| **H7** | **Operator-console motion ban made real.** `pipeline-progress.tsx` carried `animate-pulse` on rendered content plus three Tailwind-default amber colours. Removed. Loading skeletons are exempt by an explicit two-entry list with reasons, and a companion test fails a STALE exemption so the list cannot become where animations hide | ✅ SHIPPED | lock check 10 |
+
+> **TWO PREMISES IN THE BRIEF THAT THE CODEBASE DOES NOT SUPPORT — reported, not built to.**
+> The brief states two defects "both verified in the current build". Measured across every
+> palette in the repo — `app/globals.css`, `public/prototype/assets/tokens.css`,
+> `DESIGN_SYSTEM_reference.html`, the PDF template, and an exhaustive tree sweep including the
+> untracked working folders:
+> - **"Three of four verdict badges fail contrast (3.22, 3.31, 4.33)"** — all four PASSED:
+>   5.42, 4.62, 4.62, 5.87:1. No palette in the repo produces those three numbers.
+> - **"`--muted #767E8A` measures 3.76:1, not the >=4.5 its own comment claims"** — `#767E8A`
+>   **exists nowhere in the repository.** The real `--color-muted` is `#5C6570` at 5.5:1, and
+>   its comment is accurate.
+>
+> The ruling stands regardless — the new system is a complete, measured, enforceable one and the
+> old one was none of those things. But the STATED REASON was wrong, it had propagated verbatim
+> through three documents (`UIUX_SESSION_PROMPT.md` → the 2026-08-23 handover → the dev brief)
+> with no measurement behind it, and **the founder's instinct that verdict colour was broken was
+> RIGHT — it was recorded as the wrong defect.** The real one was H4: three of four verdicts
+> rendered in the wrong colour on the page that explains them.
+
+> **OPEN, NEEDS A FOUNDER RULING — the organising rule vs ~40 existing usages.** The brief's
+> organising rule ("green, amber, orange and red may only ever mean a verdict") is contradicted
+> today by roughly forty verdict-token usages that mean something else: subscription status
+> (active / past_due), support ticket status, integrity tones, outcome correct/wrong, credit
+> deltas, the portal's "Your plan is inactive" banner, and marketing capability icons. Enforcing
+> the rule wholesale would recolour every status chip across admin and portal — a three-surface
+> change, not a token decision. The lock enforces the narrow half now (verdict colours are
+> correct, complete, measured, undriftable) and the wide half is left to the founder. **The ruled
+> homepage HTML itself uses the reserved ramp for ~7 non-verdict things** (status tags, the
+> problem-chain card, the section kicker, the × marks, the trend graph, the Learn label chips),
+> so this must be ruled before sitting two builds thirteen pages on top of it.
+
+---
+
 ## 0-G. THE AUDITS RUN THEMSELVES — 2026-08-22 (systemic pass)
 
 > Every census run by hand this week became a STANDING CHECK. Hand-auditing works at 45 cases
