@@ -1,176 +1,179 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Cpu, UserCheck, ScrollText, X } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
-import { VerdictSpectrum } from "@/components/marketing/verdict-spectrum";
-import { VERDICTS, type Verdict } from "@/components/marketing/verdict-badge";
-import { hero, layers, dimensions, dataPoints, dontDo } from "@/lib/content/how-it-works";
+import { PageHero, PageSection, Prose, RelatedLinks, PageCta } from "@/components/marketing/page-shell";
+import { AREAS } from "@/lib/content/whatWeCheck";
+import { VERDICT_COPY, VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
+import { CASE_SLA_HOURS, PLAN_BRAND_CAPS } from "@/lib/constants/plans";
+
+// /how-it-works — conversion support. The reader is close to buying and wants to know what happens.
+//
+// ONE COPY ACCURACY FLAG, raised not fixed: the content file says "If you have an invoice or a
+// quote, upload it" without qualification, but app/api/cases/submit/route.ts:117 REFUSES uploads
+// on single_99 server-side ("$99 takes no uploads", founder-ruled 2026-08-07) — Documentation
+// Review does not run on that tier, so accepting files would falsely imply review. A $99 buyer
+// following this sentence hits a 400. The sentence below is the founder's, unedited; the tier
+// qualification is added around it rather than inside it.
 
 export const metadata: Metadata = {
-  title: "How it works — HyprrIQ source intelligence",
+  title: "How It Works | HyprrIQ Supplier Reports",
   description:
-    "Deep AI research across five dimensions, reviewed and approved by a human expert, delivered as a one-page verdict with the questions to ask before you buy.",
-};
-
-const LAYER_ICONS = [Cpu, UserCheck, ScrollText];
-
-const OUTCOME_COPY: Record<Verdict, string> = {
-  clear: "All observable indicators are consistent with credible wholesale sourcing.",
-  conditional: "The source appears credible. Collect the listed items before you commit capital.",
-  verify: "Important evidence is missing or unclear. Don't go past a test order until it's resolved.",
-  deny: "Serious gaps or contradictions surfaced. Seek alternatives until they're resolved.",
+    "Submit a supplier and the brands they claim. HyprrIQ assesses five areas and returns one written verdict within 24 hours, on every plan.",
+  alternates: { canonical: "/how-it-works" },
 };
 
 export default function HowItWorksPage() {
   return (
     <>
-      {/* Hero */}
-      <section
-        className="border-b border-line"
-        style={{ background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)" }}
-      >
-        <div className="mx-auto max-w-3xl px-5 py-16 text-center lg:px-8 lg:py-20">
-          <h1 className="text-[clamp(2.1rem,4.4vw,3.2rem)] font-bold leading-[1.07] text-ink">
-            {hero.title}
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-ink-2">{hero.subtitle}</p>
-        </div>
-      </section>
+      <PageHero
+        title="How it works"
+        lede={`Three steps. About two minutes of your time at the front, then ${CASE_SLA_HOURS} hours before the verdict lands.`}
+        ground="pale"
+      />
 
-      {/* Three layers */}
-      <section className="bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 lg:py-16">
-          <div className="grid gap-6 md:grid-cols-3">
-            {layers.map((layer, i) => {
-              const Icon = LAYER_ICONS[i];
-              return (
-                <Reveal key={layer.title} delay={i * 90}>
-                  <div className="h-full rounded-[var(--radius-card)] border border-line bg-base p-6">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-tint text-brand-ink">
-                      <Icon size={20} strokeWidth={2} aria-hidden="true" />
-                    </div>
-                    <h2 className="mt-4 text-lg font-semibold text-ink">{layer.title}</h2>
-                    <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{layer.body}</p>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Five dimensions */}
-      <section className="border-y border-line bg-subtle">
-        <div className="mx-auto max-w-4xl px-5 py-14 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold leading-tight text-ink">
-              The five dimensions we research.
-            </h2>
-          </Reveal>
-          <ol className="mt-10 space-y-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-            {dimensions.map((d, i) => (
-              <Reveal as="li" key={d.name} delay={i * 60}>
-                <div className="flex gap-4 border-b border-line p-5 last:border-0">
-                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-brand-tint font-mono text-sm font-bold text-brand-ink">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <h3 className="text-[17px] font-semibold text-ink">{d.name}</h3>
-                    <p className="mt-1 text-[15px] leading-relaxed text-ink-2">{d.body}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* 60+ data points */}
-      <section>
-        <div className="mx-auto max-w-3xl px-5 py-14 text-center lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold leading-tight text-ink">
-              {dataPoints.title}
-            </h2>
-            <p className="mt-5 text-lg leading-relaxed text-ink-2">{dataPoints.body}</p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* The four outcomes */}
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto max-w-4xl px-5 py-14 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold leading-tight text-ink">
-              It all leads to one of four verdicts.
-            </h2>
-            <div className="mt-6 max-w-md">
-              <VerdictSpectrum withLabels />
+      <PageSection tone="surface">
+        <ol className="space-y-10 sm:space-y-14">
+          <Reveal as="li">
+            <div className="border-t-2 border-anchor pt-5">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-anchor">
+                Step one
+              </span>
+              <h2 className="mt-2 text-ink">You submit the supplier</h2>
+              <Prose className="mt-3">
+                <p>
+                  Supplier name, their website, the brands they claim to carry, the marketplace you
+                  sell on, and any paperwork you already have.
+                </p>
+                <p>
+                  If you have an invoice or a quote, upload it — document review is part of the
+                  Single Deep report and up. Documentation Review works from what you give us.
+                </p>
+                <p>Takes about two minutes.</p>
+              </Prose>
+              <div className="mt-4 max-w-[68ch] rounded-card border border-line bg-mist p-4 sm:p-5">
+                <p className="text-[15px] leading-[1.6] text-ink-2 sm:text-[16px]">
+                  <b className="font-semibold text-ink">One credit, one supplier.</b> A credit is not
+                  per brand. It covers one supplier, including up to your plan&rsquo;s brand limit —{" "}
+                  {PLAN_BRAND_CAPS.single_99} brands on a single report, {PLAN_BRAND_CAPS.growth_279}{" "}
+                  on Growth. {PLAN_BRAND_CAPS.growth_279} brands on one supplier is still one credit.
+                  Two suppliers is two credits, however few brands each one has.
+                </p>
+              </div>
             </div>
           </Reveal>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            {(Object.keys(VERDICTS) as Verdict[]).map((v, i) => {
-              const meta = VERDICTS[v];
-              const Icon = meta.icon;
-              return (
-                <Reveal key={v} delay={i * 70}>
-                  <div className="flex h-full gap-3 rounded-[var(--radius-card)] border border-line bg-base p-5">
-                    <div className={`flex h-10 w-10 flex-none items-center justify-center rounded-full ${meta.bg} ${meta.ink}`}>
-                      <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-                    </div>
-                    <div>
-                      <h3 className={`text-base font-semibold ${meta.ink}`}>{meta.label}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-ink-2">{OUTCOME_COPY[v]}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
-      {/* What we don't do */}
-      <section>
-        <div className="mx-auto max-w-4xl px-5 py-14 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold leading-tight text-ink">
-              {dontDo.title}
-            </h2>
-          </Reveal>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {dontDo.items.map((item, i) => (
-              <Reveal key={item.title} delay={i * 80}>
-                <div className="h-full">
-                  <X size={22} strokeWidth={2} className="text-deny-ink" aria-hidden="true" />
-                  <h3 className="mt-3 text-base font-semibold text-ink">{item.title}</h3>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">{item.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="border-t border-line bg-brand-tint">
-        <div className="mx-auto max-w-4xl px-5 py-16 text-center lg:px-8">
-          <Reveal>
-            <h2 className="text-[clamp(1.7rem,3.4vw,2.6rem)] font-bold leading-tight text-ink">
-              See what we find on your next supplier.
-            </h2>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
-                href="/pricing"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
-              >
-                See pricing
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
+          <Reveal as="li">
+            <div className="border-t-2 border-blue pt-5">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-blue">
+                Step two
+              </span>
+              <h2 className="mt-2 text-ink">The work runs, and you can watch it</h2>
+              <Prose className="mt-3">
+                <p>
+                  {AREAS.length} areas run in sequence:{" "}
+                  {AREAS.map((a) => a.name).join(", ")}.
+                </p>
+                <p>
+                  Your case page shows which area is running and which are complete, with the
+                  deadline on screen. Nothing is hidden while the assessment is in progress, and you
+                  never have to ask where it is.
+                </p>
+              </Prose>
             </div>
           </Reveal>
+
+          <Reveal as="li">
+            <div className="border-t-2 border-plum pt-5">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-plum">
+                Step three
+              </span>
+              <h2 className="mt-2 text-ink">You get one verdict, and what sits behind it</h2>
+              <Prose className="mt-3">
+                <p>
+                  One of {VERDICT_SCALE_ORDER.length}:{" "}
+                  {VERDICT_SCALE_ORDER.map((k, i) => (
+                    <span key={k}>
+                      <strong>{VERDICT_COPY[k].name}</strong>
+                      {i < VERDICT_SCALE_ORDER.length - 2 ? ", " : i === VERDICT_SCALE_ORDER.length - 2 ? ", or " : ""}
+                    </span>
+                  ))}
+                  . Written out in full, so it reads the same to everyone.
+                </p>
+                <p>
+                  With it you get the findings and every source behind them, each marked{" "}
+                  <strong>Verified</strong> or <strong>Assessed</strong>. Then two sections that most
+                  of this market leaves out:
+                </p>
+              </Prose>
+              <div className="mt-4 grid max-w-[68ch] gap-3 sm:grid-cols-2">
+                <div className="rounded-card border border-line bg-blue-tint p-4">
+                  <h3 className="text-ink">What we could not confirm</h3>
+                  <p className="mt-1.5 text-[15px] leading-[1.55] text-ink-2">
+                    The specific things we could not establish, in every report, including the clean
+                    ones.
+                  </p>
+                </div>
+                <div className="rounded-card border border-line bg-cyan-tint p-4">
+                  <h3 className="text-ink">Questions to put to this supplier</h3>
+                  <p className="mt-1.5 text-[15px] leading-[1.55] text-ink-2">
+                    Written for the supplier you actually have, not a generic checklist. Send them as
+                    they are.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </ol>
+      </PageSection>
+
+      <PageSection tone="mist">
+        <h2 className="text-ink">{CASE_SLA_HOURS} hours, every plan</h2>
+        <Prose className="mt-3">
+          <p>
+            The delivery commitment is {CASE_SLA_HOURS} hours and it does not change by price. It is
+            the same on a single report as on a monthly plan.
+          </p>
+        </Prose>
+      </PageSection>
+
+      <PageSection tone="surface">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
+          <div>
+            <h2 className="text-ink">What you need before you start</h2>
+            <Prose className="mt-3">
+              <p>
+                Not much. The supplier&rsquo;s name and website is enough to begin. Brand names make
+                the Brand Risk area sharper. Paperwork makes Documentation Review possible.
+              </p>
+              <p>You do not need to have placed an order, and it is better if you have not.</p>
+            </Prose>
+          </div>
+          <div>
+            <h2 className="text-ink">Who can buy</h2>
+            <Prose className="mt-3">
+              <p>
+                US-based clients only at launch. The suppliers themselves can be anywhere in the
+                world — that is usually the point.
+              </p>
+            </Prose>
+          </div>
         </div>
-      </section>
+        <RelatedLinks
+          links={[
+            { label: "What we check", href: "/what-we-check" },
+            { label: "Pricing", href: "/pricing" },
+            { label: "See a real redacted report", href: "/sample-report" },
+            { label: "Our method", href: "/method" },
+            { label: "Questions", href: "/faq" },
+          ]}
+        />
+      </PageSection>
+
+      <PageCta
+        title="Two minutes in. One verdict back."
+        body={`Send us a supplier and the brands they claim. The report is in your portal within ${CASE_SLA_HOURS} hours.`}
+        cta="See pricing"
+        href="/pricing"
+      />
     </>
   );
 }

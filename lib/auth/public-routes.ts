@@ -18,6 +18,17 @@ export const PUBLIC_ROUTES: string[] = [
   "/how-to-read",
   "/partners",
   "/about",
+  // The 2026-08-24 launch build — the rest of the thirteen ruled marketing routes. Every one of
+  // these is a cold-visitor page; the marketing-route lock in public-routes.test.ts fails the
+  // build if a route under app/(marketing) is added without a line here, which is the whole
+  // reason /sample-report's redirect-to-sign-in was caught in a browser and never again.
+  "/what-we-check",
+  "/method",
+  "/what-we-dont-do",
+  "/security",
+  "/how-we-handle-your-data",
+  "/contact",
+  "/faq",
   // The six legal pages (locked copy, built 2026-08-21). /terms and /privacy are PERMANENT —
   // Stripe live mode points at them and those URLs must never move.
   "/terms",
@@ -41,6 +52,8 @@ export const PUBLIC_ROUTES: string[] = [
   "/unsubscribe",
   "/api/newsletter",
   "/api/partner-request",
+  // Contact intake (2026-08-24) — same cold-visitor class as the partner request.
+  "/api/contact",
   // Typed-code validation at registration (2026-08-22): the person checking a code has no
   // account yet, by definition. Only /check is public — redeem and attach stay authenticated.
   "/api/grants/check",
