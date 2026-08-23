@@ -1,4 +1,5 @@
 import { VerdictBadge } from "./verdict-badge";
+import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
 
 // SWAP POINT (post report-finalization): replace the mock document body with a
 // real rendered first page of the PDF report. Keep the blur overlay so the full
@@ -14,7 +15,7 @@ export function ReportPreview() {
               Source Intelligence Report
             </p>
             <p className="mt-0.5 font-mono text-xs tnum text-muted">
-              AWI-2606-014 · Northgate Wholesale Co.
+              {SAMPLE_CASE_ID} · Northgate Wholesale Co.
             </p>
           </div>
           <VerdictBadge verdict="conditional" size="sm" />

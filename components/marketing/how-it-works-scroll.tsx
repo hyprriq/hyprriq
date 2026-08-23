@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
 import { FileSearch, UserCheck, ScrollText, Check, Loader, Upload } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
 
@@ -84,7 +85,7 @@ function StageVisual({ active }: { active: number }) {
         <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-ink">Researching</p>
-            <span className="font-mono text-xs tnum text-muted">AWI-2606-014</span>
+            <span className="font-mono text-xs tnum text-muted">{SAMPLE_CASE_ID}</span>
           </div>
           <ul className="mt-5 space-y-3">
             {DIMENSIONS.map((d, i) => (
@@ -118,7 +119,7 @@ function StageVisual({ active }: { active: number }) {
       >
         <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs tnum text-muted">AWI-2606-014</span>
+            <span className="font-mono text-xs tnum text-muted">{SAMPLE_CASE_ID}</span>
             <span className="text-xs text-muted">Decision Snapshot</span>
           </div>
           <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted">Vendor</p>

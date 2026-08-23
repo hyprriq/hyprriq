@@ -97,10 +97,13 @@ export const PLAN_CATEGORY: Record<PlanType, "one_time" | "subscription"> = {
 // (1h, zero consumers — retired 2026-08-12 morning). ──
 export const CASE_SLA_HOURS = 24;
 
-// ⚠ UNRULED (my constant, flagged per the laws-get-named rule — needs a founder ruling): the
-// "at risk" window for SLA risk counts/badges. With a 24h SLA, the old day-granularity check
-// (deadline within 1 day) flagged EVERY active case from the moment of submission — meaningless.
-// 6h = the last quarter of the window. Change the number here; every risk read derives from it.
+// ── FOUNDER-RULED 2026-08-22: KEEP AT 6. The "at risk" window for SLA risk counts and badges.
+// THE REASON, recorded so the number is a ruling and not a leftover: with a 24h SLA the previous
+// day-granularity check (deadline within 1 day) flagged EVERY active case from the moment of
+// submission, which is the same as flagging none. Six hours is the last quarter of the window —
+// late enough that a flag means something, early enough to still act on it. Ruled after being
+// flagged under the laws-get-named rule (a constant I introduced during plumbing work must be
+// named for a ruling, never slipped in). Change the number HERE; every risk read derives from it.
 export const SLA_RISK_WINDOW_HOURS = 6;
 // The refund window (days from delivery for single reports; from charge for subscriptions).
 // Captured with the LOCKED refund policy; the money-write build is deferred.

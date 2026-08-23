@@ -4,9 +4,13 @@ import { VerdictBadge } from "./verdict-badge";
 // The hero artifact: a tasteful mock of HyprrIQ's one-page Decision Snapshot.
 // The product's deliverable IS the hero image — anonymized, on-brand, no stock
 // photo. CSS load choreography lives in globals.css (hq-rise / hq-verdict).
+// ⛔ THE CERTAINTY VOCABULARY IS LOCKED: Verified / Assessed (founder-ruled 2026-08-07). This
+// component is the marketing homepage hero — the most-seen surface we have — and it shipped
+// "Inferred", a word that was never ruled and reads weaker and more speculative than "Assessed"
+// on an evidence surface. Corrected 2026-08-22; the chip definitions live in reportCopy.
 const DIMENSIONS = [
   { label: "Supplier Identity", state: "Verified", tone: "text-clear-ink" },
-  { label: "Supply Chain Relationship", state: "Inferred", tone: "text-conditional-ink" },
+  { label: "Supply Chain Relationship", state: "Assessed", tone: "text-conditional-ink" },
   { label: "Brand Risk", state: "Verified", tone: "text-clear-ink" },
   { label: "Sourcing Logic", state: "Holds together", tone: "text-clear-ink" },
 ];
@@ -23,7 +27,12 @@ export function DecisionSnapshot() {
       {/* Header */}
       <div className="hq-rise flex items-center justify-between border-b border-line px-5 py-3.5">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs tnum text-muted">AWI-2606-014</span>
+          {/* A RESERVED SERIES, NOT A LUCKY GAP (2026-08-22). This read AWI-2606-014 — the live
+              AWI-YYMM-### shape, in a month that already has real cases. The generator
+              (20260601000000) can only ever put DIGITS in the middle segment, so a non-numeric
+              one cannot collide with a real case number by construction, rather than by nobody
+              having reached that number yet. */}
+          <span className="font-mono text-xs tnum text-muted">AWI-SAMPLE-001</span>
         </div>
         <span className="text-xs text-muted">Decision Snapshot</span>
       </div>

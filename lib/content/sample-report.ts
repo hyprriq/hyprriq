@@ -1,3 +1,4 @@
+import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
 // ── THE SAMPLE REPORT (tracker 1.8 / 2.x — "the highest-converting page not yet built") ──────
 //
 // ⚠ JUDGEMENT CALL, FLAGGED FOR THE FOUNDER, NOT SLIPPED IN: this sample is ANONYMIZED. The five
@@ -14,7 +15,7 @@
 // converts.
 
 export const sampleMeta = {
-  caseNumber: "AWI-2608-041",
+  caseNumber: SAMPLE_CASE_ID,
   vendor: "Northgate Wholesale Co.",
   brands: ["Bioderma", "RevitaLash"],
   plan: "Single Deep Report · $149",

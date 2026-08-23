@@ -5,6 +5,26 @@
 
 Everything below is standing instruction for that session. Written 2026-08-02 at `c97963a` (dev lane closed).
 
+> ## ⛔ STOP — VISUAL SYSTEM IS UNDER ACTIVE RULING (2026-08-22)
+>
+> **This file's VISUAL guidance is SUPERSEDED pending a founder ruling in the planning thread.**
+> The palette, typography and motion described below predate this week's design work. Building
+> from them today would inherit **three verdict badges that fail contrast** and a **base colour
+> the founder has rejected**. Do not treat §4 ("the existing design system") or any colour,
+> token, type or motion instruction in this file as current.
+>
+> **What DOES still stand, and is not affected by that ruling:**
+> - §5 THE SURFACE MAP — including the acquisition-funnel queue (invite landing, /partners
+>   request form + confirmation, inactive-invite notice, admin partner-requests panel).
+> - The copy MUST_PASS locks and every "restyle, don't rewire" instruction. Copy and structure
+>   are content decisions, already ruled; they are not part of the visual system under review.
+> - §2 (layouts-first workflow), §3 (hard laws), §6 (session-end gates), §7 (voice & copy bar).
+>
+> **Before starting a visual session:** get the current palette/type ruling from the founder and
+> work from that. This marker is removed by the founder when the ruling lands — not by a design
+> session, and not by whoever finds it inconvenient.
+
+
 ---
 
 ## 0. WHAT THIS PROJECT IS (60 seconds)
