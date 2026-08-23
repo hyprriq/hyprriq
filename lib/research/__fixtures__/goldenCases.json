@@ -1,0 +1,1267 @@
+{
+  "generated_note": "Frozen verdict inputs + expected verdicts. Regenerate ONLY with an explicit founder ruling: scripts/golden-cases-freeze.ts",
+  "cases": [
+    {
+      "case_number": "AWI-2606-003",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": true,
+      "signals": {
+        "supplier_identity": "n_a",
+        "supply_chain_relationship": "n_a",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-004",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-005",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-007",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-008",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-009",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-010",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-011",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2606-012",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "usable_with_conditions",
+      "stored_verdict": "usable_with_conditions",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 9,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-013",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "n_a",
+        "supply_chain_relationship": "n_a",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 5,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-014",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-015",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "n_a",
+        "supply_chain_relationship": "n_a",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 5,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-016",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "soft_fail",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 3,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-017",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 6,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-018",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "usable_with_conditions",
+      "stored_verdict": "usable_with_conditions",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 9,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-019",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-020",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "n_a",
+        "supply_chain_relationship": "n_a",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 5,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-021",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "usable_with_conditions",
+      "stored_verdict": "usable_with_conditions",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 6,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-022",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "usable_with_conditions",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": true,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 9,
+      "contradiction_count": 4,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Lenovo operates a formal reseller program for B2B partners, explicitly inviting resellers to source and sell Lenovo products through its channel program, consistent with a reseller-friendly posture.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E01",
+              "E02"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Seller forum posts report Lenovo has an agreement with Amazon restricting used Lenovo product sales to authorized used dealers only, with non-authorized sellers facing suspension; certain Lenovo laptop listings on Amazon Renewed have been blocked.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E04",
+              "E05"
+            ]
+          },
+          "interpretation": "Lenovo's formal channel program welcomes resellers broadly, but platform-level enforcement actions suggest meaningful restrictions exist specifically for used/renewed product sales on Amazon. The conflict is between the open-channel posture and the gated-marketplace reality, which may be product-condition-specific rather than a wholesale contradiction, but the boundary is not clearly defined in the evidence.",
+          "is_load_bearing": true,
+          "contradiction_type": "channel_policy_vs_enforcement"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Bosch's published MAP policy explicitly preserves retailer pricing freedom, stating retailers are free to advertise and sell Bosch products at whatever price they deem appropriate.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E08"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Multiple Amazon Seller Central forum threads document sellers being told they cannot sell Bosch products on Amazon without being on Bosch's whitelist; Bosch has threatened lawsuits against unauthorized resellers and stated it does not guarantee quality of products from non-authorized resellers.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E10",
+              "E11"
+            ]
+          },
+          "interpretation": "Bosch's MAP policy text is permissive on pricing, but Bosch's actual enforcement posture involves authorization requirements and litigation threats that go well beyond pricing — effectively restricting who may sell, not just at what price. The policy document and the enforcement record describe materially different operating realities for a prospective reseller.",
+          "is_load_bearing": true,
+          "contradiction_type": "policy_text_vs_enforcement_behavior"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Bosch's sales policy and distribution strategy accommodate third-party resellers in consumer segments and distribution channels, indicating a distribution-friendly posture in at least some product lines.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E12",
+              "E13"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Bosch's sales policy document reserves the right to limit channels for sale and distribution of Bosch products, and enforcement actions against non-authorized Amazon resellers have been documented.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E09",
+              "E10",
+              "E11"
+            ]
+          },
+          "interpretation": "Bosch simultaneously maintains broad distribution relationships and contractual authority to restrict channels, with documented use of that authority against non-authorized sellers. The distribution-friendly posture applies to authorized partners; the restriction authority is exercised against those outside that authorization. A reseller's position depends entirely on whether they hold authorized status.",
+          "is_load_bearing": true,
+          "contradiction_type": "channel_openness_vs_channel_restriction"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "TD SYNNEX Belgium's vendor listing page includes Bosch among the more than 200 brands it distributes, asserting a Bosch distribution relationship.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-010"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Bosch Power Tools US store locator, Bosch Semiconductors authorized distributor lists, Bosch Home Comfort PRO Partner Program, and multiple other Bosch division dealer/distributor locators do not reference TD SYNNEX in any available evidence.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-011",
+              "EV-012",
+              "EV-013",
+              "EV-014"
+            ]
+          },
+          "interpretation": "TD SYNNEX self-asserts a Bosch distribution relationship via its Belgium vendor listing, but no Bosch-side source across multiple divisions and regions corroborates TD SYNNEX as an authorized distributor. The gap between self-assertion and the absence of Bosch-side confirmation is the finding — it does not prove the relationship is absent, but it is unverified from the brand side.",
+          "is_load_bearing": true,
+          "contradiction_type": "claimed_relationship_vs_observable_confirmation"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2607-023",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 2,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-024",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "n_a",
+        "supply_chain_relationship": "n_a",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 6,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-026",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-027",
+      "status": "manual_override_required",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "n_a",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-028",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-029",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-030",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2607-031",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "infer",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 3,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2608-032",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 2,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Sterilite's own website references resellers but does not list Four Seasons General Merchandise as an authorized reseller or distributor.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Four Seasons General Merchandise explicitly names Sterilite as a carried brand and lists a Sterilite SKU for wholesale sale on its platform, indicating active commercial handling.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          "interpretation": "Four Seasons actively sells Sterilite products commercially yet appears nowhere on Sterilite's reseller references. This gap between observable commercial activity and the absence of any authorization signal is the core finding: the vendor may be a legitimate gray-market reseller operating through retail channel purchases, or it may lack any sanctioned supply relationship. The record cannot resolve which.",
+          "is_load_bearing": true,
+          "contradiction_type": "authorization_status_vs_distribution_model"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "low",
+          "assertion_a": {
+            "statement": "Sterilite's IP enforcement actions are directed at replica manufacturers (e.g., Olivet International), not at third-party resellers of genuine Sterilite products.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Whether Sterilite maintains a published authorized-reseller or MAP policy governing third-party online marketplace sales is unresolved, meaning enforcement scope toward resellers is not affirmatively ruled out.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E4"
+            ]
+          },
+          "interpretation": "The absence of observed cease-and-desist actions against resellers is consistent with Sterilite's known enforcement focus on replica makers, but it does not affirmatively confirm that resellers are free from policy risk. The gap between 'no observed enforcement against resellers' and 'no policy restricting resellers' is real but currently unresolvable from the record.",
+          "is_load_bearing": false,
+          "contradiction_type": "brand_enforcement_scope_vs_reseller_risk"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-033",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 3,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Bulk Buy America lists Optimum Nutrition as a featured brand on its homepage, implying it carries and sells Optimum Nutrition products.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "E01"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Optimum Nutrition's official 'Where to Buy' page does not list Bulk Buy America among authorized retailers, and Optimum Nutrition uses formal, named distribution agreements for channel partners.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "E03",
+              "E05"
+            ]
+          },
+          "interpretation": "Bulk Buy America publicly claims to carry Optimum Nutrition, but there is no observable evidence of authorization within Optimum Nutrition's controlled distribution framework. The gap between the vendor's implied authorization and the brand's documented channel structure is the finding.",
+          "is_load_bearing": true,
+          "contradiction_type": "authorization_status_vs_brand_policy"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Optimum Nutrition maintains broad retail distribution and an active direct-to-consumer website, indicating participation in open consumer-facing channels.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E03"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Optimum Nutrition appears to have requested Amazon to stop third-party sales of at least one ASIN, indicating a brand-level move to restrict third-party Amazon listings.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E01"
+            ]
+          },
+          "interpretation": "The brand's broad retail presence suggests openness, but concurrent actions to restrict third-party Amazon listings indicate the brand is actively tightening channel control. These signals conflict on the question of whether third-party resale is permissible.",
+          "is_load_bearing": true,
+          "contradiction_type": "brand_channel_openness_vs_reseller_restriction"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Burt's Bees has broad retail distribution and has partnered with Amazon Ads, indicating participation in broad consumer retail channels including Amazon.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E08"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Burt's Bees requires a Letter of Authorization from the brand to sell on Amazon, Amazon ungating alone does not grant permission, and the brand is listed as gated on Amazon requiring pre-approval.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "E06",
+              "E07"
+            ]
+          },
+          "interpretation": "Burt's Bees participates in Amazon as an advertising and sales channel at the brand level, but simultaneously restricts third-party sellers from listing without explicit brand authorization. Broad retail presence does not translate to open third-party resale rights.",
+          "is_load_bearing": true,
+          "contradiction_type": "brand_channel_openness_vs_reseller_restriction"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-034",
+      "status": "delivered",
+      "plan_type": "scale_499",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "pass",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a",
+        "category_compliance": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 2,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "NVE Pharmaceuticals is an active commercial entity with ongoing trade show participation as recently as 2026, suggesting it has not ceased operations despite the bankruptcy filing.",
+            "track_key": "A08",
+            "evidence_ids": [
+              "EV-005",
+              "EV-004"
+            ]
+          },
+          "assertion_b": {
+            "statement": "NVE Pharmaceuticals has filed for Chapter 11 bankruptcy, creating material uncertainty about its current financial stability and operational continuity as a supplier.",
+            "track_key": "A04",
+            "evidence_ids": [
+              "EV-007"
+            ]
+          },
+          "interpretation": "The company simultaneously presents as commercially active (trade show presence, retail distribution) while carrying an unresolved Chapter 11 bankruptcy filing. These signals are not mutually exclusive — Chapter 11 permits continued operations — but the gap between the outward commercial posture and the underlying financial distress status is unresolved and cannot be reconciled from the current evidence record. The bankruptcy filing date and current case status are unknown, making it impossible to determine whether the reorganization is ongoing, dismissed, or concluded.",
+          "is_load_bearing": true,
+          "contradiction_type": "operational_status_vs_financial_distress"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Stacker 2 products are distributed through major mass retail channels including Walmart and are sold in more than 8 countries, indicating broad commercial reach.",
+            "track_key": "A05",
+            "evidence_ids": [
+              "EV-004",
+              "EV-005"
+            ]
+          },
+          "assertion_b": {
+            "statement": "NVE Pharmaceuticals received an FDA warning letter in 2017, indicating a documented regulatory compliance issue that has not been confirmed as resolved.",
+            "track_key": "A03",
+            "evidence_ids": [
+              "E05"
+            ]
+          },
+          "interpretation": "Continued mass retail distribution through Walmart and international channels implies at least tacit regulatory tolerance, yet the 2017 FDA warning letter's resolution is unconfirmed. Retailers of this scale typically require supplier compliance documentation, but no evidence confirms NVE remediated the cited violations. The observable commercial footprint and the unresolved regulatory flag point in opposite directions without a reconciling fact in the record.",
+          "is_load_bearing": false,
+          "contradiction_type": "regulatory_compliance_claim_vs_unresolved_enforcement"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-035",
+      "status": "delivered",
+      "plan_type": "single_99",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "brand_risk_assessment": "flag",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 2,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Lacaco Wholesale's contact information is fully consistent across all sources including its own website, BBB, and Facebook (refuted)",
+            "track_key": "vendor-level",
+            "evidence_ids": [
+              "EV-006"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco Wholesale presents as a legitimate business entity based on consistent address and phone data across multiple independent sources (supported)",
+            "track_key": "vendor-level",
+            "evidence_ids": [
+              "EV-004",
+              "EV-005"
+            ]
+          },
+          "interpretation": "EV-006 documents that BeauteTrade lists Lacaco with two phone numbers (+1 302-250-4329 and 1-866-978-7100) that differ from the (714) 854-4843 number used on the vendor's own site and BBB profile. This directly refutes the claim of full cross-source consistency, while the legitimacy assertion relies partly on that consistency. The conflict is real but bounded: the discrepant numbers appear only on a third-party directory, not on the vendor's own controlled channels, limiting but not eliminating the anomaly.",
+          "is_load_bearing": true,
+          "contradiction_type": "internal_consistency"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "RevitaLash applies a selective distribution model restricting downstream resale in at least the UK market (supported)",
+            "track_key": "Revitalash",
+            "evidence_ids": [
+              "EV-002",
+              "EV-004"
+            ]
+          },
+          "assertion_b": {
+            "statement": "RevitaLash's selective distribution model documented for the UK applies in equivalent form to the US market (unresolved)",
+            "track_key": "Revitalash",
+            "evidence_ids": [
+              "EV-003"
+            ]
+          },
+          "interpretation": "The UK selective distribution agreement and the announced move to in-house UK operations are documented, but the US market evidence shows only a structured authorized reseller program with a public list and application form — not a documented restriction on unauthorized resale of genuine product. The claim that UK-style channel control extends to the US is unresolved: the observable US evidence is consistent with a permissive authorized-reseller model rather than a restrictive selective distribution regime.",
+          "is_load_bearing": true,
+          "contradiction_type": "claim_vs_observable"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-036",
+      "status": "delivered",
+      "plan_type": "single_149",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a",
+        "category_compliance": "n_a"
+      },
+      "attempt": 3,
+      "contradiction_count": 3,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "RevitaLash maintains a published list of authorized online resellers, and Lacaco does not appear on that list.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-001"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco states it works directly with authorized distributors and reputable vendors in the U.S. to supply genuine products, implying legitimate indirect access to brand inventory.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-007"
+            ]
+          },
+          "interpretation": "Lacaco's self-described indirect supply chain model is structurally incompatible with RevitaLash's authorized reseller framework. Absence from the authorized list combined with an admitted indirect sourcing model creates a gap between claimed legitimacy and observable authorization status. The claim of sourcing from 'authorized distributors' does not confer reseller authorization from the brand itself.",
+          "is_load_bearing": true,
+          "contradiction_type": "Authorization Status vs. Supply Chain Model"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Athena Cosmetics (RevitaLash parent) has actively litigated against counterfeit sellers, obtaining over $1.1 million in damages, and publicly warns consumers that unauthorized resellers may carry counterfeit or tampered products.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-002",
+              "EV-003",
+              "EV-004"
+            ]
+          },
+          "assertion_b": {
+            "statement": "RevitaLash operates a reseller application form, indicating the brand accepts applications from prospective resellers and does not operate a fully closed distribution channel.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-005"
+            ]
+          },
+          "interpretation": "RevitaLash simultaneously enforces aggressively against unauthorized sellers while maintaining an open application pathway. This is not a true logical contradiction but creates an ambiguous risk posture: the existence of an application process does not mean Lacaco has applied or been approved, and the enforcement record shows the brand acts on unauthorized distribution. The gap between an open application channel and Lacaco's non-appearance on the authorized list is the operative risk.",
+          "is_load_bearing": false,
+          "contradiction_type": "Brand Enforcement Posture vs. Absence of Documented Restrictions"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Forcell USA, Inc. is identified as the only authorized exclusive distributor of Bioderma for the Asian and Hispanic communities in the USA; QH Distribution also publicly claims authorized distributor status for Bioderma USA.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-008",
+              "EV-009"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco describes itself as a health and beauty wholesale distributor handling European brands but does not explicitly name Bioderma as a brand it carries, and is not listed on Bioderma's official US store locator.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-010",
+              "EV-012"
+            ]
+          },
+          "interpretation": "Named, publicly identified authorized Bioderma distributors exist in the US market. Lacaco's non-appearance on Bioderma's store locator and its own silence on Bioderma as a carried brand, combined with its indirect sourcing model, creates a conflict between the observable authorized channel structure and any implicit claim that Lacaco is a legitimate Bioderma supply source.",
+          "is_load_bearing": true,
+          "contradiction_type": "Bioderma Authorized Channel Identification vs. Lacaco's Claimed European Brand Coverage"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-037",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "AWI-2608-038",
+      "status": "delivered",
+      "plan_type": "scale_499",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a",
+        "category_compliance": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 4,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Lacaco Wholesale describes itself as a health and beauty wholesale distributor offering 'authentic' products, implying legitimate supply chain access.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-004"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco Wholesale does not appear on RevitaLash's official authorized resellers pages (US or NZ), and no documentation of RevitaLash authorization has been found.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-001",
+              "EV-002"
+            ]
+          },
+          "interpretation": "Lacaco's public self-description as an 'authentic' product distributor is not corroborated by any brand authorization record for RevitaLash. The gap between the vendor's implied legitimacy claim and the observable absence from official reseller lists is the finding. This does not confirm inauthenticity but leaves the authorization status unresolved.",
+          "is_load_bearing": true,
+          "contradiction_type": "Authorization Status vs. Self-Description"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "RevitaLash operates a selective distribution policy restricting online resale to pre-approved authorized purchasers on approved branded websites.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-002"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco Wholesale is not listed as an authorized RevitaLash reseller and makes no claim of RevitaLash authorization, yet offers RevitaLash products for wholesale.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-001",
+              "EV-002",
+              "EV-004"
+            ]
+          },
+          "interpretation": "RevitaLash's confirmed selective distribution policy (UK-scoped in evidence) structurally conflicts with Lacaco's apparent offering of RevitaLash products without any observable authorization. Even if a US-equivalent policy is unconfirmed, the pattern creates a material tension between brand channel controls and vendor supply chain claims.",
+          "is_load_bearing": true,
+          "contradiction_type": "Selective Distribution Policy vs. Unverified Reseller Access"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "RevitaLash's enforcement actions on record are directed at counterfeiters and domain infringers, not at resellers of genuine product.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-001",
+              "EV-005"
+            ]
+          },
+          "assertion_b": {
+            "statement": "RevitaLash is actively tightening its distribution channel management, including moving UK operations in-house in 2026 and expanding travel retail partnerships.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-004"
+            ]
+          },
+          "interpretation": "Historical enforcement posture (targeting counterfeiters only) conflicts directionally with the brand's observable channel-tightening trajectory. Past non-enforcement against resellers does not reliably predict future posture given the documented strategic shift toward controlled distribution.",
+          "is_load_bearing": false,
+          "contradiction_type": "Brand Enforcement Trajectory vs. Current Reseller Risk"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Bioderma requires a letter of authorization from the brand and an invoice for Amazon marketplace listings, and operates through an authorized US distributor network.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-007",
+              "EV-008"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Lacaco Wholesale is not listed on Bioderma's official US store locator, and no documentation of Bioderma authorization or authorized distributor sourcing has been found.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-006"
+            ]
+          },
+          "interpretation": "Bioderma's documented gating requirements for marketplace sales conflict with the observable absence of any authorization evidence for Lacaco Wholesale. Whether Lacaco holds undisclosed authorization through an authorized distributor cannot be determined, but the gap between the brand's stated requirements and the vendor's unverified status is a real finding.",
+          "is_load_bearing": false,
+          "contradiction_type": "Bioderma Authorization Requirement vs. Unverified Vendor Status"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-039",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "flag",
+        "brand_risk_assessment": "flag",
+        "documentation_review": "n_a",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 2,
+      "contradiction_count": 4,
+      "module_4_contradictions": [
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Click Entertainment's own website and LinkedIn profile describe it as an international wholesaler and distributor of video games, consoles, and accessories worldwide, which would encompass Nintendo products.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-001"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Nintendo's official retailer and distributor pages do not list Click Entertainment among authorized retailers or distributors, and Vast Inc is identified as one of a select few official Nintendo distributors with no mention of Click Entertainment.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-002",
+              "EV-003"
+            ]
+          },
+          "interpretation": "Click Entertainment self-asserts a distribution role for Nintendo products, but Nintendo's official public-facing authorization records contain no listing for Click Entertainment. The gap between the vendor's claim and the observable official record is the finding: no Nintendo-originated authorization is corroborated.",
+          "is_load_bearing": true,
+          "contradiction_type": "self_assertion_vs_official_record"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Click Entertainment's website explicitly claims to be a distributor and wholesale supplier of PlayStation 4 Consoles.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-005"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Sony's official authorized dealer directory and retailer pages do not list Click Entertainment among Sony's authorized dealers or service centers, and Sony's authorized retailer guidance instructs buyers to verify purchases through sony.com/electronics/retailers where Click Entertainment does not appear.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-006",
+              "EV-007"
+            ]
+          },
+          "interpretation": "Click Entertainment self-asserts a PlayStation distribution role, but Sony's official authorization records contain no listing for Click Entertainment. The gap between the vendor's claim and the observable official record is the finding: no Sony Interactive Entertainment authorization is corroborated.",
+          "is_load_bearing": true,
+          "contradiction_type": "self_assertion_vs_official_record"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "high",
+          "assertion_a": {
+            "statement": "Click Entertainment presents itself as an international wholesaler capable of supplying Nintendo and PlayStation products to resellers, implying downstream marketplace viability.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-001"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Selling Nintendo products on Amazon requires a Letter of Authorization from the brand owner, Sony products are gated on Amazon requiring case-by-case approval, and PlayStation products have become re-gated on Amazon for third-party sellers.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-007",
+              "EV-008",
+              "EV-009",
+              "EV-011"
+            ]
+          },
+          "interpretation": "The vendor's implied promise of resalable inventory conflicts with documented marketplace access restrictions on both Nintendo and Sony/PlayStation product lines. A buyer sourcing from an unauthorized distributor would face compounded risk: no brand authorization and no clear path to Amazon listing approval.",
+          "is_load_bearing": true,
+          "contradiction_type": "claimed_scope_vs_observable_restriction"
+        },
+        {
+          "origin": "synthesis",
+          "risk_level": "medium",
+          "assertion_a": {
+            "statement": "Nintendo employs a multi-channel sales strategy including direct, digital, retail, and partner-led distribution, suggesting a broad channel approach rather than a closed or B2B-only model.",
+            "track_key": "brand_risk_assessment",
+            "evidence_ids": [
+              "EV-006"
+            ]
+          },
+          "assertion_b": {
+            "statement": "Nintendo actively enforces its authorized channel boundaries, including console bans for grey-market purchases, and Nintendo's official pages do not list Click Entertainment as an authorized distributor.",
+            "track_key": "supply_chain_relationship",
+            "evidence_ids": [
+              "EV-004",
+              "EV-002"
+            ]
+          },
+          "interpretation": "Nintendo's broad channel model does not translate into open access for unauthorized distributors. The brand's active enforcement of channel boundaries, including hardware-level bans, means that operating outside the authorized network carries material product integrity and resale risk even if the brand is not formally closed-channel.",
+          "is_load_bearing": false,
+          "contradiction_type": "channel_model_vs_enforcement_behavior"
+        }
+      ]
+    },
+    {
+      "case_number": "AWI-2608-043",
+      "status": "delivered",
+      "plan_type": "single_99",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "flag",
+        "brand_risk_assessment": "infer",
+        "sourcing_logic": "n_a"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "SEED-VALIDATE-T1-1782628513681",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "soft_fail",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "SEED-VALIDATE-T1-1782630128321",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "soft_fail",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "SEED-VALIDATE-T1-1782631228537",
+      "status": "awaiting_review",
+      "plan_type": "growth_279",
+      "expected_verdict": "do_not_rely",
+      "stored_verdict": "do_not_rely",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "soft_fail",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    },
+    {
+      "case_number": "SEED-VALIDATE-T1-1782799704622",
+      "status": "delivered",
+      "plan_type": "growth_279",
+      "expected_verdict": "verify_before_purchase",
+      "stored_verdict": "verify_before_purchase",
+      "diverges_from_stored": false,
+      "signals": {
+        "supplier_identity": "infer",
+        "supply_chain_relationship": "infer",
+        "brand_risk_assessment": "soft_fail",
+        "documentation_review": "soft_fail",
+        "sourcing_logic": "soft_fail"
+      },
+      "attempt": 1,
+      "contradiction_count": 0,
+      "module_4_contradictions": []
+    }
+  ]
+}
