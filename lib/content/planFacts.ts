@@ -28,6 +28,7 @@ import {
 import {
   requiredFindingTracks, trackByNumber, isAssessmentArea, ASSESSMENT_AREA_KEYS,
 } from "@/lib/constants/tracks";
+import { AREAS, type AreaCopy } from "@/lib/content/whatWeCheck";
 
 export type PlanFact = { label: string; value: string };
 
@@ -46,6 +47,31 @@ export function areasForPlan(plan: PlanType): { included: number; total: number;
     isAssessmentArea(trackByNumber(n).track_key),
   ).length;
   return { included, total, label: included === total ? `All ${total}` : `${included} of ${total}` };
+}
+
+/**
+ * Which assessment areas a plan RUNS and which it does not — both sides, derived.
+ *
+ * This is the honest answer to the question the pricing page now asks out loud: a $99 buyer gets
+ * three of five areas, and the two that are absent (Supply-Chain Relationship, Documentation
+ * Review) are the pair that answers "can this supplier actually supply this brand". They are gated
+ * at RESEARCH time, so no row exists and nothing renders — the research does not happen, so there
+ * is nothing withheld.
+ *
+ * Deriving BOTH lists from TRACK_CONFIG means the copy cannot go stale: change a tier's tracks and
+ * the page's "answers" and "does not answer" lists move together, in the same direction, with no
+ * one remembering to edit prose.
+ */
+export function areaSplitForPlan(plan: PlanType): { included: AreaCopy[]; excluded: AreaCopy[] } {
+  const runs = new Set<string>(
+    requiredFindingTracks(plan)
+      .map((n) => trackByNumber(n).track_key as string)
+      .filter(isAssessmentArea),
+  );
+  return {
+    included: AREAS.filter((a) => runs.has(a.key)),
+    excluded: AREAS.filter((a) => !runs.has(a.key)),
+  };
 }
 
 export function factsForPlan(plan: PlanType): PlanFact[] {

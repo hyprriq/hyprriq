@@ -24,18 +24,22 @@ export const metadata: Metadata = {
 // brand navy (not a verdict colour at all), and verify_before_purchase wore `amber-600` from
 // Tailwind's default palette, outside the design system. On the page whose entire job is teaching
 // a client to read the verdict. palette.lock.test.ts now fails any file that builds its own map.
-const VERDICT_TONES: Record<string, string> = Object.fromEntries(
-  Object.entries(VERDICT_CLASSES).map(([key, c]) => [key, c.borderL]),
-);
+//
+// FOUNDER RULING 2 (2026-08-24): the 4px side-stripes are gone. A coloured left border is a weak
+// carrier for the single most important signal on the page — it is easy to miss, it reads as
+// decoration, and at 360px it competes with the text for the same edge. The verdict now wears its
+// own filled chip, which is the treatment the report and the homepage already use, so a client
+// learns the badge here and recognises the same badge in their report.
 
 export default function HowToReadPage() {
   return (
     <>
-      <section className="border-b border-line" style={{ background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)" }}>
-        <div className="mx-auto max-w-3xl px-5 py-16 text-center lg:px-8 lg:py-20">
-          <h1 className="text-[clamp(2.1rem,4.4vw,3.2rem)] font-bold leading-[1.07] text-ink">
-            How to read your report
-          </h1>
+      {/* FOUNDER RULING 2: the hardcoded #FAF9F7 cream gradient is gone. It was a warm off-white
+          inlined in JSX — off-system twice over, since the base is cool now and standing rule 7
+          forbids per-component hex values. --pale is the ruled tinted ground. */}
+      <section className="border-b border-line bg-pale">
+        <div className="mx-auto max-w-3xl px-5 py-12 text-center sm:py-16 lg:px-8 lg:py-20">
+          <h1 className="text-ink">How to read your report</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-ink-2">{HOW_TO_READ}</p>
         </div>
       </section>
@@ -52,10 +56,14 @@ export default function HowToReadPage() {
                 const v = VERDICT_COPY[key];
                 const help = verdicts.find((h) => h.key === key);
                 return (
-                  <div key={key} className={`rounded-card border border-line border-l-4 ${VERDICT_TONES[key] ?? "border-l-line"} bg-base p-5`}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-[17px] font-bold text-ink">{v.name}</h3>
-                      <span className="shrink-0 font-mono text-[12px] text-muted">level {v.level} of 4</span>
+                  <div key={key} className="rounded-card border border-line bg-base p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={`rounded-chip px-2.5 py-1 text-[13px] font-semibold ${VERDICT_CLASSES[key].bg} ${VERDICT_CLASSES[key].ink}`}>
+                        {v.name}
+                      </span>
+                      <span className="shrink-0 font-mono text-[12px] text-muted">
+                        level {v.level} of {VERDICT_SCALE_ORDER.length}
+                      </span>
                     </div>
                     <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{v.means}</p>
                     {help && <p className="mt-2 text-[13px] font-semibold text-muted">{help.action}</p>}

@@ -97,6 +97,17 @@ const PENDING_REFUSAL_REVIEW: { text: string; why: string }[] = [
     text: "We won't say your account is safe",
     why: "H3 account safe — one of the three refusals on the homepage. H3 carries no negation guard.",
   },
+  {
+    text: "Will this keep my Amazon account safe?",
+    why: "H3 account safe — the /faq QUESTION whose answer is 'No.' The rule cannot see that the sentence is interrogative, let alone that the answer beneath it refuses the claim outright.",
+  },
+  {
+    // The offender line truncates the literal at 80 characters, so an exemption must be matched on
+    // the literal's OPENING, not on the clause that trips the rule. The tripping clause is
+    // "We do not sell your data and we do not tell suppliers they were checked."
+    text: "Your cases are separated from every other client's at the database level",
+    why: "Purchase-recommendation rule, either polarity — matched on 'sell' in the /faq data answer. The OBJECT is the client's data, not a purchase: this is a privacy promise, and the rule does not model what is being sold.",
+  },
 ];
 
 const pendingTexts = PENDING_REFUSAL_REVIEW.map((p) => p.text);
