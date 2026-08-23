@@ -13,6 +13,7 @@
 //   known AWI-2607-022 leak ("documentation_review: no documents were provided for review")
 //   fails the structure test; future non-questions fail it too without maintenance.
 import { assertNoInternalTokens } from "./clientTokenCheckpoint";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 
 // Parenthetical groups made ONLY of internal evidence tokens — src_40 / E04 / EV-011 — joined by
 // commas, "and", or "through". Genuine parentheticals (words, e.g., NYSE: SNX, years in prose)
@@ -218,14 +219,20 @@ const TRACK_BARE: Record<string, string> = {
   "5": "Sourcing Logic",
   "6": "category compliance",
 };
-const SNAKE_NAMES: [RegExp, string][] = [
-  [/\bsupplier_identity\b/g, "Supplier Legitimacy"],
-  [/\bsupply_chain_relationship\b/g, "Supply-Chain Relationship"],
-  [/\bbrand_risk_assessment\b/g, "Brand Risk"],
-  [/\bdocumentation_review\b/g, "Documentation Review"],
-  [/\bsourcing_logic\b/g, "Sourcing Logic"],
-  [/\bintake_scope_guard\b/g, "intake"],
-];
+// ── DERIVED FROM THE CANONICAL REGISTRY, NOT HAND-LISTED (2026-08-22). The hand-list carried
+// `brand_risk_assessment` but not the SHORT ALIAS `brand_risk` the engine also emits — so
+// "(brand_risk)" survived onto AWI-2608-033's DELIVERED report, found by the corpus sweep.
+// Exactly the failure the marker vocabulary had: an enumerated list missing a form nobody wrote
+// down. AREA_NAMES is the source now; SNAKE_ALIASES carries the short/legacy spellings measured
+// in the corpus, and the LONGEST key substitutes first so `brand_risk_assessment` can never be
+// half-eaten by the `brand_risk` rule.
+const SNAKE_ALIASES: Record<string, string> = {
+  brand_risk: "Brand Risk",
+  intake_scope_guard: "intake",
+};
+const SNAKE_NAMES: [RegExp, string][] = Object.entries({ ...AREA_NAMES, ...SNAKE_ALIASES })
+  .sort((a, b) => b[0].length - a[0].length)
+  .map(([key, name]) => [new RegExp(String.raw`\b${key}\b`, "g"), name] as [RegExp, string]);
 
 export function substituteInternalDimensionNames(text: string): string {
   let out = text.replace(/\b(a|an|the)\s+Track\s+(0\.5|[0-6])\b/gi, (_m, article: string, n: string) => {

@@ -45,6 +45,7 @@
 // A false refusal is recoverable (operator edits prose via the override path, republishes); a
 // marker on a paid report is not.
 import { deepStrings } from "./deepStrings";
+import { INTERNAL_CONTENT_PATTERNS } from "@/lib/integrity/checks";
 
 // PRESENCE patterns. There is no grammar here and there must never be any.
 const CHECKPOINT_TOKENS: { name: string; re: RegExp }[] = [
@@ -57,6 +58,17 @@ const CHECKPOINT_TOKENS: { name: string; re: RegExp }[] = [
   { name: "A-NN", re: /(?<![A-Za-z0-9_-])A-?\d{1,3}(?![A-Za-z0-9])/ },
   { name: "RG-NN", re: /(?<![A-Za-z0-9_-])RG-?\d{1,3}(?![A-Za-z0-9])/i },
 ];
+
+// ── THE WIDER CLASS JOINS THE BACKSTOP (founder-locked 2026-08-22, item 1e). The marker leak
+// was ONE INSTANCE of "internal content in a client-facing field". The class was measured across
+// all 45 cases and found one more live example — "(brand_risk)" on a DELIVERED report, a track
+// key the hand-written substitution list did not know in its short form. The substitution now
+// derives from AREA_NAMES, and these patterns are the backstop for the next form nobody wrote
+// down. Measured false positives across the corpus: ZERO for every pattern.
+//
+// The same law as above applies: PRESENCE ONLY, no grammar. These ask "is internal vocabulary
+// there", never "does it read like a citation".
+const CONTENT_TOKENS = INTERNAL_CONTENT_PATTERNS;
 
 export interface TokenPresence {
   token: string;   // which pattern fired
@@ -81,7 +93,7 @@ export function findInternalTokens(value: unknown): TokenPresence[] {
   const found: TokenPresence[] = [];
   for (const { path, value: raw } of deepStrings(value)) {
     const text = withoutUrls(raw);
-    for (const { name, re } of CHECKPOINT_TOKENS) {
+    for (const { name, re } of [...CHECKPOINT_TOKENS, ...CONTENT_TOKENS]) {
       const m = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
       let hit: RegExpExecArray | null;
       while ((hit = m.exec(text)) !== null) {

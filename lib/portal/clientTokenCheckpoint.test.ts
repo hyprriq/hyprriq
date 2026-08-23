@@ -39,8 +39,25 @@ describe("the ruled token set — the EXCLUSIONS are as load-bearing as the incl
     expect(findInternalTokens({ summary: "See EV-001 for the filing." })).toHaveLength(1);
   });
 
-  it("does NOT fire on internal snake_case track keys — ruled safe in prose", () => {
-    expect(findInternalTokens({ summary: "The documentation_review area was not assessed." })).toEqual([]);
+  // ── EXPECTATION REVERSED BY RULING (item 1e, 2026-08-22), not bent to fit a build. This
+  // previously asserted snake_case keys were "ruled safe in prose" because the cleaners
+  // substitute them. The corpus sweep then measured what that assumption cost: "(brand_risk)"
+  // reached a DELIVERED report, because the substitution list knew brand_risk_assessment but
+  // not the short alias. The cleaner now derives from AREA_NAMES; the checkpoint refuses the
+  // next form nobody wrote down. Measured false positives across 45 cases: zero.
+  it("DOES fire on internal snake_case track keys (was: ruled safe in prose)", () => {
+    expect(findInternalTokens({ summary: "The documentation_review area was not assessed." })).not.toEqual([]);
+    expect(findInternalTokens({ summary: "restricted third-party ASINs (brand_risk)" })).not.toEqual([]);
+  });
+
+  it("still does NOT fire on the client's own words — the measured collisions stay safe", () => {
+    for (const s of [
+      "active SEC filings (S-1, S-3, 10-K)",
+      "SKUs beyond B007EARF3O",
+      "the EV-2000 charger and the E-40 mount",
+      "Documentation Review was not assessed.",
+      "Brand Risk is covered in this report.",
+    ]) expect(findInternalTokens({ summary: s }), s).toEqual([]);
   });
 
   it("does NOT fire on an operator-pasted URL containing a token-shaped path segment", () => {
