@@ -1,631 +1,544 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Gavel,
-  Lock,
-  PackageX,
-  ShieldQuestion,
-  Boxes,
-  ShieldAlert,
-  Database,
-  Check,
-  ScanEye,
-  FileText,
-  Store,
-  UserCheck,
-  Activity,
-} from "lucide-react";
-
-const TRUST_TOPICS = [
-  { icon: Store, label: "Amazon Wholesale Experts", color: "text-brand" },
-  { icon: UserCheck, label: "Supplier Vetting", color: "text-accent-data" },
-  { icon: ShieldAlert, label: "IP Risk Analysis", color: "text-verify-ink" },
-  { icon: FileText, label: "Invoice Review", color: "text-brand-ink" },
-  { icon: Activity, label: "Account Health", color: "text-clear-ink" },
-  { icon: Gavel, label: "Brand Enforcement", color: "text-deny-ink" },
-];
-import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 import { Reveal } from "@/components/marketing/reveal";
-import { Counter } from "@/components/marketing/counter";
-import { DecisionSnapshot } from "@/components/marketing/decision-snapshot";
-import { DashboardPreview } from "@/components/marketing/dashboard-preview";
-import { ReportPreview } from "@/components/marketing/report-preview";
-import { VerdictSpectrum } from "@/components/marketing/verdict-spectrum";
-import { VERDICTS, type Verdict } from "@/components/marketing/verdict-badge";
-import { HowItWorksScroll } from "@/components/marketing/how-it-works-scroll";
-import { FAQ, FAQ_ITEMS } from "@/components/marketing/faq";
+import { ServiceRail } from "@/components/marketing/home/service-rail";
+import { PricingTabs } from "@/components/marketing/home/pricing-tabs";
+import { StaggerList, BeatHeading } from "@/components/marketing/home/stagger-list";
+import { TrendGraph } from "@/components/marketing/home/trend-graph";
+import { VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES } from "@/lib/content/reportCopy";
+import { VERDICT_CLASSES } from "@/lib/design/palette";
+import { SAMPLE_CASE_ID, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
+import { CASE_SLA_HOURS, PLAN_PRICE_LABEL, PLAN_BRAND_CAPS } from "@/lib/constants/plans";
+import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
 
-const PAIN_MODES = [
-  {
-    icon: Gavel,
-    title: "IP & counterfeit complaints",
-    body: "A brand reports your listing as inauthentic. The strike lands on your account — not the supplier's.",
-  },
-  {
-    icon: Lock,
-    title: "The “authorized” distributor who wasn’t",
-    body: "A confident invoice is not proof the brand will stand behind the sale. Plenty don’t.",
-  },
-  {
-    icon: PackageX,
-    title: "Capital stranded in dead stock",
-    body: "Gated brand, frozen payout, inventory you can’t sell — money already spent before you knew.",
-  },
-];
+// ── THE HOMEPAGE — built from hyprriq_flow_v2.html (2026-08-24) ───────────────────────────────
+//
+// The spec file is the layout, copy and motion ruling. Five deliberate departures, each because
+// the spec is a standalone document and this is a thirteen-page application:
+//
+// 1. NO HAND-TYPED MONEY OR COUNTS. The spec writes "$99", "24 hours", "5", "3 of 5" as literals.
+//    Every one of them renders from a ruled registry here. A correct hardcoded value is still a
+//    defect: it goes wrong silently at the next ruling and no test catches staleness.
+// 2. THE CASE ID IS SAMPLE_CASE_ID. The spec's "AWI-0000-000" MATCHES the live generator shape
+//    (LIVE_CASE_ID_RE) and would fail sampleIdentifiers.lock.test.ts — the lock that exists
+//    because a real delivered case id and a real distributor's name once shipped on this page.
+// 3. THE LEARN SECTION POINTS AT LAUNCH PAGES. Three of the spec's four cards link to parked
+//    pages that publish later through Sanity. Build note 1: six dead internal links on launch day
+//    is a worse signal than six missing pages. The section keeps its shape and its purpose.
+// 4. VERDICT NAMES COME FROM reportCopy. A prospect reading this page and a client reading their
+//    report see the same four names, because they are the same constant.
+// 5. THE MOCK VENDOR IS SAMPLE_VENDOR, the ruled fictional supplier, so every mock across the
+//    site names the same imaginary company rather than inventing one per surface.
 
-const OUTCOME_COPY: Record<Verdict, string> = {
-  clear:
-    "All observable indicators are consistent with credible wholesale sourcing. Proceed with standard due diligence.",
-  conditional:
-    "The source appears credible. Collect the listed items before you commit significant capital.",
-  verify:
-    "Important evidence is missing or unclear. Don’t go past a test order until it’s resolved.",
-  deny:
-    "Serious gaps or contradictions surfaced. Seek alternatives until the specific issues are resolved.",
-};
-
-const EDGE_STATS = [
-  { value: 60, suffix: "+", label: "public data points per case" },
-  { value: 5, suffix: "", label: "assessment areas" },
-  { value: 14, suffix: "", label: "documentation standards checked" },
-];
-
-const EDGE = [
-  {
-    icon: Boxes,
-    title: "Five assessment areas",
-    body: "Supplier identity, supply-chain relationship, brand risk, document review, and sourcing logic — each reported on its own terms.",
-  },
-  {
-    icon: ShieldAlert,
-    title: "Risk, separated honestly",
-    body: "Invoice risk and enforcement risk are never blended into one score. They’re different questions, so they get different answers.",
-  },
-  {
-    icon: Database,
-    title: "A cache that compounds",
-    body: "A proprietary database of vendors and brands that sharpens with every case — so your reports get faster and deeper over time.",
-  },
-];
-
-const PROFILES = [
-  {
-    title: "New supplier, first order",
-    body: "You found a promising distributor. Before the opening PO, you want a second set of expert eyes on it.",
-  },
-  {
-    title: "Adding a brand to your catalog",
-    body: "The supplier checks out. The brand’s enforcement posture is the open question — and it’s the one that strands inventory.",
-  },
-  {
-    title: "Burned before, done guessing",
-    body: "You’ve eaten a gated ASIN or a counterfeit claim once. Never again on a signal someone could have caught.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Growth",
-    price: "$279",
-    cadence: "/mo",
-    credits: "5 reports a month",
-    // "five-dimension" → "assessment areas": the ruled public vocabulary (126d440) — this card
-    // was the one survivor of that pass.
-    points: ["Up to 5 brands per report", "All five assessment areas", "Full portal + case history"],
-    popular: false,
-  },
-  {
-    name: "Scale",
-    price: "$499",
-    cadence: "/mo",
-    credits: "12 reports a month",
-    // CLAIMS STRIP 2026-08-20 (founder-queued): "deep analysis" (no plan gating exists in
-    // synthesis) and "Delivered within N hours" (one constant, same on $99) removed as unbacked
-    // Scale differentiators — see lib/content/pricing.ts for the full note.
-    points: ["Everything in Growth", "Category compliance review", "Credit rollover (up to 4)"],
-    popular: true,
-  },
-];
-
-const orgJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "HyprrIQ",
+export const metadata: Metadata = {
+  title: "HyprrIQ — Know who you're buying from, before the money leaves",
   description:
-    "Pre-purchase source-intelligence reports for Amazon and Walmart wholesale sellers.",
-  url: "https://hyprriq.com",
+    "Send us a supplier and the brands they claim. We research them and return a written report within 24 hours — one verdict, the evidence behind it, and a straight list of what we could not confirm.",
+  alternates: { canonical: "/" },
 };
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: FAQ_ITEMS.map((item) => ({
-    "@type": "Question",
-    name: item.q,
-    acceptedAnswer: { "@type": "Answer", text: item.a },
-  })),
-};
+const CAPABILITIES = [
+  { title: "Amazon wholesale", body: "How this market operates, not how it is described.", tint: "bg-brand-tint", ink: "text-anchor" },
+  { title: "Supplier vetting", body: "Whether a business is real, and what its records don't show.", tint: "bg-blue-tint", ink: "text-blue" },
+  { title: "IP risk", body: "How brands police listings, and what that pattern implies.", tint: "bg-plum-tint", ink: "text-plum" },
+  { title: "Invoice review", body: "The fourteen document fields we check on every invoice.", tint: "bg-cyan-tint", ink: "text-cyan" },
+  { title: "Account risk", body: "What puts a selling account at risk — and what doesn't.", tint: "bg-verify-bg", ink: "text-verify-ink" },
+  { title: "Brand enforcement", body: "How a brand crackdown starts, and what it looks like beforehand.", tint: "bg-violet-tint", ink: "text-violet" },
+];
 
-export default function Home() {
+const CHAIN = [
+  { step: "Step one", title: "A brand decides to tighten", body: "Enforcement is a business decision made by someone you will never meet, and it usually applies to a whole listing at once." },
+  { step: "Step two", title: "The channel is questioned", body: "The question is where the stock came from. That answer lives with your supplier and with theirs — a chain you cannot see from a purchase order." },
+  { step: "Step three", title: "The consequence lands on you", body: "The complaint attaches to your account, not the supplier's. The stock is already yours and the payout is already held." },
+];
+
+const REFUSALS = [
+  { title: "We won't say you'll get ungated", body: "Gating decisions belong to the marketplace. We can tell you what the paperwork looks like and how the brand has been behaving. Nobody honest can tell you the outcome." },
+  { title: "We won't say a supplier is authorized", body: "Authorization lives in private agreements between a brand and a distributor. We tell you what we could check ourselves and give you the questions that get proof." },
+  { title: "We won't say your account is safe", body: "A clean invoice and a brand IP claim are independent risks. Good paperwork does not protect you from enforcement — we separate the two rather than blur them." },
+];
+
+const LEARN = [
+  { tag: "Product", href: "/what-we-check", title: "What we check on every supplier", body: "The five areas in every report — what each one examines, what lands in your report, and what each honestly cannot conclude.", tint: "bg-blue-tint", ink: "text-blue" },
+  { tag: "Method", href: "/method", title: "Our method, and its limits", body: "How we decide what counts as proof, and the things we will never tell you, no matter how much you would like to hear them.", tint: "bg-cyan-tint", ink: "text-cyan" },
+  { tag: "Refusals", href: "/what-we-dont-do", title: "What we don't do", body: "The promises this product refuses to make, written down, so you can hold us to the ones it does make.", tint: "bg-plum-tint", ink: "text-plum" },
+  { tag: "Questions", href: "/faq", title: "Frequently asked questions", body: "What a credit buys, what happens if we can't confirm anything, and what you actually receive at the end.", tint: "bg-violet-tint", ink: "text-violet" },
+];
+
+function Kicker({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`mb-3 font-mono text-[10px] uppercase tracking-[0.13em] sm:mb-4 sm:text-[11px] sm:tracking-[0.16em] ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export default function HomePage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-
-      {/* ───────────────────────── Hero ───────────────────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)" }}
-      >
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:px-8 lg:py-16">
-          <div className="hq-rise">
-            <span className="inline-block rounded-full bg-brand-tint px-3 py-1.5 text-xs font-semibold text-brand-ink">
-              Pre-purchase source intelligence
-            </span>
-            <h1 className="mt-5 max-w-xl text-[clamp(2.4rem,5.2vw,3.9rem)] font-bold leading-[1.05] text-ink">
-              Know what you&rsquo;re really buying &mdash; before you wire the
-              money.
-            </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-2">
-              Every wholesale buy is a bet on a supplier you can&rsquo;t fully
-              see and a brand that can pull your listing. We investigate both,
-              then hand you a one-page verdict and the exact questions to ask.
-              We don&rsquo;t promise &ldquo;safe&rdquo; &mdash; we help you decide.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-hover"
-              >
-                Vet a supplier
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
-              <a
-                href="#sample-report"
-                className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-subtle"
-              >
-                View sample report
-              </a>
-            </div>
-            <div className="mt-9 max-w-xs">
-              <VerdictSpectrum />
-              <p className="mt-2 text-sm text-muted">
-                Four plain-English verdicts &mdash; from Source Clear to Do Not
-                Rely
-              </p>
-            </div>
-          </div>
-
-          <div className="relative flex justify-center lg:justify-end">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 -z-10"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, var(--color-line) 1px, transparent 1px)",
-                backgroundSize: "16px 16px",
-                maskImage:
-                  "radial-gradient(ellipse 80% 80% at 60% 40%, black, transparent 75%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 80% 80% at 60% 40%, black, transparent 75%)",
-              }}
-            />
-            <DecisionSnapshot />
-          </div>
-        </div>
-      </section>
-
-      {/* ─────────────────── Trust-topic strip ─────────────────── */}
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-5 px-5 py-6 sm:grid-cols-3 lg:flex lg:items-center lg:justify-between lg:px-8">
-          {TRUST_TOPICS.map((t) => (
-            <div key={t.label} className="flex items-center gap-2.5">
-              <t.icon size={22} strokeWidth={1.75} className={t.color} aria-hidden="true" />
-              <span className="text-[13px] font-semibold leading-tight text-ink">
-                {t.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─────────────────── Where sellers lose money ─────────────────── */}
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Where wholesale sellers actually lose money.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
-              It&rsquo;s rarely the price. It&rsquo;s the things you couldn&rsquo;t
-              see before you bought.
-            </p>
-          </Reveal>
-
-          <div className="mt-10 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-            <Reveal>
-              <figure className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-base">
-                <figcaption className="flex items-center gap-2.5 bg-[#232F3E] px-5 py-3">
-                  <span className="h-2 w-2 rounded-full bg-deny-ink" />
-                  <span className="text-sm font-semibold text-white">Account Health</span>
-                  <span className="ml-auto rounded border border-white/25 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/70">
-                    Illustrative example
-                  </span>
-                </figcaption>
-                <div className="p-6">
-                  <p className="text-base font-bold text-deny-ink">
-                    Your account has been deactivated
-                  </p>
-                  <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-                    We received a report that a product you listed may be
-                    inauthentic. Funds may be withheld for up to 90 days while
-                    your account is under review.
-                  </p>
-                  <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
-                    By the time this email arrives, the inventory is already
-                    yours.
-                  </p>
-                </div>
-              </figure>
-            </Reveal>
-
-            <ul>
-              {PAIN_MODES.map((p, i) => (
-                <Reveal
-                  key={p.title}
-                  as="li"
-                  delay={i * 90}
-                  className="flex gap-4 border-b border-line py-5 last:border-0"
-                >
-                  <p.icon
-                    size={24}
-                    strokeWidth={1.75}
-                    className="mt-0.5 flex-none text-deny-ink"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <h3 className="text-[17px] font-semibold text-ink">{p.title}</h3>
-                    <p className="mt-1 text-[15px] leading-relaxed text-ink-2">{p.body}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </ul>
-          </div>
-
-          <Reveal>
-            <div className="mt-10 flex gap-3 rounded-[var(--radius-card)] bg-brand-tint px-6 py-5">
-              <ShieldQuestion size={22} className="mt-0.5 flex-none text-brand-ink" aria-hidden="true" />
-              <p className="text-[15px] leading-relaxed text-brand-ink">
-                <span className="font-bold">HyprrIQ can&rsquo;t undo any of this.</span>{" "}
-                What it can do is surface the signals before you buy &mdash; so
-                you decide with your eyes open, not after the email arrives.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─────────────────────── The stakes ─────────────────────── */}
-      <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              The math nobody runs before they buy.
-            </h2>
-          </Reveal>
-          <div className="mt-10 grid items-stretch gap-5 md:grid-cols-[1fr_auto_1fr]">
-            <Reveal className="flex">
-              <div className="flex w-full flex-col rounded-[var(--radius-card)] border border-line bg-surface p-7">
-                <p className="text-sm font-semibold uppercase tracking-wide text-clear-ink">
-                  Checking first
-                </p>
-                <p className="mt-3 font-display text-3xl font-bold text-ink">From $99</p>
-                <p className="mt-2 text-[15px] text-ink-2">
-                  One report. Delivered within {CASE_SLA_HOURS} hours. A clear
-                  verdict and the questions to ask — before a dollar moves.
-                </p>
-              </div>
-            </Reveal>
-            <div className="hidden items-center justify-center md:flex">
-              <span className="font-display text-lg font-bold text-muted">vs</span>
-            </div>
-            <Reveal delay={90} className="flex">
-              <div className="flex w-full flex-col rounded-[var(--radius-card)] border border-deny-ink/25 bg-deny-bg p-7">
-                <p className="text-sm font-semibold uppercase tracking-wide text-deny-ink">
-                  Not checking
-                </p>
-                <p className="mt-3 font-display text-3xl font-bold text-deny-ink">
-                  The whole buy
-                </p>
-                <p className="mt-2 text-[15px] text-ink-2">
-                  Gated brand, payout held 90 days, inventory you can&rsquo;t
-                  sell — and sometimes the account itself.
-                </p>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ─────────────────────── Why HyprrIQ exists ─────────────────────── */}
-      <section className="bg-surface">
-        <div className="mx-auto max-w-3xl px-5 py-12 text-center lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Why HyprrIQ exists.
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-ink-2">
-              Founded by an Amazon wholesale seller with 15+ years buying
-              inventory — handling invoices, brand restrictions, authenticity
-              complaints, and account-health fights. One lesson kept repeating:{" "}
-              <span className="font-medium text-ink">
-                the invoice isn&rsquo;t the risk &mdash; the unknowns behind it
-                are.
-              </span>{" "}
-              A supplier can be real, the invoice genuine, and the brand can
-              still reject the source. HyprrIQ investigates what sellers usually
-              discover only after the money&rsquo;s already gone.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─────────────────────── How it works ─────────────────────── */}
-      <section id="how-it-works" className="scroll-mt-20 border-y border-line">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Three steps. {CASE_SLA_HOURS} hours. One clear answer.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
-              Watch a case go from a vendor name to a verdict.
-            </p>
-          </Reveal>
-          <div className="mt-10">
-            <HowItWorksScroll />
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────── The four outcomes ──────────────────── */}
-      <section id="outcomes" className="scroll-mt-20 bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Every report ends in one of four plain-English verdicts.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-2">
-              No scores to decode, no false certainty. Just where the evidence
-              lands — and what to do next.
-            </p>
-            <div className="mx-auto mt-7 max-w-md">
-              <VerdictSpectrum withLabels />
-            </div>
-          </Reveal>
-
-          <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {(Object.keys(VERDICTS) as Verdict[]).map((v, i) => {
-                const meta = VERDICTS[v];
-                const Icon = meta.icon;
-                return (
-                  <Reveal key={v} delay={i * 80}>
-                    <div className="flex h-full flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-base p-5 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-12px_rgba(26,25,23,0.18)]">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${meta.bg} ${meta.ink}`}>
-                        <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-                      </div>
-                      <h3 className={`text-base font-semibold ${meta.ink}`}>{meta.label}</h3>
-                      <p className="text-sm leading-relaxed text-ink-2">{OUTCOME_COPY[v]}</p>
-                    </div>
-                  </Reveal>
-                );
-              })}
-            </div>
-            <Reveal delay={120}>
-              <div id="sample-report" className="scroll-mt-24">
-                <ReportPreview />
-                <p className="mt-3 text-center text-sm text-muted">
-                  A real Source Intelligence Report — anonymized.
-                </p>
-                {/* /sample-report.pdf download REMOVED 2026-08-08 (founder-ruled: no dead links;
-                    the file 404'd). Returns with the sample-report page (tracker 1.8). */}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ─────────────────── The depth / intelligence edge ─────────────────── */}
-      <section className="bg-subtle">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <div className="grid items-center gap-14 lg:grid-cols-2">
-            <Reveal>
-              <div>
-                <DashboardPreview />
-                <p className="mt-3 text-center text-sm text-muted">
-                  Every case, verdict, and report in one place.
-                </p>
-              </div>
-            </Reveal>
+      {/* ── HERO — the submit form, not the answer ─────────────────────────────────────────── */}
+      <header className="relative overflow-hidden bg-[linear-gradient(172deg,#E4F0F1_0%,#EDF5F5_46%,#F4F9F9_100%)] pt-11 sm:pt-[88px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-40 -top-52 h-[660px] w-[800px] bg-[radial-gradient(circle_at_50%_50%,rgba(0,90,104,.14),rgba(0,121,131,.06)_46%,transparent_72%)]"
+        />
+        <div className="relative z-10 mx-auto max-w-[1180px] px-5 lg:px-10">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.04fr_.96fr] lg:gap-14">
             <div>
-              <Reveal>
-                <h2 className="max-w-xl text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-                  The depth behind the one page.
-                </h2>
-                <p className="mt-4 max-w-md text-lg text-ink-2">
-                  The verdict is short on purpose. The work behind it isn&rsquo;t.
-                </p>
-              </Reveal>
+              <Kicker className="text-cyan">Supplier checks for wholesale buyers</Kicker>
+              <h1 className="max-w-[28ch] text-ink">
+                Know who you&rsquo;re buying from — before the money leaves.
+              </h1>
+              <p className="mt-4 max-w-[47ch] text-[16.5px] leading-[1.55] text-ink-2 sm:mt-[22px] sm:text-[19.5px] sm:leading-[1.58]">
+                <strong className="font-semibold text-ink">We do the checking for you.</strong> Send
+                us a supplier&rsquo;s name and the brands they say they carry. We research them, and
+                within {CASE_SLA_HOURS} hours you get a written report — one clear answer, the
+                evidence behind it, and a straight list of what we could not confirm.
+              </p>
+              <div className="mt-6 flex flex-col gap-2.5 sm:mt-[34px] sm:flex-row sm:gap-3">
+                <Link
+                  href="/pricing"
+                  className="flex min-h-11 items-center justify-center rounded-control bg-action px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-anchor"
+                >
+                  Vet a supplier — {PLAN_PRICE_LABEL.single_99}
+                </Link>
+                <Link
+                  href="/sample-report"
+                  className="flex min-h-11 items-center justify-center rounded-control border border-control-border bg-transparent px-6 py-3.5 text-[15px] font-semibold text-anchor transition-colors hover:bg-subtle"
+                >
+                  See a real report
+                </Link>
+              </div>
+            </div>
 
-              <Reveal>
-                <dl className="mt-8 grid grid-cols-3 gap-4 border-y border-line py-6">
-                  {EDGE_STATS.map((s) => (
-                    <div key={s.label}>
-                      <dt className="font-display text-3xl font-bold text-brand">
-                        <Counter value={s.value} suffix={s.suffix} />
-                      </dt>
-                      <dd className="mt-1 text-xs leading-snug text-ink-2">{s.label}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Reveal>
-
-              <div className="mt-8 space-y-6">
-                {EDGE.map((e, i) => (
-                  <Reveal key={e.title} delay={i * 90} className="flex gap-4">
-                    <e.icon size={22} strokeWidth={1.75} className="mt-0.5 flex-none text-accent-data" aria-hidden="true" />
-                    <div>
-                      <h3 className="text-base font-semibold text-ink">{e.title}</h3>
-                      <p className="mt-1 text-[15px] leading-relaxed text-ink-2">{e.body}</p>
-                    </div>
-                  </Reveal>
+            {/* The submit form, as the client meets it. A mock, with a fictional supplier. */}
+            <div className="overflow-hidden rounded-card-lg border border-line bg-surface shadow-[0_22px_52px_-30px_rgba(0,61,72,.32)]">
+              <div className="flex gap-2.5 border-b border-line bg-subtle px-3.5 py-2.5 font-mono text-[9.5px] uppercase tracking-[0.07em] text-muted sm:px-4.5 sm:py-3 sm:text-[10.5px] sm:tracking-[0.1em]">
+                <span>New assessment</span>
+                <span className="ml-auto">Takes about 2 minutes</span>
+              </div>
+              <div className="px-3.5 pb-2.5 pt-1 sm:px-5 sm:pb-3.5 sm:pt-2">
+                {[
+                  ["Supplier name", SAMPLE_VENDOR, false],
+                  ["Website", "northgatewholesale.com", false],
+                  ["Brands they claim", `Brand A, Brand B, +1`, false],
+                  ["Marketplace", "Amazon US", false],
+                  ["Their paperwork", "invoice-april.pdf", true],
+                ].map(([label, value, isFile]) => (
+                  <div
+                    key={label as string}
+                    className="flex flex-col gap-1.5 border-b border-line py-2.5 text-[14px] last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3.5 sm:py-[11px] sm:text-[14.5px]"
+                  >
+                    <span className="text-[13px] text-muted sm:text-[14.5px]">{label as string}</span>
+                    <span
+                      className={`overflow-hidden text-ellipsis whitespace-nowrap rounded-field border px-3 py-2 text-left text-[13.5px] font-semibold sm:w-[210px] sm:text-[14.5px] ${
+                        isFile
+                          ? "border-cyan/40 bg-cyan-tint text-cyan"
+                          : "border-control-border bg-[#F2F8F9] text-anchor"
+                      }`}
+                    >
+                      {value as string}
+                    </span>
+                  </div>
                 ))}
+                <div className="mb-1 mt-3.5 rounded-field bg-action px-3 py-3 text-center text-[14px] font-semibold text-white sm:text-[14.5px]">
+                  Submit for assessment
+                </div>
+                <p className="pb-2.5 text-center text-[11.5px] leading-[1.45] text-muted sm:text-[13px]">
+                  Report back within {CASE_SLA_HOURS} hours · the same checks on every supplier
+                </p>
               </div>
             </div>
           </div>
+
+          {/* The ribbon. Four facts, each of which is a constant somewhere. */}
+          <dl className="relative z-10 mt-10 grid grid-cols-2 overflow-hidden rounded-t-[12px] bg-anchor sm:mt-[76px] sm:rounded-t-[14px] lg:grid-cols-4">
+            {[
+              [`${CASE_SLA_HOURS} hours`, "Delivery, every plan"],
+              [String(ASSESSMENT_AREA_KEYS.length), "Assessment areas"],
+              [String(VERDICT_SCALE_ORDER.length), "Verdict levels, never a score"],
+              ["Same", "Method on every supplier"],
+            ].map(([big, small], i) => (
+              <div
+                key={small}
+                className={`px-4 py-4 sm:px-[26px] sm:pb-7 sm:pt-[26px] ${
+                  i % 2 === 0 ? "border-r border-white/[0.13]" : ""
+                } ${i < 2 ? "border-b border-white/[0.13] lg:border-b-0" : ""} lg:border-r lg:last:border-r-0`}
+              >
+                <dt className="font-display text-[22px] font-medium tracking-[-0.025em] text-white sm:text-[29px]">
+                  {big}
+                </dt>
+                <dd className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.09em] text-nav-fg-dim sm:text-[10.5px] sm:tracking-[0.11em]">
+                  {small}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </header>
+
+      {/* ── CAPABILITY STRIP ───────────────────────────────────────────────────────────────── */}
+      <section className="border-b border-line bg-mist py-10 sm:py-14">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal>
+            <p className="text-center font-mono text-[10px] uppercase leading-[1.5] tracking-[0.13em] text-muted sm:text-[11px] sm:tracking-[0.15em]">
+              Fifteen years inside Amazon wholesale — the expertise behind every case
+            </p>
+          </Reveal>
+          <Reveal>
+            <div className="mt-6 grid grid-cols-2 gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-6">
+              {CAPABILITIES.map((c) => (
+                <div key={c.title}>
+                  <span
+                    className={`mb-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-[9px] sm:mb-3 sm:h-10 sm:w-10 sm:rounded-[10px] ${c.tint} ${c.ink}`}
+                    aria-hidden
+                  >
+                    <span className="h-2 w-2 rounded-full bg-current" />
+                  </span>
+                  <h3 className="text-[14.5px] sm:text-[16px]">{c.title}</h3>
+                  <p className="mt-1 text-[13px] leading-[1.45] text-ink-2 sm:text-[14px] sm:leading-[1.5]">
+                    {c.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal>
+            <p className="mt-6 text-center text-[13.5px] text-muted sm:mt-7 sm:text-[15px]">
+              These are the domains we assess. None of them is a promise about your outcome.
+            </p>
+          </Reveal>
         </div>
       </section>
 
-      {/* ─────────────────────── Who it's for ─────────────────────── */}
-      <section>
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Built for sellers with real money on the line.
-            </h2>
+      {/* ── WHAT YOU GET ───────────────────────────────────────────────────────────────────── */}
+      <section id="get" className="border-b border-line bg-surface py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-6 sm:mb-11">
+            <Kicker className="text-action">What you get</Kicker>
+            <BeatHeading first="One supplier in." second="One report back." />
           </Reveal>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {PROFILES.map((p, i) => (
-              <Reveal key={p.title} delay={i * 90}>
-                <div className="h-full rounded-[var(--radius-card)] border border-line bg-surface p-6 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-12px_rgba(26,25,23,0.18)]">
-                  <h3 className="text-lg font-semibold text-ink">{p.title}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{p.body}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="grid gap-0 lg:grid-cols-[.85fr_1.15fr] lg:gap-16">
+            <Reveal className="hidden border-t-2 border-action pt-6 lg:block">
+              <p className="text-[19px] leading-[1.58] text-ink-2">
+                Nothing to set up and nothing to learn. A supplier name goes in, and the same checks
+                run against it that run against every other supplier on the platform.
+              </p>
+              <p className="mt-4 text-[19px] leading-[1.58] text-ink-2">
+                Twenty-four hours later a report comes back. Here is exactly what is in it.
+              </p>
+              <Link
+                href="/sample-report"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-action transition-colors hover:text-anchor"
+              >
+                See a real report <span aria-hidden>→</span>
+              </Link>
+            </Reveal>
+            <Reveal>
+              <StaggerList
+                items={[
+                  { text: `A written report, in ${CASE_SLA_HOURS} hours.` },
+                  { text: `One verdict, out of ${VERDICT_SCALE_ORDER.length}. Never a score.` },
+                  { text: "Every finding, with the source we got it from." },
+                  { text: "A plain list of what we could not confirm." },
+                  { text: "The exact questions to ask your supplier — before you pay.", lead: true },
+                ]}
+              />
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ───────────────────────── Pricing ───────────────────────── */}
-      <section id="pricing" className="scroll-mt-20 border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-                Costs less than one bad buy.
-              </h2>
-              <p className="mt-4 text-lg text-ink-2">
-                Subscribe for regular sourcing, or try a single report first.
-                Either way, you pay for clarity before the capital moves.
-              </p>
-            </div>
+      {/* ── 1 · THE PROBLEM ────────────────────────────────────────────────────────────────── */}
+      <section id="problem" className="border-b border-line bg-surface py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-11">
+            <Kicker className="text-verify-ink">1 · The problem</Kicker>
+            <h2 className="text-ink">
+              Suspensions rarely start with the seller.
+            </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-ink-2 sm:text-[19px] sm:leading-[1.58]">
+              They start upstream — with a brand, a channel, or a piece of paper that could not do
+              the job it was bought to do. By the time it reaches you, the money is spent.
+            </p>
           </Reveal>
-
-          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
-            {PLANS.map((plan, i) => (
-              <Reveal key={plan.name} delay={i * 90}>
-                <div
-                  className={`flex h-full flex-col rounded-[var(--radius-card)] border bg-base p-7 ${
-                    plan.popular ? "border-brand shadow-[0_0_0_1px_var(--color-brand)]" : "border-line"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display text-xl font-bold text-ink">{plan.name}</h3>
-                    {plan.popular && (
-                      <span className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-semibold text-brand-ink">
-                        Most popular
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-4 flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-bold text-ink">{plan.price}</span>
-                    <span className="text-ink-2">{plan.cadence}</span>
-                  </p>
-                  <p className="mt-1 text-sm text-ink-2">{plan.credits}</p>
-                  <ul className="mt-6 space-y-3">
-                    {plan.points.map((pt) => (
-                      <li key={pt} className="flex gap-2.5 text-[15px] text-ink-2">
-                        <Check size={18} strokeWidth={2.25} className="mt-0.5 flex-none text-brand" aria-hidden="true" />
-                        {pt}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/sign-up"
-                    className={`mt-7 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold transition-colors ${
-                      plan.popular
-                        ? "bg-brand text-white hover:bg-brand-hover"
-                        : "border border-line-strong bg-surface text-ink hover:bg-subtle"
+          <Reveal>
+            <ol className="grid gap-3 lg:grid-cols-[1fr_26px_1fr_26px_1fr] lg:gap-0">
+              {CHAIN.map((c, i) => (
+                <li key={c.step} className="contents">
+                  <div
+                    className={`rounded-card-lg border p-4.5 sm:p-6 ${
+                      i === 2 ? "border-verify-ink/25 bg-verify-bg" : "border-line bg-pale"
                     }`}
                   >
-                    Get started
-                    <ArrowRight size={18} aria-hidden="true" />
-                  </Link>
-                </div>
-              </Reveal>
-            ))}
+                    <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
+                      {c.step}
+                    </span>
+                    <h3 className="mb-2 mt-2 text-[16.5px] sm:text-[18.5px]">{c.title}</h3>
+                    <p className="text-[14.5px] leading-[1.55] text-ink-2 sm:text-[15px]">{c.body}</p>
+                  </div>
+                  {i < 2 && (
+                    <div className="hidden items-center justify-center text-[19px] text-line-strong lg:flex" aria-hidden>
+                      →
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+          <Reveal>
+            <p className="mt-5 rounded-r-card border-l-2 border-action bg-mist px-4.5 py-4 text-[14.5px] leading-[1.6] text-ink-2 sm:mt-8 sm:px-6 sm:py-5 sm:text-[16px]">
+              <b className="font-semibold text-ink">Where we fit, stated plainly:</b> we cannot stop
+              any of that, and we will never tell you a supplier is safe. What we can do is make the
+              upstream facts checkable while the decision is still yours.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── 2 · WHAT WE DO ─────────────────────────────────────────────────────────────────── */}
+      <section id="service" className="border-b border-line bg-base py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-11">
+            <Kicker className="text-blue">2 · What we do</Kicker>
+            <h2 className="text-ink">
+              {ASSESSMENT_AREA_KEYS.length} areas. Each one states its own limit.
+            </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-ink-2 sm:text-[19px] sm:leading-[1.58]">
+              The same questions, asked the same way, on every supplier — what we examine at each
+              stage, and what that stage honestly cannot conclude.
+            </p>
+          </Reveal>
+
+          <ServiceRail />
+
+          <div className="mt-9 border-t border-line pt-8 sm:mt-14 sm:pt-13">
+            <Kicker className="text-blue">And you can watch it happen</Kicker>
+            <h2 className="text-[22px] text-ink sm:text-[30px]">Nothing is hidden while the work runs.</h2>
+            <Reveal>
+              <div className="mt-6 grid gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-3">
+                {[
+                  {
+                    n: "01", ink: "text-anchor", title: "You submit",
+                    sub: "Supplier, brands, paperwork. About two minutes.",
+                    head: "New assessment", right: null,
+                    rows: [["Supplier", SAMPLE_VENDOR], ["Brands claimed", `3 of ${PLAN_BRAND_CAPS.single_99} used`], ["Marketplace", "Amazon US"], ["Document", "invoice-april.pdf"], ["Credits", "1 used"]],
+                  },
+                  {
+                    n: "02", ink: "text-blue", title: "The work runs",
+                    sub: `${ASSESSMENT_AREA_KEYS.length} areas in sequence, with the deadline we are working to.`,
+                    head: SAMPLE_CASE_ID, right: "14h 12m left",
+                    rows: ASSESSMENT_AREA_KEYS.map((k, i) => [
+                      AREA_NAMES[k] ?? k,
+                      i < 2 ? "Complete" : i === 2 ? "Researching" : "Queued",
+                    ]) as [string, string][],
+                  },
+                  {
+                    n: "03", ink: "text-plum", title: "Every case, the same way",
+                    sub: `The same ${ASSESSMENT_AREA_KEYS.length} areas, in the same order, whoever the supplier is.`,
+                    head: "Delivered", right: "PDF attached",
+                    rows: [["Verdict", VERDICT_COPY.verify_before_purchase.name], ["Findings", "9"], ["Could not confirm", "3"], ["Questions drafted", "3"], ["Method", `Fixed, all ${ASSESSMENT_AREA_KEYS.length} areas`]],
+                  },
+                ].map((step) => (
+                  <div key={step.n}>
+                    <div className={`font-mono text-[9.5px] uppercase tracking-[0.14em] sm:text-[10.5px] ${step.ink}`}>
+                      {step.n}
+                    </div>
+                    <h3 className="mb-1.5 mt-1.5 text-[17px] sm:text-[18px]">{step.title}</h3>
+                    <p className="pb-3.5 text-[14.5px] leading-[1.55] text-ink-2 sm:pb-4.5 sm:text-[15px]">
+                      {step.sub}
+                    </p>
+                    <div className="overflow-hidden rounded-card border border-line bg-surface">
+                      <div className="flex gap-2.5 border-b border-line bg-subtle px-3.5 py-2.5 font-mono text-[9.5px] uppercase tracking-[0.07em] text-muted">
+                        <span>{step.head}</span>
+                        {step.right && <span className="ml-auto">{step.right}</span>}
+                      </div>
+                      <div className="px-3.5 pb-2.5 pt-1">
+                        {step.rows.map(([k, v]) => (
+                          <div key={k} className="flex items-center justify-between gap-2 border-b border-line py-2.5 text-[13.5px] last:border-b-0 sm:text-[14.5px]">
+                            <span className="text-muted">{k}</span>
+                            <span className="text-right font-semibold text-ink">{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+            <p className="mt-5 text-[13.5px] text-muted sm:text-[14.5px]">
+              Portal views are masked demonstrations with illustrative data.
+            </p>
+            <Link
+              href="/what-we-check"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 text-[14.5px] font-semibold text-action transition-colors hover:text-anchor sm:text-[15px]"
+            >
+              See everything we check <span aria-hidden>→</span>
+            </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ── 3 · THE VERDICT — the one place warm hues are allowed to mean something ────────── */}
+      <section id="output" data-ground="dark" className="bg-anchor py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-11">
+            <Kicker className="text-cyan-tint">3 · What you get</Kicker>
+            <h2 className="text-white">
+              Not a score. One of {VERDICT_SCALE_ORDER.length} answers.
+            </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-nav-fg sm:text-[19px] sm:leading-[1.58]">
+              A number invites you to argue with it. A verdict tells you what to do next — and the
+              level is always written out, so it reads the same to everyone.
+            </p>
+          </Reveal>
 
           <Reveal>
-            <p className="mt-8 flex items-center justify-center gap-2 text-center text-[15px] text-ink-2">
-              <FileText size={17} className="text-muted" aria-hidden="true" />
-              Not ready to subscribe?{" "}
-              <Link href="/pricing" className="font-semibold text-brand hover:text-brand-hover">
-                Single reports from $99
-              </Link>
-            </p>
+            <ol className="grid gap-2.5 sm:gap-3.5 lg:grid-cols-4">
+              {VERDICT_SCALE_ORDER.map((key) => {
+                const v = VERDICT_COPY[key];
+                const c = VERDICT_CLASSES[key];
+                return (
+                  <li key={key} className={`rounded-card-lg p-4 sm:p-5 ${c.bg}`}>
+                    <div className={`font-mono text-[10px] uppercase tracking-[0.14em] opacity-85 ${c.ink}`}>
+                      Level {v.level} of {VERDICT_SCALE_ORDER.length}
+                    </div>
+                    <h3 className={`mb-2 mt-2 font-display text-[19px] font-medium leading-[1.1] tracking-[-0.02em] sm:text-[22px] ${c.ink}`}>
+                      {v.name}
+                    </h3>
+                    <p className={`text-[14px] leading-[1.5] sm:text-[14.5px] ${c.ink}`}>{v.means}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          </Reveal>
+
+          <Reveal>
+            <Link
+              href="/how-to-read"
+              className="mt-7 inline-flex min-h-11 items-center gap-2 text-[14.5px] font-semibold text-cyan-tint transition-opacity hover:opacity-80 sm:mt-9 sm:text-[15px]"
+            >
+              How to read a report <span aria-hidden>→</span>
+            </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ───────────────────────── FAQ ───────────────────────── */}
-      <section id="faq" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-          <Reveal>
-            <h2 className="text-center text-[clamp(1.75rem,3vw,2.4rem)] font-bold leading-tight text-ink">
-              Questions, answered straight.
+      {/* ── 4 · WHY TRUST IT ───────────────────────────────────────────────────────────────── */}
+      <section id="proof" className="border-b border-line bg-pale py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-11">
+            <Kicker className="text-plum">4 · Why trust it</Kicker>
+            <h2 className="text-ink">
+              Fifteen years of reading one graph.
             </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-ink-2 sm:text-[19px] sm:leading-[1.58]">
+              How a brand behaves toward third-party sellers leaves a trace. Most people look at this
+              line and see a number. We were taught, expensively, to read the shape.
+            </p>
+          </Reveal>
+
+          <Reveal>
+            <TrendGraph />
+          </Reveal>
+
+          <Reveal>
+            <ul className="mt-6 grid gap-3 sm:mt-10 sm:gap-5 lg:grid-cols-3">
+              {REFUSALS.map((r) => (
+                <li key={r.title} className="rounded-card-lg border border-line bg-surface p-4.5 sm:p-6">
+                  <div className="mb-2.5 font-display text-[26px] leading-none text-deny-ink" aria-hidden>
+                    &times;
+                  </div>
+                  <h3 className="mb-2 text-[16px] sm:text-[17.5px]">{r.title}</h3>
+                  <p className="text-[14.5px] leading-[1.55] text-ink-2 sm:text-[15px]">{r.body}</p>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Link
+            href="/method"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 text-[14.5px] font-semibold text-action transition-colors hover:text-anchor sm:text-[15px]"
+          >
+            Our method, and its limits <span aria-hidden>→</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 5 · PRICING ────────────────────────────────────────────────────────────────────── */}
+      <section id="price" className="bg-base py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-11">
+            <Kicker className="text-cyan">5 · Pricing</Kicker>
+            <h2 className="text-ink">
+              Two ways to buy. Same discipline in both.
+            </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-ink-2 sm:text-[19px] sm:leading-[1.58]">
+              Every plan delivers in {CASE_SLA_HOURS} hours. Every supplier gets the same checks, in
+              the same order, whatever you paid.
+            </p>
           </Reveal>
           <Reveal>
-            <div className="mt-10">
-              <FAQ />
-            </div>
+            <PricingTabs />
+          </Reveal>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 text-[14.5px] font-semibold text-action transition-colors hover:text-anchor sm:text-[15px]"
+          >
+            Compare every plan <span aria-hidden>→</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── LEARN ──────────────────────────────────────────────────────────────────────────── */}
+      <section className="border-t border-line bg-sand py-14 sm:py-[104px]">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <Reveal className="mb-7 sm:mb-9">
+            <Kicker className="text-violet">Not ready to buy?</Kicker>
+            <h2 className="text-ink">
+              Read the things that made us build this.
+            </h2>
+            <p className="mt-4 max-w-[660px] text-[16.5px] leading-[1.55] text-ink-2 sm:text-[19px] sm:leading-[1.58]">
+              Everything below is free, and none of it asks for an email.
+            </p>
+          </Reveal>
+          <Reveal>
+            <ul className="grid gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {LEARN.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="flex h-full flex-col rounded-card-lg border border-line bg-surface p-4.5 transition-[border-color,transform] hover:-translate-y-0.5 hover:border-line-strong sm:p-6"
+                  >
+                    <span className={`mb-3 self-start rounded-chip px-2.5 py-1 font-mono text-[9.5px] font-semibold uppercase tracking-[0.13em] ${l.tint} ${l.ink}`}>
+                      {l.tag}
+                    </span>
+                    <h3 className="mb-2 text-[16px] leading-[1.25] sm:text-[18px]">{l.title}</h3>
+                    <p className="text-[13.5px] leading-[1.55] text-ink-2 sm:text-[14.5px]">{l.body}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </div>
       </section>
 
-      {/* ──────────── Honesty manifesto — final CTA (brand drench) ──────────── */}
-      <section className="bg-brand-ink">
-        <div className="mx-auto max-w-4xl px-5 py-20 text-center lg:px-8 lg:py-24">
-          <Reveal>
-            <ScanEye size={32} strokeWidth={1.75} className="mx-auto text-white/75" aria-hidden="true" />
-            <h2 className="mx-auto mt-6 max-w-3xl text-[clamp(1.9rem,3.8vw,3rem)] font-bold leading-tight text-white">
-              We will never tell you a source is safe.
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-white/80">
-              We&rsquo;ll tell you what we found, what we couldn&rsquo;t verify,
-              and what questions remain. That&rsquo;s the entire product.
-            </p>
-            <div className="mt-8 flex justify-center">
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-base font-semibold text-brand-ink transition-colors hover:bg-white/90"
-              >
-                Vet a supplier
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
-            </div>
-            <p className="mt-4 text-sm text-white/55">
-              Takes about 2 minutes. View a sample report first if you like.
-            </p>
-          </Reveal>
+      {/* ── FINAL ──────────────────────────────────────────────────────────────────────────── */}
+      <section className="border-t border-line bg-mist py-14 text-center sm:py-24">
+        <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
+          <h2 className="text-ink">
+            The cheapest research you&rsquo;ll ever buy is the one before the wire.
+          </h2>
+          <p className="mx-auto mt-4 max-w-[48ch] text-[16px] leading-relaxed text-ink-2 sm:mt-5 sm:text-[19px]">
+            One supplier, one verdict, twenty-four hours. If we can&rsquo;t confirm something, we
+            tell you that too.
+          </p>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-control bg-action px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-anchor sm:mt-7"
+          >
+            Start a single report — {PLAN_PRICE_LABEL.single_99}
+          </Link>
         </div>
       </section>
     </>

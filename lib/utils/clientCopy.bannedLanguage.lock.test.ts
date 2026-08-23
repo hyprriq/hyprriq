@@ -56,9 +56,69 @@ function offendersIn(dirs: string[], filter?: (src: string, lit: string) => bool
   return offenders;
 }
 
+// ── ⚠ UNRULED — MARKETING REFUSAL COPY vs THE NEGATION GUARDS (2026-08-24) ───────────────────
+//
+// FOUNDER INSTRUCTION (2026-08-24): "marketing website can be okay if anything is wrong, just
+// list it, we will change later — ignore and continue building." This IS that list.
+//
+// THE PROBLEM, and it is a SCANNER GAP, NOT A COPY DEFECT. Three sentences of the founder's
+// CLOSED launch copy trip HARD rules. All three are REFUSALS — the product stating what it will
+// not claim — which sitewide rules 1 and 5 require on every page. The scanner is built to let
+// exactly these through: H2 is "negation-aware (mandated disclaimers pass)", H12 is "denial-aware
+// — 'could not confirm authorization' passes", H14 runs makeVerdictGuard. They trip because:
+//
+//   · "we cannot prove a business is fraudulent"  — H14's guard looks for negation adjacent to
+//     the verdict phrase; here "cannot" sits four words upstream of "is fraudulent".
+//   · "nobody can confirm authorization"          — H12's guard reads not/cannot/never/could-not;
+//     the negation here is carried by the SUBJECT ("nobody"), which it does not model.
+//   · "We won't say your account is safe"         — H3 has NO negation test at all, so the
+//     substring "account is safe" trips inside its own denial.
+//
+// THE REAL FIX is in lib/utils/banned-language.ts — extend the two guards' negation vocabulary
+// and give H3 the guard the other promise-rules already have. That file is a FROZEN SURFACE
+// (hard law 1: the design lane never reaches into it), and the change must be measured against
+// the 45-case corpus first, because a guard that lets a refusal through must never let a real
+// claim through with it. That is a dev-lane change under founder ruling, not a design-lane edit.
+//
+// UNTIL THEN these three literals are allowed BY EXACT TEXT — not by pattern, not by file, not by
+// rule. Anything else with the same banned vocabulary still fails. Adding to this list is a
+// founder decision; the companion test below deletes it from under you when a string stops
+// existing, so it cannot quietly outlive the copy it was written for.
+const PENDING_REFUSAL_REVIEW: { text: string; why: string }[] = [
+  {
+    text: "we cannot prove a business is fraudulent. Absence of a record is a gap in evidence, never an accusation.",
+    why: "H14 fraud verdict — the stated limit of Supplier Legitimacy. Refuses the accusation it matches.",
+  },
+  {
+    text: "nobody can confirm authorization from outside — those deals are private.",
+    why: "H12 confirms authorization — the stated limit of Supply-Chain Relationship. Refuses the confirmation it matches.",
+  },
+  {
+    text: "We won't say your account is safe",
+    why: "H3 account safe — one of the three refusals on the homepage. H3 carries no negation guard.",
+  },
+];
+
+const pendingTexts = PENDING_REFUSAL_REVIEW.map((p) => p.text);
+
 describe("BL6 — static surface locks (UI copy + error messages)", () => {
+  it("every pending-refusal exemption still matches live copy", () => {
+    // A stale exemption is worse than none: it silently pre-approves a string nobody ships any
+    // more, and the next person to write that sentence inherits an allowance they never asked for.
+    const live = offendersIn(UI_DIRS).join(" | ");
+    const stale = PENDING_REFUSAL_REVIEW.filter((p) => !live.includes(p.text.slice(0, 60)));
+    expect(
+      stale.map((p) => p.text),
+      `these exemptions no longer match any shipped literal and should be deleted: ${stale
+        .map((p) => p.text)
+        .join(" | ")}`,
+    ).toEqual([]);
+  });
+
   it("UI COPY: no HARD-banned language in any client-surface string literal", () => {
-    const offenders = offendersIn(UI_DIRS);
+    const offenders = offendersIn(UI_DIRS).filter(
+      (o) => !pendingTexts.some((t) => o.includes(t.slice(0, 60))),
+    );
     expect(offenders, `banned language in live UI copy:\n${offenders.join("\n")}`).toEqual([]);
   });
 
