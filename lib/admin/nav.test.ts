@@ -16,13 +16,13 @@ const minimalStaff: Operator = { user_id: "s2", role: "sub_user", capabilities: 
 const legacyFounder: Operator = { user_id: "f1", role: "super_admin", capabilities: CAPABILITIES, transitional: true };
 
 describe("navFor — ruled visibility, absent not disabled", () => {
-  it("super_admin sees the FULL nav (all 17 items — Billing added 2026-08-12, cap view_billing)", () => {
+  it("super_admin sees the FULL nav (all 18 items — System health added 2026-08-22)", () => {
     expect(keys(superAdmin)).toEqual([
       "dashboard", "review", "delivered", "all", "run",
       "clients", "billing", "support", "outcomes", "users",
       "suppliers", "brands",
       "acquisition", "bulk",
-      "revenue", "prompts", "settings",
+      "revenue", "integrity", "prompts", "settings",
     ]);
   });
 
@@ -51,7 +51,7 @@ describe("navFor — ruled visibility, absent not disabled", () => {
   });
 
   it("a capability-less sub_user gets only the always-on items; emptied sections drop", () => {
-    expect(keys(minimalStaff)).toEqual(["dashboard", "clients", "outcomes", "prompts", "settings"]);
+    expect(keys(minimalStaff)).toEqual(["dashboard", "clients", "outcomes", "integrity", "prompts", "settings"]);
     const sections = navFor(minimalStaff).map((g) => g.section);
     expect(sections).not.toContain("Cases");
     expect(sections).not.toContain("Intelligence");

@@ -15,6 +15,7 @@ import { can, canManageUsers, canManageStaff, type Operator } from "@/lib/auth/p
 import type { Capability } from "@/lib/auth/capabilities";
 
 export type AdminNavKey =
+  | "integrity"
   | "dashboard"
   | "review"
   | "delivered"
@@ -88,6 +89,10 @@ const GROUPS: NavGroup[] = [
     section: "System",
     items: [
       { key: "revenue", label: "Revenue", icon: "📊", href: "/admin/revenue", requires: { cap: "view_billing" } },
+      // System health (2026-08-22): the standing integrity checks. Visible to any operator —
+      // it names cases, never client data, and an operator who can see cases should be able to
+      // see whether the checks over them are passing.
+      { key: "integrity", label: "System health", icon: "✓", href: "/admin/integrity" },
       { key: "prompts", label: "Prompts", icon: "📄", href: "/admin/prompts" },
       { key: "settings", label: "Settings", icon: "⚙", href: "/admin/settings" },
     ],

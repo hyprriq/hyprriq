@@ -95,3 +95,26 @@ replaying signal derivation would push the boundary one layer upstream.
 2. Regeneration is `npx tsx --conditions=react-server --tsconfig tsconfig.json --env-file=.env.local scripts/golden-cases-freeze.ts`.
 3. The generator **validates its own freeze**: it refuses to write a case whose inputs it cannot
    pair from a single attempt, so a fixture can never be built from mixed-attempt data.
+
+---
+
+## ⛔ THE DIVERGENCE LAW (founder-locked 2026-08-22)
+
+**A delivered verdict that no longer matches the engine is INVESTIGATED, never smoothed.**
+
+Specifically, and in the founder's words — this is a law so that nobody can quietly undo it later:
+
+- It is **never rebaselined away.**
+- It is **never regenerated** to make a suite go green.
+- It is **never removed from the pinned list** in `goldenCases.test.ts`.
+
+A divergence means a real client holds a report the engine would no longer produce. That is a fact
+about the product, not a test failure to be tidied. The correct response is to look at the case and
+decide — re-issue, leave it, or rule the engine change wrong. The incorrect response, and the only
+one this law forbids, is to make the signal disappear.
+
+The two known divergences (`AWI-2606-003`, `AWI-2607-022`) are pinned **by name** in a test that
+fails if the list changes. That test is the enforcement: adding to the list requires a deliberate
+edit, and removing from it requires explaining why a divergence stopped existing. The nightly
+integrity sweep (`/admin/integrity`) reports the same divergences independently, so deleting the
+pin does not make them invisible — it only makes two records disagree.
