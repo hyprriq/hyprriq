@@ -144,6 +144,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The header is sticky, so every in-page anchor must clear it or the link scrolls its own
+   heading underneath the nav. Set once here rather than per-section on thirteen pages: the
+   58px mobile header and the 66px desktop one each get their height plus breathing room. */
+:where(section, header, article, div)[id] {
+  scroll-margin-top: 72px;
+}
+@media (min-width: 640px) {
+  :where(section, header, article, div)[id] {
+    scroll-margin-top: 84px;
+  }
+}
+
 body {
   background-color: var(--color-base);
   color: var(--color-ink);
@@ -170,6 +182,49 @@ h4 {
   letter-spacing: -0.015em;
   line-height: 1.25;
   text-wrap: balance;
+}
+
+/* ── THE RULED TYPE SCALE, as ELEMENT defaults ────────────────────────────────────────────────
+   The brief's scale (H1 60→29px, H2 46→24px, H3 20→17px) set once here instead of a clamp()
+   repeated in thirteen page files — repeating it is how one page ends up a step out and nobody
+   notices. Breakpoints match the spec's own: 400px and 760px, not Tailwind's defaults.
+
+   These are ELEMENT selectors (specificity 0,0,1), so any Tailwind text-* utility still wins.
+   That is deliberate: the ~40 existing portal and admin headings that set their own size keep it,
+   and the marketing pages get the ruled scale by writing nothing at all. */
+h1 {
+  font-size: 29px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-size: 24px;
+  line-height: 1.14;
+}
+h3 {
+  font-size: 17px;
+}
+@media (min-width: 400px) {
+  h1 {
+    font-size: 32px;
+  }
+  h2 {
+    font-size: 26px;
+  }
+}
+@media (min-width: 760px) {
+  h1 {
+    font-size: clamp(40px, 4.8vw, 60px);
+    line-height: 1.06;
+    letter-spacing: -0.022em;
+  }
+  h2 {
+    font-size: clamp(31px, 3.7vw, 46px);
+    line-height: 1.06;
+  }
+  h3 {
+    font-size: 20px;
+  }
 }
 
 p {

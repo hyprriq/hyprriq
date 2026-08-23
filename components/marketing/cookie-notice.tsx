@@ -36,7 +36,7 @@ export function CookieNotice() {
             We use cookies that keep you signed in and keep the service secure. That&rsquo;s all — no
             advertising, no tracking, no analytics.
           </b>{" "}
-          <Link href="/cookie-policy" className="underline hover:text-ink">Cookie Policy →</Link>
+          <Link href="/cookie-policy" className="inline-flex min-h-11 items-center underline hover:text-ink">Cookie Policy →</Link>
         </p>
         <button
           type="button"
@@ -44,7 +44,7 @@ export function CookieNotice() {
             try { localStorage.setItem(STORAGE_KEY, new Date().toISOString()); } catch { /* dismiss anyway */ }
             setDismissedNow(true);
           }}
-          className="shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90"
+          className="min-h-11 shrink-0 rounded-control bg-ink px-5 py-2 text-[13px] font-semibold text-surface transition-opacity hover:opacity-90"
         >
           Got it
         </button>

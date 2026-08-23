@@ -45,12 +45,12 @@ export function NewsletterSignup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
+              className="min-h-11 w-full min-w-0 rounded-field border border-control-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-action focus:outline-none"
             />
             <button
               type="submit"
               disabled={state === "busy"}
-              className="shrink-0 rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-surface transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="min-h-11 shrink-0 rounded-control bg-action px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-anchor disabled:opacity-50"
             >
               Sign up
             </button>
