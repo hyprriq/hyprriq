@@ -105,6 +105,67 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-I. THE MARKETING SITE — 2026-08-24 (design sitting two)
+
+> Eleven of the thirteen ruled launch pages are built from `hyprriq_flow_v2.html` and
+> `HyprrIQ_CONTENT_FINAL.md`. Mobile is part of the build, not a later pass.
+
+| # | Item | State |
+|---|---|---|
+| **I1** | **Site chrome.** Header and footer to the spec. Nav points at ROUTES, not the spec's homepage anchors (dead on twelve pages); a mobile menu exists that the spec does not have (it hides the nav below 960px, workable for one page, a dead end for thirteen). The announcement bar is out of the layout — the ruled homepage has none and its copy is not in the closed content file. Component kept, not deleted | ✅ SHIPPED |
+| **I2** | **Homepage**, nine sections in the spec's order. Every number derived from a ruled registry; the spec's own case id `AWI-0000-000` matches the LIVE generator shape and would have failed the sample-identifier lock, so `SAMPLE_CASE_ID` is used | ✅ SHIPPED |
+| **I3** | **Eight content pages** — `/what-we-check` `/how-it-works` `/method` `/what-we-dont-do` `/security` `/how-we-handle-your-data` `/about` `/contact`. One shared editorial shell. Build notes 2 (US spelling), 3 (cut the "inferred" clause), 5 (no postal address on /contact) and 6 (transit-only encryption) applied as instructed | ✅ SHIPPED |
+| **I4** | **`/pricing` and `/faq`.** The three-of-five story is DERIVED from `TRACK_CONFIG` via `areaSplitForPlan()` — both the "answers" and "does not answer" lists, so they move together. FAQPage schema on `/faq` only, generated from the same array the page renders | ✅ SHIPPED |
+| **I5** | **`/how-to-read` under founder ruling 2** — launches, side-stripes removed (the verdict wears its own chip from the registry), hardcoded `#FAF9F7` cream gradient removed | ✅ SHIPPED |
+| **I6** | **`/contact` is a REAL form** — new public endpoint, ruled abuse posture (server validation, honeypot before rate limit, per-IP brake, no CAPTCHA). ⚠ EMAIL IS THE ONLY RECORD: no contact table exists and creating one is a migration, so a failed send LOSES the message and the route returns 502 rather than a false success | ✅ SHIPPED, flagged |
+| **I7** | **Mobile, MEASURED at 360/390/430px** — zero horizontal overflow on every page, one h1 per page, body 16px, and zero standalone controls under 44px. `/pricing`'s table scrolls in its own box | ✅ MEASURED |
+
+> **⛔ `/sample-report` IS NOT BUILT — the brief and the content file contradict each other.**
+> `HyprrIQ_DEV_BRIEF.md` says "The page is a frame around a report that does not exist yet. Build
+> the report… take a real delivered case and redact it." `HyprrIQ_CONTENT_FINAL.md` line 552 says
+> **"[THE REPORT ITSELF GOES HERE — GAUTAM TO SUPPLY]"**. Both cannot be followed. Beyond the
+> contradiction, building it means reading a real delivered client case and publishing a redacted
+> version publicly — a client-data decision that stops and comes to the founder under the standing
+> limits. The existing page is untouched and still live.
+
+> **`/partners` DELIBERATELY UNTOUCHED.** It is on the launch URL map, but the dev brief's "what not
+> to do" says do not restyle `/partners`, the invite landing or the request form yet — they are
+> queued separately and come after the system exists. It launches as it is.
+
+> **⚠ THE BANNED-LANGUAGE SCANNER BLOCKS THE SITE'S REFUSALS — five so far, one class.** Sentences
+> that REFUSE a claim trip the rule that bans the claim. The scanner is built to allow denials
+> (H12 is "denial-aware", H14 runs `makeVerdictGuard`) but the guards do not model negation four
+> words upstream, negation carried by the subject ("nobody can confirm"), an interrogative ("Will
+> this keep my Amazon account safe?" — answer: No), or the OBJECT of a verb ("we do not sell your
+> **data**" matching a purchase rule). H3 has no guard at all. THE REAL FIX is in
+> `lib/utils/banned-language.ts` — a FROZEN surface — and must be corpus-measured first, because a
+> guard that lets a refusal through must never let a real claim through. Until then the five
+> literals are allowed BY EXACT TEXT in `clientCopy.bannedLanguage.lock.test.ts`, each with its
+> reason, plus a companion test that fails a STALE exemption. Recorded on the founder's
+> "list it, we will change later" instruction.
+
+> **OPEN, NEEDS A RULING:** credit roll-over on `/pricing` — the content file marks it
+> `[GAUTAM TO CONFIRM]`. Not guessed. `PLAN_ROLLOVER_LIMIT` already answers it (singles 0, Growth 2,
+> Scale 4) and the comparison table already renders a "Credit rollover" row from it, so the fact is
+> already public; only the FAQ answer is missing. Publishing a rollover PROMISE changes what a
+> client is promised.
+
+> **COPY ACCURACY FLAG:** `/how-it-works` says "If you have an invoice or a quote, upload it", but
+> `app/api/cases/submit/route.ts:117` REFUSES uploads on `single_99` server-side — Documentation
+> Review does not run on that tier, so accepting files would falsely imply review. A $99 buyer
+> following that sentence hits a 400. The tier qualification was added AROUND the founder's
+> sentence, not inside it.
+
+> **TWO WORDMARKS ON THE SITE TODAY.** The marketing chrome renders the spec's live-text lockup
+> (Newsreader, IQ in petrol). `components/brand/wordmark.tsx` — the founder-ruled SVG in Fraunces
+> with a COPPER IQ, a typeface and a colour the 2026-08-23 ruling both deleted — is still used by
+> auth, admin, `error.tsx` and `not-found.tsx`. The assets need regenerating.
+
+> **CONFIRMED for the content file's "unverified" note:** a case CAN run without an uploaded
+> document (`submit/route.ts:42`, files optional by ruling).
+
+---
+
 ## 0-H. THE VISUAL SYSTEM IS BUILT AND LOCKED — 2026-08-24 (design sitting one of three)
 
 > The founder's visual ruling (`HyprrIQ_DEV_BRIEF.md`, 2026-08-23) is implemented as a token
