@@ -41,7 +41,12 @@ export function deriveStages(c: {
 
 const DOT: Record<StageState, string> = {
   done: "bg-clear-bg text-clear-ink border-clear-ink/30",
-  working: "bg-amber-50 text-amber-700 border-amber-300 animate-pulse",
+  // `working` was `bg-amber-50 text-amber-700 border-amber-300 animate-pulse` — three colours from
+  // Tailwind's DEFAULT palette (outside the design system entirely) in a warm hue the ruling
+  // reserves for verdicts, plus a pulse on the operator console, where the brief's one
+  // non-negotiable motion rule is that nothing animates: this screen is read dozens of times a day
+  // and motion there reads as latency. In-progress is a STATUS, so it takes a cool accent.
+  working: "bg-blue-tint text-blue border-blue/30",
   failed: "bg-deny-bg text-deny-ink border-deny-ink/30",
   manual: "bg-deny-bg text-deny-ink border-deny-ink/30",
   skipped: "bg-subtle text-muted border-line",

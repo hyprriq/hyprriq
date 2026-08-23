@@ -5,6 +5,7 @@ import {
   HOW_TO_READ, VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, AREA_DEFS, CHIP_DEFS, CLOSING_STATEMENT,
 } from "@/lib/content/reportCopy";
 import { verdicts, verdictDisclaimer } from "@/lib/content/help";
+import { VERDICT_CLASSES } from "@/lib/design/palette";
 
 export const metadata: Metadata = {
   title: "How to read your report — HyprrIQ",
@@ -18,12 +19,14 @@ export const metadata: Metadata = {
 // deliverable — never re-typed. A prospect reading this page and a client reading their report
 // see the same words; that is the point, and the reportCopy lock keeps it true.
 
-const VERDICT_TONES: Record<string, string> = {
-  source_clear: "border-l-verify-ink",
-  usable_with_conditions: "border-l-brand",
-  verify_before_purchase: "border-l-amber-600",
-  do_not_rely: "border-l-deny-ink",
-};
+// VERDICT COLOUR COMES FROM THE REGISTRY. This map used to be hand-written here and three of its
+// four entries were wrong: source_clear wore the VERIFY orange, usable_with_conditions wore the
+// brand navy (not a verdict colour at all), and verify_before_purchase wore `amber-600` from
+// Tailwind's default palette, outside the design system. On the page whose entire job is teaching
+// a client to read the verdict. palette.lock.test.ts now fails any file that builds its own map.
+const VERDICT_TONES: Record<string, string> = Object.fromEntries(
+  Object.entries(VERDICT_CLASSES).map(([key, c]) => [key, c.borderL]),
+);
 
 export default function HowToReadPage() {
   return (

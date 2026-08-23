@@ -9,19 +9,17 @@ import {
   dimensions,
   faqs,
 } from "@/lib/content/help";
+import { VERDICT_CLASSES } from "@/lib/design/palette";
 
-const VERDICT_CLS: Record<string, string> = {
-  source_clear: "border-clear-ink/30 bg-clear-bg",
-  usable_with_conditions: "border-conditional-ink/30 bg-conditional-bg",
-  verify_before_purchase: "border-verify-ink/30 bg-verify-bg",
-  do_not_rely: "border-deny-ink/30 bg-deny-bg",
-};
-const VERDICT_INK: Record<string, string> = {
-  source_clear: "text-clear-ink",
-  usable_with_conditions: "text-conditional-ink",
-  verify_before_purchase: "text-verify-ink",
-  do_not_rely: "text-deny-ink",
-};
+// Verdict colour comes from the registry, never from a map written here. This one happened to be
+// CORRECT — and that is the point: /how-to-read wrote the same kind of map and got three of four
+// wrong. Two hand-maintained copies of the same mapping is how the wrong one goes unnoticed.
+const VERDICT_CLS: Record<string, string> = Object.fromEntries(
+  Object.entries(VERDICT_CLASSES).map(([key, c]) => [key, `${c.border}/30 ${c.bg}`]),
+);
+const VERDICT_INK: Record<string, string> = Object.fromEntries(
+  Object.entries(VERDICT_CLASSES).map(([key, c]) => [key, c.ink]),
+);
 
 function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
