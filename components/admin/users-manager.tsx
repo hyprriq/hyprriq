@@ -16,6 +16,7 @@ import { GRANTABLE_CAPABILITIES, CAPABILITY_LABELS, type Capability } from "@/li
 
 interface AdminUserRow {
   user_id: string; email: string; role: string; capabilities: string[]; disabled: boolean; created_by: string | null;
+  created_at?: string | null; updated_at?: string | null;
   // Resolved from Clerk by /api/admin/users (2026-08-20); null when Clerk has no name or is unreachable.
   name?: string | null; image_url?: string | null;
 }
@@ -53,6 +54,39 @@ function CapChips({ caps, empty }: { caps: string[]; empty: string }) {
       ))}
     </span>
   );
+}
+
+
+/** Clerk ids are long and share a prefix; head+tail is what distinguishes two of them at a glance. */
+function shortId(id: string): string {
+  return id.length <= 18 ? id : `${id.slice(0, 10)}…${id.slice(-6)}`;
+}
+
+/** Dates on this page are provenance, not scheduling — day precision, no time. */
+function shortDate(v: string | null | undefined): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+/**
+ * HOW ACCESS WAS GRANTED — the question an audit actually asks (founder-ruled 2026-08-24).
+ * admin_permissions has carried created_at, created_by and updated_at all along and the page
+ * surfaced none of them. created_by is the audit-relevant field: the founder's two rows read
+ * "seed-founder-ruling-option-b" and "founder-production-bootstrap", and a staff invite records
+ * WHO granted it. An audit asks who, not when — so who leads and the dates follow it.
+ */
+function provenance(u: { created_by: string | null; created_at?: string | null; updated_at?: string | null }): string {
+  const parts: string[] = [];
+  parts.push(u.created_by ? `Granted by ${u.created_by}` : "Granted by an unrecorded source");
+  const created = shortDate(u.created_at);
+  if (created) parts.push(created);
+  const updated = shortDate(u.updated_at);
+  // Only worth the pixels when it differs from creation — otherwise it is the same fact twice.
+  if (updated && updated !== created) parts.push(`updated ${updated}`);
+  return parts.join(" · ");
 }
 
 export function UsersManager({
@@ -263,15 +297,33 @@ export function UsersManager({
               const assigned = assignments.filter((a) => a.admin_user_id === u.user_id).map((a) => a.client_id);
               const unassigned = assignableClients.filter((c) => !assigned.includes(c.id));
               return (
-                <div key={u.user_id} className="border-t border-line py-3 first:border-t-0">
+                <div key={u.user_id} className={`border-t border-line py-3 first:border-t-0 ${isSelf ? "bg-brand-tint/25" : ""}`}>
                   {/* line 1 — the person. Name from Clerk (one source, resolved at request time);
                       email is the secondary line when a name exists, the identity when it doesn't. */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {/* Clerk ID is debugging data — it lives in the tooltip, not on screen */}
+                    {/* ── IDENTITY, NOT DEBUGGING (founder-ruled 2026-08-24) ───────────────────
+                        This previously hid the Clerk ID in a `title` tooltip, on the reasoning that
+                        it was debugging data. That holds only while emails are unique. The founder
+                        runs TWO legitimate super_admin rows on the SAME email — a development
+                        identity carrying 45 cases of history and a production identity created at
+                        launch — and the page rendered them as two identical lines with no way to
+                        tell which was which. A tooltip is not an answer on a phone, and it is not
+                        an answer to "which of these am I signed in as".
+                        Truncated head+tail: enough to distinguish, short enough not to dominate. */}
                     <span className="inline-flex flex-col" title={u.user_id}>
                       <span className="text-[13.5px] font-semibold text-ink">{u.name?.trim() || u.email}</span>
                       {u.name?.trim() && <span className="text-[11.5px] text-muted">{u.email}</span>}
+                      <span className="font-mono text-[11px] text-muted">{shortId(u.user_id)}</span>
                     </span>
+                    {/* THE ROW AN OPERATOR ACTUALLY NEEDS TO SEE. `isSelf` already existed but only
+                        reached the ACTION slot, and a super_admin row shows "founder-managed (SQL)"
+                        there instead — so on the founder's own two rows it never appeared at all.
+                        It belongs next to the identity, where it answers the question being asked. */}
+                    {isSelf && (
+                      <span className="rounded bg-brand-tint px-1.5 py-0.5 text-[11px] font-semibold text-anchor">
+                        This session
+                      </span>
+                    )}
                     <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${isSuper ? "bg-clear-bg text-clear-ink" : "bg-subtle text-ink-2"}`}>
                       {u.role === "super_admin" ? "Founder" : u.role === "admin" ? "Admin" : "Staff"}
                     </span>
@@ -291,6 +343,7 @@ export function UsersManager({
                       )}
                     </span>
                   </div>
+                  <p className="mt-1 text-[11.5px] text-muted">{provenance(u)}</p>
 
                   {/* line 2 — what they can reach */}
                   <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">

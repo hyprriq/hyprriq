@@ -18,7 +18,7 @@ export async function GET() {
   const op = await getOperator(userId);
   if (!canManageStaff(op)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   let q = supabaseAdmin
-    .from("admin_permissions").select("user_id, email, role, capabilities, disabled, created_by, created_at");
+    .from("admin_permissions").select("user_id, email, role, capabilities, disabled, created_by, created_at, updated_at");
   // Admins see their management domain only (staff); the super admin sees everyone.
   if (op!.role === "admin") q = q.eq("role", "sub_user");
   const { data, error } = await q;
