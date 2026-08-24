@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-22 (**§0-G THE AUDITS RUN THEMSELVES — every hand-run census is now a standing BLOCK/ALERT/SURFACE check with a measured zero false-positive rate, nightly sweep paging once per NEW finding, and /admin/integrity where green means measured green. Prior: **§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-24 (**§0-J APP SHELL ALIGNMENT — the 60px headings were an UNLAYERED-CSS cascade bug, not a sizing choice (measured before/after; marketing keeps its scale); portal and admin now share one AppHeader and one top baseline; the five text-base headings are fixed. ⚠ THE text-base TOKEN COLLISION IS HANDED TO THE UI/UX THREAD — rename or lock, not a note. Prior: **§0-G THE AUDITS RUN THEMSELVES — every hand-run census is now a standing BLOCK/ALERT/SURFACE check with a measured zero false-positive rate, nightly sweep paging once per NEW finding, and /admin/integrity where green means measured green. Prior: **§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -102,6 +102,58 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > | **② Top-ups off sale + unclippable when they return** — billing card flag-gated (one-flag return-to-sale); webhook lands paid packs via `add_purchased_credits` (balance + floor). AS-APPLIED records for the founder-run SQL, both live-verified by read-only MCP before writing: `20260822300000_purchased_credits.sql` + `20260822300100_acquisition_grants_growth_only.sql`. Cycle fixture-locked two-layer (SQL expressions verbatim + numeric proof: buy-3 → renewal → paid 3 survive, plan clips, plan-burns-first, 3-renewal survival) | ✅ SHIPPED | re-sale preconditions listed in the 2026-08-22 session deliverable |
 > | **③ Silent zeros in the money path DEAD** — the `?? 0` was one of FOUR: unknown paid top-up id (0 credits granted, "Top-up: 0 credits" recorded), paid subscription checkout with unmapped price (provisioned NOTHING, marked processed), paid one-time with garbage metadata kind (silent ACK), paid RENEWAL with lookup miss (card charged, zero cycle credits). All four throw via fixture-enforced helpers → `stripe_events.error` → retried + visible; `subscription.updated` deliberately logs-not-throws (status must survive) with an audit row on unmapped prices. B2 is fixtures now (`plans.paidLookups.test.ts`), incl. prototype-chain shapes that caught a real hole in the first draft | ✅ SHIPPED | |
 > | **④ Fabricated verdict** — CLOSED by the follow-up ruling same day (verdict-ADJACENT authority: display of absence only, never computation): **ABSENCE IS NOT A VALUE.** One shared presence notion (`lib/portal/verdictPresence.ts`, keys derived from `VERDICT_SCALE_ORDER`) + one loud reporter (console + `audit_log` `{verdict_absent_at_render}` + ops pager). PDF first: `no_verdict` joins the `no_client_name` refusal pattern; the template's three fallbacks (meta/ink/tone) are total lookups now. On-screen: the portal case page refuses with an honest panel (refusal state over a 500 — "Try again" would be false advice); report-view keeps the throwing belt; the admin review preview no longer shows a fabricated VBP client screen for a verdictless mid-review case (the live item-7 catch — a wrong preview becomes a wrong report). Filesystem lock over the render layers: no fallback TO a verdict value; honest non-verdicts ("pending", "—") stay legal. Engine untouched | ✅ SHIPPED | fixtures + caller lock |
+
+---
+
+## 0-J. APP SHELL ALIGNMENT + A CASCADE BUG — 2026-08-24 (portal/admin, dev lane)
+
+> Portal and admin only. No marketing file touched — the UI/UX thread owns those.
+>
+> **① THE CASCADE BUG (root cause of the 60px headings).** The ruled type scale in
+> `app/globals.css` sat **UNLAYERED**. Tailwind v4 imports as `@layer theme, base, components,
+> utilities`, and in the CSS cascade an unlayered style beats EVERY layered style regardless of
+> specificity — so `h1 { font-size: clamp(40px,4.8vw,60px) }` overrode every `text-*` utility in
+> the product. The block's own comment asserted the opposite ("any Tailwind text-* utility still
+> wins… the ~40 portal and admin headings keep their size"); that false assertion is what cost us
+> this. Fixed by wrapping the block in `@layer base` (that wrap is now marked load-bearing) and
+> rewriting the comment. **Measured before → after at 1280px:** admin title 60→18px · portal
+> title 60→20px · `/sign-in` "Welcome back" 60→30px · `h2.text-2xl` 46→24px · **marketing h1
+> 60→60px, unchanged** — marketing keeps the ruled scale because those pages write no utility.
+>
+> **② ONE SHARED APP HEADER** — `components/app/app-header.tsx`, rendered by both shells. The bars
+> had disagreed on every value (64 vs 56px, sticky vs not, bg-base vs bg-surface, text-xl vs
+> text-lg). `APP_SHELL_TOP = 64` is **the one value**: it drives the header height AND the sidebar
+> brand block, so nav-under-brand and content-under-header both begin at 64px — that is the shared
+> top baseline. Title 24px serif (bottom of the ruled 24–28px app range). `ShellChrome` now takes
+> `title` + `actions` instead of one pre-built `header` node.
+>
+> **③ THE FIVE `text-base` HEADINGS** — fixed to the 16px their authors intended. Admin's two
+> ("Case Queue", "Support Queue") had been rendering at **46px**, nearly twice the page title.
+>
+> ---
+>
+> ### ⚠ HANDED TO THE UI/UX THREAD — THE `text-base` TOKEN COLLISION (founder-ruled: their call)
+>
+> **The trap:** the palette defines a `base` colour token, so Tailwind emits
+> `.text-base { color: var(--color-base) }`, which **shadows Tailwind's default 16px font-size
+> utility**. Anyone writing `text-base` expecting 16px silently gets a colour change and whatever
+> size the element inherits. It has already caught five headings and it is invisible at write
+> time — the line looks correct.
+>
+> **Two options; founder's lean is (a):**
+> - **(a) RENAME THE COLOUR TOKEN** so `text-base` means 16px again, as every developer and every
+>   piece of Tailwind documentation assumes. A rename across the codebase.
+> - **(b) KEEP THE TOKEN AND ADD A LOCK** that fails the build when `text-base` is used as a size.
+>
+> Founder's reasoning for (a): option (b) makes a correct-looking line fail, which is confusing;
+> (a) makes the system behave the way everyone already assumes it does.
+>
+> ⛔ **It must be a rename or a lock — NOT a note.** A trap that is invisible at write time will
+> keep catching people. This entry is the hand-off, not the fix.
+>
+> **Scope note for whoever takes it:** `.text-base` is currently used as a COLOUR in some places
+> and mistakenly as a SIZE in others; a rename must distinguish the two, and every heading using
+> it as a size has already been corrected (grep for `<h[1-6][^>]*text-base` returns nothing today).
 
 ---
 
