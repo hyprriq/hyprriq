@@ -222,7 +222,7 @@ export default async function AdminDashboardPage() {
         <div className="space-y-7">
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-bold text-ink">Case Queue — Quality Review</h2>
+              <h2 className="font-display text-[16px] font-bold text-ink">Case Queue — Quality Review</h2>
               <span className="text-[13px] text-muted">{reviewQueue.length} in queue · nearest deadline first</span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
@@ -259,7 +259,7 @@ export default async function AdminDashboardPage() {
 
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-bold text-ink">Support Queue</h2>
+              <h2 className="font-display text-[16px] font-bold text-ink">Support Queue</h2>
               <span className={`text-[13px] font-semibold ${openSupport.length > 0 ? "text-deny-ink" : "text-muted"}`}>{openSupport.length} open</span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">

@@ -130,7 +130,7 @@ export default async function DashboardPage() {
             Reactivate plan →
           </Link>
         </div>
-        <h3 className="mb-3 font-display text-base font-bold text-ink">Completed Reports</h3>
+        <h3 className="mb-3 font-display text-[16px] font-bold text-ink">Completed Reports</h3>
         <CaseTable cases={completed} emptyLabel="No completed reports." />
       </PortalShell>
     );
@@ -173,12 +173,12 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-base font-bold text-ink">Recent Cases</h3>
+            <h3 className="font-display text-[16px] font-bold text-ink">Recent Cases</h3>
             <Link href="/portal/cases" className="text-[14px] font-semibold text-brand hover:text-brand-hover">View all →</Link>
           </div>
           <CaseTable cases={cases.slice(0, 4)} emptyLabel="No cases yet — submit your first research request." />
 
-          <h3 className="mb-3 mt-7 font-display text-base font-bold text-ink">Recent Activity</h3>
+          <h3 className="mb-3 mt-7 font-display text-[16px] font-bold text-ink">Recent Activity</h3>
           <div className="rounded-card border border-line bg-surface">
             {activity.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted">Nothing yet.</div>
