@@ -5,6 +5,8 @@ import { ServiceRail } from "@/components/marketing/home/service-rail";
 import { PricingTabs } from "@/components/marketing/home/pricing-tabs";
 import { StaggerList, BeatHeading } from "@/components/marketing/home/stagger-list";
 import { TrendGraph } from "@/components/marketing/home/trend-graph";
+import { FlowVisual } from "@/components/marketing/home/flow-visual";
+import { ProgressRing } from "@/components/marketing/home/progress-ring";
 import { VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES } from "@/lib/content/reportCopy";
 import { VERDICT_CLASSES } from "@/lib/design/palette";
 import { SAMPLE_CASE_ID, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
@@ -37,14 +39,51 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+// The six line-art marks are FROM THE SPEC, restored 2026-08-24 after the first build reduced them
+// to a coloured dot. Each is a 24-box stroke path drawn in currentColor, so the tint/ink pair is the
+// only thing carrying colour — no icon file, and nothing to keep in sync with the tokens.
+//
+// ⚠ UNRULED — THE FIFTH MARK USES A VERDICT COLOUR. `text-verify-ink` is warm, and warm hues are
+// reserved for verdicts. It is the spec's own choice on the spec's own strip, and this row is a list
+// of SUBJECTS rather than an assessment — but it is the one warm mark on the page outside the verdict
+// section. Matching the spec is what this sitting was asked for, so it is built as specified and
+// flagged here for the founder rather than quietly changed.
 const CAPABILITIES = [
-  { title: "Amazon wholesale", body: "How this market operates, not how it is described.", tint: "bg-brand-tint", ink: "text-anchor" },
-  { title: "Supplier vetting", body: "Whether a business is real, and what its records don't show.", tint: "bg-blue-tint", ink: "text-blue" },
-  { title: "IP risk", body: "How brands police listings, and what that pattern implies.", tint: "bg-plum-tint", ink: "text-plum" },
-  { title: "Invoice review", body: "The fourteen document fields we check on every invoice.", tint: "bg-cyan-tint", ink: "text-cyan" },
-  { title: "Account risk", body: "What puts a selling account at risk — and what doesn't.", tint: "bg-verify-bg", ink: "text-verify-ink" },
-  { title: "Brand enforcement", body: "How a brand crackdown starts, and what it looks like beforehand.", tint: "bg-violet-tint", ink: "text-violet" },
-];
+  { title: "Amazon wholesale", body: "How this market operates, not how it is described.", tint: "bg-brand-tint", ink: "text-anchor",
+    icon: ["M3 7l9-4 9 4v10l-9 4-9-4V7z", "M3 7l9 4 9-4M12 11v10"] },
+  { title: "Supplier vetting", body: "Whether a business is real, and what its records don't show.", tint: "bg-blue-tint", ink: "text-blue",
+    icon: ["M20 20l-3.6-3.6M8.5 11l1.8 1.8 3.2-3.4"], circle: [11, 11, 7] },
+  { title: "IP risk", body: "How brands police listings, and what that pattern implies.", tint: "bg-plum-tint", ink: "text-plum",
+    icon: ["M12 3l7.5 3v5.5c0 4.4-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5.1-7.5-9.5V6L12 3z", "M12 8.5v4M12 15.5v.01"] },
+  { title: "Invoice review", body: "The fourteen document fields we check on every invoice.", tint: "bg-cyan-tint", ink: "text-cyan",
+    icon: ["M6 3h9l4 4v14H6z", "M15 3v4h4M9.5 12h6M9.5 16h4"] },
+  { title: "Account risk", body: "What puts a selling account at risk — and what doesn't.", tint: "bg-verify-bg", ink: "text-verify-ink",
+    icon: ["M3 13h4l2-6 3 12 2.5-7 1.5 3h5"] },
+  { title: "Brand enforcement", body: "How a brand crackdown starts, and what it looks like beforehand.", tint: "bg-violet-tint", ink: "text-violet",
+    icon: ["M12 3v18M5 8h14M7 8l-3 6a3.2 3.2 0 006 0zM17 8l-3 6a3.2 3.2 0 006 0z"] },
+] as const;
+
+/**
+ * The state markers on the "work runs" panel. Three states, and each one has to READ as its state
+ * without the word beside it: filled for done, pulsing for running, hollow-outline for queued.
+ *
+ * ⚠ THE RUNNING STATE IS WARM, and warm hues are reserved for verdicts. It is the spec's own choice,
+ * and the case for it is that "researching" is the same amber the portal itself uses for work in
+ * flight — but it is on a marketing page beside no verdict. Built as ruled; flagged, not changed.
+ *
+ * The pulse reuses `.hq-pulse-dot`, the system's existing named motion, rather than adding a second
+ * pulse animation — one keyframe, already covered by the reduced-motion block in globals.css.
+ */
+const STATUS_TONE = {
+  ok: { chip: "bg-clear-bg text-clear-ink", mark: "bg-current" },
+  run: { chip: "bg-verify-bg text-verify-ink", mark: "bg-current hq-pulse-dot" },
+  wait: { chip: "border border-line bg-subtle text-muted", mark: "border-[1.5px] border-line-strong" },
+} as const;
+
+type Row = [label: string, value: string, tone?: keyof typeof STATUS_TONE];
+
+/** Areas finished in the masked demonstration. One number, read by the ring AND the row list. */
+const AREAS_DONE = 2;
 
 const CHAIN = [
   { step: "Step one", title: "A brand decides to tighten", body: "Enforcement is a business decision made by someone you will never meet, and it usually applies to a whole listing at once." },
@@ -186,16 +225,37 @@ export default function HomePage() {
             </p>
           </Reveal>
           <Reveal>
-            <div className="mt-6 grid grid-cols-2 gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-6">
+            {/*
+              SUBGRID, from the spec. Each card spans the parent's three rows and inherits them, so
+              the marks, the titles and the bodies sit on ONE baseline across all six — even though
+              "Brand enforcement" wraps to two lines and "IP risk" does not. Without it these are six
+              independent stacks that only LOOK aligned while the copy happens to be the same length,
+              which stops being true the first time anyone edits a word.
+            */}
+            <div className="mt-6 grid grid-cols-2 grid-rows-[auto_auto_auto] gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-6">
               {CAPABILITIES.map((c) => (
-                <div key={c.title}>
+                <div key={c.title} className="row-span-3 grid grid-rows-subgrid gap-0">
                   <span
-                    className={`mb-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-[9px] sm:mb-3 sm:h-10 sm:w-10 sm:rounded-[10px] ${c.tint} ${c.ink}`}
+                    className={`mb-2.5 flex h-[34px] w-[34px] items-center justify-center self-start rounded-[9px] sm:mb-3 sm:h-10 sm:w-10 sm:rounded-[10px] ${c.tint} ${c.ink}`}
                     aria-hidden
                   >
-                    <span className="h-2 w-2 rounded-full bg-current" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.6}
+                      strokeLinecap="round"
+                      className="h-[18px] w-[18px] sm:h-5 sm:w-5"
+                    >
+                      {"circle" in c && (
+                        <circle cx={c.circle[0]} cy={c.circle[1]} r={c.circle[2]} />
+                      )}
+                      {c.icon.map((d) => (
+                        <path key={d} d={d} />
+                      ))}
+                    </svg>
                   </span>
-                  <h3 className="text-[14.5px] sm:text-[16px]">{c.title}</h3>
+                  <h3 className="self-start text-[14.5px] sm:text-[16px]">{c.title}</h3>
                   <p className="mt-1 text-[13px] leading-[1.45] text-ink-2 sm:text-[14px] sm:leading-[1.5]">
                     {c.body}
                   </p>
@@ -227,6 +287,7 @@ export default function HomePage() {
               <p className="mt-4 text-[19px] leading-[1.58] text-ink-2">
                 Twenty-four hours later a report comes back. Here is exactly what is in it.
               </p>
+              <FlowVisual className="my-5" />
               <Link
                 href="/sample-report"
                 className="mt-4 inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-action transition-colors hover:text-anchor"
@@ -316,36 +377,44 @@ export default function HomePage() {
             <Kicker className="text-blue">And you can watch it happen</Kicker>
             <h2 className="text-[22px] text-ink sm:text-[30px]">Nothing is hidden while the work runs.</h2>
             <Reveal>
-              <div className="mt-6 grid gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-3">
+              {/* Same subgrid as the capability strip. Here it makes the three PANEL TOPS line up
+                  even though step 02's subtitle runs longer than step 01's. */}
+              <div className="mt-6 grid grid-rows-[auto_auto_auto] gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-3">
                 {[
                   {
                     n: "01", ink: "text-anchor", title: "You submit",
                     sub: "Supplier, brands, paperwork. About two minutes.",
                     head: "New assessment", right: null,
-                    rows: [["Supplier", SAMPLE_VENDOR], ["Brands claimed", `3 of ${PLAN_BRAND_CAPS.single_99} used`], ["Marketplace", "Amazon US"], ["Document", "invoice-april.pdf"], ["Credits", "1 used"]],
+                    rows: ([["Supplier", SAMPLE_VENDOR], ["Brands claimed", `3 of ${PLAN_BRAND_CAPS.single_99} used`], ["Marketplace", "Amazon US"], ["Document", "invoice-april.pdf"], ["Credits", "1 used"]] as Row[]),
                   },
                   {
                     n: "02", ink: "text-blue", title: "The work runs",
                     sub: `${ASSESSMENT_AREA_KEYS.length} areas in sequence, with the deadline we are working to.`,
                     head: SAMPLE_CASE_ID, right: "14h 12m left",
+                    ring: { done: AREAS_DONE, running: AREA_NAMES[ASSESSMENT_AREA_KEYS[AREAS_DONE]] ?? "" },
                     rows: ASSESSMENT_AREA_KEYS.map((k, i) => [
                       AREA_NAMES[k] ?? k,
-                      i < 2 ? "Complete" : i === 2 ? "Researching" : "Queued",
-                    ]) as [string, string][],
+                      i < AREAS_DONE ? "Complete" : i === AREAS_DONE ? "Researching" : "Queued",
+                      i < AREAS_DONE ? "ok" : i === AREAS_DONE ? "run" : "wait",
+                    ]) as Row[],
                   },
                   {
                     n: "03", ink: "text-plum", title: "Every case, the same way",
                     sub: `The same ${ASSESSMENT_AREA_KEYS.length} areas, in the same order, whoever the supplier is.`,
                     head: "Delivered", right: "PDF attached",
-                    rows: [["Verdict", VERDICT_COPY.verify_before_purchase.name], ["Findings", "9"], ["Could not confirm", "3"], ["Questions drafted", "3"], ["Method", `Fixed, all ${ASSESSMENT_AREA_KEYS.length} areas`]],
+                    rows: ([["Verdict", VERDICT_COPY.verify_before_purchase.name], ["Findings", "9"], ["Could not confirm", "3"], ["Questions drafted", "3"], ["Method", `Fixed, all ${ASSESSMENT_AREA_KEYS.length} areas`]] as Row[]),
                   },
                 ].map((step) => (
-                  <div key={step.n}>
-                    <div className={`font-mono text-[9.5px] uppercase tracking-[0.14em] sm:text-[10.5px] ${step.ink}`}>
-                      {step.n}
+                  <div key={step.n} className="row-span-3 grid grid-rows-subgrid gap-0">
+                    {/* Number and title share ONE row, exactly as the spec wraps them — that is what
+                        makes three rows enough to align a four-part card. */}
+                    <div className="self-start">
+                      <div className={`font-mono text-[9.5px] uppercase tracking-[0.14em] sm:text-[10.5px] ${step.ink}`}>
+                        {step.n}
+                      </div>
+                      <h3 className="mb-1.5 mt-1.5 text-[17px] sm:text-[18px]">{step.title}</h3>
                     </div>
-                    <h3 className="mb-1.5 mt-1.5 text-[17px] sm:text-[18px]">{step.title}</h3>
-                    <p className="pb-3.5 text-[14.5px] leading-[1.55] text-ink-2 sm:pb-4.5 sm:text-[15px]">
+                    <p className="self-start pb-3.5 text-[14.5px] leading-[1.55] text-ink-2 sm:pb-4.5 sm:text-[15px]">
                       {step.sub}
                     </p>
                     <div className="overflow-hidden rounded-card border border-line bg-surface">
@@ -353,11 +422,26 @@ export default function HomePage() {
                         <span>{step.head}</span>
                         {step.right && <span className="ml-auto">{step.right}</span>}
                       </div>
+                      {step.ring && (
+                        <ProgressRing
+                          done={step.ring.done}
+                          total={ASSESSMENT_AREA_KEYS.length}
+                          label={`${step.ring.done} of ${ASSESSMENT_AREA_KEYS.length} areas complete`}
+                          sub={`${step.ring.running} running now`}
+                        />
+                      )}
                       <div className="px-3.5 pb-2.5 pt-1">
-                        {step.rows.map(([k, v]) => (
+                        {step.rows.map(([k, v, tone]) => (
                           <div key={k} className="flex items-center justify-between gap-2 border-b border-line py-2.5 text-[13.5px] last:border-b-0 sm:text-[14.5px]">
                             <span className="text-muted">{k}</span>
-                            <span className="text-right font-semibold text-ink">{v}</span>
+                            {tone ? (
+                              <span className={`inline-flex items-center gap-1.5 rounded-[5px] px-2 py-[3px] font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${STATUS_TONE[tone].chip}`}>
+                                <i className={`h-[9px] w-[9px] flex-none rounded-full ${STATUS_TONE[tone].mark}`} aria-hidden />
+                                {v}
+                              </span>
+                            ) : (
+                              <span className="text-right font-semibold text-ink">{v}</span>
+                            )}
                           </div>
                         ))}
                       </div>

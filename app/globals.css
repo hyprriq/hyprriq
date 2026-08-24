@@ -346,6 +346,19 @@ p {
   animation: hq-pulse-dot 2.4s var(--ease-position) infinite;
 }
 
+/* The progress ring's arc. The circumference and the finished offset are passed in as --ring-c and
+   --ring-o by the component, which COMPUTES them from the real area count — see progress-ring.tsx
+   for why the spec's literal 188.5/113.1 are not written here. The arc starts fully retracted and
+   is released by a data attribute when the panel scrolls into view. */
+.hq-ring-arc {
+  stroke-dasharray: var(--ring-c);
+  stroke-dashoffset: var(--ring-c);
+  transition: stroke-dashoffset 1.4s var(--ease-entrance);
+}
+.hq-ring-arc[data-drawn="true"] {
+  stroke-dashoffset: var(--ring-o);
+}
+
 /* scale(.97) on press, for everything pressable. The highest-value single motion detail in the
    system, and the one most easily lost — so it is a base rule, not a utility to remember. */
 :where(button, a[role="button"], .btn):active:not(:disabled) {
@@ -361,6 +374,12 @@ p {
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
+  }
+  /* The ring is drawn AT ITS FINAL OFFSET with no transition — a suppressed animation must leave
+     the finished state, never an empty ring, or the reader loses the information entirely. */
+  .hq-ring-arc {
+    stroke-dashoffset: var(--ring-o) !important;
     transition: none !important;
   }
   .hq-rise,
