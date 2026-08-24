@@ -60,6 +60,16 @@ export const PUBLIC_ROUTES: string[] = [
   "/api/webhooks/(.*)",
   "/api/health",
   "/api/inngest(.*)",
-  // robots.txt and sitemap.xml are static file routes: the middleware matcher already skips
-  // extensioned paths, so they stay reachable without a line here (verified live).
+  // ⚠ THAT CLAIM WAS FALSE, and it was caught in Phase 0 of the domain move (2026-08-24).
+  // This list previously ended with a note saying robots.txt and sitemap.xml "stay reachable
+  // without a line here (verified live)" because the middleware matcher skips extensioned paths.
+  // The matcher's skip list is html|css|js|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|
+  // zip|webmanifest — it contains NEITHER .txt NOR .xml. Both routes therefore ran through Clerk
+  // and answered 307 → /sign-in. MEASURED, not reasoned: curl returned
+  //   /robots.txt  307 → /sign-in?redirect_url=...
+  //   /sitemap.xml 307 → /sign-in?redirect_url=...
+  // A crawler cannot follow that, so robots.txt was unreadable and the sitemap was unreachable —
+  // which would have been discovered the day indexing was switched on, and not before.
+  "/robots.txt",
+  "/sitemap.xml",
 ];

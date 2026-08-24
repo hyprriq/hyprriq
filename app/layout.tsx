@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/constants/site";
+import { SITE_URL, SEARCH_INDEXING_ENABLED } from "@/lib/constants/site";
 import { CookieNotice } from "@/components/marketing/cookie-notice";
 import { Newsreader, Inter, IBM_Plex_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -54,6 +54,12 @@ export const metadata: Metadata = {
   // metadataBase resolves the OG/Twitter image URLs (app/opengraph-image.tsx) absolutely — cards
   // are broken without it on any host that isn't the canonical origin.
   metadataBase: new URL(SITE_URL),
+  // ── SITE-WIDE noindex UNTIL LIVE STRIPE (founder condition 1, domain move) ─────────────────
+  // Emitted as a META TAG, with robots.txt left permissive, because the crawler has to be ALLOWED
+  // IN to be told not to index — see the note on SEARCH_INDEXING_ENABLED. One flag, one flip.
+  robots: SEARCH_INDEXING_ENABLED
+    ? undefined
+    : { index: false, follow: false, googleBot: { index: false, follow: false } },
   title: "HyprrIQ — Source intelligence for Amazon wholesale",
   description:
     "Before you commit capital, HyprrIQ investigates the vendor and brand behind your next wholesale buy — and hands you a one-page verdict with the exact questions to ask.",
