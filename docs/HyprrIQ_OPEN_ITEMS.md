@@ -105,6 +105,71 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-N. SITTING FIVE — SPEC GRAPHICS, THREE PAGE GRAPHICS, AND WHAT PRODUCTION DOES DIFFERENTLY — 2026-08-25
+
+**Owner: UX.** Parts 1 and 3 of the founder's sitting-five brief. Part 2 is answered below, honestly,
+including the half of it a Windows build cannot prove.
+
+### 0-N.1 · The homepage gets its spec graphics back
+
+| # | Item | State |
+|---|---|---|
+| a | The six capability line-art marks, restored from the spec. The first build had reduced them to a coloured dot. Drawn in `currentColor`, so the tint/ink pair is the only thing carrying colour. | ✅ |
+| b | **Subgrid baselines, in both places.** Six capability cards and three walkthrough steps were independent stacks that only LOOKED aligned while the copy happened to be the same length. MEASURED: all six h3 tops on one pixel, all six bodies on one pixel, all three panel tops on one pixel. | ✅ |
+| c | Progress ring — **geometry computed, not copied.** The spec's `188.5`/`113.1` are 2π·30 and that circumference times three-fifths; correct only while there are five areas and two are done. Derived from `ASSESSMENT_AREA_KEYS`; the lock proves the derived form still reproduces the spec's numbers today. | ✅ locked |
+| d | State markers — filled / pulsing / hollow. The pulse REUSES `.hq-pulse-dot`, the existing named motion, so it is already covered by the reduced-motion block. | ✅ |
+| e | The flow visual — every line of copy inside it is a grey bar; the only real words are the verdict name and the turnaround, both read from constants, warm pair from `VERDICT_PALETTE`. | ✅ |
+| f | 🔴 **F — TWO WARM HUES OUTSIDE THE VERDICT SECTION.** The account-risk capability mark and the "Researching" state marker both use the verify pair. Both are the spec's own choices; warm-means-a-verdict is the rule that says otherwise. Built as ruled, flagged in the code, **not** quietly corrected. | 🔴 F |
+| g | 🔴 **F — the flow visual's verdict text renders at about 9.5px** at the ruled 320px width, below anything else on the site. Built at the ruled size; the graphic carries an `aria-label` saying the same thing in words, so nothing is available ONLY at that size. | 🔴 F |
+
+### 0-N.2 · The three page graphics
+
+| # | Item | State |
+|---|---|---|
+| a | **The masked invoice** → `/what-we-check`, under Documentation Review. | ✅ |
+| b | ⚠ **"A fourteen-point read" had NO LIST BEHIND IT.** The phrase appeared in three places and nothing could tell you whether it was still true. `lib/content/documentFields.ts` now holds all fourteen — six pinned, eight listed — the graphic enumerates every one, and the lock counts them. A word in a paragraph became a checkable claim. | ✅ |
+| c | Every callout says what is CHECKED, never that a field is wrong. Pin 6 carries **escalate, do not accuse** verbatim; the lock refuses twelve accusatory words outright. Pins are `--action`, never a verdict hue. | ✅ locked |
+| d | **The boundary** → `/method`. Both columns DERIVED — left one line per assessment area, right from the four limits /method publishes. `CANNOT` moved out of the page into `lib/content/methodBoundary.ts`; it was about to exist twice. Cool accents both sides: the right column is a boundary, not a warning. | ✅ |
+| e | **The verdict ladder** → `/how-to-read`, replacing four equal cards. Rungs widen with the level, so the shape carries the ranking. MEASURED 677/741/804/868 units with the four registry tints in scale order. Certainty chips stay in neutral ink. | ✅ |
+| f | **Rule 5 of the visual plan is the one that would have been skipped.** All three are 900-unit viewBoxes; at 360px their text renders at about 5px. Each ships TWO FORMS FROM ONE SOURCE — drawn above `md`, stacked below. The lock fails any graphic that has only the drawn one. MEASURED at 360px: drawn form `display:none` on all three, all fourteen invoice fields readable as real text, zero horizontal overflow. | ✅ locked |
+| g | 🔴 **F — one deviation from the visual spec, taken openly.** The spec's right column carried "where the stock came from before your supplier" as a fifth boundary item. It is not one of the four limits /method publishes, and adding it would mean writing a NEW REFUSAL into product copy — a product-claim change, not this lane's call. | 🔴 F |
+| h | The banned-language scanner flagged a line of MY new copy ("whether an invoice will be accepted") as an outcome prediction, and it was right — the banned construction is "&lt;document&gt; will be accepted" and the rule cannot tell a question from an assertion. Rewritten to name whose decision it is. **This was new copy, not closed founder copy** — the rule against editing closed copy to satisfy a gate still stands. | ✅ |
+
+### 0-N.3 · Part 2 — the PDF renderer on production infrastructure, without running a case
+
+Verified by reading the **build trace**, `.next/server/app/api/inngest/route.js.nft.json`, which is the
+actual manifest of what ships in the serverless bundle — not by inspecting source and hoping.
+
+| # | Check | Result |
+|---|---|---|
+| a | `launchBrowser()` takes the `@sparticuz/chromium` branch when `process.env.VERCEL` is set — a **different browser binary from the one any local run uses**. "It works locally" says nothing about this path. | ✅ by design |
+| b | All four Chromium brotli payloads are traced into `/api/inngest`: `chromium.br`, `al2023.tar.br`, `fonts.tar.br`, `swiftshader.tar.br`. | ✅ present |
+| c | `@napi-rs/canvas` is traced (the `DOMMatrix` failure layer from 2026-08-20). | ✅ present |
+| d | `maxDuration = 300` on the Inngest route, far above the platform default a cold Chromium boot would blow through. | ✅ |
+| e | `@sparticuz/chromium` ^149 with `puppeteer-core` ^25 — a compatible pairing, and Vercel's runtime is Amazon Linux 2023 (glibc), which is what `-linux-x64-gnu` targets. | ✅ |
+| f | ⚠ **THE ONE THING A WINDOWS BUILD CANNOT PROVE.** The platform binary traced here is `@napi-rs/canvas-win32-x64-msvc`, because this build ran on Windows. On Vercel's Linux builder npm installs `-linux-x64-gnu` instead. `next.config.ts` covers it at BOTH hoisting locations and the local trace proves the include MECHANISM resolves — but the Linux artefact itself has not been seen in a bundle. | ⚠ unproven |
+| g | 🔴 **And no case has run through the path since.** All three previously measured failure layers (ENOENT on fonts, missing Chromium bin, DOMMatrix) were found by RUNNING real renders. A static trace cannot find a fourth. The cheapest close is one render on production infrastructure — the founder's call, since it spends budget. | 🔴 F |
+
+### 0-N.4 · WHAT PRODUCTION DOES DIFFERENTLY FROM STAGING — the founder's closing question
+
+Measured against the Vercel deployment list, not recalled. **Staging deploys carry `target: null` —
+they are PREVIEW deployments, so `VERCEL_ENV === "preview"` there and `"production"` only on `main`.
+Every gate written as `VERCEL_ENV === "production"` is therefore OFF on staging by construction.**
+That is the exact shape of the console-switcher bug (§0-K) and it will be the shape of the next one.
+
+| # | What differs | Why it matters |
+|---|---|---|
+| a | 🔴 **The `/prototype` gate is NOT on production.** Live production is `553f917`; the gate landed on `staging` at `d71651e`. **The files are still answering 200 on hyprriq.com as this is written.** | 🔴 F — merging to `main` stops at the founder |
+| b | **Supabase is SHARED between the two.** Staging is not an isolated environment — a staging write lands in the same database production reads. Anything that looks like a safe rehearsal on staging is not one. | the most under-appreciated item here |
+| c | **Clerk runs a different instance per environment.** Production is bound to the apex domain; the branch alias is not. Sessions do not cross, and a development identity is a different `sub` — which is why the founder holds two `super_admin` rows under one email (§0-K). | auth behaviour genuinely differs |
+| d | **Stripe: a live key is REFUSED outside Vercel Production** by `envGuard`, deliberately using `VERCEL_ENV` and never `NODE_ENV` (which reads "production" on previews too). Staging is structurally test-mode-only. | condition 2 of the domain move holds by construction, not by discipline |
+| e | **`INNGEST_SERVE_ORIGIN` is set per environment**, and it decides which deployment URL Inngest calls back. If production's value is unset or still points at the staging branch alias, a production case would be executed by staging's code. **Cannot be read from here — the founder should check both environments' value.** | 🔴 F — highest-risk unknown on this list |
+| f | **The PDF renderer uses a different browser on Vercel than anywhere else** (0-N.3a). | a local render proves nothing about the deployed one |
+| g | Sentry tags `environment` from `VERCEL_ENV`, so preview and production errors are separated. | reporting only, not behaviour |
+| h | `SEARCH_INDEXING_ENABLED` is a CODE constant, currently `false` in both. No difference today — it becomes one the moment anyone makes it env-driven, which the lock does not prevent. | worth knowing before flipping it |
+
+---
+
 ## 0-M. A PUBLIC DIRECTORY NOBODY MEANT TO PUBLISH — 2026-08-24 (design sitting five)
 
 **Owner: UX. Found by the sweep the founder ordered after ruling on the retired sample module.**
@@ -1350,7 +1415,8 @@ founder-run scripts:** the probe template is now
     pattern it claims to enforce **can never match anything** — a lock that is permanently green and
     permanently blind, which is worse than no lock. The same trap catches `	`, `
 `, ``, ``,
-    `` and ``. Write regexes with the editing tools, or a quoted heredoc, or without a regex at
+    `
+` and ``. Write regexes with the editing tools, or a quoted heredoc, or without a regex at
     all; and if a new lock finds zero offenders, prove the scanner sees anything before believing it.
     Sweep command when in doubt: `grep -rlP '' --include='*.ts' --include='*.tsx' .`
 12. **"Unreferenced" and "unlinked" are not security properties** (§0-M). Whether a file is *reached*
