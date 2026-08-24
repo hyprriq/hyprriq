@@ -189,9 +189,18 @@ h4 {
    repeated in thirteen page files — repeating it is how one page ends up a step out and nobody
    notices. Breakpoints match the spec's own: 400px and 760px, not Tailwind's defaults.
 
-   These are ELEMENT selectors (specificity 0,0,1), so any Tailwind text-* utility still wins.
-   That is deliberate: the ~40 existing portal and admin headings that set their own size keep it,
-   and the marketing pages get the ruled scale by writing nothing at all. */
+   ⛔ THE @layer base WRAP IS LOAD-BEARING. DO NOT REMOVE IT.
+   This block previously sat UNLAYERED, under a comment asserting "these are ELEMENT selectors
+   (specificity 0,0,1), so any Tailwind text-* utility still wins". That assertion was FALSE, and
+   it is what the assertion cost: Tailwind v4 imports as `@layer theme, base, components,
+   utilities`, and in the CSS cascade UNLAYERED styles beat EVERY layered style regardless of
+   specificity. So this element rule overrode every text-* utility in the product — measured
+   2026-08-24: the admin title (text-lg, 18px) and the portal title (text-xl, 20px) both rendered
+   at 60px, /sign-in's "Welcome back" (text-3xl) rendered at 60px, and an h2.text-base measured
+   46px. Not the ~40 headings keeping their size — the ~40 headings losing it, silently.
+   Inside @layer base the rules behave as the original comment intended: marketing pages that
+   write no utility inherit the ruled scale; any text-* utility wins. */
+@layer base {
 h1 {
   font-size: 29px;
   line-height: 1.1;
@@ -225,6 +234,7 @@ h3 {
   h3 {
     font-size: 20px;
   }
+}
 }
 
 p {
