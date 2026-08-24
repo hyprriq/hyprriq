@@ -5,7 +5,7 @@ import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
 // real delivered PDFs exist and their structure/voice is reproduced here faithfully — but naming a
 // REAL vendor beside a public "Verify Before Purchase" verdict is a defamation exposure and a
 // decision about what we publish about a third party, which is a founder call, not an engineering
-// one. "Northgate Wholesale Co." is the mock identity already used by components/marketing/
+// one. "Example Trading LLC" is the mock identity already used by components/marketing/
 // report-preview.tsx, so the marketing surface stays consistent. To publish a real case instead,
 // the safe routes are (a) a source_clear verdict, or (b) written consent from the vendor.
 //
@@ -16,7 +16,7 @@ import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
 
 export const sampleMeta = {
   caseNumber: SAMPLE_CASE_ID,
-  vendor: "Northgate Wholesale Co.",
+  vendor: "Example Trading LLC",
   brands: ["Bioderma", "RevitaLash"],
   plan: "Single Deep Report · $149",
   delivered: "Delivered in 19 hours",

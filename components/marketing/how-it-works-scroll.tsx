@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SAMPLE_CASE_ID } from "@/lib/content/sampleIdentifiers";
+import { SAMPLE_CASE_ID, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
 import { FileSearch, UserCheck, ScrollText, Check, Loader, Upload } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
 
@@ -60,7 +60,7 @@ function StageVisual({ active }: { active: number }) {
         <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6">
           <p className="text-sm font-semibold text-ink">New research request</p>
           <div className="mt-5 space-y-4">
-            <Field label="Vendor name" value="Northgate Wholesale Co." />
+            <Field label="Vendor name" value={SAMPLE_VENDOR} />
             <Field label="Brands" value="Anker, Soundcore" />
             <div>
               <p className="mb-1.5 text-xs font-medium text-muted">Invoice or LOA</p>
@@ -123,7 +123,7 @@ function StageVisual({ active }: { active: number }) {
             <span className="text-xs text-muted">Decision Snapshot</span>
           </div>
           <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted">Vendor</p>
-          <p className="text-lg font-semibold text-ink">Northgate Wholesale Co.</p>
+          <p className="text-lg font-semibold text-ink">{SAMPLE_VENDOR}</p>
           <div className="mt-4">
             <VerdictBadge verdict="conditional" />
           </div>

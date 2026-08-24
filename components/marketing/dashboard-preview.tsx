@@ -1,5 +1,5 @@
 import { VerdictBadge, type Verdict } from "./verdict-badge";
-import { SAMPLE_CASE_IDS } from "@/lib/content/sampleIdentifiers";
+import { SAMPLE_CASE_IDS, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
 import { Wordmark } from "@/components/brand/wordmark";
 
 // ── SYNTHETIC FIXTURE, BY RULING (founder-ruled 2026-08-21 — supersedes the old "swap in a
@@ -13,7 +13,7 @@ const ROWS: { id: string; vendor: string; verdict: Verdict; when: string }[] = [
   // Ids come from the ONE reserved series (lib/content/sampleIdentifiers). This file previously
   // solved the same problem alone, with month "00" — correct, but a second convention that left
   // four other surfaces on live-shaped ids. One source now, so the guarantee cannot drift.
-  { id: SAMPLE_CASE_IDS[0], vendor: "Northgate Wholesale Co.", verdict: "conditional", when: "2d ago" },
+  { id: SAMPLE_CASE_IDS[0], vendor: SAMPLE_VENDOR, verdict: "conditional", when: "2d ago" },
   { id: SAMPLE_CASE_IDS[1], vendor: "Cedar Supply Partners", verdict: "clear", when: "4d ago" },
   { id: SAMPLE_CASE_IDS[2], vendor: "Atlas Trade Group", verdict: "verify", when: "5d ago" },
   { id: SAMPLE_CASE_IDS[3], vendor: "Harbor Point Dist.", verdict: "deny", when: "1w ago" },

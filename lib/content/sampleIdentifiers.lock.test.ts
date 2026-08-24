@@ -49,8 +49,22 @@ describe("LOCK — sample identifiers cannot collide with a real case", () => {
     expect(offenders, `presentation surfaces must use SAMPLE_CASE_IDS:\n${offenders.join("\n")}`).toEqual([]);
   });
 
-  it("the sample vendor is fictional — a real distributor beside a mock verdict is a claim about a real business", () => {
-    expect(SAMPLE_VENDOR).toBe("Northgate Wholesale Co.");
+  it("the sample vendor is a PLACEHOLDER, not an invented company", () => {
+    // ── UPDATED 2026-08-24 (founder ruling). This pinned the literal "Northgate Wholesale Co." —
+    // a name chosen to read as a plausible fictional wholesaler. Plausible is precisely the wrong
+    // target: the Nordvik catch was a name invented to be fictional that turned out to be a real
+    // pharmaceutical company. The visual-assets ruling is "no company names, real OR invented —
+    // placeholders only".
+    //
+    // So the assertion moved from the VALUE to the PROPERTY. A placeholder must announce itself.
+    // Pinning a literal would have let the next rename reintroduce a plausible-sounding company
+    // and still pass, because the lock would simply be updated to match it.
+    const PLACEHOLDER_WORDS = ["example", "sample", "placeholder", "acme", "test"];
+    expect(
+      PLACEHOLDER_WORDS.some((w) => SAMPLE_VENDOR.toLowerCase().includes(w)),
+      `SAMPLE_VENDOR is "${SAMPLE_VENDOR}" — it must be self-evidently a placeholder, because a ` +
+        `plausible invented company name is the one that collides with a real business`,
+    ).toBe(true);
     for (const real of ["TD SYNNEX", "TD Synnex", "Bulk Buy America", "NVE Pharmaceuticals"]) {
       for (const scope of SURFACES) {
         for (const f of walk(path.join(repo, scope))) {

@@ -1,3 +1,4 @@
+import { SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
 import { ArrowRight } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
 
@@ -40,7 +41,7 @@ export function DecisionSnapshot() {
       {/* Vendor + verdict */}
       <div className="hq-rise px-5 pt-5" style={{ animationDelay: "0.08s" }}>
         <p className="text-xs font-medium uppercase tracking-wide text-muted">Vendor</p>
-        <p className="mt-0.5 text-lg font-semibold text-ink">Northgate Wholesale Co.</p>
+        <p className="mt-0.5 text-lg font-semibold text-ink">{SAMPLE_VENDOR}</p>
         <p className="mt-0.5 text-sm text-ink-2">Brands reviewed · Anker, Soundcore</p>
         <div className="hq-verdict mt-4">
           <VerdictBadge verdict="conditional" />
