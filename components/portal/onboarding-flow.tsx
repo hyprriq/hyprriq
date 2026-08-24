@@ -196,7 +196,7 @@ export function OnboardingFlow({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 />
               </label>
               <label className="block">
@@ -206,7 +206,7 @@ export function OnboardingFlow({
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Agarwal Trading LLC"
-                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -216,7 +216,7 @@ export function OnboardingFlow({
                     type="text"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                   />
                 </label>
                 <label className="block">
@@ -226,7 +226,7 @@ export function OnboardingFlow({
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="+1 555 000 0000"
-                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                 </label>
               </div>
@@ -235,7 +235,7 @@ export function OnboardingFlow({
                 <select
                   value={marketplace}
                   onChange={(e) => setMarketplace(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 >
                   <option value="">Select…</option>
                   {PRIMARY_MARKETPLACES.map((m) => (
@@ -251,7 +251,7 @@ export function OnboardingFlow({
                     value={marketplaceOther}
                     onChange={(e) => setMarketplaceOther(e.target.value)}
                     placeholder="e.g. Etsy, Wayfair"
-                    className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                 </label>
               )}
@@ -260,7 +260,7 @@ export function OnboardingFlow({
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 >
                   <option value="">Select…</option>
                   {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -293,35 +293,35 @@ export function OnboardingFlow({
                   {sellsAmazon && (
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">Amazon store name</span>
-                      <input type="text" value={amazonStore} onChange={(e) => setAmazonStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                      <input type="text" value={amazonStore} onChange={(e) => setAmazonStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   )}
                   {sellsWalmart && (
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">Walmart store name</span>
-                      <input type="text" value={walmartStore} onChange={(e) => setWalmartStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                      <input type="text" value={walmartStore} onChange={(e) => setWalmartStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   )}
                   <label className="block">
                     <span className="text-[13px] font-medium text-ink">Billing address line 1</span>
-                    <input type="text" value={addr1} onChange={(e) => setAddr1(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    <input type="text" value={addr1} onChange={(e) => setAddr1(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                   </label>
                   <label className="block">
                     <span className="text-[13px] font-medium text-ink">Billing address line 2</span>
-                    <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                    <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">City</span>
-                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">State</span>
-                      <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                      <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">ZIP</span>
-                      <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand" />
+                      <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   </div>
                 </div>

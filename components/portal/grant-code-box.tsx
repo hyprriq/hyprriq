@@ -54,7 +54,7 @@ export function GrantCodeBox() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="HYPRR-XXXXXXXX"
-              className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-line bg-surface min-h-11 px-3 py-2 font-mono text-[16px] text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
             />
             <button
               type="submit"

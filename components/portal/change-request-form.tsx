@@ -72,7 +72,7 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -86,7 +86,7 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
             onChange={(e) => setDetails(e.target.value)}
             rows={5}
             placeholder="Describe the specific finding and why you believe it should be reviewed…"
-            className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
           />
         </label>
         <div className="rounded-lg border border-line bg-base px-4 py-3 text-[13px] text-ink-2">
