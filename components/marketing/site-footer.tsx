@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/brand/wordmark";
 import { NewsletterSignup } from "@/components/marketing/newsletter-signup";
 import { LEGAL_PAGES, COMPANY } from "@/lib/content/legal";
 
@@ -57,9 +58,7 @@ export function SiteFooter() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.7fr_1fr_1fr_1.2fr] lg:gap-7">
           <div>
             <Link href="/" aria-label="HyprrIQ home" className="inline-flex min-h-11 items-center">
-              <span className="font-display text-[22px] font-semibold tracking-[-0.03em] text-white">
-                Hyprr<span className="text-cyan-tint">IQ</span>
-              </span>
+<Wordmark variant="reversed" height={16} />
             </Link>
             <p className="mt-3 max-w-[34ch] text-[13.5px] leading-relaxed text-nav-fg-dim">
               Wholesale supplier intelligence for Amazon resellers. A product of {COMPANY.legalName}.

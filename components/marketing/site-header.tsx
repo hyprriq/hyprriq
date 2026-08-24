@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { Wordmark } from "@/components/brand/wordmark";
 
 // ── SITE HEADER — built to hyprriq_flow_v2.html's nav (2026-08-24) ────────────────────────────
 //
@@ -19,10 +20,10 @@ import { Menu, X } from "lucide-react";
 //    away on the same page, and a dead end when they are twelve separate routes. The founder's
 //    bar for this sitting is that a page which only works on desktop is not done.
 //
-// THE WORDMARK IS LIVE TEXT, per the spec. components/brand/wordmark.tsx is a founder-ruled SVG
-// lockup in Fraunces with a copper IQ — a typeface and a colour the 2026-08-23 ruling both
-// deleted. Rendering it here would ship the identity in two values that no longer exist in the
-// system. Flagged to the founder; the SVG assets need regenerating in Newsreader/petrol.
+// THE WORDMARK IS THE SHARED LOCKUP. Founder ruling 4 (2026-08-24) made the marketing text
+// lockup the identity across the whole product, replacing the Fraunces + copper SVG on auth,
+// admin, portal, error and 404. It lives in components/brand/wordmark.tsx; this header sizes it
+// through className so it can be responsive.
 
 const NAV = [
   { label: "What we check", href: "/what-we-check" },
@@ -32,15 +33,6 @@ const NAV = [
   { label: "For agencies", href: "/partners" },
 ];
 
-/** The typographic lockup: Newsreader 600, tight, with IQ carrying the action petrol. */
-export function Wordmark({ className = "" }: { className?: string }) {
-  return (
-    <span className={`font-display text-[19px] font-semibold tracking-[-0.03em] text-ink sm:text-[22px] ${className}`}>
-      Hyprr<span className="text-action">IQ</span>
-    </span>
-  );
-}
-
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
@@ -48,7 +40,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-line bg-base/[0.88] backdrop-blur-[14px]">
       <div className="mx-auto flex h-[58px] max-w-[1180px] items-center justify-between gap-3 px-5 sm:h-[66px] lg:px-10">
         <Link href="/" aria-label="HyprrIQ home" className="flex min-h-11 flex-none items-center">
-          <Wordmark />
+          <Wordmark className="text-[19px] sm:text-[22px]" />
         </Link>
 
         {/* The spec drops the nav at 960px; the mobile menu below picks it up. */}
