@@ -109,3 +109,49 @@ describe("LOCK — the mobile floor on client surfaces", () => {
     expect(found, "the control scanner found no inputs at all — the regex is wrong").toBeGreaterThan(20);
   });
 });
+
+// ── LOCK — THE TWO CONSOLES ARE REACHABLE FROM EACH OTHER (founder-ruled 2026-08-24) ──────────
+//
+// Found on the LIVE domain: an operator signed in, landed in the client portal, was asked to buy
+// a plan, and had no visible route to the admin console. Both directions needed a typed URL.
+//
+// Two separate causes, and the second is the one that would have survived a naive fix:
+//   1. the switcher was gated `VERCEL_ENV !== "production"` — present on staging, absent on the
+//      only domain that matters;
+//   2. its condition read `client.role !== "client" || isOperator === true` and NO CALLER EVER
+//      PASSED isOperator, so it fell back to a legacy role an admin_permissions operator lacks.
+//
+// The rule this pins: ONE notion of who is an operator, and it is getOperator() — the same
+// function the admin boundary uses. The link appears exactly when the guard would admit you.
+describe("LOCK — portal and admin link to each other", () => {
+  // Comments are the paper trail and NECESSARILY quote the removed condition — the first version
+  // of this lock failed against its own documentation. Code only.
+  const strip = (x: string) =>
+    x.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+  const portal = strip(fs.readFileSync(path.join(repo, "components/portal/portal-shell.tsx"), "utf8"));
+  const admin = strip(fs.readFileSync(path.join(repo, "components/admin/admin-shell.tsx"), "utf8"));
+
+  it("neither switcher is gated by the deploy environment", () => {
+    for (const [name, src] of [["portal", portal], ["admin", admin]] as const) {
+      expect(
+        /showSwitcher\s*=\s*[^;]*VERCEL_ENV/.test(src),
+        `${name}: the console switcher is env-gated again — it would vanish in production, which ` +
+          `is the exact defect this lock exists for`,
+      ).toBe(false);
+    }
+  });
+
+  it("the portal decides with getOperator, the one shared operator notion", () => {
+    expect(portal, "the portal switcher must ask getOperator()").toMatch(/getOperator\(/);
+    expect(
+      /client\.role\s*!==\s*"client"/.test(portal),
+      "a second notion of who is an operator is back — getOperator already carries the legacy " +
+        "clients.role fallback inside it",
+    ).toBe(false);
+  });
+
+  it("both directions exist", () => {
+    expect(portal, "portal must offer a route to /admin").toMatch(/href:\s*"\/admin\/dashboard"/);
+    expect(admin, "admin must offer a route back to /portal").toMatch(/href:\s*"\/portal\/dashboard"/);
+  });
+});

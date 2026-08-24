@@ -4,6 +4,8 @@ import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
 import { AppSidebarBrand } from "@/components/app/app-header";
 import { ShellChrome } from "@/components/app/shell-chrome";
+import { auth } from "@clerk/nextjs/server";
+import { getOperator } from "@/lib/auth/permissions";
 import { GrantAttach } from "@/components/portal/grant-attach";
 import { Wordmark } from "@/components/brand/wordmark";
 import {
@@ -226,33 +228,48 @@ function TopbarActions({
         <UserMenu
           initial={initial}
           email={client.email}
-          switcher={showSwitcher ? { href: "/admin/dashboard", label: "View as Admin" } : undefined}
+          switcher={showSwitcher ? { href: "/admin/dashboard", label: "Admin console" } : undefined}
         />
     </>
   );
 }
 
-export function PortalShell({
+export async function PortalShell({
   client,
   active,
   title,
   children,
-  isOperator,
 }: {
   client: Client;
   active: PortalNavKey;
   title: string;
   children: React.ReactNode;
-  // ADMIN ACCESS FIX (2026-07-30): admin_permissions rows live on their own identities, so a
-  // portal user may be an operator without an elevated clients.role. Callers that load the
-  // operator can pass this; the legacy clients.role path keeps working unchanged. (A rows-only
-  // super-admin has no portal presence at all — they enter via /admin directly.)
-  isOperator?: boolean;
 }) {
   const access = deriveAccess(client);
-  // Dev/staging-only view switcher, admin-only. VERCEL_ENV (not NODE_ENV) — Vercel
-  // sets NODE_ENV='production' on preview builds too (see ADR-005).
-  const showSwitcher = process.env.VERCEL_ENV !== "production" && (client.role !== "client" || isOperator === true);
+
+  // ── THE ADMIN CONSOLE IS REACHABLE FROM THE PORTAL (founder-ruled 2026-08-24, post-launch) ──
+  //
+  // TWO DEFECTS, BOTH FOUND BY THE FOUNDER ON THE LIVE DOMAIN. Signed in as an operator, he landed
+  // in the client portal, was asked to buy a plan, and had no visible route to the admin console he
+  // has permission for. /admin was reachable only by typing the URL.
+  //
+  //  1. THE SWITCHER WAS GATED OFF IN PRODUCTION — `VERCEL_ENV !== "production"` — so it existed on
+  //     staging and vanished on exactly the domain that matters. It was built as a dev convenience;
+  //     it is now a permanent, capability-gated route.
+  //  2. AND IT WOULD STILL HAVE SHOWN NOTHING. The old condition was
+  //     `client.role !== "client" || isOperator === true`, and NO CALLER EVER PASSED isOperator —
+  //     grep across app/(portal) returned zero. So it fell back to the legacy clients.role, which
+  //     an operator whose access comes from an admin_permissions row does not have.
+  //
+  // ONE NOTION OF WHO IS AN OPERATOR, NOT TWO. getOperator() is the SAME function the admin
+  // boundary uses (lib/data/admin.ts: "admin PAGE access = getOperator(userId) !== null"), and it
+  // already carries the legacy clients.role fallback INSIDE it. So the old expression was a
+  // duplicate of logic that lives one call away — removing it reduces the notions from two to one.
+  //
+  // THE PRINCIPLE: the link appears exactly when the guard would admit you. It cannot advertise a
+  // door that /admin would bounce, and it cannot hide one it would open.
+  const { userId } = await auth();
+  const showSwitcher = userId ? (await getOperator(userId)) !== null : false;
 
   return (
     <ShellChrome

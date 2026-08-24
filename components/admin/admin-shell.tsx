@@ -100,9 +100,12 @@ export async function AdminShell({
   clientScope: ClientScope;
   children: React.ReactNode;
 }) {
-  // Admin routes are already is_admin-guarded; the switcher just needs the
-  // dev/staging gate (VERCEL_ENV, not NODE_ENV — see ADR-005).
-  const showSwitcher = process.env.VERCEL_ENV !== "production";
+  // THE WAY BACK (founder-ruled 2026-08-24). This was gated to dev/staging by
+  // `VERCEL_ENV !== "production"`, so on the live domain both directions needed a typed URL.
+  // No capability check is needed here and adding one would be the second notion: the (admin)
+  // layout already ran requireOperatorAccess() before this shell rendered, so anyone seeing it
+  // is an operator by definition. Every operator has a portal to go back to.
+  const showSwitcher = true;
   // Badge derives from the role — never hardcoded (identity law, 2026-08-02).
   const roleBadge = operator.role === "super_admin" ? "Founder" : "Staff";
   // Support open-count badge: fetched only when the item is visible to this operator, and
@@ -153,7 +156,7 @@ export async function AdminShell({
               initial={user.initial}
               email={user.email}
               imageUrl={operator.image_url ?? null}
-              switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
+              switcher={showSwitcher ? { href: "/portal/dashboard", label: "Client portal" } : undefined}
             />
           )}
         </>
