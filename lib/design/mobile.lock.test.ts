@@ -89,6 +89,19 @@ describe("LOCK — the mobile floor on client surfaces", () => {
     ).toEqual([]);
   });
 
+  it("the Clerk auth components are held to the same 16px floor", () => {
+    // THE WORST PLACE THIS BUG COULD LIVE, and it lived there: Clerk renders its OWN inputs, and
+    // measured at default they were 13px and 32px tall. Sign-in and sign-up are the first screens
+    // a client meets — the zoom fired before they had paid anything, on a form we do not own the
+    // markup for. It is set through Clerk's appearance API instead, which is why the scanner above
+    // cannot see it and this assertion exists.
+    const clerk = fs.readFileSync(path.join(repo, "lib/clerk-appearance.ts"), "utf8");
+    expect(clerk, "Clerk's base font size must be 16px or iOS zooms the sign-in form")
+      .toMatch(/fontSize:\s*"16px"/);
+    expect(clerk, "Clerk's field must carry a 44px minimum touch target")
+      .toMatch(/formFieldInput:\s*"[^"]*min-h-11/);
+  });
+
   it("the checked class of control actually exists on these surfaces", () => {
     // A lock that silently matches nothing is worse than no lock. This proves the scanner sees the
     // controls it claims to police — the first version's regex missed every multi-line JSX tag.

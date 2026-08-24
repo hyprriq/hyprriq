@@ -17,6 +17,13 @@ const brandVariables = {
   colorInputText: "#0e191d",
   borderRadius: "0.625rem",
   fontFamily: "var(--font-inter), system-ui, sans-serif",
+  // ── 16px IS A FUNCTIONAL REQUIREMENT HERE, NOT A PREFERENCE (2026-08-24) ──────────────────
+  // MEASURED: Clerk's default rendered its own inputs at 13px and 32px tall. iOS Safari zooms the
+  // page when a focused input is under 16px AND DOES NOT ZOOM BACK OUT — so the bug fired on the
+  // FIRST screen a client meets, before they had paid anything. Every field in our own forms was
+  // raised to 16px the same day; Clerk's are the ones we do not own, so they are set here.
+  // Clerk scales its internal type from this base, so the whole component grows proportionally.
+  fontSize: "16px",
 } as const;
 
 export const clerkAppearance = {
@@ -29,6 +36,11 @@ export const clerkAppearance = {
     // header/footer are hidden and the form sits flush in our right panel.
     header: "hidden",
     footer: "hidden",
+    // The variables above set the type scale; these set the TOUCH TARGETS. Clerk's fields and
+    // primary action were 32px tall, under the 44px bar this project holds every control to.
+    formFieldInput: "min-h-11 text-[16px]",
+    formButtonPrimary: "min-h-11 text-[15px]",
+    socialButtonsBlockButton: "min-h-11",
   },
 };
 
