@@ -68,6 +68,24 @@ describe("LOCK — domain move condition 1: the site is not indexable until live
     expect(list, "sitemap.xml must be publicly reachable").toContain("/sitemap.xml");
   });
 
+  it("/prototype is not reachable by the open internet", () => {
+    // FOUND BY SWEEP, 2026-08-24, LIVE ON THE PRODUCTION DOMAIN. public/prototype/** answered 200
+    // to anyone with the URL — internal admin mockups, client report mockups, the design-system
+    // reference, real company names and live-shaped case references among them. The proxy matcher
+    // deliberately skips extensioned paths, so Clerk never saw a single .html under it.
+    //
+    // "Unreferenced" and "not linked" say NOTHING about reachability, which is the lesson the
+    // retired sample-report module taught the same day. This asserts the middleware still runs for
+    // those paths and that nobody has quietly made them public again.
+    const proxy = fs.readFileSync(path.join(repo, "proxy.ts"), "utf8");
+    expect(proxy, "the middleware matcher must cover /prototype regardless of file extension")
+      .toMatch(/"\/prototype\/:path\*"/);
+    expect(
+      (PUBLIC_ROUTES as readonly string[]).some((r) => r.includes("prototype")),
+      "/prototype must NOT be a public route",
+    ).toBe(false);
+  });
+
   it("still keeps the authenticated and API surfaces out of the crawler", () => {
     // Independent of the launch flag: these carry client data and never belong in an index.
     const r = robots();
