@@ -1,28 +1,31 @@
-"use client";
-
-import { useId, useState } from "react";
 import Link from "next/link";
 import { oneTimePlans, subscriptionPlans, COMING_SOON_LABEL, type Plan } from "@/lib/content/pricing";
 import { factsForPlan } from "@/lib/content/planFacts";
 import type { PlanType } from "@/lib/constants/plans";
 
-// Homepage pricing, from hyprriq_flow_v2.html §5. Two tabs, two cards each.
+// ── HOMEPAGE PRICING — CSS-ONLY TABS, NO JAVASCRIPT (founder ruling 6, 2026-08-24) ────────────
 //
-// EVERY NUMBER ON THESE CARDS IS DERIVED (lib/content/planFacts.ts) — credits, brand caps,
-// assessment areas and delivery all come from the ruled registries. The spec hand-typed them and
-// they happened to be right; a correct hardcoded number is still a defect, because it goes wrong
-// silently at the next ruling and no test catches a value that is merely stale.
+// THIS IS NO LONGER A CLIENT COMPONENT. The previous version held the active tab in React state,
+// which meant the "Monthly plans" panel rendered `hidden` on the server and the tab did nothing
+// until hydration finished. On a phone on a slow connection that is a control which silently
+// ignores a tap — the founder's line: a menu that needs hydration is normal, a pricing control that
+// swallows a tap is not.
 //
-// COMING-SOON CARDS CARRY NO BUY PATH. single_149 and scale_499 are off sale while KEEPA_LIVE is
-// false; the checkout route refuses them server-side with a 403. That refusal is the control — but
-// a card that LOOKS buyable is a broken promise even when the server says no, so the CTA is
-// replaced by an honest note rather than a disabled-looking button. `comingSoon` derives from
-// PLANS_ON_SALE; it is never set by hand here.
+// HOW IT WORKS: two same-name radio inputs sit before everything else as siblings. A <label>
+// pointing at each input flips the selection, and one rule — `#input:checked ~ .thing { display }` —
+// reveals the matching tab strip and the matching panel. That is the browser's own state machine:
+// it works with JavaScript disabled, before hydration, and inside a crawler that never runs
+// scripts. There is no useState and no effect.
+//
+// WHY RADIOS RATHER THAN role="tab": ARIA tabs REQUIRE roving focus and arrow-key handling, which
+// is JavaScript by definition. Half-implemented tab semantics announce a keyboard contract the page
+// cannot honour. A labelled radio group is the honest markup for "pick one of two", it is keyboard
+// operable with arrow keys for free, and screen readers describe it accurately.
+//
+// BOTH PANELS ARE IN THE HTML. The inactive one is hidden with CSS, not omitted — so its content is
+// server-rendered, crawlable, and findable with in-page search.
 
-const TABS = [
-  { id: "single", label: "Single reports", plans: oneTimePlans },
-  { id: "monthly", label: "Monthly plans", plans: subscriptionPlans },
-] as const;
+const GROUP = "hq-pricing-tab";
 
 function PlanCard({ plan }: { plan: Plan }) {
   const facts = factsForPlan(plan.id as PlanType);
@@ -100,47 +103,78 @@ function PlanCard({ plan }: { plan: Plan }) {
 }
 
 export function PricingTabs() {
-  const [active, setActive] = useState<(typeof TABS)[number]["id"]>("single");
-  const base = useId();
+  const tabBase =
+    "flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center rounded-control px-5 text-[14px] font-semibold text-muted sm:flex-none sm:text-[15px]";
+  const tabSelected = "bg-surface text-ink shadow-[0_1px_3px_rgba(0,61,72,.12)]";
 
   return (
-    <>
-      <div
-        role="tablist"
-        aria-label="Pricing"
-        className="mb-6 inline-flex w-full rounded-card border border-line bg-subtle p-1 sm:mb-7 sm:w-auto"
-      >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            id={`${base}-${t.id}-tab`}
-            aria-selected={active === t.id}
-            aria-controls={`${base}-${t.id}`}
-            onClick={() => setActive(t.id)}
-            className={`min-h-11 flex-1 rounded-control px-5 text-[14px] font-semibold transition-colors sm:flex-none sm:text-[15px] ${
-              active === t.id ? "bg-surface text-ink shadow-[0_1px_3px_rgba(0,61,72,.12)]" : "text-muted"
-            }`}
-          >
-            {t.label}
-          </button>
+    <fieldset className="border-0 p-0">
+      <legend className="sr-only">Choose a pricing view</legend>
+
+      {/* The inputs come first so every later sibling can react to them. sr-only keeps them
+          keyboard- and screen-reader-reachable; the labels carry the visible treatment, and arrow
+          keys work for free because this is a real radio group. */}
+      <input type="radio" name={GROUP} id={`${GROUP}-single`} defaultChecked className="sr-only" />
+      <input type="radio" name={GROUP} id={`${GROUP}-monthly`} className="sr-only" />
+
+      {/* THE STRIP IS RENDERED TWICE, once per selection, and the SAME display rule that switches
+          the panels switches the strips. That is deliberate rather than clever: every attempt to
+          drive the labels' colour from the radio state failed here — Tailwind's named-peer variants
+          were never emitted for these class names, and a hand-written rule matched the label
+          (verified with .matches() in the browser) yet did not paint it. `display` is the one
+          mechanism measured working in this component, so the selected treatment rides it.
+          Only one strip is ever displayed, so a screen reader sees one label per input. */}
+      <div className="hq-strip hq-strip-single hidden w-full">
+        <div className="inline-flex w-full rounded-card border border-line bg-subtle p-1 sm:w-auto">
+          <label htmlFor={`${GROUP}-single`} className={`${tabBase} ${tabSelected}`}>
+            Single reports
+          </label>
+          <label htmlFor={`${GROUP}-monthly`} className={tabBase}>
+            Monthly plans
+          </label>
+        </div>
+      </div>
+      <div className="hq-strip hq-strip-monthly hidden w-full">
+        <div className="inline-flex w-full rounded-card border border-line bg-subtle p-1 sm:w-auto">
+          <label htmlFor={`${GROUP}-single`} className={tabBase}>
+            Single reports
+          </label>
+          <label htmlFor={`${GROUP}-monthly`} className={`${tabBase} ${tabSelected}`}>
+            Monthly plans
+          </label>
+        </div>
+      </div>
+
+      <div className="hq-pane hq-pane-single mt-6 hidden gap-3.5 sm:mt-7 sm:gap-5 md:grid-cols-2">
+        {oneTimePlans.map((p) => (
+          <PlanCard key={p.id} plan={p} />
+        ))}
+      </div>
+      <div className="hq-pane hq-pane-monthly mt-6 hidden gap-3.5 sm:mt-7 sm:gap-5 md:grid-cols-2">
+        {subscriptionPlans.map((p) => (
+          <PlanCard key={p.id} plan={p} />
         ))}
       </div>
 
-      {TABS.map((t) => (
-        <div
-          key={t.id}
-          role="tabpanel"
-          id={`${base}-${t.id}`}
-          aria-labelledby={`${base}-${t.id}-tab`}
-          hidden={active !== t.id}
-          className="grid gap-3.5 sm:gap-5 md:grid-cols-2"
-        >
-          {t.plans.map((p) => (
-            <PlanCard key={p.id} plan={p} />
-          ))}
-        </div>
-      ))}
-    </>
+      {/* ONE STYLE BLOCK OWNS THE WHOLE SWITCH — panels and tabs together.
+          Two earlier attempts are recorded here because both failed in ways worth not repeating:
+          Tailwind's named-peer variants (peer-checked/single:) were NOT EMITTED for these class
+          names — verified in the browser, the generated stylesheet contains no such selector — so
+          the labels never changed; and an earlier version used the `background` shorthand while the
+          label carried transition-colors, which watches background-color, so the box-shadow swapped
+          on selection and the fill did not. Longhand below, and no backtick may appear in this
+          block: it lives in a template literal and one here terminates the string. */}
+      <style>{`
+        #${GROUP}-single:checked ~ .hq-pane-single,
+        #${GROUP}-monthly:checked ~ .hq-pane-monthly { display: grid; }
+        #${GROUP}-single:checked ~ .hq-strip-single,
+        #${GROUP}-monthly:checked ~ .hq-strip-monthly { display: block; }
+        #${GROUP}-single:focus-visible ~ .hq-strip-single label[for="${GROUP}-single"],
+        #${GROUP}-monthly:focus-visible ~ .hq-strip-monthly label[for="${GROUP}-monthly"] {
+          outline: 3px solid var(--color-focus);
+          outline-offset: 3px;
+        }
+      `}</style>
+    </fieldset>
   );
 }
