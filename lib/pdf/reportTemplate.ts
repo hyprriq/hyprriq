@@ -6,10 +6,16 @@ import type { ClientReport, ClientCategoryCompliance } from "@/lib/portal/client
 import { DOC_TITLE, ISSUER, confidentialityLine } from "@/lib/content/documentIdentity";
 import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
-  BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine,
+  BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, coverPhoneLine,
 } from "@/lib/content/reportDocument";
 import type { ReportAssets } from "@/lib/pdf/reportAssets";
 import { requireVerdict } from "@/lib/portal/verdictPresence";
+import { SITE_URL } from "@/lib/constants/site";
+
+// The signpost's destination, derived from the ONE canonical origin so it cannot drift from the
+// deployed domain. Protocol stripped: this is printed on paper as often as it is read on a screen,
+// and "https://" is noise a reader types past.
+const PORTAL_CASES_URL = `${SITE_URL.replace(/^https?:\/\//, "")}/portal/cases`;
 import {
   VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, CHIP_DEFS,
   CHECKLIST_INTRO, CATEGORY_NOTE, CLOSING_STATEMENT,
@@ -264,6 +270,7 @@ ul.dash li::before{content:"–";position:absolute;left:0}
 .cover-foot .cols{display:flex;justify-content:space-between}
 .cover-foot .k{font-weight:700;font-size:7pt;color:#fff;opacity:.65;text-transform:uppercase;margin-bottom:2pt}
 .cover-foot .v{font-size:8.5pt;color:#fff;max-width:150pt}
+.cover-phone{margin-top:12pt;font-size:8pt;color:#fff;opacity:.6}
 .cover-foot .v.mono{font-family:Mono,monospace}
 .section{page-break-before:always}
 .sec-open{display:flex;align-items:baseline;gap:12pt;margin-bottom:8pt}
@@ -335,6 +342,7 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
       ${[[COVER_META_LABELS.preparedFor, esc(c.clientName), ""], [COVER_META_LABELS.delivered, esc(c.deliveredAt), ""], [COVER_META_LABELS.caseRef, esc(c.caseNumber), "mono"], [COVER_META_LABELS.inside, esc(coverInsideLine(r.questions.length)), ""]]
         .map(([k, v, cls]) => `<div><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`).join("")}
     </div>
+    <div class="cover-phone">${esc(coverPhoneLine(PORTAL_CASES_URL))}</div>
   </div>
 </div>
 

@@ -45,6 +45,24 @@ export const COVER_META_LABELS = {
   inside: "What's inside",
 } as const;
 
+/**
+ * THE PHONE SIGNPOST (founder-ruled 2026-08-24, option C).
+ *
+ * The PDF stays a PRINT AND FILING document and is not being redesigned. Measured, it cannot be
+ * made legible on a phone by resizing: the page is 8.5in = 816 CSS px, which a 390px screen fits
+ * at scale 0.478, so the 10pt body lands at about 6.4 CSS px. Reaching a comfortable 16px would
+ * need a ~25pt body — roughly thirty characters to a line — and even A5 only reaches 8.9px. The
+ * arithmetic rules that option out rather than an opinion.
+ *
+ * So the phone path is the PORTAL, which already renders this report responsively at 16px, and
+ * which the delivery email already leads with. This one line is the only thing the PDF gains: a
+ * signpost for the client who opens the attachment directly and would otherwise be pinching.
+ *
+ * No promise, no outcome language — it points at a page.
+ */
+export const coverPhoneLine = (portalUrl: string) =>
+  `Reading this on a phone? The same report is in your portal, sized for a small screen — ${portalUrl}`;
+
 export const coverInsideLine = (questionCount: number) =>
   `Verdict · the assessment areas your plan includes · ${questionCount} verification questions`;
 

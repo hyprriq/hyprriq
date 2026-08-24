@@ -8,7 +8,7 @@ import { subscriptionPlans, oneTimePlans, creditExplainer, pricingHero, comparis
 import { PARTNER_REQUEST_COPY, INVITE_LINK_INACTIVE_COPY, GRANT_CODE_ENTRY_COPY } from "@/lib/content/partnerRequest";
 import { VERDICT_ABSENT_TITLE, VERDICT_ABSENT_BODY, VERDICT_ABSENT_PREVIEW_NOTE } from "@/lib/portal/verdictPresence";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
-import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter } from "@/lib/content/reportDocument";
+import { SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION, BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, coverPhoneLine, documentFooter } from "@/lib/content/reportDocument";
 
 // ── BANNED-LANGUAGE FIX GATE (spec 2026-07-24, ALL SIX OQs founder-ruled) — the new HARD rules
 // H10–H15 + the H4 negation carve-out, TWO-SIDED BY LAW.
@@ -77,6 +77,7 @@ const MUST_PASS: [string, string][] = [
   ["PDF scope note label", SCOPE_NOTE_LABEL],
   ["PDF cover meta labels", `${COVER_META_LABELS.preparedFor} · ${COVER_META_LABELS.delivered} · ${COVER_META_LABELS.caseRef} · ${COVER_META_LABELS.inside}`],
   ["PDF cover inside line", coverInsideLine(17)],
+  ["PDF cover phone signpost", coverPhoneLine("hyprriq.com/portal/cases")],
   ["PDF document footer", documentFooter("Marcus Chen (Chen Trading Co.)", 6, 12)],
   // — pricing-ladder / intake strings (2026-08-07 pass — standing rule 8: same commit) —
   ["upload upsell ($99 gate)", "Document review is included from the $149 report up."],
