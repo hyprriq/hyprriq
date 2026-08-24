@@ -68,7 +68,7 @@ describe("LOCK — the progress ring's geometry is computed, never copied", () =
       PAGE,
       "the ring label must read the area count from ASSESSMENT_AREA_KEYS, or it will disagree " +
         "with the rows listed directly beneath it",
-    ).toMatch(/areas complete.*ASSESSMENT_AREA_KEYS\.length|ASSESSMENT_AREA_KEYS\.length.*areas complete/s);
+    ).toMatch(/\$\{ASSESSMENT_AREA_KEYS\.length\} areas complete/);
   });
 });
 
