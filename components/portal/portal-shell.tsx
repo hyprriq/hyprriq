@@ -3,7 +3,7 @@ import type { Client } from "@/lib/data/client";
 import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
 import { AppSidebarBrand } from "@/components/app/app-header";
-import { ShellChrome } from "@/components/portal/shell-chrome";
+import { ShellChrome } from "@/components/app/shell-chrome";
 import { GrantAttach } from "@/components/portal/grant-attach";
 import { Wordmark } from "@/components/brand/wordmark";
 import {

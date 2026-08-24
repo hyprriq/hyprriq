@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { UserMenu } from "@/components/portal/user-menu";
+import { ShellChrome } from "@/components/app/shell-chrome";
 import { navFor, type AdminNavKey, type NavGroup } from "@/lib/admin/nav";
 import type { Operator } from "@/lib/auth/permissions";
 import type { ClientScope } from "@/lib/auth/clientScope";
 import { getOpenSupportCount } from "@/lib/data/adminSupport";
-import { AppHeader, AppSidebarBrand } from "@/components/app/app-header";
+import { AppSidebarBrand } from "@/components/app/app-header";
 import { Wordmark } from "@/components/brand/wordmark";
 
 // ── OPERATOR-AWARE SHELL (founder-ruled 2026-08-02): the nav model + visibility rules live in
@@ -116,9 +117,8 @@ export async function AdminShell({
       }));
     }
   }
-  return (
-    <div className="flex min-h-dvh bg-canvas">
-      <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 pb-5">
+  const sidebar = (
+    <aside className="flex h-full w-full flex-col overflow-y-auto bg-brand-hover px-4 pb-5">
         {/* Shares the page header's height, so the nav below starts level with the content. */}
         <AppSidebarBrand>
           <div className="flex w-full items-center justify-between">
@@ -132,26 +132,34 @@ export async function AdminShell({
           </div>
         </AppSidebarBrand>
         <Nav groups={groups} active={active} />
-      </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader
-          title={title}
-          actions={
-            <>
-              {topRight}
-              {user && (
-                <UserMenu
-                  initial={user.initial}
-                  email={user.email}
-                  imageUrl={operator.image_url ?? null}
-                  switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
-                />
-              )}
-            </>
-          }
-        />
-        <main className="flex-1 overflow-y-auto px-6 py-5">{children}</main>
-      </div>
-    </div>
+    </aside>
+  );
+
+  // ADMIN GETS THE SHARED DRAWER (sitting three, 2026-08-24). It previously rendered the sidebar
+  // as a fixed w-[248px] column with no responsive prefix, no drawer and no hamburger — the one
+  // shell in the product that genuinely did not work on a phone. ShellChrome is the same chrome
+  // the portal has used since the 1.4 mobile build; admin keeps its DENSE full-width content area
+  // through contentClassName rather than inheriting the portal's 1200px prose measure.
+  return (
+    <ShellChrome
+      title={title}
+      contentClassName="w-full px-4 py-5 sm:px-6"
+      sidebar={sidebar}
+      actions={
+        <>
+          {topRight}
+          {user && (
+            <UserMenu
+              initial={user.initial}
+              email={user.email}
+              imageUrl={operator.image_url ?? null}
+              switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
+            />
+          )}
+        </>
+      }
+    >
+      {children}
+    </ShellChrome>
   );
 }

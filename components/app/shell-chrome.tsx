@@ -1,6 +1,12 @@
 "use client";
 
-// Mobile drawer chrome for the portal shell (skin port 2026-08-11, tracker 1.4 build).
+// Mobile drawer chrome, SHARED BY PORTAL AND ADMIN (moved out of components/portal 2026-08-24,
+// sitting three — it was never portal-specific, and admin had no mobile mode at all: a fixed
+// w-[248px] sidebar with no drawer, no hamburger and no breakpoint, which is what actually broke
+// on a phone. Reusing this is not admin polish; it is giving admin a shell that exists below
+// 1024px. Follows the shared AppHeader the dev thread landed the same day.)
+//
+// ORIGINAL NOTE (skin port 2026-08-11, tracker 1.4 build):
 // Deliberately thin: the sidebar and topbar stay server-rendered and are passed in as
 // slots; this component only owns the open/close state so the client boundary pulls in
 // zero server modules (clientBoundary.lock walks this graph).
@@ -12,6 +18,7 @@ export function ShellChrome({
   title,
   actions,
   children,
+  contentClassName = "mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-7 sm:py-6",
 }: {
   sidebar: React.ReactNode;
   // Title and actions are separate slots (2026-08-24) so the SHARED AppHeader owns the bar and
@@ -20,6 +27,9 @@ export function ShellChrome({
   title: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
+  /** The main content container. Portal centres on a 1200px measure; admin runs dense and full
+   *  width, because an operator is reading tables, not prose. */
+  contentClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -73,7 +83,7 @@ export function ShellChrome({
           }
         />
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-7 sm:py-6">{children}</div>
+          <div className={contentClassName}>{children}</div>
         </main>
       </div>
     </div>
