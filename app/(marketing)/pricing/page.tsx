@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
 import { PageHero, PageSection, Prose, RelatedLinks } from "@/components/marketing/page-shell";
 import { oneTimePlans, subscriptionPlans, comparison, comparisonColumns, COMING_SOON_LABEL } from "@/lib/content/pricing";
-import { factsForPlan, areaSplitForPlan } from "@/lib/content/planFacts";
+import { factsForPlan, areaSplitForPlan, rolloverAnswer } from "@/lib/content/planFacts";
 import { CASE_SLA_HOURS, PLAN_BRAND_CAPS, type PlanType } from "@/lib/constants/plans";
 import { VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
 
@@ -17,13 +17,11 @@ import { VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
 // so plainly — "the research does not happen, so there is nothing to withhold" — which is both
 // true and the strongest thing this page says.
 //
-// ⚠ ONE QUESTION IS DELIBERATELY ABSENT: "Do unused credits roll over?" The content file marks it
-// [GAUTAM TO CONFIRM] with the note that guessing at a billing term is the wrong kind of mistake.
-// It is NOT guessed here. Worth knowing while ruling it: lib/constants/plans.ts already carries
-// PLAN_ROLLOVER_LIMIT (singles 0, Growth 2, Scale 4) and the comparison table below — which is
-// existing shipped copy — already renders a "Credit rollover" row from it. So the fact is public;
-// only the FAQ answer is missing. Publishing a rollover PROMISE changes what a client is promised,
-// which stops and comes to the founder.
+// CREDIT ROLLOVER IS ANSWERED, FROM THE CODE (founder ruling 5, 2026-08-24). The content file had
+// left it [GAUTAM TO CONFIRM]; the answer already existed in PLAN_ROLLOVER_LIMIT and was already
+// shipped in the comparison table's "Credit rollover" row. rolloverAnswer() derives the sentence
+// from the constant and from PLANS_ON_SALE, so it names only tiers a buyer can actually reach and
+// updates itself when one opens — a billing promise that cannot drift from the billing code.
 //
 // COMING-SOON TIERS HAVE NO BUY PATH. `comingSoon` derives from PLANS_ON_SALE; the checkout route
 // refuses them server-side with a 403. That refusal is the control — a card that merely looks
@@ -44,6 +42,10 @@ const FAQS = [
   {
     q: "Can I buy one report and then upgrade?",
     a: "Yes. A single report does not lock you out of a monthly plan later.",
+  },
+  {
+    q: "Do unused credits roll over?",
+    a: rolloverAnswer(),
   },
   {
     q: "Who can buy?",

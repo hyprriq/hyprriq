@@ -4,22 +4,34 @@ import { Reveal } from "@/components/marketing/reveal";
 import { PartnerRequestForm } from "@/components/marketing/partner-request-form";
 import { INVITE_LINK_INACTIVE_COPY } from "@/lib/content/partnerRequest";
 import { checkGrantCode, logGrantCheckFailOpen } from "@/lib/data/grantCheck";
-import { AREA_NAMES, AREA_DEFS } from "@/lib/content/reportCopy";
+import { PageSection, Prose, RelatedLinks } from "@/components/marketing/page-shell";
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 
 export const metadata: Metadata = {
-  title: "Wholesale supplier verification for agencies & VAs — HyprrIQ",
+  title: "For VAs and Sourcing Agencies | HyprrIQ",
   description:
-    "Your clients buy inventory on your advice. HyprrIQ is how sourcing agencies, VAs and consultants check a wholesale supplier before recommending one — a researched verdict with the evidence behind it.",
+    "Your clients buy on your recommendation. Check the supplier before you make it, and hand over a report with your reasoning already written down.",
+  alternates: { canonical: "/partners" },
 };
 
-// ── /PARTNERS (founder-ruled 2026-08-21) — the page the first clients come from: VAs, agencies
-// and consultants who manage sourcing for Amazon sellers. Grant invite links LAND HERE (the
-// /grant/[code] handler redirects with ?invited=1), so a partner arrives with context instead
-// of a bare token screen. Copy rules held: "a full assessment", never a tier name, until $149
-// and Scale open. Assessment-area copy is IMPORTED from the canonical modules, never re-typed.
-// SEO: nobody targets "wholesale supplier verification for agencies" — this page does.
-
-const PARTNER_AREAS = ["supplier_identity", "supply_chain_relationship", "brand_risk_assessment"] as const;
+// ── /PARTNERS — REBUILT 2026-08-24 under founder ruling 2 ─────────────────────────────────────
+//
+// The page BODY is rebuilt from HyprrIQ_CONTENT_FINAL.md. Two things are DELIBERATELY UNTOUCHED,
+// because the founder's ruling scoped this page's rebuild away from them:
+//
+//   1. THE INVITE BANNERS (both states) are carried over verbatim — markup, copy and logic. They
+//      are the invite LANDING, which is queued separately. They are also load-bearing in a way a
+//      restyle could quietly break: the banner CHECKS the grant code before it promises anything
+//      (item 1b, 2026-08-22), because this render was once the last point that trusted a query
+//      param — /partners?invited=1 typed by hand showed "your assessment is attached" unverified.
+//   2. THE REQUEST FORM and its surrounding copy, which is MUST_PASS-locked.
+//
+// ⚠ FLAGGED: both now sit inside a page built on the new system, so they read a step older than
+// everything around them — the banner CTA is still on the pre-ruling `rounded-lg bg-ink`. That is
+// the cost of the scoping and it is visible; say the word and they get the same 20 minutes.
+//
+// Grant invite links LAND HERE (/grant/[code] redirects with ?invited=1), so a partner arrives with
+// context instead of a bare token screen.
 
 export default async function PartnersPage({
   searchParams,
@@ -29,12 +41,10 @@ export default async function PartnersPage({
   const { invited, invite, code } = await searchParams;
   const safeCode = code && code.length <= 64 ? code : null;
 
-  // ── THE BANNER CHECKS BEFORE IT PROMISES (item 1b, 2026-08-22): this render was the last
-  // point that trusted a query param — /partners?invited=1 typed by hand, or bookmarked after
-  // the grant died, showed "your assessment is attached" unverified. Now: invited=1 without a
-  // code renders the plain page (nothing to verify → no promise), and invited=1 with a code
-  // re-checks it through the ONE shared validity path. Fail-open on lookup error (1c,
-  // founder-accepted) — and never silently: logged to console + audit_log. ──
+  // ── THE BANNER CHECKS BEFORE IT PROMISES (item 1b, 2026-08-22): invited=1 without a code renders
+  // the plain page (nothing to verify → no promise), and invited=1 with a code re-checks it through
+  // the ONE shared validity path. Fail-open on lookup error (1c, founder-accepted) — and never
+  // silently: logged to console + audit_log. ──
   let inviteState: "banner" | "inactive" | "none" = "none";
   if (invite === "inactive") inviteState = "inactive";
   else if (invited === "1" && safeCode) {
@@ -83,59 +93,100 @@ export default async function PartnersPage({
         </div>
       )}
 
-      <section className="border-b border-line" style={{ background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)" }}>
-        <div className="mx-auto max-w-3xl px-5 py-16 text-center lg:px-8 lg:py-20">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">
-            For sourcing agencies, VAs &amp; consultants
+      <header className="border-b border-line bg-sand">
+        <div className="mx-auto max-w-[1180px] px-5 py-12 sm:py-20 lg:px-10">
+          <h1 className="max-w-[20ch] text-ink">For VAs and sourcing agencies</h1>
+          <p className="mt-4 max-w-[54ch] text-[17px] leading-[1.55] text-ink-2 sm:mt-5 sm:text-[19px] sm:leading-[1.58]">
+            Your risk is not the same as your client&rsquo;s. They lose money on a bad supplier. You
+            lose the client — and then you lose the next three, because this industry talks.
           </p>
-          <h1 className="mt-3 text-[clamp(2.1rem,4.4vw,3.2rem)] font-bold leading-[1.07] text-ink">
-            Your clients buy inventory on your advice.
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-ink-2">
-            HyprrIQ is how you check a wholesale supplier <i>before</i> you recommend one — independent
-            research on the supplier, their connection to the brands, and the brands&rsquo; posture toward
-            marketplace sellers, delivered as one verdict with the evidence behind it.
+        </div>
+      </header>
+
+      <PageSection tone="surface">
+        <h2 className="text-ink">The recommendation is the product</h2>
+        <Prose className="mt-3">
+          <p>
+            When you hand a client a supplier, you are lending them your judgement. If it goes wrong,
+            the post-mortem is not about the distributor. It is about why you recommended them.
           </p>
-          <div className="mt-7 flex items-center justify-center gap-3">
-            <Link href="/sample-report" className="rounded-lg bg-ink px-5 py-2.5 text-[14px] font-semibold text-surface hover:opacity-90">
-              See a real report
-            </Link>
-            <Link href="/how-to-read" className="rounded-lg border border-line bg-surface px-5 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-subtle">
-              How to read one
-            </Link>
-          </div>
-        </div>
-      </section>
+          <p>
+            That conversation is much easier when you can show what was checked, what came back, and
+            what could not be established at the time you made the call. Not because it proves you
+            were right — nobody can promise that — but because it shows the recommendation was made
+            on evidence rather than on a good feeling about a price list.
+          </p>
+        </Prose>
+      </PageSection>
 
-      <section className="bg-surface">
-        <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
-          <Reveal>
-            <h2 className="text-2xl font-bold text-ink">The check that protects your recommendation</h2>
-            <p className="mt-2 max-w-2xl text-[15px] text-ink-2">
-              When a supplier goes wrong, it&rsquo;s your client&rsquo;s money — and your name on the
-              recommendation. A report answers the three questions that matter before anyone wires a deposit:
-            </p>
-            <dl className="mt-6 space-y-4">
-              {PARTNER_AREAS.map((k) => (
-                <div key={k} className="rounded-card border border-line bg-base p-5">
-                  <dt className="text-[15px] font-bold text-ink">{AREA_NAMES[k]}</dt>
-                  <dd className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{AREA_DEFS[k]}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-4 text-[13px] text-muted">
-              Reports state plainly what was verified, what was assessed, and what could not be established —
-              you pass the evidence to your client, not just a yes or no.
-            </p>
-          </Reveal>
+      <PageSection tone="mist">
+        <h2 className="text-ink">What a report gives you to hand over</h2>
+        <Prose className="mt-3">
+          <p>
+            One verdict, in {CASE_SLA_HOURS} hours. The findings and every source behind them. What
+            could not be confirmed, stated plainly. And a set of questions written for that specific
+            supplier, which your client can send themselves.
+          </p>
+          <p>
+            That last part tends to be the one clients remember. You gave them something to do, not
+            just an opinion.
+          </p>
+        </Prose>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/sample-report"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-action px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-anchor"
+          >
+            See a real report
+          </Link>
+          <Link
+            href="/how-to-read"
+            className="inline-flex min-h-11 items-center justify-center rounded-control border border-control-border bg-surface px-5 py-2.5 text-[14px] font-semibold text-ink-2 transition-colors hover:bg-subtle"
+          >
+            How to read one
+          </Link>
         </div>
-      </section>
+      </PageSection>
 
-      {/* THE TWO VISITORS NEVER COLLIDE (ruled 1g, 2026-08-22): an ?invited=1 arrival already
-          holds a grant — the banner above is their whole path, and this request section does not
-          render for them (asking them to request what they hold was the old mailto section's
-          quiet collision). Cold visitors get the in-page request form — the mailto is dead: it
-          failed silently without a mail client and captured nothing (ruled 1a/1b). */}
+      <PageSection tone="surface">
+        <h2 className="text-ink">The same questions, every time</h2>
+        <Prose className="mt-3">
+          <p>The value to you is consistency more than depth.</p>
+          <p>
+            You assess suppliers on good weeks and bad ones. A method that does not vary means the
+            supplier you check when you are busy gets the same treatment as the one you check when
+            you are curious — and your client gets the same standard either way.
+          </p>
+          <p>
+            Two reports on the same evidence reach the same verdict. That is what makes a report
+            something you can put your name next to.
+          </p>
+        </Prose>
+      </PageSection>
+
+      <PageSection tone="pale">
+        <h2 className="text-ink">What we won&rsquo;t do for you</h2>
+        <Prose className="mt-3">
+          <p>
+            We will not tell your client a supplier is authorized, that they will get ungated, or
+            that their account is safe. We will not do it for you either.
+          </p>
+          <p>
+            If a report is going to sit under your recommendation, it is worth knowing that it will
+            not overstate anything to make your recommendation look better. That is the point of it.
+          </p>
+        </Prose>
+        <RelatedLinks
+          links={[
+            { label: "What we check", href: "/what-we-check" },
+            { label: "What we don't do", href: "/what-we-dont-do" },
+            { label: "See a real report", href: "/sample-report" },
+            { label: "Contact us", href: "/contact" },
+          ]}
+        />
+      </PageSection>
+
+      {/* ⛔ UNTOUCHED — the request form and its copy are queued separately (founder ruling 2). */}
       {inviteState !== "banner" && (
         <section className="border-t border-line bg-base">
           <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">

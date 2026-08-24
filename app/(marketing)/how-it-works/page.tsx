@@ -3,16 +3,19 @@ import { Reveal } from "@/components/marketing/reveal";
 import { PageHero, PageSection, Prose, RelatedLinks, PageCta } from "@/components/marketing/page-shell";
 import { AREAS } from "@/lib/content/whatWeCheck";
 import { VERDICT_COPY, VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
-import { CASE_SLA_HOURS, PLAN_BRAND_CAPS } from "@/lib/constants/plans";
+import { CASE_SLA_HOURS, PLAN_BRAND_CAPS, PLAN_PRICE_LABEL } from "@/lib/constants/plans";
+import { uploadPlanNames } from "@/lib/content/planFacts";
 
 // /how-it-works — conversion support. The reader is close to buying and wants to know what happens.
 //
-// ONE COPY ACCURACY FLAG, raised not fixed: the content file says "If you have an invoice or a
-// quote, upload it" without qualification, but app/api/cases/submit/route.ts:117 REFUSES uploads
-// on single_99 server-side ("$99 takes no uploads", founder-ruled 2026-08-07) — Documentation
-// Review does not run on that tier, so accepting files would falsely imply review. A $99 buyer
-// following this sentence hits a 400. The sentence below is the founder's, unedited; the tier
-// qualification is added around it rather than inside it.
+// FOUNDER RULING 3 (2026-08-24) — the upload line now says what the server does. submit/route.ts
+// REFUSES uploads on single_99, so a $99 buyer following an unqualified "upload it" hit a 400.
+//
+// THE PLAN NAMES ARE DERIVED, not typed. The ruling said "uploads are Growth and above", which is
+// true of what is ON SALE but not of the predicate: planAcceptsUploads is "every plan except
+// single_99", and that INCLUDES Single Deep ($149) — a one-time tier priced BELOW Growth, off sale
+// only while KEEPA_LIVE is false. uploadPlanNames() intersects PLANS_ON_SALE with the predicate, so
+// the sentence reads "Growth" today and gains Single Deep the day it opens, with no edit here.
 
 export const metadata: Metadata = {
   title: "How It Works | HyprrIQ Supplier Reports",
@@ -44,8 +47,16 @@ export default function HowItWorksPage() {
                   sell on, and any paperwork you already have.
                 </p>
                 <p>
-                  If you have an invoice or a quote, upload it — document review is part of the
-                  Single Deep report and up. Documentation Review works from what you give us.
+                  If you have an invoice or a quote, upload it — document review runs on{" "}
+                  {uploadPlanNames().join(" and ")}. Documentation Review works from what you give
+                  us.
+                </p>
+                <p>
+                  <strong>
+                    The {PLAN_PRICE_LABEL.single_99} single report takes no document upload.
+                  </strong>{" "}
+                  Documentation Review does not run on it, so there would be nothing to read — the
+                  submit form does not accept a file on that plan.
                 </p>
                 <p>Takes about two minutes.</p>
               </Prose>

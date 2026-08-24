@@ -23,8 +23,10 @@
 // drops the number. Flagged to the founder rather than silently shipped either way.
 
 import {
-  PLAN_BRAND_CAPS, PLAN_CREDITS_PER_CYCLE, PLAN_CATEGORY, CASE_SLA_HOURS, type PlanType,
+  PLAN_BRAND_CAPS, PLAN_CREDITS_PER_CYCLE, PLAN_CATEGORY, PLAN_NAME, PLAN_TYPES,
+  PLAN_ROLLOVER_LIMIT, CASE_SLA_HOURS, planOnSale, type PlanType,
 } from "@/lib/constants/plans";
+import { planAcceptsUploads } from "@/lib/constants/uploads";
 import {
   requiredFindingTracks, trackByNumber, isAssessmentArea, ASSESSMENT_AREA_KEYS,
 } from "@/lib/constants/tracks";
@@ -72,6 +74,32 @@ export function areaSplitForPlan(plan: PlanType): { included: AreaCopy[]; exclud
     included: AREAS.filter((a) => runs.has(a.key)),
     excluded: AREAS.filter((a) => !runs.has(a.key)),
   };
+}
+
+/**
+ * The plans A BUYER CAN ACTUALLY BUY TODAY that accept a document upload.
+ *
+ * FOUNDER RULING 3 (2026-08-24) said "$99 has no upload; uploads are Growth and above". The first
+ * half is the invariant; the second half is true only of what is ON SALE. `planAcceptsUploads` is
+ * "every plan except single_99", which INCLUDES Single Deep ($149) — a one-time tier priced BELOW
+ * Growth. It is off sale today only because KEEPA_LIVE is false, so "Growth and above" would become
+ * wrong the day it opens, on a page nobody would think to re-read.
+ *
+ * Deriving it from PLANS_ON_SALE ∩ planAcceptsUploads means the sentence is right today and right
+ * the moment a tier returns to sale, without anyone editing prose.
+ */
+export function uploadPlanNames(): string[] {
+  return PLAN_TYPES.filter((p) => planOnSale(p) && planAcceptsUploads(p)).map((p) => PLAN_NAME[p]);
+}
+
+/** Rollover, in the words a client reads. Derived from PLAN_ROLLOVER_LIMIT (founder ruling 5). */
+export function rolloverAnswer(): string {
+  const rolling = PLAN_TYPES.filter((p) => planOnSale(p) && PLAN_ROLLOVER_LIMIT[p] > 0)
+    .map((p) => `${PLAN_NAME[p]} carries up to ${PLAN_ROLLOVER_LIMIT[p]}`)
+    .join(", ");
+  return rolling
+    ? `Yes, on the monthly plans — ${rolling} unused credits into the next cycle. A single report does not roll over: it is a one-time purchase rather than a monthly allowance, so there is no cycle for it to roll into.`
+    : "Single reports do not roll over — they are one-time purchases rather than a monthly allowance.";
 }
 
 export function factsForPlan(plan: PlanType): PlanFact[] {
