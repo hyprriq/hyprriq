@@ -120,6 +120,24 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > title 60→20px · `/sign-in` "Welcome back" 60→30px · `h2.text-2xl` 46→24px · **marketing h1
 > 60→60px, unchanged** — marketing keeps the ruled scale because those pages write no utility.
 >
+> **THE OTHER TWO UNLAYERED RULES IN `globals.css` — FOUNDER-RULED 2026-08-24: LEAVE BOTH.**
+> Flagged is enough; they were deliberately NOT swept in this sitting. They are not the same thing
+> as each other, and the difference is the point:
+>
+> - `p { text-wrap: pretty }` — **latent, cosmetic, low blast radius.** Unlayered, so it would beat
+>   a `text-pretty`/`text-balance` utility on a paragraph. Nobody has hit it. Stays flagged; fix it
+>   only if it actually bites.
+>
+> - ⛔ `:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible { outline: … }`
+>   — **DO NOT "FIX" THIS. Unlayered is CORRECT here, not a latent bug.** It is the WCAG 2.1 AA
+>   focus indicator (1.4.11), and being unlayered is exactly what makes it *unremovable by an
+>   accidental utility*: a `focus-visible:outline-none` sitting in `@layer utilities` loses to it.
+>   Wrapping it in `@layer base` — the obvious move for anyone repeating the cascade audit that
+>   found ① — would make the focus ring **overridable**, and would silently weaken an accessibility
+>   control to make a stylesheet look tidy. The `:where()` keeps its specificity at 0 so a
+>   deliberate, specific override is still possible; the layer position is what stops a careless
+>   one. **If a future sweep proposes layering this rule, that sweep is wrong.**
+>
 > **② ONE SHARED APP HEADER** — `components/app/app-header.tsx`, rendered by both shells. The bars
 > had disagreed on every value (64 vs 56px, sticky vs not, bg-base vs bg-surface, text-xl vs
 > text-lg). `APP_SHELL_TOP = 64` is **the one value**: it drives the header height AND the sidebar
