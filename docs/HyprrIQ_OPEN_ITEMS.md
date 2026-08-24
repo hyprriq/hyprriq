@@ -120,7 +120,40 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 | **I6** | **`/contact` is a REAL form** — new public endpoint, ruled abuse posture (server validation, honeypot before rate limit, per-IP brake, no CAPTCHA). ⚠ EMAIL IS THE ONLY RECORD: no contact table exists and creating one is a migration, so a failed send LOSES the message and the route returns 502 rather than a false success | ✅ SHIPPED, flagged |
 | **I7** | **Mobile, MEASURED at 360/390/430px** — zero horizontal overflow on every page, one h1 per page, body 16px, and zero standalone controls under 44px. `/pricing`'s table scrolls in its own box | ✅ MEASURED |
 
-> **⛔ `/sample-report` IS NOT BUILT — the brief and the content file contradict each other.**
+> **SEVEN RULINGS APPLIED — 2026-08-24 (second pass).**
+> | # | Ruling | State |
+> |---|---|---|
+> | 1 | Warm/cool narrowed — verdict hues reserved on report surfaces only; the ~40 existing and ~7 homepage uses stay | ✅ no action needed, nothing recoloured |
+> | 2 | `/how-to-read` launches (side-stripes + cream gradient gone); `/partners` BUILT | ✅ SHIPPED — banners and request form untouched per the ruling's scope |
+> | 3 | `/how-it-works` upload line says `$99` has no upload | ✅ SHIPPED, **derived** — see correction below |
+> | 4 | One wordmark product-wide; the marketing text lockup wins | ✅ SHIPPED — `components/brand/wordmark.tsx` replaced, API unchanged, zero call sites edited |
+> | 5 | Credit rollover answered from `PLAN_ROLLOVER_LIMIT` | ✅ SHIPPED, derived from the constant + `PLANS_ON_SALE` |
+> | 6 | Pricing tabs work without JavaScript | ✅ SHIPPED — measured switching with no `use client` |
+> | 7 | Banned-language false positives stay recorded, not fixed | ✅ no action — list + staleness test stand |
+>
+> **ONE CORRECTION TO RULING 3, and the reason the copy is derived rather than typed.** The ruling
+> said "uploads are Growth and above". `planAcceptsUploads` is *every plan except `single_99`*,
+> which INCLUDES Single Deep ($149) — a one-time tier priced BELOW Growth, off sale today only
+> because `KEEPA_LIVE` is false. "Growth and above" is true of what is on sale and goes wrong the
+> day $149 opens. `uploadPlanNames()` intersects `PLANS_ON_SALE` with the predicate, so the sentence
+> reads "Growth" today and gains Single Deep by itself.
+>
+> **THE PRICING TABS COST THREE FAILED APPROACHES**, recorded in the component so nobody repeats
+> them: Tailwind's named-peer variants (`peer-checked/single:`) were NEVER EMITTED for those class
+> names, verified against the generated stylesheet; the `background` shorthand lost to the label's
+> `transition-colors`, which watches `background-color`; and a rule that MATCHED the label
+> (confirmed with `.matches()`) still would not paint it. The shipped version rides `display`, the
+> one mechanism measured working there, and renders the strip twice — once per selection.
+>
+> **FLAGGED after ruling 2:** `/partners`'s invite banners and request form now sit inside a page
+> built on the new system and read a step older than everything around them (the banner CTA is
+> still `rounded-lg bg-ink`, and "Request access" is the one control still under 44px on that page).
+> That is the cost of the ruling's scoping, and it is visible.
+
+> **⛔ `/sample-report` — CONTRADICTION RESOLVED, WAITING ON THE CASE (founder ruling 1, 2026-08-24).**
+> The founder supplies the case and names it; dev does the masking and the page. Every delivered
+> case is his or the house account, so there is no third-party client data — which was the blocker.
+> **Still waiting on the case reference.** The original contradiction, for the record:
 > `HyprrIQ_DEV_BRIEF.md` says "The page is a frame around a report that does not exist yet. Build
 > the report… take a real delivered case and redact it." `HyprrIQ_CONTENT_FINAL.md` line 552 says
 > **"[THE REPORT ITSELF GOES HERE — GAUTAM TO SUPPLY]"**. Both cannot be followed. Beyond the
