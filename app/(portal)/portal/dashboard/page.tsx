@@ -101,7 +101,7 @@ export default async function DashboardPage() {
     return (
       <PortalShell client={client} active="dashboard" title="Dashboard">
         <div className="mb-1">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
+          <h2 className="font-display text-base font-bold tracking-tight text-ink">
             {firstName ? `Welcome, ${firstName}` : "Welcome to HyprrIQ"}
           </h2>
           <p className="mt-1 text-sm text-ink-2">Let&rsquo;s get your first supplier vetted.</p>
@@ -153,8 +153,8 @@ export default async function DashboardPage() {
   return (
     <PortalShell client={client} active="dashboard" title="Dashboard">
       <div className="mb-5">
-        <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
-          {firstName ? `Good day, ${firstName} 👋` : "Welcome to HyprrIQ 👋"}
+        <h2 className="font-display text-base font-bold tracking-tight text-ink">
+          {firstName ? `Good day, ${firstName}` : "Welcome to HyprrIQ"}
         </h2>
         <p className="mt-1 text-sm text-ink-2">
           {empty

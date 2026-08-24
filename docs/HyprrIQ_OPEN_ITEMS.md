@@ -105,6 +105,49 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-K. PORTAL AND ADMIN ON MOBILE — 2026-08-24 (design sitting three)
+
+> **THE PREMISE WAS INVERTED, AND THE FOUNDER RECORDED IT AS SUCH.** "The portal does not load on
+> mobile" was carried from an old backlog note and never verified. Measured this sitting: the
+> portal loads, is responsive, and has had a working mobile drawer since the 1.4 build. **Admin was
+> the shell with no mobile mode at all.**
+
+**The 5a diagnosis, measured not read:**
+
+| Check | Result |
+|---|---|
+| `/portal/*` routing | 302 → `/sign-in?redirect_url=…` → 200. No loop, no crash |
+| `/grant/[code]` | invalid code correctly lands on `/partners?invite=inactive` |
+| Viewport meta | Next sets it automatically — not a factor |
+| `/sign-in`, `/sign-up`, `/partners` @360/390 | zero overflow, Clerk mounts |
+| **Real `ReportView`, real data (AWI-2608-037) @360/390/430** | **zero horizontal overflow at all three** |
+| `<table>` in portal | none — the portal is card/list based |
+| Fixed widths in portal | 3, all bounded (`max-w-[84vw]`, `max-w-[1200px]`, a flexible `min-w-[120px]`) |
+| **`components/admin/admin-shell.tsx:121`** | **fixed `w-[248px]` sidebar, no responsive prefix, no drawer, no hamburger** |
+
+| # | Item | State |
+|---|---|---|
+| **K1** | **THE MOBILE FLOOR.** 36 client form controls raised to 16px with 44px height. iOS Safari zooms the page when a focused input is under 16px AND DOES NOT ZOOM BACK — every portal field was 14px, including the submit form. **This is very likely the origin of the original note: the portal loads, and the first tap on a field breaks the viewport.** Locked | ✅ SHIPPED |
+| **K2** | **THE `text-base` COLLISION — RENAMED (ruling 1, option a).** `--color-base` → `--color-canvas`; 132 call sites moved. MEASURED: `text-base` on an element inheriting 11px now yields **16px** with colour still inherited. A new lock fails any colour token named after a Tailwind size utility | ✅ SHIPPED |
+| **K3** | **ADMIN GETS THE SHARED DRAWER.** `shell-chrome.tsx` moves to `components/app/`; admin renders through the same chrome as the portal and keeps its dense full-width content via a new `contentClassName`. Ruling 5d respected — nothing restyled | ✅ SHIPPED |
+| **K4** | **Grid stacking**, judged per grid: three stack (labelled stat trio, paired fields, City/State/ZIP), two keep their columns (short-label tiles, comfortable at ~160px) | ✅ SHIPPED |
+| **K5** | **`/partners` items 6 and 7** — "Request access" reaches 44px; the form and banner button move off the pre-ruling `rounded-lg bg-ink`. Banner COPY and its grant re-check are untouched | ✅ SHIPPED |
+| **K6** | **RULING 3, my call:** the dashboard greeting drops from 24px to the 16px section rung (it duplicated the page title directly above it) and the 👋 is removed — it read consumer-app on the surface where a client is about to read a verdict about someone's business | ✅ SHIPPED |
+
+> **5f — THE PDF IS NOT LEGIBLE ON A PHONE.** `@page{size:letter}` (8.5in) with 10pt body
+> (`lib/pdf/reportTemplate.ts:242,247`). On a 390px screen that scales to ~46%, rendering 10pt at
+> roughly 4.6pt effective. It requires pinch-zoom. NOT redesigned, per the ruling — reported only.
+> This matters because a PDF opened on a phone is the most common way a client will read a report.
+
+> **STILL OPEN — the portal's reading sizes.** The portal carries 105 × 13px, 94 × 14px, 82 ×
+> `text-sm`, 44 × 12px. The FORM CONTROLS are fixed (K1), which was the functional half. The
+> READING half — body prose in the report view and case detail — is not, and it is deliberately not
+> a find-and-replace: ruling 4 fixes the ladder at 24 → 16 → 13, so promoting every 13px to 16px
+> would collapse meta into the section rung and destroy the ladder. It needs a semantic prose class
+> applied to the ~30 body-copy usages in `report-view.tsx`, not a sweep of 380.
+
+---
+
 ## 0-J. APP SHELL ALIGNMENT + A CASCADE BUG — 2026-08-24 (portal/admin, dev lane)
 
 > Portal and admin only. No marketing file touched — the UI/UX thread owns those.
