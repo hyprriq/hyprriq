@@ -81,7 +81,7 @@ export function SupportForm({
           <select
             value={typeIdx}
             onChange={(e) => setTypeIdx(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
           >
             {TYPE_OPTIONS.map((o, i) => (
               <option key={o.label} value={i}>{o.label}</option>
@@ -94,7 +94,7 @@ export function SupportForm({
           <select
             value={caseId}
             onChange={(e) => setCaseId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
           >
             <option value="">Select a case…</option>
             {cases.map((c) => (
@@ -110,7 +110,7 @@ export function SupportForm({
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
           />
         </label>
 
@@ -121,7 +121,7 @@ export function SupportForm({
             onChange={(e) => setMessage(e.target.value)}
             rows={5}
             placeholder="Describe your question or issue…"
-            className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+            className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
           />
         </label>
 

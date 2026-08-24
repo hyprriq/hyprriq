@@ -100,7 +100,7 @@ export function DashboardPreview() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
         style={{
-          background: "linear-gradient(to bottom, rgba(250,249,247,0), var(--color-base))",
+          background: "linear-gradient(to bottom, rgba(250,249,247,0), var(--color-canvas))",
         }}
       />
     </div>

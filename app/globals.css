@@ -24,7 +24,7 @@
 
 @theme {
   /* ── Neutrals — cool grey, near-zero chroma. Not warm paper, not violet. ──────────────────── */
-  --color-base: #f6f9fb;
+  --color-canvas: #f6f9fb;
   --color-surface: #ffffff;
   --color-subtle: #ecf1f3;
   /* Tinted section grounds. They alternate rhythm; none of them carries meaning. */
@@ -157,7 +157,7 @@ html {
 }
 
 body {
-  background-color: var(--color-base);
+  background-color: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   /* cv11 = single-storey `a`, ss03 = disambiguated l/I. Small, and it matters when someone is

@@ -103,17 +103,17 @@ export default async function BillingPage() {
                 ) : null}
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-line bg-base p-3">
+                <div className="rounded-lg border border-line bg-canvas p-3">
                   <div className="text-[12px] uppercase tracking-wide text-muted">Credits Available</div>
                   <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{cv.available}</div>
                   <div className="text-[12px] text-muted">{cv.perCycle > 0 ? `plan renews to ${cv.perCycle}/cycle` : "—"}</div>
                 </div>
-                <div className="rounded-lg border border-line bg-base p-3">
+                <div className="rounded-lg border border-line bg-canvas p-3">
                   <div className="text-[12px] uppercase tracking-wide text-muted">Rollover</div>
                   <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{rollover}</div>
                   <div className="text-[12px] text-muted">max carry-forward</div>
                 </div>
-                <div className="rounded-lg border border-line bg-base p-3">
+                <div className="rounded-lg border border-line bg-canvas p-3">
                   <div className="text-[12px] uppercase tracking-wide text-muted">Renews</div>
                   <div className="mt-0.5 font-display text-base font-extrabold text-ink">{fmtDate(client.renewal_date)}</div>
                   <div className="text-[12px] text-muted">{renewDays !== null ? `${renewDays} days` : "—"}</div>
@@ -145,7 +145,7 @@ export default async function BillingPage() {
                   checkout route refuses off-sale tiers regardless of what any UI shows. */}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {PLANS_ON_SALE.map((p) => (
-                  <div key={p} className="flex flex-col rounded-lg border border-line bg-base p-4">
+                  <div key={p} className="flex flex-col rounded-lg border border-line bg-canvas p-4">
                     <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
                     <div className="mt-0.5 text-[13px] text-muted">
                       {PLAN_PRICE_LABEL[p]} {PLAN_CADENCE[p]}
@@ -206,7 +206,7 @@ export default async function BillingPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               {/* On-sale subscriptions only (2026-08-22) — derived, never a second list. */}
               {PLANS_ON_SALE.filter((p) => PLAN_CATEGORY[p] === "subscription").map((p) => (
-                <div key={p} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-base p-4">
+                <div key={p} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas p-4">
                   <div>
                     <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
                     <div className="text-[13px] text-muted">

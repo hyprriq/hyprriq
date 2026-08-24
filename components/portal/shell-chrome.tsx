@@ -37,7 +37,7 @@ export function ShellChrome({
   }, [open]);
 
   return (
-    <div className="flex min-h-dvh bg-base">
+    <div className="flex min-h-dvh bg-canvas">
       {/* sidebar: static column ≥lg, slide-in drawer below */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-[272px] max-w-[84vw] transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-[248px] lg:max-w-none lg:translate-x-0 lg:transition-none ${

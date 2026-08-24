@@ -165,7 +165,7 @@ export function OnboardingFlow({
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-base px-5 py-10">
+    <div className="grid min-h-dvh place-items-center bg-canvas px-5 py-10">
       <div className="w-full max-w-md rounded-card border border-line bg-surface p-7 shadow-sm">
         <div className="mb-6 flex items-center justify-center gap-2">
           {STEPS.map((s) => (
@@ -196,7 +196,7 @@ export function OnboardingFlow({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 />
               </label>
               <label className="block">
@@ -206,7 +206,7 @@ export function OnboardingFlow({
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Agarwal Trading LLC"
-                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -216,7 +216,7 @@ export function OnboardingFlow({
                     type="text"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                   />
                 </label>
                 <label className="block">
@@ -226,7 +226,7 @@ export function OnboardingFlow({
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="+1 555 000 0000"
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                 </label>
               </div>
@@ -235,7 +235,7 @@ export function OnboardingFlow({
                 <select
                   value={marketplace}
                   onChange={(e) => setMarketplace(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 >
                   <option value="">Select…</option>
                   {PRIMARY_MARKETPLACES.map((m) => (
@@ -251,7 +251,7 @@ export function OnboardingFlow({
                     value={marketplaceOther}
                     onChange={(e) => setMarketplaceOther(e.target.value)}
                     placeholder="e.g. Etsy, Wayfair"
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                 </label>
               )}
@@ -260,7 +260,7 @@ export function OnboardingFlow({
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                 >
                   <option value="">Select…</option>
                   {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -276,7 +276,7 @@ export function OnboardingFlow({
                 {showMore ? "− Hide additional details" : "+ Add billing address & other marketplaces (optional)"}
               </button>
               {showMore && (
-                <div className="space-y-4 rounded-lg border border-line bg-base/50 p-3">
+                <div className="space-y-4 rounded-lg border border-line bg-canvas/50 p-3">
                   <div>
                     <span className="text-[13px] font-medium text-ink">I also sell on</span>
                     <div className="mt-2 flex flex-wrap gap-4">
@@ -293,35 +293,35 @@ export function OnboardingFlow({
                   {sellsAmazon && (
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">Amazon store name</span>
-                      <input type="text" value={amazonStore} onChange={(e) => setAmazonStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                      <input type="text" value={amazonStore} onChange={(e) => setAmazonStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   )}
                   {sellsWalmart && (
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">Walmart store name</span>
-                      <input type="text" value={walmartStore} onChange={(e) => setWalmartStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                      <input type="text" value={walmartStore} onChange={(e) => setWalmartStore(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   )}
                   <label className="block">
                     <span className="text-[13px] font-medium text-ink">Billing address line 1</span>
-                    <input type="text" value={addr1} onChange={(e) => setAddr1(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                    <input type="text" value={addr1} onChange={(e) => setAddr1(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                   </label>
                   <label className="block">
                     <span className="text-[13px] font-medium text-ink">Billing address line 2</span>
-                    <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                    <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">City</span>
-                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">State</span>
-                      <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                      <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">ZIP</span>
-                      <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
+                      <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                     </label>
                   </div>
                 </div>
@@ -366,7 +366,7 @@ export function OnboardingFlow({
 
             {plan ? (
               <>
-                <div className="mt-5 rounded-card border border-line bg-base p-5">
+                <div className="mt-5 rounded-card border border-line bg-canvas p-5">
                   <div className="font-display text-lg font-extrabold text-brand">{PLAN_NAME[plan]} Plan</div>
                   <div className="mt-0.5 text-xs text-muted">
                     {PLAN_PRICE_LABEL[plan]} {PLAN_CADENCE[plan]}
@@ -417,7 +417,7 @@ export function OnboardingFlow({
                   {/* On-sale plans only (founder-locked 2026-08-22) — the checkout route
                       refuses off-sale tiers regardless; this picker simply tells the truth. */}
                   {PLANS_ON_SALE.map((p) => (
-                    <div key={p} className="flex items-center justify-between gap-3 rounded-card border border-line bg-base p-4">
+                    <div key={p} className="flex items-center justify-between gap-3 rounded-card border border-line bg-canvas p-4">
                       <div>
                         <div className="font-display text-base font-extrabold text-brand">{PLAN_NAME[p]}</div>
                         <div className="text-[13px] text-muted">
@@ -463,7 +463,7 @@ export function OnboardingFlow({
               Submit your first request and receive a structured verdict on your
               supplier within {CASE_SLA_HOURS} hours.
             </p>
-            <div className="mt-5 rounded-card border border-line bg-base p-5">
+            <div className="mt-5 rounded-card border border-line bg-canvas p-5">
               <div className="text-[14px] font-semibold text-ink">
                 What happens when you submit
               </div>

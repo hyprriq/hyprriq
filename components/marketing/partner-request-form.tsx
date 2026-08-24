@@ -64,7 +64,7 @@ export function PartnerRequestForm() {
             value={name}
             maxLength={120}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
+            className="mt-1 block w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
           />
         </label>
         <label className="text-[12px] font-semibold text-muted">
@@ -75,7 +75,7 @@ export function PartnerRequestForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
-            className="mt-1 block w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
+            className="mt-1 block w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
           />
         </label>
         <label className="text-[12px] font-semibold text-muted">
@@ -83,7 +83,7 @@ export function PartnerRequestForm() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2 text-[16px] font-normal text-ink focus:border-line-strong focus:outline-none"
+            className="mt-1 block w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2 text-[16px] font-normal text-ink focus:border-line-strong focus:outline-none"
           >
             {ROLE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -95,7 +95,7 @@ export function PartnerRequestForm() {
           <select
             value={band}
             onChange={(e) => setBand(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2 text-[16px] font-normal text-ink focus:border-line-strong focus:outline-none"
+            className="mt-1 block w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2 text-[16px] font-normal text-ink focus:border-line-strong focus:outline-none"
           >
             {CLIENTS_BAND_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -112,7 +112,7 @@ export function PartnerRequestForm() {
           rows={2}
           onChange={(e) => setNote(e.target.value)}
           placeholder="e.g. the supplier category you mostly source, or a supplier you'd try this on"
-          className="mt-1 block w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
+          className="mt-1 block w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2 text-[16px] font-normal text-ink placeholder:text-muted focus:border-line-strong focus:outline-none"
         />
       </label>
 

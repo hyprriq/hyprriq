@@ -158,7 +158,7 @@ export default function SampleReportPage() {
               ))}
 
               {/* The ruled non-voting emitter, under its own subhead — correct by design. */}
-              <section className="rounded-card border border-line bg-base p-4 sm:p-5">
+              <section className="rounded-card border border-line bg-canvas p-4 sm:p-5">
                 <p className="font-mono text-[9.5px] uppercase tracking-[0.13em] text-muted">
                   Checks that don&rsquo;t affect the verdict
                 </p>
@@ -173,7 +173,7 @@ export default function SampleReportPage() {
             </div>
 
             {/* Certainty key */}
-            <div className="mt-8 grid gap-3 rounded-card border border-line bg-base p-4 sm:grid-cols-3 sm:p-5">
+            <div className="mt-8 grid gap-3 rounded-card border border-line bg-canvas p-4 sm:grid-cols-3 sm:p-5">
               {([["Verified", CHIP_DEFS.verified], ["Assessed", CHIP_DEFS.assessed], ["Not assessed", CHIP_DEFS.not_assessed]] as const).map(
                 ([label, def]) => (
                   <div key={label}>

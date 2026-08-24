@@ -24,7 +24,7 @@ export function PageHero({
   lede?: string;
   ground?: "base" | "pale" | "mist" | "sand";
 }) {
-  const bg = { base: "bg-base", pale: "bg-pale", mist: "bg-mist", sand: "bg-sand" }[ground];
+  const bg = { base: "bg-canvas", pale: "bg-pale", mist: "bg-mist", sand: "bg-sand" }[ground];
   return (
     <header className={`border-b border-line ${bg}`}>
       <div className="mx-auto max-w-[1180px] px-5 py-12 sm:py-20 lg:px-10">
@@ -52,7 +52,7 @@ export function PageSection({
   id?: string;
 }) {
   const bg = {
-    surface: "bg-surface", base: "bg-base", pale: "bg-pale", mist: "bg-mist", sand: "bg-sand",
+    surface: "bg-surface", base: "bg-canvas", pale: "bg-pale", mist: "bg-mist", sand: "bg-sand",
   }[tone];
   return (
     <section id={id} className={`border-b border-line ${bg} ${className}`}>

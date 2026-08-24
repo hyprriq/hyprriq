@@ -73,13 +73,13 @@ export function OutcomePanel({ caseId, existing }: { caseId: string; existing: C
       ) : (
         <div className="mt-2 space-y-2">
           <select value={outcomeType} onChange={(e) => setOutcomeType(e.target.value)}
-            className="w-full rounded-lg border border-line bg-base px-3 py-2 text-[13px] text-ink outline-none focus:border-brand">
+            className="w-full rounded-lg border border-line bg-canvas px-3 py-2 text-[13px] text-ink outline-none focus:border-brand">
             <option value="">What happened with this supplier?</option>
             {OUTCOME_TYPES.map((t) => <option key={t} value={t}>{OUTCOME_LABELS[t]}</option>)}
           </select>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
             placeholder="Notes (optional) — what happened, when, how it was resolved."
-            className="w-full resize-y rounded-lg border border-line bg-base px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted focus:border-brand" />
+            className="w-full resize-y rounded-lg border border-line bg-canvas px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted focus:border-brand" />
           <div className="flex items-center gap-2 text-[12px] text-muted">
             <span>Prediction:</span>
             <button type="button" onClick={() => setCorrect(correct === true ? null : true)}

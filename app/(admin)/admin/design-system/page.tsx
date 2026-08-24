@@ -69,7 +69,7 @@ function Swatch({ name, hex, on, floor = FLOOR }: { name: string; hex: string; o
 }
 
 const GROUNDS: [string, string][] = [
-  ["surface", NEUTRAL.surface], ["base", NEUTRAL.base], ["subtle", NEUTRAL.subtle],
+  ["surface", NEUTRAL.surface], ["base", NEUTRAL.canvas], ["subtle", NEUTRAL.subtle],
   ["mist", NEUTRAL.mist], ["pale", NEUTRAL.pale], ["sand", NEUTRAL.sand],
 ];
 
@@ -141,7 +141,7 @@ export default async function DesignSystemPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <dt className="font-mono text-[11px] text-muted">ink on --base</dt>
-                      <dd><Ratio fg={v.ink} bg={NEUTRAL.base} /></dd>
+                      <dd><Ratio fg={v.ink} bg={NEUTRAL.canvas} /></dd>
                     </div>
                   </dl>
                 </div>
@@ -202,11 +202,11 @@ export default async function DesignSystemPage() {
           note="Petrol anchors the brand; the four accents are wayfinding only. Cool hues may never mean a verdict, and the verdict hues never appear here — that is the whole organising rule, and it is what makes the two systems independent."
         >
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Swatch name="--anchor" hex={BRAND.anchor} on={[["base", NEUTRAL.base], ["surface", NEUTRAL.surface], ["brand-tint", BRAND.tint]]} />
-            <Swatch name="--action" hex={BRAND.action} on={[["base", NEUTRAL.base], ["surface", NEUTRAL.surface], ["sand", NEUTRAL.sand]]} />
+            <Swatch name="--anchor" hex={BRAND.anchor} on={[["base", NEUTRAL.canvas], ["surface", NEUTRAL.surface], ["brand-tint", BRAND.tint]]} />
+            <Swatch name="--action" hex={BRAND.action} on={[["base", NEUTRAL.canvas], ["surface", NEUTRAL.surface], ["sand", NEUTRAL.sand]]} />
             <Swatch name="--brand-tint" hex={BRAND.tint} on={[["(ground for anchor)", BRAND.anchor]]} floor={NON_TEXT} />
-            <Swatch name="--blue" hex={ACCENT.blue} on={[["base", NEUTRAL.base], ["blue-tint", ACCENT.blueTint]]} />
-            <Swatch name="--cyan" hex={ACCENT.cyan} on={[["base", NEUTRAL.base], ["cyan-tint", ACCENT.cyanTint], ["hero grad", "#E4F0F1"]]} />
+            <Swatch name="--blue" hex={ACCENT.blue} on={[["base", NEUTRAL.canvas], ["blue-tint", ACCENT.blueTint]]} />
+            <Swatch name="--cyan" hex={ACCENT.cyan} on={[["base", NEUTRAL.canvas], ["cyan-tint", ACCENT.cyanTint], ["hero grad", "#E4F0F1"]]} />
             <Swatch name="--plum" hex={ACCENT.plum} on={[["pale", NEUTRAL.pale], ["plum-tint", ACCENT.plumTint]]} />
             <Swatch name="--violet" hex={ACCENT.violet} on={[["sand", NEUTRAL.sand], ["violet-tint", ACCENT.violetTint]]} />
           </div>

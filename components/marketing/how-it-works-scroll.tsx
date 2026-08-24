@@ -149,7 +149,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium text-muted">{label}</p>
-      <div className="rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink">
+      <div className="rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink">
         {value}
       </div>
     </div>

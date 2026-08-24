@@ -78,7 +78,7 @@ export function AuthShell({
     <div className="grid min-h-dvh md:grid-cols-2">
       <BrandPanel variant={variant} />
 
-      <div className="flex flex-col justify-center bg-base px-5 py-12 sm:px-10">
+      <div className="flex flex-col justify-center bg-canvas px-5 py-12 sm:px-10">
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile-only wordmark (brand panel hidden below md) */}
           <Link href="/" aria-label="HyprrIQ home" className="mb-8 inline-block md:hidden">

@@ -72,7 +72,7 @@ export function RunCaseForm() {
     );
   }
 
-  const field = "mt-1 w-full rounded-lg border border-line bg-base px-3 py-2 text-[13px] text-ink";
+  const field = "mt-1 w-full rounded-lg border border-line bg-canvas px-3 py-2 text-[13px] text-ink";
   const label = "block text-[12px] font-semibold text-muted";
   const group = "text-[11px] font-semibold uppercase tracking-wide text-muted";
   const uploadHint =

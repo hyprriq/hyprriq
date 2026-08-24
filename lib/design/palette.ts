@@ -22,7 +22,7 @@
 /** Neutrals — cool grey, near-zero chroma. Not warm paper, not violet. */
 export const NEUTRAL = {
   /** canvas — the page ground */
-  base: "#F6F9FB",
+  canvas: "#F6F9FB",
   /** cards, panels, anything raised */
   surface: "#FFFFFF",
   /** insets, table headers, sunk wells */
@@ -33,9 +33,9 @@ export const NEUTRAL = {
   pale: "#F0F6F7",
   /** tinted section ground — the one warm-ish neutral, and it carries no meaning */
   sand: "#F5F3EE",
-  /** primary text — 16.89:1 on base */
+  /** primary text — 16.89:1 on canvas */
   ink: "#0E191D",
-  /** secondary text — 8.89:1 on base */
+  /** secondary text — 8.89:1 on canvas */
   ink2: "#3D484D",
   /**
    * captions and every 10.5-11px mono label.
@@ -59,9 +59,9 @@ export const NEUTRAL = {
 
 /** Anchor and action — petrol. The brand, and the only two colours a client is asked to click. */
 export const BRAND = {
-  /** deep fills, nav, dark sections, hover state of `action` — 11.27:1 on base */
+  /** deep fills, nav, dark sections, hover state of `action` — 11.27:1 on canvas */
   anchor: "#003D48",
-  /** the interactive petrol: buttons, links, focus-adjacent emphasis — 7.46:1 on base */
+  /** the interactive petrol: buttons, links, focus-adjacent emphasis — 7.46:1 on canvas */
   action: "#005A68",
   /** anchor wash — active nav pill, icon plates */
   tint: "#E3EFF1",
@@ -190,24 +190,24 @@ export const CONTRAST_CONTRACTS: readonly {
   what: string;
 }[] = [
   // text on every ground it actually renders on
-  ...(["base", "surface", "subtle", "mist", "pale", "sand"] as const).flatMap((g) => [
+  ...(["canvas", "surface", "subtle", "mist", "pale", "sand"] as const).flatMap((g) => [
     { fg: NEUTRAL.ink, bg: NEUTRAL[g], floor: 4.5, what: `--ink on --${g}` },
     { fg: NEUTRAL.ink2, bg: NEUTRAL[g], floor: 4.5, what: `--ink-2 on --${g}` },
     { fg: NEUTRAL.muted, bg: NEUTRAL[g], floor: 4.5, what: `--muted on --${g}` },
   ]),
   // brand
-  { fg: BRAND.anchor, bg: NEUTRAL.base, floor: 4.5, what: "--anchor on --base" },
+  { fg: BRAND.anchor, bg: NEUTRAL.canvas, floor: 4.5, what: "--anchor on --canvas" },
   { fg: BRAND.anchor, bg: NEUTRAL.surface, floor: 4.5, what: "--anchor on --surface" },
   { fg: BRAND.anchor, bg: BRAND.tint, floor: 4.5, what: "--anchor on --brand-tint" },
-  { fg: BRAND.action, bg: NEUTRAL.base, floor: 4.5, what: "--action on --base" },
+  { fg: BRAND.action, bg: NEUTRAL.canvas, floor: 4.5, what: "--action on --canvas" },
   { fg: BRAND.action, bg: NEUTRAL.surface, floor: 4.5, what: "--action on --surface" },
   { fg: BRAND.action, bg: NEUTRAL.subtle, floor: 4.5, what: "--action on --subtle" },
   { fg: BRAND.action, bg: NEUTRAL.sand, floor: 4.5, what: "--action on --sand" },
   { fg: NEUTRAL.surface, bg: BRAND.action, floor: 4.5, what: "white on --action (primary button)" },
   { fg: NEUTRAL.surface, bg: BRAND.anchor, floor: 4.5, what: "white on --anchor (button hover, ribbon)" },
   // accents, on the grounds the ruled homepage puts them on
-  { fg: ACCENT.blue, bg: NEUTRAL.base, floor: 4.5, what: "--blue on --base (section kicker)" },
-  { fg: ACCENT.cyan, bg: NEUTRAL.base, floor: 4.5, what: "--cyan on --base (section kicker)" },
+  { fg: ACCENT.blue, bg: NEUTRAL.canvas, floor: 4.5, what: "--blue on --base (section kicker)" },
+  { fg: ACCENT.cyan, bg: NEUTRAL.canvas, floor: 4.5, what: "--cyan on --base (section kicker)" },
   { fg: ACCENT.cyan, bg: NEUTRAL.surface, floor: 4.5, what: "--cyan on --surface" },
   { fg: ACCENT.cyan, bg: ACCENT.cyanTint, floor: 4.5, what: "--cyan on its tint (coming-soon chip)" },
   { fg: ACCENT.cyan, bg: "#E4F0F1", floor: 4.5, what: "--cyan on the hero gradient's darkest stop" },
@@ -221,10 +221,10 @@ export const CONTRAST_CONTRACTS: readonly {
   { fg: NEUTRAL.surface, bg: NEUTRAL.ink, floor: 4.5, what: "white on --ink (footer headings)" },
   // non-text: control boundaries and focus indicators (WCAG 1.4.11)
   { fg: NEUTRAL.controlBorder, bg: NEUTRAL.surface, floor: 3, what: "control border on --surface" },
-  { fg: NEUTRAL.controlBorder, bg: NEUTRAL.base, floor: 3, what: "control border on --base" },
+  { fg: NEUTRAL.controlBorder, bg: NEUTRAL.canvas, floor: 3, what: "control border on --canvas" },
   { fg: NEUTRAL.controlBorder, bg: NEUTRAL.subtle, floor: 3, what: "control border on --subtle" },
   { fg: FOCUS.onLight, bg: NEUTRAL.surface, floor: 3, what: "focus ring on --surface" },
-  { fg: FOCUS.onLight, bg: NEUTRAL.base, floor: 3, what: "focus ring on --base" },
+  { fg: FOCUS.onLight, bg: NEUTRAL.canvas, floor: 3, what: "focus ring on --canvas" },
   { fg: FOCUS.onLight, bg: NEUTRAL.subtle, floor: 3, what: "focus ring on --subtle" },
   { fg: FOCUS.onDark, bg: BRAND.anchor, floor: 3, what: "dark-ground focus ring on --anchor" },
   { fg: FOCUS.onDark, bg: NEUTRAL.ink, floor: 3, what: "dark-ground focus ring on --ink" },

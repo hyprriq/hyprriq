@@ -63,7 +63,7 @@ export function PartnerRequestsPanel({ requests, available }: {
       ) : (
         <div className="mt-3 space-y-2">
           {[...open, ...decided].map((r) => (
-            <div key={r.id} className="rounded-lg border border-line/60 bg-base p-3">
+            <div key={r.id} className="rounded-lg border border-line/60 bg-canvas p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="text-[14px] font-semibold text-ink">

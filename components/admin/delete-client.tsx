@@ -77,7 +77,7 @@ export function DeleteClient({
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="off"
-              className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-deny-ink"
+              className="mt-1 w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-deny-ink"
             />
           </label>
           <label className="mt-3 block">
@@ -87,7 +87,7 @@ export function DeleteClient({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. GDPR erasure request"
-              className="mt-1 w-full rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+              className="mt-1 w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
             />
           </label>
           {error && <p className="mt-3 text-[13px] text-deny-ink">{error}</p>}

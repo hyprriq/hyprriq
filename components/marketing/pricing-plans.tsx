@@ -48,7 +48,7 @@ function PlanCard({ plan }: { plan: Plan }) {
         ))}
       </ul>
       {plan.comingSoon ? (
-        <p className="mt-7 rounded-lg border border-line bg-base px-4 py-3 text-center text-[13px] leading-relaxed text-muted">
+        <p className="mt-7 rounded-lg border border-line bg-canvas px-4 py-3 text-center text-[13px] leading-relaxed text-muted">
           {COMING_SOON_NOTE}
         </p>
       ) : (

@@ -222,11 +222,11 @@ export function SubmitForm({
         </dl>
 
         <div className="mt-3 grid grid-cols-2 gap-3 text-left">
-          <div className="rounded-lg border border-line bg-base p-3">
+          <div className="rounded-lg border border-line bg-canvas p-3">
             <div className="text-[12px] uppercase tracking-wide text-muted">Credits Used</div>
             <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.credits_charged}</div>
           </div>
-          <div className="rounded-lg border border-line bg-base p-3">
+          <div className="rounded-lg border border-line bg-canvas p-3">
             <div className="text-[12px] uppercase tracking-wide text-muted">Remaining Balance</div>
             <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{result.remaining_balance}</div>
           </div>
@@ -306,7 +306,7 @@ export function SubmitForm({
                     onChange={(e) => setVendor(e.target.value)}
                     placeholder="e.g. Universal Supply Co."
                     autoComplete="organization"
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                   <span className="mt-1 block text-[13px] text-muted">The full legal name from their invoice or quote — spelling matters.</span>
                 </label>
@@ -317,7 +317,7 @@ export function SubmitForm({
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://"
                     inputMode="url"
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                   <span className="mt-1 block text-[13px] text-muted">If they gave you a storefront, portal, or catalog link, paste it here.</span>
                 </label>
@@ -326,7 +326,7 @@ export function SubmitForm({
                   <select
                     value={marketplace}
                     onChange={(e) => setMarketplace(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand"
                   >
                     {MARKETPLACES.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
@@ -347,7 +347,7 @@ export function SubmitForm({
                 </div>
                 <div>
                   <span className="text-[14px] font-medium text-ink">Brand names <span className="text-deny-ink">*</span></span>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-base p-2">
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-canvas p-2">
                     {brands.map((b, i) => (
                       <span key={b} className="flex items-center gap-1 rounded-md bg-brand-tint px-2 py-1 text-[13px] font-medium text-brand-ink">
                         {b}
@@ -394,7 +394,7 @@ export function SubmitForm({
                             value={asins[b] ?? ""}
                             onChange={(e) => setAsins((prev) => ({ ...prev, [b]: e.target.value }))}
                             placeholder="e.g. B0ABC12345"
-                            className="min-h-11 w-44 rounded-lg border border-line bg-base px-2.5 py-1.5 font-mono text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                            className="min-h-11 w-44 rounded-lg border border-line bg-canvas px-2.5 py-1.5 font-mono text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                           />
                           {(asins[b] ?? "").trim() !== "" && !ASIN_RE.test(normalizeAsin(asins[b])) && (
                             <span className="text-[12px] text-deny-ink">10 letters/digits</span>
@@ -451,7 +451,7 @@ export function SubmitForm({
                           addFiles(e.dataTransfer.files ?? null);
                         }}
                         className={`mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-4 transition-colors ${
-                          dragOver ? "border-brand bg-brand-tint" : "border-line-strong bg-base"
+                          dragOver ? "border-brand bg-brand-tint" : "border-line-strong bg-canvas"
                         }`}
                       >
                         <input
@@ -505,7 +505,7 @@ export function SubmitForm({
                     onChange={(e) => setNotes(e.target.value)}
                     rows={notesRequired ? 5 : 3}
                     placeholder="e.g. They say they ship from a EU warehouse — the pricing feels low for this brand."
-                    className="mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                   {notesRequired && (
                     <p className="mt-1 text-[13px] text-ink-2">

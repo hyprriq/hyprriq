@@ -14,7 +14,7 @@ export function GrantCodeBox() {
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-base p-4">
+    <div className="mt-4 rounded-lg border border-line bg-canvas p-4">
       <div className="text-[13px] font-semibold text-ink">Have an access code?</div>
       <p className="mt-1 text-[13px] text-ink-2">
         Codes from our team apply a free full assessment to your account.

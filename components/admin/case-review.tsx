@@ -257,7 +257,7 @@ export function CaseReview({
         <div className="flex flex-wrap items-center gap-3">
           <span className={`rounded-lg border px-3 py-1.5 text-[15px] font-bold ${vmeta.cls}`}>{vmeta.name}</span>
           <span className="text-[12px] text-muted">recomputed now from stored signals — not an archived record</span>
-          <div className="ml-auto flex rounded-lg border border-line bg-base p-0.5" role="tablist" aria-label="Review view">
+          <div className="ml-auto flex rounded-lg border border-line bg-canvas p-0.5" role="tablist" aria-label="Review view">
             {(["operator", "client"] as const).map((k) => (
               <button key={k} type="button" role="tab" aria-selected={view === k} onClick={() => setView(k)}
                 className={`rounded-md px-3 py-1 text-[12.5px] font-semibold ${view === k ? "bg-brand text-white" : "text-ink-2 hover:bg-subtle"}`}>
@@ -307,7 +307,7 @@ export function CaseReview({
           {presentVerdict(clientView.c.verdict) ? (
             <ReportView c={clientView.c} findings={clientView.findings} report={clientView.report} preview />
           ) : (
-            <p className="rounded-lg border border-line bg-base px-4 py-3 text-[13px] text-ink-2">
+            <p className="rounded-lg border border-line bg-canvas px-4 py-3 text-[13px] text-ink-2">
               {VERDICT_ABSENT_PREVIEW_NOTE}
             </p>
           )}
@@ -358,11 +358,11 @@ export function CaseReview({
           </div>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-line bg-base p-3">
+          <div className="rounded-lg border border-line bg-canvas p-3">
             <div className="text-[12px] font-semibold text-muted">What to Verify <span className="font-normal">(vendor questions)</span></div>
             <div className="mt-1.5"><List items={es.what_to_verify} empty="No vendor questions." /></div>
           </div>
-          <div className="rounded-lg border border-line bg-base p-3">
+          <div className="rounded-lg border border-line bg-canvas p-3">
             <div className="text-[12px] font-semibold text-muted">What to Monitor <span className="font-normal">(watch points)</span></div>
             <div className="mt-1.5"><List items={es.what_to_monitor} empty="No watch points." /></div>
           </div>
@@ -419,7 +419,7 @@ export function CaseReview({
         ) : (
           <div className="space-y-3">
             {ct.contradictions.map((c, i) => (
-              <div key={i} className="rounded-lg border border-line bg-base">
+              <div key={i} className="rounded-lg border border-line bg-canvas">
                 <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
                   <span className="font-mono text-[12px] font-semibold text-ink">#{i + 1}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${c.risk_level === "critical" ? "bg-deny-bg text-deny-ink" : c.risk_level === "high" ? "bg-verify-bg text-verify-ink" : "bg-conditional-bg text-conditional-ink"}`}>{c.risk_level}</span>
@@ -456,7 +456,7 @@ export function CaseReview({
           {areas.map((a) => {
             const sm = a.signal ? SIGNAL_META[a.signal as TrackSignal] : SIGNAL_META.n_a;
             return (
-              <div key={a.track_key} className="rounded-lg border border-line bg-base p-3">
+              <div key={a.track_key} className="rounded-lg border border-line bg-canvas p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[14px] font-semibold text-ink">{a.areaName}</span>
                   <div className="flex items-center gap-2">
@@ -556,7 +556,7 @@ export function CaseReview({
                     {a.sourcing.flags.length > 0 ? (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {a.sourcing.flags.map((f) => (
-                          <span key={f} className="rounded-full border border-line bg-base px-2 py-0.5 text-[11px] font-medium text-ink-2">
+                          <span key={f} className="rounded-full border border-line bg-canvas px-2 py-0.5 text-[11px] font-medium text-ink-2">
                             {f.replace(/_/g, " ")}
                           </span>
                         ))}
@@ -610,7 +610,7 @@ export function CaseReview({
         ) : (
           <ul className="space-y-2">
             {questions.map((q, i) => (
-              <li key={q.id ?? `sys-${i}`} className="rounded-lg border border-line bg-base p-3">
+              <li key={q.id ?? `sys-${i}`} className="rounded-lg border border-line bg-canvas p-3">
                 {editingId && q.id === editingId ? (
                   <div className="space-y-2">
                     <textarea value={ef.question} onChange={(e) => setEf({ ...ef, question: e.target.value })} rows={2}
@@ -627,7 +627,7 @@ export function CaseReview({
                       <label className="flex items-center gap-1 text-[12px] text-ink-2"><input type="checkbox" checked={ef.required} onChange={(e) => setEf({ ...ef, required: e.target.checked })} /> required</label>
                       <button type="button" disabled={qBusy || !ef.question.trim()} onClick={async () => { if (await questionAction("PATCH", { id: q.id, ...ef })) setEditingId(null); }}
                         className="rounded-lg bg-brand px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50">Save</button>
-                      <button type="button" onClick={() => setEditingId(null)} className="rounded-lg border border-line bg-base px-3 py-1 text-[12px] font-semibold text-ink-2">Cancel</button>
+                      <button type="button" onClick={() => setEditingId(null)} className="rounded-lg border border-line bg-canvas px-3 py-1 text-[12px] font-semibold text-ink-2">Cancel</button>
                     </div>
                   </div>
                 ) : (
@@ -657,7 +657,7 @@ export function CaseReview({
         )}
 
         {/* Analyst add form — always available, even with zero system questions. */}
-        <div className="mt-4 rounded-lg border border-dashed border-line bg-base p-3">
+        <div className="mt-4 rounded-lg border border-dashed border-line bg-canvas p-3">
           <div className="mb-2 text-[12px] font-semibold text-muted">Add a question (analyst)</div>
           <textarea value={nq.question} onChange={(e) => setNq({ ...nq, question: e.target.value })} rows={2} placeholder="What should the client ask their supplier?"
             className="w-full rounded-lg border border-line bg-surface p-2 text-[13px]" />
@@ -726,7 +726,7 @@ export function CaseReview({
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
                   placeholder="Why is this delivered case being re-investigated? (required, audited)…"
-                  className="w-full rounded-lg border border-line bg-base px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                  className="w-full rounded-lg border border-line bg-canvas px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
                 <div className="flex gap-2">
                   <button
@@ -737,7 +737,7 @@ export function CaseReview({
                   >
                     {busy === "request_investigation" ? "Enqueuing…" : "Confirm dispute re-run"}
                   </button>
-                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-base px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
+                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-canvas px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
                 </div>
               </div>
             )}
@@ -762,7 +762,7 @@ export function CaseReview({
                     <button
                       type="button"
                       onClick={() => { setMode("override"); setError(null); }}
-                      className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+                      className="rounded-lg border border-line bg-canvas px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
                     >
                       Override verdict
                     </button>
@@ -772,7 +772,7 @@ export function CaseReview({
                   <button
                     type="button"
                     onClick={() => { setMode("investigate"); setError(null); }}
-                    className="rounded-lg border border-line bg-base px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+                    className="rounded-lg border border-line bg-canvas px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
                   >
                     Request further investigation
                   </button>
@@ -793,7 +793,7 @@ export function CaseReview({
                       type="button"
                       onClick={() => setOverrideVerdict(k)}
                       aria-pressed={overrideVerdict === k}
-                      className={`rounded-lg border px-3 py-2 text-left text-[13px] font-semibold transition-colors ${overrideVerdict === k ? "border-brand bg-brand-tint text-brand-ink" : "border-line bg-base text-ink-2 hover:bg-subtle"}`}
+                      className={`rounded-lg border px-3 py-2 text-left text-[13px] font-semibold transition-colors ${overrideVerdict === k ? "border-brand bg-brand-tint text-brand-ink" : "border-line bg-canvas text-ink-2 hover:bg-subtle"}`}
                     >
                       {VERDICT_META[k].name}
                     </button>
@@ -804,7 +804,7 @@ export function CaseReview({
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
                   placeholder="Reason for overriding (required, audited)…"
-                  className="w-full rounded-lg border border-line bg-base px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                  className="w-full rounded-lg border border-line bg-canvas px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
                 <div className="flex gap-2">
                   <button
@@ -815,7 +815,7 @@ export function CaseReview({
                   >
                     {busy === "override" ? "Saving…" : "Override & deliver"}
                   </button>
-                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-base px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
+                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-canvas px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
                 </div>
               </div>
             )}
@@ -828,7 +828,7 @@ export function CaseReview({
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
                   placeholder="What needs more evidence? (required, audited)…"
-                  className="w-full rounded-lg border border-line bg-base px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
+                  className="w-full rounded-lg border border-line bg-canvas px-3 py-2 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
                 <div className="flex gap-2">
                   <button
@@ -839,7 +839,7 @@ export function CaseReview({
                   >
                     {busy === "request_investigation" ? "Sending…" : "Request investigation"}
                   </button>
-                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-base px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
+                  <button type="button" onClick={() => setMode("idle")} className="rounded-lg border border-line bg-canvas px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-subtle">Cancel</button>
                 </div>
               </div>
             )}
@@ -881,7 +881,7 @@ export function CaseReview({
                           value={rw?.text ?? f.field_text}
                           onChange={(e) => setRewords((r) => ({ ...r, [i]: { text: e.target.value, saved: false, busy: false, error: null } }))}
                           rows={Math.min(6, Math.max(2, Math.ceil(f.field_text.length / 90)))}
-                          className="w-full rounded-lg border border-line bg-base px-2.5 py-2 text-[13px] text-ink outline-none focus:border-brand"
+                          className="w-full rounded-lg border border-line bg-canvas px-2.5 py-2 text-[13px] text-ink outline-none focus:border-brand"
                         />
                         <div className="mt-1.5 flex items-center gap-3">
                           <button

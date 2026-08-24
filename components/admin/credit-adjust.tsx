@@ -45,11 +45,11 @@ export function CreditAdjust({ clientId, currentBalance }: { clientId: string; c
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-[12px] text-muted">Delta (±)<br />
           <input value={delta} onChange={(e) => setDelta(e.target.value)} placeholder="+2 or -1"
-            className="mt-1 w-24 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" />
+            className="mt-1 w-24 rounded-lg border border-line bg-canvas px-2 py-1.5 text-[13px] text-ink" />
         </label>
         <label className="flex-1 text-[12px] text-muted">Reason (required — audited)<br />
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. goodwill for delayed case AWI-…"
-            className="mt-1 w-full rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink" />
+            className="mt-1 w-full rounded-lg border border-line bg-canvas px-2 py-1.5 text-[13px] text-ink" />
         </label>
         <button type="button" disabled={busy || !valid} onClick={submit}
           className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">

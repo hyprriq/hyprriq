@@ -87,7 +87,7 @@ export default async function AdminIntegrityPage() {
                   <div className="font-display text-[15px] font-bold text-ink">{spec.title}</div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {spec.shapes.map((s) => (
-                      <span key={s} className="rounded-full border border-line bg-base px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                      <span key={s} className="rounded-full border border-line bg-canvas px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
                         {s === "BLOCK" ? "Blocks it happening" : "Alerts on drift"}
                       </span>
                     ))}
@@ -114,7 +114,7 @@ export default async function AdminIntegrityPage() {
               )}
 
               {(result?.notEvaluated.length ?? 0) > 0 && (
-                <div className="mt-3 rounded-lg border border-line bg-base p-3">
+                <div className="mt-3 rounded-lg border border-line bg-canvas p-3">
                   <div className="text-[12px] font-bold uppercase tracking-wide text-muted">Could not be evaluated (not counted as clean)</div>
                   <ul className="mt-1.5 space-y-1">
                     {result!.notEvaluated.map((n) => (

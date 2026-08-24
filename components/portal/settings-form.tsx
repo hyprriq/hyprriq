@@ -6,7 +6,7 @@ import type { ClientProfile } from "@/lib/data/client";
 import { PRIMARY_MARKETPLACES, COUNTRIES } from "@/lib/constants/marketplaces";
 
 const INPUT =
-  "mt-1 w-full rounded-lg border border-line bg-base min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand";
+  "mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand";
 
 function Text({
   label, value, onChange, placeholder, type = "text",

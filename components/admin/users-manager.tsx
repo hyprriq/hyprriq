@@ -192,7 +192,7 @@ export function UsersManager({
         </p>
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="text-[12px] font-medium text-ink-2">Email<br />
-            <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
+            <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-canvas px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
           </label>
           <button type="button" disabled={busy || !inviteEmail.trim()} onClick={() => invite(false)}
             className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
@@ -339,7 +339,7 @@ export function UsersManager({
                         {unassigned.length > 0 && (
                           <div className="mt-1.5 flex items-center gap-2">
                             <select value={assignPick[u.user_id] ?? ""} onChange={(e) => setAssignPick({ ...assignPick, [u.user_id]: e.target.value })}
-                              className="rounded-lg border border-line bg-base px-2 py-1 text-[12px] text-ink">
+                              className="rounded-lg border border-line bg-canvas px-2 py-1 text-[12px] text-ink">
                               <option value="">Choose a client…</option>
                               {unassigned.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                             </select>
@@ -375,17 +375,17 @@ export function UsersManager({
             {selfRole === "super_admin" && (
               <label className="text-[12px] font-medium text-ink-2">Role<br />
                 <select value={newRole} onChange={(e) => setNewRole(e.target.value as "admin" | "sub_user")}
-                  className="mt-1 rounded-lg border border-line bg-base px-2 py-1.5 text-[13px] text-ink">
+                  className="mt-1 rounded-lg border border-line bg-canvas px-2 py-1.5 text-[13px] text-ink">
                   <option value="sub_user">Staff (works cases)</option>
                   <option value="admin">Admin (manages staff)</option>
                 </select>
               </label>
             )}
             <label className="text-[12px] font-medium text-ink-2">Clerk user id<br />
-              <input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 font-mono text-[12.5px] text-ink" placeholder="user_..." />
+              <input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-canvas px-2.5 py-1.5 font-mono text-[12.5px] text-ink" placeholder="user_..." />
             </label>
             <label className="text-[12px] font-medium text-ink-2">Email (label)<br />
-              <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-base px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
+              <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="mt-1 w-64 rounded-lg border border-line bg-canvas px-2.5 py-1.5 text-[13px] text-ink" placeholder="name@example.com" />
             </label>
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">

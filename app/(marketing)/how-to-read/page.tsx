@@ -56,7 +56,7 @@ export default function HowToReadPage() {
                 const v = VERDICT_COPY[key];
                 const help = verdicts.find((h) => h.key === key);
                 return (
-                  <div key={key} className="rounded-card border border-line bg-base p-5">
+                  <div key={key} className="rounded-card border border-line bg-canvas p-5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className={`rounded-chip px-2.5 py-1 text-[13px] font-semibold ${VERDICT_CLASSES[key].bg} ${VERDICT_CLASSES[key].ink}`}>
                         {v.name}
@@ -76,7 +76,7 @@ export default function HowToReadPage() {
         </div>
       </section>
 
-      <section className="border-t border-line bg-base">
+      <section className="border-t border-line bg-canvas">
         <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
           <Reveal>
             <h2 className="text-2xl font-bold text-ink">The assessment areas</h2>
@@ -104,7 +104,7 @@ export default function HowToReadPage() {
             </p>
             <dl className="mt-6 space-y-4">
               {([["Verified", CHIP_DEFS.verified], ["Assessed", CHIP_DEFS.assessed], ["Not assessed", CHIP_DEFS.not_assessed]] as const).map(([label, def]) => (
-                <div key={label} className="rounded-card border border-line bg-base p-5">
+                <div key={label} className="rounded-card border border-line bg-canvas p-5">
                   <dt className="text-[15px] font-bold text-ink">{label}</dt>
                   <dd className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{def}</dd>
                 </div>
@@ -115,7 +115,7 @@ export default function HowToReadPage() {
         </div>
       </section>
 
-      <section className="border-t border-line bg-base">
+      <section className="border-t border-line bg-canvas">
         <div className="mx-auto max-w-3xl px-5 py-14 text-center lg:px-8">
           <h2 className="text-2xl font-bold text-ink">See it on a real report</h2>
           <p className="mx-auto mt-2 max-w-xl text-[15px] text-ink-2">

@@ -66,7 +66,7 @@ export function InternalNotes({
         onChange={(e) => setNotes(e.target.value)}
         rows={6}
         placeholder="Context that doesn't fit elsewhere — e.g. 'Walmart seller, new to wholesale', 'prefers phone, don't email', 'referred by …'."
-        className="mt-3 w-full resize-y rounded-lg border border-line bg-base px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
+        className="mt-3 w-full resize-y rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
       />
       {error && <p className="mt-2 text-[13px] text-deny-ink">{error}</p>}
       <div className="mt-3 flex items-center justify-end gap-3">

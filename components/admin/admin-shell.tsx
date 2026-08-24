@@ -117,7 +117,7 @@ export async function AdminShell({
     }
   }
   return (
-    <div className="flex min-h-dvh bg-base">
+    <div className="flex min-h-dvh bg-canvas">
       <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 pb-5">
         {/* Shares the page header's height, so the nav below starts level with the content. */}
         <AppSidebarBrand>

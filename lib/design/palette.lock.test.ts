@@ -93,7 +93,7 @@ describe("LOCK — the verdict ramp cannot be got wrong", () => {
 
   it("every verdict ink is legible on surface and canvas — badges are not always filled", () => {
     for (const [key, v] of Object.entries(VERDICT_PALETTE)) {
-      for (const [name, bg] of [["--surface", NEUTRAL.surface], ["--base", NEUTRAL.base]] as const) {
+      for (const [name, bg] of [["--surface", NEUTRAL.surface], ["--canvas", NEUTRAL.canvas]] as const) {
         const r = ratio(v.ink, bg);
         expect(r, `${key} ink on ${name} measures ${r}:1`).toBeGreaterThanOrEqual(VERDICT_FLOOR);
       }
@@ -165,7 +165,7 @@ describe("LOCK — the verdict ramp cannot be got wrong", () => {
 // ══════════════════════════════════════════════════════════════════════════════════════════════
 describe("LOCK — the token layer cannot drift from the registry", () => {
   const MIRROR: [string, string][] = [
-    ["color-base", NEUTRAL.base], ["color-surface", NEUTRAL.surface], ["color-subtle", NEUTRAL.subtle],
+    ["color-canvas", NEUTRAL.canvas], ["color-surface", NEUTRAL.surface], ["color-subtle", NEUTRAL.subtle],
     ["color-mist", NEUTRAL.mist], ["color-pale", NEUTRAL.pale], ["color-sand", NEUTRAL.sand],
     ["color-ink", NEUTRAL.ink], ["color-ink-2", NEUTRAL.ink2], ["color-muted", NEUTRAL.muted],
     ["color-line", NEUTRAL.line], ["color-line-strong", NEUTRAL.lineStrong],
@@ -181,6 +181,30 @@ describe("LOCK — the token layer cannot drift from the registry", () => {
 
   it.each(MIRROR)("--%s matches the registry", (name, expected) => {
     expect(cssVar(name)?.toUpperCase(), `--${name} in app/globals.css`).toBe(expected.toUpperCase());
+  });
+
+  it("no colour token shadows a Tailwind SIZE utility", () => {
+    // ── THE text-base COLLISION (founder ruling 1, 2026-08-24) ────────────────────────────────
+    // `--color-base` made Tailwind emit `.text-base { color: … }`, which SHADOWED the built-in
+    // 16px font-size utility. Anyone writing `text-base` expecting 16px silently got a colour, and
+    // the element fell through to its default size. Fourteen usages were doing exactly that —
+    // every one of them size-intent, each already carrying its own colour class beside it. They
+    // were invisible while the unlayered-CSS bug oversized everything.
+    //
+    // FIXED BY RENAME (option a): the token is `--color-canvas`, so `text-base` means 16px again —
+    // the way every developer, and every piece of Tailwind documentation, already assumes.
+    //
+    // This test is the other half of that ruling: "it must be a rename or a lock, never a note".
+    // Any future token whose name collides with a Tailwind size utility fails HERE, at the moment
+    // it is added, rather than silently mis-sizing text somewhere else entirely.
+    const SIZE_UTILITIES = ["base", "xs", "sm", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl", "9xl"];
+    const declared = [...css.matchAll(/--color-([a-z0-9-]+)\s*:/g)].map((m) => m[1]);
+    const shadowing = declared.filter((n) => SIZE_UTILITIES.includes(n));
+    expect(
+      shadowing,
+      `these colour tokens shadow Tailwind text-* SIZE utilities, so \`text-<name>\` silently ` +
+        `becomes a colour: ${shadowing.map((n) => `--color-${n}`).join(", ")}`,
+    ).toEqual([]);
   });
 
   it("the deprecated brand-* aliases still resolve to the petrol pair", () => {

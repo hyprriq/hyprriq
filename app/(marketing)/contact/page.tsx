@@ -29,7 +29,7 @@ export default function ContactPage() {
             <h2 className="text-ink">Before you write</h2>
             <ul className="mt-4 space-y-3">
               {beforeYouWrite.map((b) => (
-                <li key={b.lead} className="rounded-card border border-line bg-base p-4">
+                <li key={b.lead} className="rounded-card border border-line bg-canvas p-4">
                   <p className="text-[15px] leading-[1.6] text-ink-2 sm:text-[16px]">
                     <b className="font-semibold text-ink">{b.lead}</b>, {b.body}
                   </p>

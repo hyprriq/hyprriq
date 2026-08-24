@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 // ── THE APP HEADER — ONE COMPONENT, PORTAL AND ADMIN (founder-ruled 2026-08-24) ──────────────
 //
 // Before this, the two surfaces disagreed on every value: the portal bar was 64px tall, sticky,
-// bg-base, px-4/sm:px-7, title at text-xl; the admin bar was 56px, not sticky, bg-surface, px-6,
+// bg-canvas, px-4/sm:px-7, title at text-xl; the admin bar was 56px, not sticky, bg-surface, px-6,
 // title at text-lg. An operator crossing between them saw the chrome move. They are now the same
 // component, so they cannot drift again — there is no second copy to forget.
 //

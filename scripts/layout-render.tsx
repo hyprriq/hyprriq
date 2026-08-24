@@ -38,7 +38,7 @@ ${THEME}
   --font-mono: "JetBrains Mono";
   --font-reading: "Source Serif 4", Georgia, serif;
 }
-body { background-color: var(--color-base); color: var(--color-ink); font-family: "Instrument Sans", system-ui, sans-serif; }
+body { background-color: var(--color-canvas); color: var(--color-ink); font-family: "Instrument Sans", system-ui, sans-serif; }
 h1,h2,h3,h4 { font-family: "Fraunces", Georgia, serif; letter-spacing: -0.01em; }
 </style>
 </head><body>

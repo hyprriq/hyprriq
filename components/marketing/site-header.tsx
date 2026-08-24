@@ -37,7 +37,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-base/[0.88] backdrop-blur-[14px]">
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/[0.88] backdrop-blur-[14px]">
       <div className="mx-auto flex h-[58px] max-w-[1180px] items-center justify-between gap-3 px-5 sm:h-[66px] lg:px-10">
         <Link href="/" aria-label="HyprrIQ home" className="flex min-h-11 flex-none items-center">
           <Wordmark className="text-[19px] sm:text-[22px]" />

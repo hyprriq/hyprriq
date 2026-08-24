@@ -297,7 +297,7 @@ export default function HomePage() {
       </section>
 
       {/* ── 2 · WHAT WE DO ─────────────────────────────────────────────────────────────────── */}
-      <section id="service" className="border-b border-line bg-base py-14 sm:py-[104px]">
+      <section id="service" className="border-b border-line bg-canvas py-14 sm:py-[104px]">
         <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
           <Reveal className="mb-7 sm:mb-11">
             <Kicker className="text-blue">2 · What we do</Kicker>
@@ -466,7 +466,7 @@ export default function HomePage() {
       </section>
 
       {/* ── 5 · PRICING ────────────────────────────────────────────────────────────────────── */}
-      <section id="price" className="bg-base py-14 sm:py-[104px]">
+      <section id="price" className="bg-canvas py-14 sm:py-[104px]">
         <div className="mx-auto max-w-[1180px] px-5 lg:px-10">
           <Reveal className="mb-7 sm:mb-11">
             <Kicker className="text-cyan">5 · Pricing</Kicker>

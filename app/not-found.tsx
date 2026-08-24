@@ -3,7 +3,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-base px-5 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-canvas px-5 text-center">
       <Link href="/" aria-label="HyprrIQ home" className="inline-block">
         <Wordmark height={22} />
       </Link>

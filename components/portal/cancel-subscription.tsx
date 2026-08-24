@@ -69,7 +69,7 @@ export function CancelSubscription({
   }
 
   return (
-    <div className="rounded-lg border border-line bg-base p-4">
+    <div className="rounded-lg border border-line bg-canvas p-4">
       <div className="text-[14px] font-semibold text-ink">Cancel your subscription?</div>
       <p className="mt-1 text-[13px] text-ink-2">
         Your plan stays active until <span className="font-semibold">{renewalLabel}</span>, then

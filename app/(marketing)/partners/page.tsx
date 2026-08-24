@@ -188,7 +188,7 @@ export default async function PartnersPage({
 
       {/* ⛔ UNTOUCHED — the request form and its copy are queued separately (founder ruling 2). */}
       {inviteState !== "banner" && (
-        <section className="border-t border-line bg-base">
+        <section className="border-t border-line bg-canvas">
           <div className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
             <Reveal>
               <h2 className="text-2xl font-bold text-ink">Try it on a real supplier, free</h2>
