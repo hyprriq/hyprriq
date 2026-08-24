@@ -209,7 +209,7 @@ export function OnboardingFlow({
                   className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                 />
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-[14px] font-medium text-ink">Contact name</span>
                   <input
@@ -310,7 +310,7 @@ export function OnboardingFlow({
                     <span className="text-[13px] font-medium text-ink">Billing address line 2</span>
                     <input type="text" value={addr2} onChange={(e) => setAddr2(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <label className="block">
                       <span className="text-[13px] font-medium text-ink">City</span>
                       <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none focus:border-brand" />

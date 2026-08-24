@@ -76,7 +76,7 @@ export default async function PartnersPage({
                 <b>Your free full assessment is attached to this link.</b> Create your account in this
                 browser and it&rsquo;s applied automatically — nothing to type.
               </p>
-              <Link href="/sign-up" className="shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90">
+              <Link href="/sign-up" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-control bg-action px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-anchor">
                 Create your account
               </Link>
             </div>

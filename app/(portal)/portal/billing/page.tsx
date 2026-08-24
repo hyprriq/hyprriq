@@ -102,7 +102,7 @@ export default async function BillingPage() {
                   </CheckoutButton>
                 ) : null}
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-line bg-canvas p-3">
                   <div className="text-[12px] uppercase tracking-wide text-muted">Credits Available</div>
                   <div className="mt-0.5 font-display text-2xl font-extrabold text-ink">{cv.available}</div>

@@ -138,7 +138,7 @@ export function PartnerRequestForm() {
         <button
           type="submit"
           disabled={state === "busy"}
-          className="rounded-lg bg-ink px-5 py-2.5 text-[14px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-control bg-action px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-anchor disabled:opacity-50"
         >
           {state === "busy" ? "Sending…" : COPY.submit}
         </button>

@@ -27,7 +27,7 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
         style={{ background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)" }}
       />
       <div className="relative m-auto max-w-sm">
-        <Link href="/" aria-label="HyprrIQ home" className="inline-block">
+        <Link href="/" aria-label="HyprrIQ home" className="inline-flex min-h-11 items-center">
           <Wordmark variant="reversed" height={26} />
         </Link>
         <p className="mt-1 text-sm text-white/60">{brand.sub}</p>
@@ -81,7 +81,7 @@ export function AuthShell({
       <div className="flex flex-col justify-center bg-canvas px-5 py-12 sm:px-10">
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile-only wordmark (brand panel hidden below md) */}
-          <Link href="/" aria-label="HyprrIQ home" className="mb-8 inline-block md:hidden">
+          <Link href="/" aria-label="HyprrIQ home" className="mb-8 inline-flex min-h-11 items-center md:hidden">
             <Wordmark height={22} />
           </Link>
 
