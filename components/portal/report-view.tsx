@@ -101,7 +101,7 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
                       {cat.flags.map((f) => (
                         <div key={`${f.subcategory}-${f.flag_language.slice(0, 24)}`} className="mt-2">
                           {/* flag_language is FOUNDER COPY, VERBATIM — never reworded here. */}
-                          <p className="max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-ink-2">{f.flag_language}</p>
+                          <p className="max-w-[68ch] font-reading report-prose leading-relaxed text-ink-2">{f.flag_language}</p>
                           {/* ⛔ The ATTENTION LABEL, never the raw risk_level. "HIGH" would claim
                               which category the product sits in — which, with no ASIN, we cannot know. */}
                           <div className="mt-1 text-[12px] text-muted">{f.attention}</div>
@@ -120,7 +120,7 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
             )}
 
             {b.brand_category_note ? (
-              <p className="mt-2.5 max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-ink-2">{b.brand_category_note}</p>
+              <p className="mt-2.5 max-w-[68ch] font-reading report-prose leading-relaxed text-ink-2">{b.brand_category_note}</p>
             ) : null}
           </div>
         ))}
@@ -342,7 +342,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                     {qualifier && (
                       <div className="mt-2.5 border-t border-line pt-2.5">
                         <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{HEADLINE_QUALIFIER_LABEL}</div>
-                        <p className="mt-1 max-w-[68ch] font-reading text-[14px] leading-relaxed text-ink-2">{qualifier}</p>
+                        <p className="mt-1 max-w-[68ch] font-reading report-prose leading-relaxed text-ink-2">{qualifier}</p>
                       </div>
                     )}
                   </>
@@ -405,7 +405,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             ))}
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-muted"><span>Source Clear</span><span>Do Not Rely</span></div>
-          <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{meta.means}</p>
+          <p className="mt-3 report-prose leading-relaxed text-ink-2">{meta.means}</p>
           {/* ── §4 — LIVE. The href is the AUTHORIZED route for THIS VIEWER: the client route
               re-checks ownership; the ADMIN route (preview mode) re-checks operator capability +
               scope — before this split, the admin client-view rendered a button that hit the
@@ -461,7 +461,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <div className={`mt-6 ${READING_CARD} rounded-card border border-line border-l-4 border-l-verify-ink bg-surface p-6`}>
           <h3 className="font-display text-[17px] font-bold text-ink">The single most important risk</h3>
           {/* Reading measure: this paragraph ran the full card width (~110+ characters a line). */}
-          <p className="mt-2.5 max-w-[68ch] whitespace-pre-line font-reading text-[15px] leading-[1.7] text-ink-2">{report.the_real_risk}</p>
+          <p className="mt-2.5 max-w-[68ch] whitespace-pre-line font-reading report-prose leading-[1.7] text-ink-2">{report.the_real_risk}</p>
         </div>
       )}
 
@@ -469,7 +469,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
       <div className="mt-6 print:hidden">
         {howtoOpen ? (
           <div className="flex items-start gap-3 rounded-card border border-line bg-brand-tint/60 p-4">
-            <p className="flex-1 text-[13px] leading-relaxed text-ink-2">
+            <p className="flex-1 report-prose leading-relaxed text-ink-2">
               <b className="text-ink">How to read this report.</b> {HOW_TO_READ}
             </p>
             <button type="button" onClick={() => setHowtoOpen(false)} className="shrink-0 rounded-lg px-2.5 py-1 text-[12.5px] font-semibold text-brand hover:bg-subtle">
@@ -571,7 +571,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                   return (
                     <div key={f.id} className="flex flex-col gap-1 border-b border-line px-5 py-3 last:border-b-0">
                       <div className="text-[13.5px] font-semibold text-ink-2">{AREA_NAMES[f.track_key] ?? f.track_key}</div>
-                      {detail && <p className="max-w-[68ch] font-reading text-[13.5px] leading-relaxed text-muted">{detail}</p>}
+                      {detail && <p className="max-w-[68ch] font-reading report-prose leading-relaxed text-muted">{detail}</p>}
                     </div>
                   );
                 })}
@@ -603,14 +603,14 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             {report?.leading_interpretation && (
               /* The one long unbroken block (AWI-2607-022): solved with measure (75→68ch), the
                  reading serif, and open leading — NOT by loosening the segmentation guards. */
-              <p className="mt-2 max-w-[68ch] whitespace-pre-line font-reading text-[15px] leading-[1.7] text-ink-2">{report.leading_interpretation}</p>
+              <p className="mt-2 max-w-[68ch] whitespace-pre-line font-reading report-prose leading-[1.7] text-ink-2">{report.leading_interpretation}</p>
             )}
             {report && report.what_to_monitor.length > 0 && (
               <div className="mt-4 border-t border-dashed border-line pt-3">
                 <div className="text-[12px] font-semibold uppercase tracking-wide text-muted">What to monitor</div>
                 <ul className="mt-1.5 max-w-[68ch] space-y-1.5">
                   {report.what_to_monitor.map((m, i) => (
-                    <li key={i} className="flex gap-2 font-reading text-[14.5px] leading-[1.7] text-ink-2"><span className="text-muted">•</span>{m}</li>
+                    <li key={i} className="flex gap-2 font-reading report-prose leading-[1.7] text-ink-2"><span className="text-muted">•</span>{m}</li>
                   ))}
                 </ul>
               </div>
@@ -630,7 +630,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
                   <li key={i} className="flex items-start gap-3 border-t border-line py-2.5">
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-tint text-[12.5px] font-bold text-brand-ink">{i + 1}</span>
                     <div className="min-w-0">
-                      <div className="max-w-[68ch] font-reading text-[14.5px] leading-[1.7] text-ink">{q.question}</div>
+                      <div className="max-w-[68ch] font-reading report-prose leading-[1.7] text-ink">{q.question}</div>
                       {q.source === "additional" && (
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{QUESTION_SOURCE_LABEL.additional}</div>
                       )}
@@ -647,7 +647,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">Notes</div>
           <div className="mt-3 rounded-card border border-line bg-surface p-5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-muted">Category requirements</div>
-            <p className="mt-2 max-w-[66ch] text-[14px] leading-relaxed text-ink-2">
+            <p className="mt-2 max-w-[66ch] report-prose leading-relaxed text-ink-2">
               Selling these brands in their marketplace categories may require category approval or specific documentation before listing.
               This is a marketplace requirement independent of this report&rsquo;s verdict — confirm your category status before you commit.
             </p>
@@ -657,7 +657,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
 
       {/* ════ CLOSING ════ */}
       <div className="mt-8">
-        <p className="max-w-[68ch] text-[12.5px] leading-relaxed text-muted">
+        <p className="max-w-[68ch] report-prose leading-relaxed text-muted">
           This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval,
           account safety, or brand action. The decision to purchase is yours.
         </p>

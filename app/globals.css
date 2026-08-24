@@ -253,6 +253,25 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── REPORT PROSE — the sentences a client actually reads ─────────────────────────────────────
+   THE LADDER IS 24 → 16 → 13 (page title → section heading → meta, founder-ruled 2026-08-24) and
+   it stays. This class is the BODY rung, which the ladder does not name and which had drifted
+   badly: the report view carried its reading paragraphs at SEVEN different sizes — 12.5, 13, 13.5,
+   14, 14.5, 15 and 16.5px — on the one surface where someone reads a verdict about a supplier they
+   are about to wire money to. 13px is the wrong size for that.
+
+   Why a class and not a sweep: promoting every 13px in the portal to 16px would collapse META into
+   the section rung and destroy the ruled ladder. Only PROSE moves. Meta stays at 13px.
+
+   In @layer components so a deliberate utility can still override it; unlayered would outrank
+   every Tailwind class and make the exception impossible. */
+@layer components {
+  .report-prose {
+    font-size: 16px;
+    line-height: 1.65;
+  }
+}
+
 /* ── Reveal ───────────────────────────────────────────────────────────────────────────────────
    Visible by DEFAULT. The client <Reveal> arms the hidden state on mount and releases it in view,
    so no-JS, a headless renderer or a background tab still gets the content — a reveal that gates
