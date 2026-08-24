@@ -5,14 +5,20 @@
 // slots; this component only owns the open/close state so the client boundary pulls in
 // zero server modules (clientBoundary.lock walks this graph).
 import { useEffect, useState } from "react";
+import { AppHeader } from "@/components/app/app-header";
 
 export function ShellChrome({
   sidebar,
-  header,
+  title,
+  actions,
   children,
 }: {
   sidebar: React.ReactNode;
-  header: React.ReactNode;
+  // Title and actions are separate slots (2026-08-24) so the SHARED AppHeader owns the bar and
+  // the drawer button can sit inside it. Previously this took one `header` node and built its
+  // own <header>, which is how the portal and admin bars drifted apart.
+  title: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -50,19 +56,22 @@ export function ShellChrome({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-base px-4 sm:px-7">
-          <button
-            type="button"
-            aria-label="Open menu"
-            onClick={() => setOpen(true)}
-            className="-ml-2 grid h-11 w-11 place-items-center rounded-lg text-ink lg:hidden"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          {header}
-        </header>
+        <AppHeader
+          title={title}
+          actions={actions}
+          leading={
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setOpen(true)}
+              className="-ml-2 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink lg:hidden"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          }
+        />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-7 sm:py-6">{children}</div>
         </main>

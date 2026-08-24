@@ -4,6 +4,7 @@ import { navFor, type AdminNavKey, type NavGroup } from "@/lib/admin/nav";
 import type { Operator } from "@/lib/auth/permissions";
 import type { ClientScope } from "@/lib/auth/clientScope";
 import { getOpenSupportCount } from "@/lib/data/adminSupport";
+import { AppHeader, AppSidebarBrand } from "@/components/app/app-header";
 import { Wordmark } from "@/components/brand/wordmark";
 
 // ── OPERATOR-AWARE SHELL (founder-ruled 2026-08-02): the nav model + visibility rules live in
@@ -117,33 +118,38 @@ export async function AdminShell({
   }
   return (
     <div className="flex min-h-dvh bg-base">
-      <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 py-5">
-        <div className="mb-4 flex items-center justify-between px-1">
-          <div className="flex items-baseline gap-1.5">
-            <Wordmark variant="reversed" height={17} />
-            <span className="font-display text-base font-semibold tracking-tight text-white/50">Admin</span>
+      <aside className="flex w-[248px] shrink-0 flex-col bg-brand-hover px-4 pb-5">
+        {/* Shares the page header's height, so the nav below starts level with the content. */}
+        <AppSidebarBrand>
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-baseline gap-1.5">
+              <Wordmark variant="reversed" height={17} />
+              <span className="font-display text-base font-semibold tracking-tight text-white/50">Admin</span>
+            </div>
+            <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
+              {roleBadge}
+            </span>
           </div>
-          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
-            {roleBadge}
-          </span>
-        </div>
+        </AppSidebarBrand>
         <Nav groups={groups} active={active} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b border-line bg-surface px-6">
-          <h1 className="font-display text-lg font-semibold tracking-tight text-ink">{title}</h1>
-          <div className="flex items-center gap-3">
-            {topRight}
-            {user && (
-              <UserMenu
-                initial={user.initial}
-                email={user.email}
-                imageUrl={operator.image_url ?? null}
-                switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
-              />
-            )}
-          </div>
-        </header>
+        <AppHeader
+          title={title}
+          actions={
+            <>
+              {topRight}
+              {user && (
+                <UserMenu
+                  initial={user.initial}
+                  email={user.email}
+                  imageUrl={operator.image_url ?? null}
+                  switcher={showSwitcher ? { href: "/portal/dashboard", label: "View as Client" } : undefined}
+                />
+              )}
+            </>
+          }
+        />
         <main className="flex-1 overflow-y-auto px-6 py-5">{children}</main>
       </div>
     </div>

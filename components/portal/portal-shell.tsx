@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Client } from "@/lib/data/client";
 import { deriveAccess, type Access } from "@/lib/data/access";
 import { UserMenu } from "@/components/portal/user-menu";
+import { AppSidebarBrand } from "@/components/app/app-header";
 import { ShellChrome } from "@/components/portal/shell-chrome";
 import { GrantAttach } from "@/components/portal/grant-attach";
 import { Wordmark } from "@/components/brand/wordmark";
@@ -135,13 +136,16 @@ function isBlocked(key: PortalNavKey, access: Access): boolean {
 function Sidebar({ client, active, access }: { client: Client; active: PortalNavKey; access: Access }) {
   const plan = client.plan_type as PlanType | null;
   return (
-    <aside className="flex h-full w-full flex-col overflow-y-auto bg-brand-hover px-4 py-5 text-nav-fg">
-      <div className="mb-5 px-1">
-        <Wordmark variant="reversed" height={21} />
-        <div className="mt-0.5 text-xs font-medium text-nav-fg-dim">
-          {plan ? `${PLAN_NAME[plan]} Plan` : "No plan yet"}
+    <aside className="flex h-full w-full flex-col overflow-y-auto bg-brand-hover px-4 pb-5 text-nav-fg">
+      {/* Shares the page header's height, so the nav below starts level with the content. */}
+      <AppSidebarBrand>
+        <div>
+          <Wordmark variant="reversed" height={21} />
+          <div className="mt-0.5 text-xs font-medium text-nav-fg-dim">
+            {plan ? `${PLAN_NAME[plan]} Plan` : "No plan yet"}
+          </div>
         </div>
-      </div>
+      </AppSidebarBrand>
 
       <nav className="flex flex-col gap-0.5">
         {NAV.map((group, gi) => (
@@ -195,22 +199,20 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
   );
 }
 
-function TopbarContent({
+// ACTIONS ONLY (2026-08-24): the page title moved into the shared AppHeader, which portal and
+// admin both render. This contributes the right-hand slot and nothing else.
+function TopbarActions({
   client,
-  title,
   access,
   showSwitcher,
 }: {
   client: Client;
-  title: string;
   access: Access;
   showSwitcher: boolean;
 }) {
   const initial = (client.full_name || client.email || "?").charAt(0).toUpperCase();
   return (
     <>
-      <h1 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-ink">{title}</h1>
-      <div className="ml-auto flex items-center gap-3">
         {access.canSubmit && (
           <Link
             href="/portal/submit"
@@ -226,7 +228,6 @@ function TopbarContent({
           email={client.email}
           switcher={showSwitcher ? { href: "/admin/dashboard", label: "View as Admin" } : undefined}
         />
-      </div>
     </>
   );
 }
@@ -256,7 +257,8 @@ export function PortalShell({
   return (
     <ShellChrome
       sidebar={<Sidebar client={client} active={active} access={access} />}
-      header={<TopbarContent client={client} title={title} access={access} showSwitcher={showSwitcher} />}
+      title={title}
+      actions={<TopbarActions client={client} access={access} showSwitcher={showSwitcher} />}
     >
       {/* Invite-grant attach (2026-08-21): plan-less accounts only — consumes the parked invite
           cookie via the attach route and makes every outcome VISIBLE (silent grant loss was the
