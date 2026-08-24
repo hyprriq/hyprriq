@@ -105,6 +105,27 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-M. A PUBLIC DIRECTORY NOBODY MEANT TO PUBLISH — 2026-08-24 (design sitting five)
+
+**Owner: UX. Found by the sweep the founder ordered after ruling on the retired sample module.**
+
+| # | Item | State |
+|---|---|---|
+| 0-M.1 | `lib/content/sample-report.ts` DELETED — unreferenced, tracked, and carrying real company names lifted unmasked from a delivered case. It rendered nowhere, so no client saw it. | ✅ |
+| 0-M.2 | ⚠ **THE NAMES REMAIN IN GIT HISTORY.** Founder-ruled not worth rewriting history over. Recorded here so a future reader does not assume deletion cleaned the repo. | ✅ recorded |
+| 0-M.3 | **`public/prototype/**` WAS ANSWERING 200 TO THE OPEN INTERNET** on the live domain — internal admin mockups, client report mockups, the design-system reference, with company names and a real case ID across them. MEASURED on hyprriq.com, not inferred. | ✅ gated |
+| 0-M.4 | Cause: the middleware matcher deliberately skips extensioned paths, so **no `.html` under `public/` ever reached Clerk**. The same skip list that hid `/robots.txt` behind auth by omitting `.txt` was, by including `.html`, exposing these. One list, two opposite defects. | ✅ |
+| 0-M.5 | Fix: an explicit `"/prototype/:path*"` matcher entry. Runs middleware for those paths regardless of extension; changes no other static file's handling; deletes nothing. Measured after: `/prototype/*` → 307, `/`, `/pricing`, `/robots.txt`, `/sitemap.xml` → 200. Locked. | ✅ |
+| 0-M.6 | 🔴 **F — whether `public/prototype/**` should be DELETED rather than gated.** Deleting stops at the founder. The gate is a lock, not a reason to keep the files. | 🔴 F |
+| 0-M.7 | 🔴 **F — the gate is on `staging` only.** Until it reaches `main`, the files are still public on the live domain. Deploying to main stops at the founder. | 🔴 F |
+
+**THE LESSON, and the reason the founder ordered the sweep.** Last sitting I argued the retired
+module was safe to leave *because it was unreferenced*. Unreferenced said nothing about what was
+inside it, and — as 0-M.3 shows — nothing about whether it was reachable either. **"Nothing links
+to it" is not a security property. A URL does not need a link.**
+
+---
+
 ## 0-L. THE DOMAIN MOVE — EXECUTED 2026-08-24 (sitting four)
 
 > `main` fast-forwarded from `c9f1934` (the empty Create-Next-App commit) to `c077ab7`.
@@ -1323,6 +1344,17 @@ founder-run scripts:** the probe template is now
 8. Any new client-facing string joins the must-pass fixture in the SAME commit.
 9. Client wording is a RENDERING concern — never a stored-literal change. No client-wording ruling may reopen a freeze.
 10. **Productization gets built fast and rough — NOT gated like the engine.** The heavy gates are done.
+11. **NEVER write a regex through a bash heredoc.** Bit twice in one sitting, silently both times.
+    A `` word-boundary typed into a heredoc is interpreted by the shell as a **literal backspace
+    byte, 0x08**, before the file is ever written. The result compiles, the test passes, and the
+    pattern it claims to enforce **can never match anything** — a lock that is permanently green and
+    permanently blind, which is worse than no lock. The same trap catches `	`, `
+`, ``, ``,
+    `` and ``. Write regexes with the editing tools, or a quoted heredoc, or without a regex at
+    all; and if a new lock finds zero offenders, prove the scanner sees anything before believing it.
+    Sweep command when in doubt: `grep -rlP '' --include='*.ts' --include='*.tsx' .`
+12. **"Unreferenced" and "unlinked" are not security properties** (§0-M). Whether a file is *reached*
+    is decided by the middleware matcher and the deploy, never by whether the codebase imports it.
 
 ---
 
