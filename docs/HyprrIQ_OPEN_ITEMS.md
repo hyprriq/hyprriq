@@ -105,6 +105,42 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-L. THE DOMAIN MOVE — EXECUTED 2026-08-24 (sitting four)
+
+> `main` fast-forwarded from `c9f1934` (the empty Create-Next-App commit) to `c077ab7`.
+> **660 commits. hyprriq.com is live.** Phase 2 ran BEFORE the merge on the founder's revision —
+> Clerk production instance (DNS 5/5, SSL issued), Resend DKIM, and DNS were all propagating first,
+> so the merge landed on a domain that was already resolving.
+
+**VERIFIED ON THE LIVE DOMAIN (automated half):**
+
+| Check | Result |
+|---|---|
+| Condition 1 — site-wide noindex | `<meta name="robots" content="noindex, nofollow">` ✅ |
+| Condition 3 — legal effective date | "August 24, 2026" rendering on /terms ✅ |
+| `/terms` + `/privacy` (Stripe points here — permanent) | 200 / 200 ✅ |
+| All 13 launch routes + `/how-to-read` | 200 ✅ |
+| The 6 legal pages | 200 ✅ |
+| `/robots.txt` + `/sitemap.xml` — **the Phase 0 defect** | 200, permissive `Allow: /` ✅ |
+| `/portal/*`, `/admin/*` gating | 307 → /sign-in ✅ |
+| `/grant/<invalid>` | 307 → `/partners?invite=inactive` ✅ |
+
+> **ONE MEASUREMENT ARTEFACT WORTH RECORDING:** a bare `curl` of `/portal/dashboard` returns **404**,
+> not a redirect. That is CORRECT — Clerk's `auth.protect()` answers 404 for non-document requests,
+> and curl sends no document `Accept` header. With `Accept: text/html` it 307s properly. A future
+> smoke test that curls the portal and sees 404 has NOT found a bug.
+
+> **STILL TO WALK — needs hands, not HTTP:** sign-up on a phone against the production Clerk
+> instance · the grant invite cross-device path (create a grant, open on a phone, register on a
+> laptop) · a test-mode purchase → webhook → credits · submit → Inngest → PDF render · the delivery
+> email → portal link · `/admin/integrity` showing the `AWI-2607-022` finding (**green would mean
+> the check is not running**) · admin on a phone.
+
+> **NOTED, NOT A BLOCKER:** one Supabase project serves both environments, so a staging bug can
+> write production data. Worth a proper split before real clients.
+
+---
+
 ## 0-K. PORTAL AND ADMIN ON MOBILE — 2026-08-24 (design sitting three)
 
 > **THE PREMISE WAS INVERTED, AND THE FOUNDER RECORDED IT AS SUCH.** "The portal does not load on
