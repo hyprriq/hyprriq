@@ -32,7 +32,15 @@ import {
 } from "@/lib/constants/tracks";
 import { AREAS, type AreaCopy } from "@/lib/content/whatWeCheck";
 
-export type PlanFact = { label: string; value: string };
+export type PlanFact = {
+  label: string;
+  value: string;
+  /** Names the value refers to, spelled out — a buyer should not have to leave the page to learn
+   *  which areas "3 of 5" means (founder ruling, 2026-08-24). */
+  detail?: string;
+  /** Where the detail is explained in full. */
+  href?: string;
+};
 
 /**
  * Sold assessment areas a plan runs, over the total the product sells.
@@ -115,7 +123,14 @@ export function factsForPlan(plan: PlanType): PlanFact[] {
       label: recurring ? "Brands per credit" : "Brands covered",
       value: `Up to ${PLAN_BRAND_CAPS[plan]}`,
     },
-    { label: "Assessment areas", value: areas.label },
+    {
+      label: "Assessment areas",
+      value: areas.label,
+      // DERIVED from the same split the pricing page uses, so the names can never disagree with
+      // the count beside them, or with the ladder in TRACK_CONFIG.
+      detail: areaSplitForPlan(plan).included.map((a) => a.name).join(", "),
+      href: "/what-we-check",
+    },
     { label: "Delivery", value: `${CASE_SLA_HOURS} hours` },
   ];
 }

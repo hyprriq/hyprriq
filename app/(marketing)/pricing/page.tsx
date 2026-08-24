@@ -84,9 +84,26 @@ function PlanCard({ plan }: { plan: (typeof oneTimePlans)[number] }) {
       <p className="mt-1 text-[15px] text-muted">{plan.meta}</p>
       <ul className="mt-5">
         {facts.map((f) => (
-          <li key={f.label} className="flex justify-between gap-3 border-b border-line py-2.5 text-[15px] last:border-b-0">
-            <span className="text-muted">{f.label}</span>
-            <span className="text-right font-semibold text-ink">{f.value}</span>
+          <li key={f.label} className="border-b border-line py-2.5 last:border-b-0">
+            <div className="flex justify-between gap-3 text-[15px]">
+              <span className="text-muted">{f.label}</span>
+              <span className="text-right font-semibold text-ink">{f.value}</span>
+            </div>
+            {/* The names behind the count. A buyer comparing plans should not have to leave the
+                page to find out which areas "3 of 5" means. */}
+            {f.detail && (
+              <p className="mt-1 text-[13px] leading-[1.5] text-muted">
+                {f.detail}
+                {f.href && (
+                  <>
+                    {" · "}
+                    <Link href={f.href} className="font-semibold text-action hover:text-anchor">
+                      what each area covers
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
           </li>
         ))}
       </ul>

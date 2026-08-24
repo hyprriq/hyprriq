@@ -8,6 +8,8 @@
 // — which is the point of the section they sit in. See the pending-refusal note in
 // clientCopy.bannedLanguage.lock.test.ts for the scanner's blind spot on that class.
 
+import { AREAS } from "@/lib/content/whatWeCheck";
+
 export type FaqItem = { q: string; a: string };
 export type FaqGroup = { heading: string; items: FaqItem[] };
 
@@ -18,6 +20,12 @@ export const FAQ_GROUPS: FaqGroup[] = [
       {
         q: "What exactly do I receive?",
         a: "One verdict — Source Clear, Usable With Conditions, Verify Before Purchase, or Do Not Rely. With it, the findings and every source behind them, each marked Verified or Assessed. Then what we could not confirm, and a set of questions written for your specific supplier that you can send as they are.",
+      },
+      {
+        // Founder ruling 2026-08-24: name them. Derived from the same registry the pricing page and
+        // the homepage rail read, so the list cannot drift from the ladder or from the report.
+        q: `What are the ${AREAS.length} assessment areas?`,
+        a: `${AREAS.map((a) => a.name).join(", ")}. Each one states what it examines, what lands in your report, and what it cannot conclude — set out in full on the "what we check" page.`,
       },
       {
         q: "How long does it take?",

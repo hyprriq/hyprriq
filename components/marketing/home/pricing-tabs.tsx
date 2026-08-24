@@ -74,12 +74,26 @@ function PlanCard({ plan }: { plan: Plan }) {
 
       <ul className="mt-5">
         {facts.map((f) => (
-          <li
-            key={f.label}
-            className="flex justify-between gap-3 border-b border-line py-2 text-[14.5px] last:border-b-0 sm:py-2.5 sm:text-[15.5px]"
-          >
-            <span className="text-muted">{f.label}</span>
-            <span className="text-right font-semibold text-ink">{f.value}</span>
+          <li key={f.label} className="border-b border-line py-2 last:border-b-0 sm:py-2.5">
+            <div className="flex justify-between gap-3 text-[14.5px] sm:text-[15.5px]">
+              <span className="text-muted">{f.label}</span>
+              <span className="text-right font-semibold text-ink">{f.value}</span>
+            </div>
+            {/* The names behind the count, so a buyer never has to leave the page to learn what
+                "3 of 5" actually means. */}
+            {f.detail && (
+              <p className="mt-1 text-[13px] leading-[1.5] text-muted">
+                {f.detail}
+                {f.href && (
+                  <>
+                    {" · "}
+                    <Link href={f.href} className="font-semibold text-action hover:text-anchor">
+                      what each area covers
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
           </li>
         ))}
       </ul>
