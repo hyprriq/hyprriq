@@ -192,7 +192,7 @@ export function SettingsForm({ profile }: { profile: ClientProfile }) {
           type="button"
           onClick={save}
           disabled={busy}
-          className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
+          className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
         >
           {busy ? "Saving…" : "Save changes"}
         </button>

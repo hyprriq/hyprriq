@@ -44,7 +44,8 @@ console.log(`\nTABLES: ${tables.length} total, ${unwrapped.length} with NO horiz
 for (const t of unwrapped) console.log(`  ! ${t.file}:${t.line}`);
 
 const CLIENT = /^(app\/\(portal\)|app\/\(auth\)|components\/portal|components\/auth)/;
-const small = appFiles(repo).filter((f) => CLIENT.test(f)).flatMap((f) => scanTapTargets(repo, f));
+const small = appFiles(repo).filter((f) => CLIENT.test(f)).flatMap((f) => scanTapTargets(repo, f))
+  .filter((t) => t.gate === null || t.gate < 768); // desktop-only controls are mouse targets
 console.log(`\nCLIENT-SURFACE TAP TARGETS UNDER 44px: ${small.length}`);
 const byFile = new Map<string, number[]>();
 for (const t of small) byFile.set(t.file, [...(byFile.get(t.file) ?? []), t.height]);

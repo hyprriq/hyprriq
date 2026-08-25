@@ -110,7 +110,7 @@ function ActiveCase({ c }: { c: CaseDetail }) {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-[13px] text-muted">
+        <p className="report-prose mt-3 text-muted">
           Every report is reviewed by a human analyst before delivery, and you&rsquo;ll get an email when it&rsquo;s ready.
         </p>
       </div>

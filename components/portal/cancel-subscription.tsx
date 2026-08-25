@@ -47,7 +47,7 @@ export function CancelSubscription({
           type="button"
           onClick={() => call(true)}
           disabled={busy}
-          className="rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+          className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
         >
           {busy ? "…" : "Resume plan"}
         </button>
@@ -92,7 +92,7 @@ export function CancelSubscription({
           type="button"
           onClick={() => call(false)}
           disabled={busy}
-          className="rounded-lg bg-deny-ink px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          className="min-h-11 inline-flex items-center justify-center rounded-lg bg-deny-ink px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
           {busy ? "Cancelling…" : "Yes, cancel at period end"}
         </button>
@@ -100,7 +100,7 @@ export function CancelSubscription({
           type="button"
           onClick={() => setConfirming(false)}
           disabled={busy}
-          className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle"
+          className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle"
         >
           Keep my plan
         </button>

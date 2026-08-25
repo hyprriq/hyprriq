@@ -76,10 +76,10 @@ export default async function ChangeRequestPage({
                   : `Change requests can be submitted within 7 days of delivery (delivered ${fmt(c.delivered_at)}).`}
             </p>
             <div className="mt-5 flex justify-center gap-3">
-              <Link href={`/portal/cases/${c.id}`} className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
+              <Link href={`/portal/cases/${c.id}`} className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
                 Back to case
               </Link>
-              <Link href="/portal/support" className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle">
+              <Link href="/portal/support" className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle">
                 Contact support
               </Link>
             </div>

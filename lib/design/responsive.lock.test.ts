@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
 import {
-  scanAll, scanTapTargets, scanTables, appFiles, isOffender,
+  scanAll, scanTapTargets, scanControls, scanTables, appFiles, isOffender,
   contentBox, splitTracks, trackMin, TEST_WIDTHS, type GridSite,
 } from "./responsiveScan";
 
@@ -61,23 +61,9 @@ const KNOWN_UNWRAPPED_TABLES: string[] = [
  * join this scope in the second remediation sitting, not before.
  */
 const KNOWN_SMALL_TARGETS: string[] = [
-  "components/portal/report-view.tsx",
-  "components/portal/submit-form.tsx",
-  "components/portal/onboarding-flow.tsx",
-  "components/portal/cancel-subscription.tsx",
-  "components/portal/change-request-form.tsx",
-  "components/portal/settings-form.tsx",
-  "components/portal/support-form.tsx",
-  "components/portal/user-menu.tsx",
-  "components/portal/grant-code-box.tsx",
-  "components/portal/case-table.tsx",
-  "components/portal/portal-shell.tsx",
-  "components/auth/grant-code-entry.tsx",
-  "app/(portal)/portal/dashboard/page.tsx",
-  "app/(portal)/portal/cases/page.tsx",
-  "app/(portal)/portal/cases/[id]/page.tsx",
-  "app/(portal)/portal/cases/[id]/change/page.tsx",
-  "app/(portal)/portal/help/page.tsx",
+  // EMPTY, 2026-08-25 — all 36 client-surface controls were raised to the 44px floor in the same
+  // sitting the lock was built. The staleness test below keeps it empty: if a control drops under
+  // 44px again it lands in "no NEW control", not quietly in this list.
 ];
 
 const CLIENT_SURFACES = /^(app\/\(portal\)|app\/\(auth\)|components\/portal|components\/auth)/;
@@ -216,13 +202,23 @@ describe("LOCK — tables can be reached", () => {
 describe("LOCK — 44px tap targets on client surfaces", () => {
   const targets = appFiles(repo)
     .filter((f) => CLIENT_SURFACES.test(f))
-    .flatMap((f) => scanTapTargets(repo, f));
+    .flatMap((f) => scanTapTargets(repo, f))
+    // A control gated to >=768px never renders on a phone — it is a MOUSE target, not a touch one.
+    // Holding a desk-density table row to 44px would inflate it for no accessibility gain.
+    .filter((t) => t.gate === null || t.gate < 768);
 
   it("the tap-target scanner sees controls at all", () => {
-    // Same self-test discipline: prove it is looking before trusting a clean sheet.
-    const all = appFiles(repo).filter((f) => CLIENT_SURFACES.test(f))
-      .flatMap((f) => scanTapTargets(repo, f));
-    expect(all.length, "the tap-target scanner found nothing on any client surface").toBeGreaterThan(10);
+    // ⚠ THIS ASSERTION USED TO CALL scanTapTargets AND COUNT THE OFFENDERS — which meant it FAILED
+    // the moment the last offender was fixed, and the only way to green it again would have been to
+    // weaken it. The self-test had the exact bug it exists to prevent. It now counts every control
+    // EXAMINED, because "did it find something broken" and "did it look at anything" are different
+    // questions and only the second is proof of life.
+    const examined = appFiles(repo).filter((f) => CLIENT_SURFACES.test(f))
+      .flatMap((f) => scanControls(repo, f));
+    expect(
+      examined.length,
+      "the tap-target scanner examined NO controls on any client surface — it is blind",
+    ).toBeGreaterThan(40);
   });
 
   it("no NEW control under 44px on a client surface", () => {

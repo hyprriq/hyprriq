@@ -266,7 +266,14 @@ p {
    In @layer components so a deliberate utility can still override it; unlayered would outrank
    every Tailwind class and make the exception impossible. */
 @layer components {
-  .report-prose {
+  /* Two names, ONE rule. `.report-prose` is the reading body of a delivered report; `.field-help`
+     is the explanatory text under a form field on /portal/submit — the surface where a client
+     spends a credit, and where the copy exists to stop them spending it wrongly. Both are the same
+     thing: PROSE A CLIENT READS TO DECIDE SOMETHING, and the ruled ladder puts that at 16px.
+     They are separate selectors rather than one shared name so a future session can move one
+     without moving the other. */
+  .report-prose,
+  .field-help {
     font-size: 16px;
     line-height: 1.65;
   }

@@ -39,7 +39,7 @@ export function UserMenu({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-brand-tint text-sm font-bold text-brand-ink ring-offset-2 transition hover:ring-2 hover:ring-brand/30"
+        className="min-h-11 inline-flex items-center justify-center grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-brand-tint text-sm font-bold text-brand-ink ring-offset-2 transition hover:ring-2 hover:ring-brand/30"
       >
         {imageUrl ? (
           // Plain <img>, deliberately: a 36px third-party (Clerk-hosted) avatar gains nothing
@@ -66,7 +66,7 @@ export function UserMenu({
               href={switcher.href}
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 border-b border-line px-3 py-2.5 text-[14px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
+              className="min-h-11 flex items-center gap-2 border-b border-line px-3 py-2.5 text-[14px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
             >
               <span aria-hidden>🔁</span> {switcher.label}
               <span className="ml-auto rounded bg-conditional-bg px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-conditional-ink">
@@ -78,7 +78,7 @@ export function UserMenu({
             type="button"
             role="menuitem"
             onClick={() => signOut({ redirectUrl: "/" })}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] font-medium text-deny-ink hover:bg-deny-bg/40"
+            className="min-h-11 flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] font-medium text-deny-ink hover:bg-deny-bg/40"
           >
             <span aria-hidden>↩</span> Sign out
           </button>

@@ -71,7 +71,7 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
     <div className="mt-6">
       <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Category compliance</span>
       <div className="mt-2.5 rounded-card border border-line bg-surface p-5">
-        <p className="text-[13px] text-muted">
+        <p className="report-prose text-muted">
           Advisory only — this section does not affect the verdict. It reflects the product categories our
           research associated with each brand, and what those categories generally involve.
         </p>
@@ -117,7 +117,7 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
             ) : (
               // EMPTY STATE — a brand our research could not place in a category. Said plainly:
               // absence is not an accusation, and it is not a gap in the report either.
-              <p className="mt-2 text-[13px] text-muted">
+              <p className="report-prose mt-2 text-muted">
                 Our research did not associate this brand with a specific product category.
               </p>
             )}
@@ -205,7 +205,7 @@ export function FindingBody({ text }: { text: string }) {
           );
         }
         return (
-          <p key={i} className="whitespace-pre-line text-[14.5px] leading-[1.7] text-ink-2">
+          <p key={i} className="report-prose whitespace-pre-line text-ink-2">
             {b.text}
           </p>
         );
@@ -451,7 +451,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               a.remove();
               setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
             }}
-            className="mt-4 block w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle print:hidden"
+            className="min-h-11 mt-4 flex items-center justify-center w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-center text-[13px] font-semibold text-ink-2 hover:bg-subtle print:hidden"
           >
             Download PDF
           </a>
@@ -475,7 +475,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
             <p className="flex-1 report-prose leading-relaxed text-ink-2">
               <b className="text-ink">How to read this report.</b> {HOW_TO_READ}
             </p>
-            <button type="button" onClick={() => setHowtoOpen(false)} className="shrink-0 rounded-lg px-2.5 py-1 text-[12.5px] font-semibold text-brand hover:bg-subtle">
+            <button type="button" onClick={() => setHowtoOpen(false)} className="min-h-11 inline-flex items-center justify-center shrink-0 rounded-lg px-2.5 py-1 text-[12.5px] font-semibold text-brand hover:bg-subtle">
               Got it — hide this
             </button>
           </div>
@@ -567,7 +567,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
           {nonVerdict.length > 0 && (
             <div className="mt-5">
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{NON_VERDICT_SUBHEAD}</div>
-              <p className="mt-1 max-w-[68ch] text-[12.5px] text-muted">{NON_VERDICT_SUBHEAD_NOTE}</p>
+              <p className="report-prose mt-1 max-w-[68ch] text-muted">{NON_VERDICT_SUBHEAD_NOTE}</p>
               <div className="mt-2 overflow-hidden rounded-card border border-line bg-surface">
                 {nonVerdict.map((f) => {
                   const { detail } = findingText(f);
@@ -585,7 +585,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               closing disclaimer) were the only text left running the panel's whole ~1030px —
               ~130 characters a line at 12px. Same rule as every other prose surface: the text
               takes a measure; the box does not decide the line length. */}
-          <p className="mt-2 max-w-[68ch] text-[12px] text-muted">
+          <p className="report-prose mt-2 max-w-[68ch] text-muted">
             <b>Verified</b> — {CHIP_DEFS.verified} <b>Assessed</b> — {CHIP_DEFS.assessed} <b>Not assessed</b> — {CHIP_DEFS.not_assessed}
           </p>
           {/* §2 — Track 6 sits INSIDE the findings panel, after the five areas and after their
@@ -627,7 +627,7 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         <div role="tabpanel" className={panelCls("checklist")}>
           <div className="hidden font-display text-[15px] font-semibold print:my-3 print:block">Verify before you commit</div>
           <div className="mt-3 rounded-card border border-line bg-surface px-5 py-2">
-            <p className="py-2 text-[12.5px] text-ink-2">{CHECKLIST_INTRO}</p>
+            <p className="report-prose py-2 text-ink-2">{CHECKLIST_INTRO}</p>
             <ol className="mb-2">
                 {report!.questions.map((q, i) => (
                   <li key={i} className="flex items-start gap-3 border-t border-line py-2.5">
@@ -669,11 +669,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
         </div>
         {!preview && (
           <div className="mt-4 flex flex-wrap gap-2.5 print:hidden">
-            <Link href="/portal/help" className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
+            <Link href="/portal/help" className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
               Ask about this report
             </Link>
             {changeRequestOpen(c) && (
-              <Link href={`/portal/cases/${c.id}/change`} className="rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
+              <Link href={`/portal/cases/${c.id}/change`} className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-subtle">
                 Request a change (one included, 7-day window)
               </Link>
             )}

@@ -223,10 +223,33 @@ export function scanAll(repo: string): GridSite[] {
 // INLINE LINKS ARE EXEMPT and fall out naturally: only an element carrying an EXPLICIT size class is
 // measured. A link inside a paragraph has none, so it is never flagged.
 
-export type TapTarget = { file: string; line: number; element: string; height: number; from: string };
+export type TapTarget = {
+  file: string; line: number; element: string; height: number; from: string;
+  /** Width below which this control does NOT render. A desktop-only control is not a touch target. */
+  gate: number | null;
+};
+
+/**
+ * Every interactive element examined, whether it passes or not.
+ *
+ * ⚠ THIS EXISTS BECAUSE THE SELF-TEST HAD THE BUG IT WAS WRITTEN TO PREVENT. The first version of
+ * the lock proved the tap scanner worked by asserting it FOUND OFFENDERS — so the moment the last
+ * offender was fixed, the self-test failed, and the only way to make it pass again would have been
+ * to weaken it. "Did it find something broken" is not the same question as "did it look at
+ * anything", and only the second one is a proof of life.
+ */
+export function scanControls(repo: string, file: string): { file: string; line: number; element: string; height: number | null }[] {
+  const src = fs.readFileSync(path.join(repo, file), "utf8");
+  const out: { file: string; line: number; element: string; height: number | null }[] = [];
+  for (const m of src.matchAll(/<(button|Link|a)\b/g)) {
+    out.push({ file, line: src.slice(0, m.index).split("\n").length, element: m[1], height: null });
+  }
+  return out;
+}
 
 export function scanTapTargets(repo: string, file: string): TapTarget[] {
   const src = fs.readFileSync(path.join(repo, file), "utf8");
+  const lines = src.split("\n");
   const out: TapTarget[] = [];
   for (const m of src.matchAll(/<(button|Link|a)\b/g)) {
     // Read to the end of the opening tag, tolerating nested braces in JSX expressions.
@@ -250,7 +273,12 @@ export function scanTapTargets(repo: string, file: string): TapTarget[] {
       if (py) { height = parseFloat(py[1]) * 8 + 20; from = `py-${py[1]} + line box`; }
     }
     if (height !== null && height < 44) {
-      out.push({ file, line: src.slice(0, m.index).split("\n").length, element: m[1], height, from });
+      const line = src.slice(0, m.index).split("\n").length;
+      // A control inside `hidden … md:block` NEVER RENDERS ON A PHONE, so it is a MOUSE target, not
+      // a touch one — e.g. the row actions in case-table.tsx's dense grid. Holding a desk-density
+      // table row to 44px would inflate it for no accessibility gain, so the gate is recorded and
+      // the lock filters on it rather than an exemption list somebody has to maintain.
+      out.push({ file, line, element: m[1], height, from, gate: wrapperGate(lines, line).gate });
     }
   }
   return out;
