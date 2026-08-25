@@ -105,6 +105,165 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-P. INNGEST WAS REGISTERED AGAINST A PREVIEW DEPLOYMENT — 2026-08-25 (founder-found)
+
+**Owner: F executes, UX described. DESCRIBE-AND-STOP: nothing in here has been changed.** The
+founder found the Inngest dashboard showing one app whose serve URL was a single immutable Vercel
+deployment, and held the PDF render until it was settled.
+
+### 0-P.1 · Diagnosis — confirmed, with one correction that changes the risk
+
+The URL **was** a deployment-specific immutable one, and execution **was** pinned to it. But the
+founder's reading of *which* build was wrong, and it matters:
+
+`hyprriq-605r5bmfv-…` resolves to `dpl_BXfNeU33SJQGMSJDdPZMZeJtDsWQ` = commit **`b12b254`**, branch
+**`staging`**, `"target": null` — a **PREVIEW** deployment created **the same afternoon the founder
+asked**. Not an old build. The failure is not staleness:
+
+> One Inngest app + the SAME keys in both Vercel scopes → **every deployment on either branch syncs
+> to the same Inngest environment and overwrites its serve URL. Last deploy wins, regardless of
+> branch.** Production case execution runs on whatever deployed most recently — as of the diagnosis,
+> staging code in a `VERCEL_ENV=preview` runtime — and flips on the next deploy either side.
+
+| # | Finding | State |
+|---|---|---|
+| 0-P.1a | Registered URL is a preview deployment of `staging`, minutes old — not a stale build | ✅ measured |
+| 0-P.1b | `serveOrigin: process.env.INNGEST_SERVE_ORIGIN` **already exists** in `app/api/inngest/route.ts`, with a comment describing this exact problem. **The mechanism was built and the variable was never set.** | ✅ |
+| 0-P.1c | ⚠ SEVEN CRON FUNCTIONS are registered and have been firing against that preview deployment — `retention-sweep` (daily 03:00, permanently deletes client documents), `pipeline-watchdog` (15 min), `stalled-case-alarm` (hourly), `email-reminders` (daily 13:00), plus three sweeps | ✅ |
+| 0-P.1d | Whether it auto-syncs every deploy or was synced once could NOT be determined from here. **Both are broken and both take the same fix.** If it does not auto-sync, a second failure waits: preview deployments are subject to retention, and when that one is removed every Inngest call 404s | 🔴 F to observe |
+
+### 0-P.2 · What the crons have actually DONE — the founder's urgent question, answered
+
+**NOTHING HAS BEEN DELETED, AND IT WAS STRUCTURALLY IMPOSSIBLE FOR IT TO BE.** Read-only queries
+against the shared production database:
+
+| probe | result |
+|---|---|
+| `uploaded_files` total | **3** |
+| `uploaded_files` with a retention deletion stamp | **0** |
+| files past `delete_after` and still live | **0** |
+| earliest `delete_after` on any file | **2027-06-20** — twenty-two months away |
+| `email_log` `retention_warning` rows | **0** |
+| dormant-notice rows | **0** |
+| `audit_log` retention rows | **0** |
+
+Phase 2 only deletes a file whose `delete_after` **has passed**. Nothing qualifies until **June
+2027**. Even with `RETENTION_SWEEP_ENABLED=1` set in both scopes, the sweep had nothing to act on.
+
+**What the crons DID do, four days of it:** 4 `admin_alert` emails **to the founder**, and 108
+`audit_log` rows from `stalled-case-alarm` recording `stalled_alert: true` / `hours_overdue` against
+long-waiting cases. Those rows carry an **empty `old_value`** — they are AUDIT-ONLY, which is why
+`cases.updated_at` still maxes at 2026-08-21 while the audit log runs to today. The one `welcome`
+email was a real signup, not a cron.
+
+**Zero client emails. Zero deletions. Zero case mutations.** The crons ran from the wrong runtime and
+did nothing harmful — by luck of the calendar, not by design.
+
+### 0-P.3 · Which build has been executing cases — and why the sync history cannot change the answer
+
+The founder asked for the Inngest sync history, correctly, as the only authoritative record of what
+was registered when. **I have no Inngest API access and could not read it.** But the underlying
+question is answered without it:
+
+| probe | result |
+|---|---|
+| cases created ≥ 2026-08-22 | **0** |
+| cases updated ≥ 2026-08-22 | **0** |
+| cases delivered ≥ 2026-08-22 | **0** |
+| MAX `created_at` across all cases | **2026-08-20 15:48** |
+| MAX `delivered_at` | **2026-08-20 16:07** |
+
+The verdict-absence and email guards landed **2026-08-22**. **No case has executed since 2026-08-20.**
+So every case in the system predates those guards *by commit date*, whatever URL was registered —
+the sync history cannot move that. And the engine code in the registered build is **byte-identical to
+production `main`** (`lib/research`, `lib/inngest`, `lib/pdf`, `lib/verdict`, `lib/data` — zero diff;
+last engine commit `cb88053`, 2026-08-24). **It does not predate this month's engine fixes.**
+
+🟡 **Still worth reading** when the founder is in the dashboard: the sync history would show whether
+the URL churns per deploy (0-P.1d). That is an observation, not a blocker.
+
+### 0-P.4 · The fix — TWO independent defects, both required
+
+The founder framed three options as alternatives; **two of them are both needed**, and they
+confirmed the point.
+
+| Defect | Fix |
+|---|---|
+| The URL is deployment-specific | `INNGEST_SERVE_ORIGIN` → a stable alias per environment |
+| Production and staging share ONE Inngest environment | Separate Inngest **environments**, each with its own keys |
+
+⚠ **VERIFIED AGAINST INNGEST'S LIVE DOCS, not memory** (the founder's instruction, and the right
+call — my knowledge of their variable names was a year stale):
+
+- `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` — **confirmed**. The signing key is what decides
+  *which environment an app syncs into*.
+- `INNGEST_ENV` — **confirmed** to exist; it names the Inngest environment to send/receive from,
+  is auto-detected on some platforms and needs setting manually on others, and can be overridden by
+  `env` in `new Inngest()`.
+- **The Vercel Marketplace integration auto-creates a Branch Environment per Git branch**, sending
+  the branch name and the preview URL to Inngest. **All Branch Environments share one Event Key and
+  one Signing Key**, distinct from Production's.
+- For a **custom** environment (e.g. "staging"), the documented route is exactly what is prescribed
+  below: add `INNGEST_EVENT_KEY`/`INNGEST_SIGNING_KEY` scoped to that Vercel environment only.
+
+**This also confirms the integration is NOT installed** — if it were, staging deploys would have
+landed in a `staging` Branch Environment instead of overwriting Production's serve URL.
+
+**Env vars to set — Vercel → hyprriq → Settings → Environment Variables. Four entries, four
+DISTINCT values:**
+
+| Variable | Scope | Value |
+|---|---|---|
+| `INNGEST_SERVE_ORIGIN` | **Production only** | `https://hyprriq.com` |
+| `INNGEST_SERVE_ORIGIN` | **Preview only** | `https://hyprriq-git-staging-hyprrx-hyprriq.vercel.app` |
+| `INNGEST_EVENT_KEY` | **Production only** | Event Key from Inngest's **Production** environment |
+| `INNGEST_SIGNING_KEY` | **Production only** | Signing Key from Inngest's **Production** environment |
+| `INNGEST_EVENT_KEY` | **Preview only** | Event Key from a **new custom Inngest environment** ("staging") |
+| `INNGEST_SIGNING_KEY` | **Preview only** | Signing Key from that same environment |
+
+⚠ The Preview scope covers **every** branch's previews, not just staging — a PR branch will register
+the staging alias and staging will serve it. Acceptable today. If per-PR isolation is ever wanted,
+install the Marketplace integration and branch environments arrive automatically.
+
+### 0-P.5 · Switchover — nothing is lost, but the crons must be handled DURING it
+
+**No in-flight case exists.** Verified, not assumed: `awaiting_review` 19 (a human wait, not a live
+run), `delivered` 14, `manual_override_required` 8, `research_failed` 3, `submission_failed` 1.
+**Nothing is running.** The window is clean.
+
+1. Set the six variables above.
+2. Redeploy **production**; confirm Inngest's Production environment shows `https://hyprriq.com/api/inngest`.
+3. Redeploy **staging**; confirm the staging environment shows the branch alias.
+4. ⚠ **ARCHIVE THE OLD REGISTRATION AS PART OF THIS, NOT AFTER** (founder-ruled). The old app keeps
+   its **seven cron triggers** pointed at the old URL. Left alive, `retention-sweep` can fire twice
+   daily, from a stale build, against shared production data — and after June 2027 it would have
+   something to delete.
+5. Submit nothing during the window: an event sent with the old key lands in the old environment.
+
+### 0-P.6 · Deployment protection is off entirely — same root cause as the prototype exposure
+
+Verified: `passwordProtection` false, `ssoProtection` false, `trustedIps` false. The founder is right
+that this is the same class as §0-M — **the default posture is "reachable", and nothing was ever
+deliberately opened.**
+
+**What turning it on would break, and the founder's suspicion is correct:** Vercel Authentication on
+**Preview** blocks every external caller that must reach a preview deployment — Inngest (which is why
+it works today), plus any Stripe/Clerk/Resend webhook pointed at staging. On **Production** it would
+break the live site outright; never enable it there.
+
+**The out, verified against Vercel's live docs:** **Protection Bypass for Automation**. Vercel injects
+the secret as `VERCEL_AUTOMATION_BYPASS_SECRET`, and a caller presents it as the
+`x-vercel-protection-bypass` header, or as a **query parameter** when the tool cannot set headers —
+which is the documented route for third-party webhooks. It covers Password Protection, Vercel
+Authentication and Trusted IPs.
+
+🔴 **F — ORDER MATTERS AND THE FOUNDER HAD IT RIGHT: separate the environments FIRST.** While
+production execution depends on a preview deployment being reachable, enabling protection on Preview
+takes production down. Once the environments are split, the only thing that breaks is *staging's own*
+Inngest — which is then a contained, testable problem with a documented bypass.
+
+---
+
 ## 0-O. RESPONSIVE AUDIT — PORTAL AND ADMIN — 2026-08-25 (measured, not surveyed)
 
 **Owner: UX. AUDIT ONLY — one functional bug fixed, nothing else.** Founder ruling: audit before
@@ -1638,6 +1797,19 @@ founder-run scripts:** the probe template is now
     1024px laptop.** "It works on my laptop" is measured at the one width that flatters the layout,
     and that is how an entire console shipped desktop-only without anyone being careless. The four
     ruled widths are **360 · 390 · 768 · 1024**, and 1024 is a TEST width, not a safe one.
+14. **AN INSTRUMENT MUST PROVE IT *LOOKED*, NEVER THAT IT *FOUND*** (founder-ruled 2026-08-25, on the
+    THIRD occurrence). Every scanner, census, lock or sweep must assert **how much it EXAMINED**, and
+    that assertion must stay true after the last defect is fixed. Three times now the same shape:
+      · a hand-run census reported a clean zero it had not earned;
+      · a marker pattern matched half the vocabulary and looked complete;
+      · the tap-target self-test proved itself by asserting it **found offenders** — so the moment
+        the last one was fixed it failed, and the only way to green it would have been to weaken it.
+    "Did it find something broken" and "did it look at anything" are different questions, and only
+    the second is proof of life. A detector whose proof-of-life is its own hit count is guaranteed to
+    go quiet exactly when you start trusting it. See `scanControls()` in `lib/design/responsiveScan.ts`
+    for the shape: count what was inspected, assert on that, and check the defects separately.
+    Related but distinct: rule 11 covers a pattern that CANNOT match; this covers one that stops
+    matching and is read as success.
 
 ---
 
