@@ -426,8 +426,11 @@ mode this project has already hit twice (the backspace regexes, standing rule 11
 
 **Founder ruling 2026-08-25: this becomes a standing note.** It is standing rule 13 in §8.
 
-⚠ **AND THE FIRST VERSION OF IT WAS WRONG.** I wrote "1024px is the tightest width in the system"
-and the founder repeated it back in their ruling. **It is not.** The arithmetic:
+⚠ **AND THE FIRST VERSION OF IT WAS WRONG — THE FOUNDER ACTED ON IT.** I wrote "1024px is the
+tightest width in the system". The founder did not merely read that: **they issued a ruling from it**
+("THE 1024px FINDING goes in the tracker as a standing note … the sidebar makes 1024 the tightest
+width in the system"), and standing rule 13 was drafted off the back of it. A wrong measurement
+became a standing instruction inside one exchange. **It is not true.** The arithmetic:
 
 | viewport | admin content | what happens |
 |---|---|---|
@@ -436,8 +439,12 @@ and the founder repeated it back in their ruling. **It is not.** The arithmetic:
 | **1024px** | **728px** | sidebar becomes a **static 248px column** — it eats 248 of the 256 pixels gained, so crossing `lg` buys **EIGHT PIXELS** |
 | 1280px | 984px | the width everything was verified at |
 
-So 1024 is **not** narrower than 768 — it is 8px wider, which is the same thing in practice. The
-correct statement, and the one worth testing against:
+So 1024 is **not** narrower than 768 — it is 8px wider, which is the same thing in practice.
+
+**FOUNDER RULING 2026-08-25 ON WHICH HALF SURVIVES: the 1280 claim is the useful one, not the 1024
+one.** "1024 is the tightest width" was wrong and is struck. "A 1280px window hands you 256px more
+than a real 1024px laptop" is right, is the reason the console shipped desktop-only, and is what the
+standing rule tests against. The correct statement:
 
 > **Crossing the `lg` breakpoint gains nothing. 1024px is tablet-portrait width with a sidebar bolted
 > on. A 1280px window hands you 256px MORE content than a real 1024px laptop — test at 1024.**
