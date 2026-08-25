@@ -14,10 +14,11 @@ import { CASE_SLA_HOURS } from "@/lib/constants/plans";
  * `verify_before_purchase` ink and tint out of `VERDICT_PALETTE`, so a change to the registry moves
  * this graphic with it and the two can never disagree. Warm here is correct — it IS a verdict.
  *
- * ⚠ THE VERDICT TEXT RENDERS AT 9.5 USER UNITS in a 320-wide box, so at the spec's `max-width:320px`
- * it is roughly 9.5px on screen — below anything else on the site. Built at the ruled size; it is
- * not a control and the whole graphic carries an `aria-label` that states the same thing in words,
- * so nothing is only available at that size. Recorded rather than silently enlarged.
+ * THE VERDICT TEXT RENDERS AT 9.5 USER UNITS in a 320-wide box — roughly 9.5px on screen, below
+ * anything else on the site. RAISED AND RULED TO STAY, 2026-08-25. It is not a control, the graphic
+ * carries an `aria-label` stating the same thing in words, and the stacked mobile form covers the
+ * small-screen case, so NOTHING IS AVAILABLE ONLY AT THAT SIZE. That last clause is the whole test —
+ * a future session enlarging this "for accessibility" would be changing a ruled size for no gain.
  */
 export function FlowVisual({ className = "" }: { className?: string }) {
   const verdict = VERDICT_COPY.verify_before_purchase.name;

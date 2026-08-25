@@ -15,7 +15,10 @@ import {
 } from "@/lib/content/reportCopy";
 import { requireVerdict } from "@/lib/portal/verdictPresence";
 
-// ── THE REPORT (full-build brief §1–§3, approved prototype public/prototype/client/report.html) —
+// ── THE REPORT (full-build brief §1–§3, built from the approved client report prototype) —
+// ⚠ THE PROTOTYPE FILE IS GONE. public/prototype/** was DELETED 2026-08-25 after it was found
+// answering 200 to the open internet; it lives in git history at c1b57ec~1 if it is ever needed.
+// Do not restore it into public/ — see the note in proxy.ts.
 // decision-first, engine's words. STRUCTURAL RULES (§5): the decision layer (identity, summary,
 // verdict scale, the single most important risk) is NEVER tabbed; only supporting depth is tabbed
 // (Findings · Could not confirm · Checklist · Notes); the four-level scale renders as a scale

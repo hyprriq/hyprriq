@@ -39,11 +39,12 @@ export const CHECKABLE: readonly { key: string; area: string; line: string }[] =
  * The four structural limits. `t`/`b` are the /method page's own headings and bodies, unchanged;
  * `short` is the same limit compressed to one drawable line for the graphic.
  *
- * ⚠ DEVIATION FROM THE VISUAL SPEC, RECORDED. The spec's right column carried "where the stock came
- * from before your supplier" as a fifth boundary item. It is not one of the four limits /method
- * publishes, and adding it here would mean writing a NEW REFUSAL into the product's own copy — a
- * product-claim change, which is not this lane's call. The graphic therefore draws the four limits
- * the site actually states. Flagged for the founder rather than quietly added or quietly dropped.
+ * ⚠ THE SPEC'S FIFTH BOUNDARY ITEM IS CUT — FOUNDER-RULED, 2026-08-25, NOT AN OVERSIGHT. The visual
+ * spec's right column carried "where the stock came from before your supplier". Adding it would have
+ * meant writing a NEW REFUSAL into product copy, and the ruling is that there are enough already.
+ * This column therefore draws the four limits /method actually publishes and no more. If a fifth is
+ * ever wanted, it is added to CANNOT first — as prose the site stands behind — and the graphic picks
+ * it up on its own. NEVER the other way round: a graphic must not be where a product claim debuts.
  */
 export const CANNOT: readonly { t: string; b: string; short: string }[] = [
   {

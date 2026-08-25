@@ -43,11 +43,16 @@ export const metadata: Metadata = {
 // to a coloured dot. Each is a 24-box stroke path drawn in currentColor, so the tint/ink pair is the
 // only thing carrying colour — no icon file, and nothing to keep in sync with the tokens.
 //
-// ⚠ UNRULED — THE FIFTH MARK USES A VERDICT COLOUR. `text-verify-ink` is warm, and warm hues are
-// reserved for verdicts. It is the spec's own choice on the spec's own strip, and this row is a list
-// of SUBJECTS rather than an assessment — but it is the one warm mark on the page outside the verdict
-// section. Matching the spec is what this sitting was asked for, so it is built as specified and
-// flagged here for the founder rather than quietly changed.
+// ⚠ THE ACCOUNT-RISK MARK WAS WARM AND IS NOW NEUTRAL (founder ruling, 2026-08-25). The spec drew
+// it in the verify ink; the ruling is that this page teaches the verdict scale, so a warm mark on it
+// is one step removed from the same collision the "Researching" marker had.
+//
+// IT IS THE ONE NEUTRAL MARK ON PURPOSE, and that is a design argument rather than a colour dodge:
+// the other five are SUBJECTS WE RESEARCH — a market, a supplier, a brand's behaviour, a document, a
+// brand's enforcement. Account risk is the CONSEQUENCE those five feed into. Neutral ink on the
+// subtle ground says "different kind of thing" where a sixth accent would have said "sixth subject",
+// and there is no sixth cool accent in the system that is not already carrying one of the five.
+// MEASURED: --ink on --subtle is 15.69:1.
 const CAPABILITIES = [
   { title: "Amazon wholesale", body: "How this market operates, not how it is described.", tint: "bg-brand-tint", ink: "text-anchor",
     icon: ["M3 7l9-4 9 4v10l-9 4-9-4V7z", "M3 7l9 4 9-4M12 11v10"] },
@@ -57,7 +62,7 @@ const CAPABILITIES = [
     icon: ["M12 3l7.5 3v5.5c0 4.4-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5.1-7.5-9.5V6L12 3z", "M12 8.5v4M12 15.5v.01"] },
   { title: "Invoice review", body: "The fourteen document fields we check on every invoice.", tint: "bg-cyan-tint", ink: "text-cyan",
     icon: ["M6 3h9l4 4v14H6z", "M15 3v4h4M9.5 12h6M9.5 16h4"] },
-  { title: "Account risk", body: "What puts a selling account at risk — and what doesn't.", tint: "bg-verify-bg", ink: "text-verify-ink",
+  { title: "Account risk", body: "What puts a selling account at risk — and what doesn't.", tint: "bg-subtle", ink: "text-ink",
     icon: ["M3 13h4l2-6 3 12 2.5-7 1.5 3h5"] },
   { title: "Brand enforcement", body: "How a brand crackdown starts, and what it looks like beforehand.", tint: "bg-violet-tint", ink: "text-violet",
     icon: ["M12 3v18M5 8h14M7 8l-3 6a3.2 3.2 0 006 0zM17 8l-3 6a3.2 3.2 0 006 0z"] },
@@ -67,16 +72,24 @@ const CAPABILITIES = [
  * The state markers on the "work runs" panel. Three states, and each one has to READ as its state
  * without the word beside it: filled for done, pulsing for running, hollow-outline for queued.
  *
- * ⚠ THE RUNNING STATE IS WARM, and warm hues are reserved for verdicts. It is the spec's own choice,
- * and the case for it is that "researching" is the same amber the portal itself uses for work in
- * flight — but it is on a marketing page beside no verdict. Built as ruled; flagged, not changed.
+ * ⚠ THE RUNNING STATE WAS WARM AND IS NOW BLUE (founder ruling, 2026-08-25). The spec drew it in the
+ * verify amber, and the reason that is wrong is specific rather than general: THIS CARD ALSO SHOWS
+ * "Verify Before Purchase", in the same amber-orange family, a few rows below. Two meanings for one
+ * hue on one card is exactly what the reserved-hue rule exists to prevent — a reader has no way to
+ * know that the amber dot means "in progress" and the amber chip means "a verdict about a supplier".
+ * It now takes the blue ALREADY ON THIS CARD for the SLA countdown, so the card carries two hues
+ * with one meaning each. MEASURED: --blue on --blue-tint is 4.58:1.
+ *
+ * The narrowed rule stands elsewhere — admin status chips, subscription state and ticket status stay
+ * warm. Warm is reserved on client-facing REPORT surfaces and anywhere a verdict is depicted, and
+ * this card depicts one.
  *
  * The pulse reuses `.hq-pulse-dot`, the system's existing named motion, rather than adding a second
  * pulse animation — one keyframe, already covered by the reduced-motion block in globals.css.
  */
 const STATUS_TONE = {
   ok: { chip: "bg-clear-bg text-clear-ink", mark: "bg-current" },
-  run: { chip: "bg-verify-bg text-verify-ink", mark: "bg-current hq-pulse-dot" },
+  run: { chip: "bg-blue-tint text-blue", mark: "bg-current hq-pulse-dot" },
   wait: { chip: "border border-line bg-subtle text-muted", mark: "border-[1.5px] border-line-strong" },
 } as const;
 
