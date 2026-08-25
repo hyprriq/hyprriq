@@ -139,7 +139,7 @@ so `sm:`/`md:`/`lg:` resolve exactly as they would on a device. Every figure is
 | 360px | 328px | 328px | |
 | 390px | 358px | 358px | |
 | 768px | 720px | 712px | |
-| **1024px** | **728px** | **720px** | ⚠ NARROWER THAN 768. The sidebar becomes a static 248px column at `lg`, so **1024px is a WORSE case than 768px**, not a better one. Anything tuned by eye at "desktop" was tuned at a width the sidebar does not exist at. |
+| **1024px** | **728px** | **720px** | ⚠ **CORRECTED 2026-08-25 — see 0-O.6.** 1024 is NOT narrower than 768; it is 8px WIDER. The sidebar becomes a static 248px column at `lg` and eats 248 of the 256 extra pixels, so crossing the breakpoint gains almost nothing. The real gap is against 1280px, which hands you 984px — **256px more than a real 1024 laptop.** |
 
 ### 0-O.2 · THE FUNCTIONAL BUG — diagnosed, fixed, verified
 
@@ -238,11 +238,15 @@ idea — it needs one component built once and used six times.
    restyle admin, not leave a shell that breaks on a phone").
 2. **The shell fix looked like the whole fix.** Sitting three gave admin a mobile drawer, and the
    screens then LOADED on a phone. Loading is not working. The drawer made the failure quieter.
-3. **⚠ AND THE REAL ONE: 1024px IS NARROWER THAN 768px ON THESE SCREENS.** The sidebar becomes a
-   static 248px column at `lg`, so admin content gets 728px at 1024 and 720px at 768. Anyone who
-   checked "does it work on a laptop" checked at 1280+ where the content box is 1265px — more than
-   DOUBLE what a 1024px laptop actually gives. The screens were not carelessly built; they were
-   built and verified at a width that flatters them.
+3. **⚠ AND THE REAL ONE: CROSSING 1024px BUYS EIGHT PIXELS.** ⚠ *This row was WRONG when first
+   written — it said 1024 was NARROWER than 768. The lock's own arithmetic assertion caught it: 728
+   is not less than 720. Corrected here rather than quietly edited, because the founder acted on the
+   wrong version.* The sidebar is an off-canvas drawer below `lg` and a **static 248px column** at
+   `lg` and above, so it eats 248 of the 256 pixels the viewport gains: **768 → 720px of content,
+   1024 → 728px.** 1024 is effectively tablet-portrait width. The flattering width is **1280 → 984px,
+   which is 256px more than a real 1024 laptop hands over.** The screens were not carelessly built;
+   they were built and verified in a window that gives a third more room than the machine they were
+   being built for.
 
 **What stops the next screen shipping the same way.** Not a note, and not a review habit — the same
 answer this project reaches every time: **a lock**, and this audit already contains its
@@ -258,6 +262,49 @@ assert it finds the known offenders**, because a scanner that silently matches n
 mode this project has already hit twice (the backspace regexes, standing rule 11).
 
 🔴 **F — the lock is NOT built.** The founder's brief was audit only, and building it is item 5 above.
+
+### 0-O.6 · THE 1024px STANDING NOTE — and a correction to this entry
+
+**Founder ruling 2026-08-25: this becomes a standing note.** It is standing rule 13 in §8.
+
+⚠ **AND THE FIRST VERSION OF IT WAS WRONG.** I wrote "1024px is the tightest width in the system"
+and the founder repeated it back in their ruling. **It is not.** The arithmetic:
+
+| viewport | admin content | what happens |
+|---|---|---|
+| 360px | 328px | sidebar is an off-canvas drawer |
+| 768px | 720px | still a drawer |
+| **1024px** | **728px** | sidebar becomes a **static 248px column** — it eats 248 of the 256 pixels gained, so crossing `lg` buys **EIGHT PIXELS** |
+| 1280px | 984px | the width everything was verified at |
+
+So 1024 is **not** narrower than 768 — it is 8px wider, which is the same thing in practice. The
+correct statement, and the one worth testing against:
+
+> **Crossing the `lg` breakpoint gains nothing. 1024px is tablet-portrait width with a sidebar bolted
+> on. A 1280px window hands you 256px MORE content than a real 1024px laptop — test at 1024.**
+
+**How the error was caught matters more than the error.** It was not caught by re-reading; it was
+caught by `responsive.lock.test.ts` asserting the relationship as arithmetic, which failed with
+`expected 728 to be less than 720`. **A lock built before the fixes caught a mistake in the audit
+that produced it** — which is exactly the argument the founder made for building it first.
+
+### 0-O.7 · THE LOCK — BUILT FIRST, founder-ruled 2026-08-25
+
+**Ruling: "if it ships last, the fixes are verified by the same eye that missed these. If it ships
+first, every fix is verified by the lock as it lands."** So it shipped first.
+
+| # | Piece | State |
+|---|---|---|
+| a | `lib/design/responsiveScan.ts` — ONE analyser, used by the lock AND by `scripts/responsive-audit.ts`. The standalone `.mjs` is deleted: it drifted from the lock's understanding three times in one sitting. | ✅ |
+| b | Each of the scanner's three blind spots is named in its header with the case that caught it — wrapper gates, inner `.map` returns, and `COLS` constants. Those are the three a rewrite would reintroduce. | ✅ |
+| c | **THE SELF-TEST THE FOUNDER REQUIRED.** Five assertions prove the scanner is looking at something: it finds grids at all; it resolves `/admin/support`'s constant-declared grid *including the gap and padding held in the constant*; it sees `case-table.tsx`'s wrapper gate above an inner `.map` return **and does not report that correct component as an offender**; it still finds every measured offender; and it names the three BROKEN routes explicitly. | ✅ |
+| d | **THE LIST CAN ONLY SHRINK.** `KNOWN_OFFENDERS` pairs with a staleness test: fix one and the lock FAILS until its row is deleted. The list cannot describe a world that no longer exists, and the scanner cannot go blind without saying so. | ✅ |
+| e | 44px tap-target floor on **client surfaces** — same scope discipline as the 16px form floor. 36 controls currently listed. Inline links are exempt and fall out for free: only elements with an explicit size class are measured. | ✅ |
+| f | `<table>` must have a horizontal scroll container. 7 files listed. | ✅ |
+| g | Client surfaces are held to **zero overflow at all four widths**, with no allowlist — the bar that does not bend. | ✅ locked |
+
+**16 assertions, all passing against the current broken state**, because the breakage is recorded
+rather than tolerated silently.
 
 ---
 
@@ -1584,6 +1631,13 @@ founder-run scripts:** the probe template is now
     Sweep command when in doubt: `grep -rlP '' --include='*.ts' --include='*.tsx' .`
 12. **"Unreferenced" and "unlinked" are not security properties** (§0-M). Whether a file is *reached*
     is decided by the middleware matcher and the deploy, never by whether the codebase imports it.
+13. **TEST AT 1024px, NOT AT 1280px** (§0-O.6, founder-ruled 2026-08-25). The app sidebar is an
+    off-canvas drawer below `lg` and a **static 248px column** at `lg` and above. Crossing that
+    breakpoint therefore gains **eight pixels** of content (768 → 720px, 1024 → 728px): the sidebar
+    eats 248 of the 256 the viewport gained. A 1280px window gives 984px — **256px more than a real
+    1024px laptop.** "It works on my laptop" is measured at the one width that flatters the layout,
+    and that is how an entire console shipped desktop-only without anyone being careless. The four
+    ruled widths are **360 · 390 · 768 · 1024**, and 1024 is a TEST width, not a safe one.
 
 ---
 
