@@ -105,6 +105,162 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-O. RESPONSIVE AUDIT — PORTAL AND ADMIN — 2026-08-25 (measured, not surveyed)
+
+**Owner: UX. AUDIT ONLY — one functional bug fixed, nothing else.** Founder ruling: audit before
+fixing, because every time this project has fixed before measuring it fixed the wrong thing.
+
+### 0-O.1 · METHOD, and why it had to change twice
+
+The portal and admin routes are auth-gated, so they cannot be driven in a browser without a session.
+The first instrument was a static scanner over the source. **It produced three different answers to
+the same question**, and each correction is worth recording because each is a way a layout audit
+lies:
+
+1. it read the grid's own class string and reported `components/portal/case-table.tsx` as broken —
+   but that component's gate is on the WRAPPER (`hidden … md:block`) with a `md:hidden` card list
+   behind it. **A correctly-built component was reported as a defect.**
+2. its backward scan for that wrapper stopped at the `return (` of an inner `.map` callback, so it
+   missed wrappers more than a few lines up.
+3. it skipped `/admin/support` entirely, because that file keeps the word `grid` INSIDE its `COLS`
+   constant, so the className string never contains it. **The single worst grid in the codebase was
+   invisible to three passes of its own detector.**
+
+At that point the scanner had earned no trust, so the numbers below come from **a real browser**: a
+temporary dev-only route rendering the real markup, loaded in **same-origin iframes of exact width**
+so `sm:`/`md:`/`lg:` resolve exactly as they would on a device. Every figure is
+`getBoundingClientRect`, `scrollWidth` or `document.elementFromPoint`. The instrument was deleted and
+`git status` verified clean before this entry was written.
+
+**Content box, measured from the shells** — this is what a row actually gets:
+
+| viewport | admin | portal | note |
+|---|---|---|---|
+| 360px | 328px | 328px | |
+| 390px | 358px | 358px | |
+| 768px | 720px | 712px | |
+| **1024px** | **728px** | **720px** | ⚠ NARROWER THAN 768. The sidebar becomes a static 248px column at `lg`, so **1024px is a WORSE case than 768px**, not a better one. Anything tuned by eye at "desktop" was tuned at a width the sidebar does not exist at. |
+
+### 0-O.2 · THE FUNCTIONAL BUG — diagnosed, fixed, verified
+
+Case links on `/admin/cases` did nothing when tapped. **It was none of the four candidates.**
+
+| what it looked like | what it was |
+|---|---|
+| tap target too small | the link is 62×23px — under 44px, but irrelevant here |
+| an overlay intercepting | nothing overlays it |
+| a hydration failure | it hydrates; it is a real `<Link>` in the DOM |
+| not rendering as a link at that breakpoint | it renders, correctly, as a link |
+
+**MEASURED at 360px:** the row grid demands **604px** (528px fixed tracks + 60px gaps + 32px
+padding) inside a **328px** box, the wrapper is `overflow-hidden`, and there is no scroll container
+anywhere above it. The link had **0px of itself inside the clip**; `elementFromPoint` at its centre
+returned **nothing at all**, because the centre sits **267px past the right edge of the viewport**.
+At 390px it is still 0px visible, 237px past the edge.
+
+**And the reason "doesn't work" was the right description rather than "too small": the case number
+in that row is a `<span>`, not a link. There was NO REACHABLE LINK IN THE ROW AT ALL.**
+
+Fixed with the pattern this codebase already had and admin never got — a `md:hidden` card list where
+**the whole card is the link**, dense grid kept behind `hidden md:block`. Verified with the same hit
+test that proved the bug: 360px → card 328×148px fully in viewport, `elementFromPoint` → the card
+link, document overflow 0. Committed as `4798cdc`.
+
+### 0-O.3 · THE FULL TABLE — route · width · issue · severity
+
+**BROKEN = cannot be used · POOR = usable but bad · MINOR.** `+N` is measured overflow in px.
+
+| route | 360 | 390 | 768 | 1024 | issue | severity |
+|---|---|---|---|---|---|---|
+| `/admin/support` | +374 | +344 | ok | ok | row grid needs 734px, `overflow-hidden`. **The row contains no `<Link>` at all** — nothing on this screen can be opened on a phone | **BROKEN** |
+| `/admin/billing` | +320 | +290 | ok | ok | row grid 680px, `overflow-hidden`; the row's only link measured 0px visible, hit test returns nothing | **BROKEN** |
+| `/admin/dashboard` (cases list) | +166 | +136 | ok | ok | row grid 526px, `overflow-hidden`; only link 0px visible | **BROKEN** |
+| `/admin/cases` | — | — | ok | ok | **FIXED this sitting** (0-O.2) | ✅ |
+| `/admin/users` | +196 | +166 | ok | ok | row grid 556px with **no wrapper at all** → the whole document scrolls sideways by **229px** at 360, 199px at 390. Content is reachable, so not BROKEN | POOR |
+| `/admin/dashboard` (second list) | +62 | +32 | ok | ok | row grid 422px, `overflow-hidden`. Informational row with no action — **data is lost, not navigation** | POOR |
+| `/admin/clients` | +2 | ok | ok | ok | row grid 362px. **The row IS a `<Link>`**, so it still navigates; the trailing column is clipped 17px at 360 | POOR |
+| `/admin/brands` | squeeze | squeeze | ok | ok | 5-col `<table>`, no scroll container. No `whitespace-nowrap`, so cells wrap rather than overflow — ~65px per column | POOR |
+| `/admin/outcomes` | squeeze | squeeze | ok | ok | **7-col** `<table>`, no scroll container — ~47px per column | POOR |
+| `/admin/suppliers` | squeeze | squeeze | ok | ok | 4-col `<table>`, no scroll container | POOR |
+| `/admin/revenue` | squeeze | squeeze | ok | ok | `<table>`, no scroll container | POOR |
+| `/admin/clients/[id]/accounting` | squeeze | squeeze | ok | ok | **FOUR** `<table>`s, none with a scroll container | POOR |
+| `/admin/cases/[id]/review` | squeeze | squeeze | ok | ok | 2 unwrapped `<table>`s + `attempt-history`'s; **16 controls under 44px, smallest 28px**; 33 paragraphs under 16px. The founder's second priority screen | POOR |
+| `/admin/clients/[id]` | ok | ok | ok | ok | 4 controls under 44px (min 32px) | MINOR |
+| `/admin/acquisition` | ok | ok | ok | ok | 5 controls under 44px (min 32px) | MINOR |
+| `/admin/cases/run` | ok | ok | ok | ok | 2 controls under 44px (min 32px) | MINOR |
+| `/admin/bulk`, `/admin/integrity`, `/admin/prompts`, `/admin/settings`, `/admin/design-system` | ok | ok | ok | ok | `design-system` has a `min-w-[640px]` block, but it is an internal specimen sheet | MINOR |
+| **CLIENT SURFACES** | | | | | | |
+| `/portal`, `/portal/dashboard`, `/portal/cases` | ok | ok | ok | ok | **No overflow at any width.** `case-table.tsx` already ships a `md:hidden` card list where the whole card is a link | ✅ |
+| `/portal/cases/[id]` | ok | ok | ok | ok | report renders; `report-view` carries 4 controls under 44px (min 28px, the "Got it — hide this" dismiss) | POOR |
+| `/portal/submit` | ok | ok | ok | ok | 6 controls under 44px — **all 40px**, so close; 17 paragraphs under 16px. **The surface a client spends a credit on** | POOR |
+| `/portal/billing` | ok | ok | ok | ok | fixed grid needs only 294px — **measured to fit**; 4 controls under 44px (min 36px) | MINOR |
+| `/portal/onboarding` | ok | ok | ok | ok | 2 controls under 44px (min 36px) | MINOR |
+| `/portal/settings`, `/portal/support`, `/portal/cases/[id]/change` | ok | ok | ok | ok | 1–3 controls at 40px | MINOR |
+| `/portal/guides`, `/portal/help` | ok | ok | ok | ok | clean | ✅ |
+| `/sign-in`, `/sign-up`, `/unsubscribe` | ok | ok | ok | ok | `sign-up` has one 36px control; Clerk's own fields were fixed in sitting three | MINOR |
+
+**Totals: 3 BROKEN, 10 POOR, the rest MINOR or clean. Every BROKEN one is admin. No client surface
+has horizontal overflow at any of the four widths.**
+
+Site-wide, computed from source: **84 interactive elements under 44px across 31 files** (smallest
+24px), and **187 paragraphs under 16px across 49 files**. The 16px floor for FORM CONTROLS is
+already locked (`mobile.lock.test.ts`, the iOS zoom bug); 44px targets and reading prose are not.
+
+### 0-O.4 · THE SHAPE OF THE WORK
+
+**Yes — the admin was built desktop-only and needs a responsive layer.** Saying it plainly, as asked.
+
+But it is **not** five sittings of page-by-page work, and the reason is the good news in this audit:
+**the correct pattern already exists in this repo and is already proven.**
+`components/portal/case-table.tsx` renders a dense grid above `md` and a card list below it where
+the whole card is a link. The portal got that in sitting three. Admin never did.
+
+So the work is ONE PRIMITIVE plus application sites, not N designs:
+
+| # | Work | Sitting |
+|---|---|---|
+| 1 | Extract `case-table.tsx`'s two-form pattern into a shared `<ListTable>` primitive: columns declared once, dense grid ≥md, card list <md, whole card the link. | 1 |
+| 2 | Apply it to the 3 BROKEN admin lists (`/admin/support`, `/admin/billing`, `/admin/dashboard`) and the 3 POOR ones (`/admin/users`, `/admin/clients`, dashboard's second list). Six application sites, no new design decisions. | 1 |
+| 3 | Wrap the 10 unwrapped `<table>`s — one `overflow-x-auto` container, applied as a class. `/admin/cases/[id]/review` first, per the narrowed ruling. | 1 (shared with 2) |
+| 4 | Tap targets and reading sizes on CLIENT surfaces. Mechanical, and the smallest values are 36–40px rather than 24px. | ½ |
+| 5 | The lock (0-O.5), so this cannot recur. | ½ |
+
+**Honest estimate: two sittings after this one.** Not five, because nothing here needs a new layout
+idea — it needs one component built once and used six times.
+
+### 0-O.5 · HOW ADMIN GOT BUILT DESKTOP-ONLY, AND WHAT STOPS THE NEXT SCREEN
+
+**How.** Three things compounding, and only the third is fixable:
+
+1. **A ruling, applied wider than it was meant.** "Admin usable, not beautiful — operators work at a
+   desk" was read as permission to skip mobile in admin. It was narrowed on 2026-08-25 to exclude the
+   cases list and case detail; §0-K already recorded the same mis-reading once ("that meant do not
+   restyle admin, not leave a shell that breaks on a phone").
+2. **The shell fix looked like the whole fix.** Sitting three gave admin a mobile drawer, and the
+   screens then LOADED on a phone. Loading is not working. The drawer made the failure quieter.
+3. **⚠ AND THE REAL ONE: 1024px IS NARROWER THAN 768px ON THESE SCREENS.** The sidebar becomes a
+   static 248px column at `lg`, so admin content gets 728px at 1024 and 720px at 768. Anyone who
+   checked "does it work on a laptop" checked at 1280+ where the content box is 1265px — more than
+   DOUBLE what a 1024px laptop actually gives. The screens were not carelessly built; they were
+   built and verified at a width that flatters them.
+
+**What stops the next screen shipping the same way.** Not a note, and not a review habit — the same
+answer this project reaches every time: **a lock**, and this audit already contains its
+implementation. The rule it encodes:
+
+> A grid whose fixed tracks + gaps + padding exceed the 328px content box must either carry a
+> breakpoint prefix, or its file must ship a `md:hidden` alternative form. A `<table>` must have an
+> `overflow-x-auto` ancestor.
+
+The scanner written for this audit computes exactly that and is wrapper-aware — including the three
+blind spots it was caught by, which are the three a naive version would repeat. **It also has to
+assert it finds the known offenders**, because a scanner that silently matches nothing is the failure
+mode this project has already hit twice (the backspace regexes, standing rule 11).
+
+🔴 **F — the lock is NOT built.** The founder's brief was audit only, and building it is item 5 above.
+
+---
+
 ## 0-N. SITTING FIVE — SPEC GRAPHICS, THREE PAGE GRAPHICS, AND WHAT PRODUCTION DOES DIFFERENTLY — 2026-08-25
 
 **Owner: UX.** Parts 1 and 3 of the founder's sitting-five brief. Part 2 is answered below, honestly,
