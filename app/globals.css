@@ -266,7 +266,14 @@ p {
    In @layer components so a deliberate utility can still override it; unlayered would outrank
    every Tailwind class and make the exception impossible. */
 @layer components {
-  .report-prose {
+  /* Two names, ONE rule. `.report-prose` is the reading body of a delivered report; `.field-help`
+     is the explanatory text under a form field on /portal/submit — the surface where a client
+     spends a credit, and where the copy exists to stop them spending it wrongly. Both are the same
+     thing: PROSE A CLIENT READS TO DECIDE SOMETHING, and the ruled ladder puts that at 16px.
+     They are separate selectors rather than one shared name so a future session can move one
+     without moving the other. */
+  .report-prose,
+  .field-help {
     font-size: 16px;
     line-height: 1.65;
   }
@@ -346,6 +353,19 @@ p {
   animation: hq-pulse-dot 2.4s var(--ease-position) infinite;
 }
 
+/* The progress ring's arc. The circumference and the finished offset are passed in as --ring-c and
+   --ring-o by the component, which COMPUTES them from the real area count — see progress-ring.tsx
+   for why the spec's literal 188.5/113.1 are not written here. The arc starts fully retracted and
+   is released by a data attribute when the panel scrolls into view. */
+.hq-ring-arc {
+  stroke-dasharray: var(--ring-c);
+  stroke-dashoffset: var(--ring-c);
+  transition: stroke-dashoffset 1.4s var(--ease-entrance);
+}
+.hq-ring-arc[data-drawn="true"] {
+  stroke-dashoffset: var(--ring-o);
+}
+
 /* scale(.97) on press, for everything pressable. The highest-value single motion detail in the
    system, and the one most easily lost — so it is a base rule, not a utility to remember. */
 :where(button, a[role="button"], .btn):active:not(:disabled) {
@@ -361,6 +381,12 @@ p {
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
+  }
+  /* The ring is drawn AT ITS FINAL OFFSET with no transition — a suppressed animation must leave
+     the finished state, never an empty ring, or the reader loses the information entirely. */
+  .hq-ring-arc {
+    stroke-dashoffset: var(--ring-o) !important;
     transition: none !important;
   }
   .hq-rise,

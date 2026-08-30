@@ -105,6 +105,569 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-Q. PRODUCTION IS FOURTEEN COMMITS BEHIND — THE "DRIFT" IS AN UNMERGED BRANCH — 2026-08-25
+
+**⛔ STOP-AND-TELL, per the standing rule "if the codebase contradicts the brief, STOP and tell me
+first." Nothing in the homepage/graphics brief was built this sitting.**
+
+The founder reported the live homepage as having **drifted from the spec** — the portal mock naming
+`Northgate Wholesale Co.` where the spec says `Example Trading LLC`, and the three portal cards not
+sharing a baseline. Both symptoms are real. **Neither is drift.**
+
+**`main` is at `d688377`. `staging` is fourteen commits ahead of it.** Every one of those symptoms —
+and almost every item in the brief's "newer additions" list — was built earlier in this same sitting
+and has been sitting on `staging`, unmerged, while `hyprriq.com` serves `main`.
+
+**MEASURED on both live origins, same probes, same minute:**
+
+| probe | staging | production |
+|---|---|---|
+| `Example Trading LLC` | **4** | **0** |
+| `Northgate` | **0** | **4** |
+| `hq-ring-arc` (the progress ring) | **1** | **0** |
+| `hq-pulse-dot` (the state markers) | **2** | **0** |
+| `role="img"` on `/what-we-check` | **1** | **0** |
+| `role="img"` on `/method` | **1** | **0** |
+| `role="img"` on `/how-to-read` | **1** | **0** |
+
+| brief item | actually |
+|---|---|
+| 2a — vendor name is `Northgate` | **fixed `0314ca1`**, on staging |
+| 2a — portal cards share no baseline | **fixed `9c77403`** (subgrid), on staging |
+| 2b — progress ring, 2 of 5 | **built `9c77403`**, geometry derived not copied |
+| 2b — state markers (filled / pulsing / hollow) | **built `9c77403`** |
+| 2b — one-in-one-back flow visual | **built `9c77403`** |
+| 2b — verdict text at 9.5px in that SVG | **built `9c77403`**, founder-ruled to stay |
+| 2b — **mobile compression below 960px** | 🔴 **GENUINELY NEW.** Not built. |
+| 2c — masked invoice → `/what-we-check` | **built `c07c434`** |
+| 2c — checkable/not-checkable → `/method` | **built `c07c434`** |
+| 2c — verdict ladder → `/how-to-read` | **built `c07c434`**, reads `VERDICT_PALETTE` |
+
+**ONE ITEM IN THE BRIEF IS GENUINELY NEW:** the service-section mobile compression, spec line 437 —
+`.pan .pm, .pan .d { display: none }` below 960px, leaving the number, the question and the limit.
+It post-dates the build and is not in the repo.
+
+🔴 **F — THE FIX IS A MERGE, NOT A BUILD.** Promoting `staging` to `main` is a deploy to `main`, which
+stops at the founder. A full "drift report" of the other twelve items would be a report on the gap
+between two branches, not on anything wrong with the code.
+
+**THE LESSON, and it is a new shape:** every prior finding this sitting came from measuring the live
+domain, and that was right. This one shows the other edge of the same habit — **the live domain is
+evidence of what is DEPLOYED, never of what is BUILT.** Fourteen commits of verified, locked,
+green-tested work were invisible to it, and read as regression.
+
+---
+
+## 0-P. INNGEST WAS REGISTERED AGAINST A PREVIEW DEPLOYMENT — 2026-08-25 (founder-found) ✅ FIXED
+
+### 0-P.0 · ✅ EXECUTED AND CONFIRMED BY THE FOUNDER, 2026-08-25
+
+| environment | app | serve URL |
+|---|---|---|
+| Production | `hyprriq` | `https://hyprriq.com/api/inngest` |
+| `staging` | `hyprriq` | `https://hyprriq-git-staging-hyprrx-hyprriq.vercel.app/api/inngest` — 10 functions |
+
+**THE PROOF WAS THE ONE THE RUNBOOK ASKED FOR:** the founder deployed staging and **production's URL
+did not move.** Before the fix a staging deploy would have overwritten it. That is the whole defect,
+demonstrated absent.
+
+**And the runbook's correction held: there was nothing to archive.** One app, corrected in place by
+the production redeploy — exactly as §0-P.5 predicted after I checked instead of assuming.
+
+
+
+**Owner: F executes, UX described. DESCRIBE-AND-STOP: nothing in here has been changed.** The
+founder found the Inngest dashboard showing one app whose serve URL was a single immutable Vercel
+deployment, and held the PDF render until it was settled.
+
+### 0-P.1 · Diagnosis — confirmed, with one correction that changes the risk
+
+The URL **was** a deployment-specific immutable one, and execution **was** pinned to it. But the
+founder's reading of *which* build was wrong, and it matters:
+
+`hyprriq-605r5bmfv-…` resolves to `dpl_BXfNeU33SJQGMSJDdPZMZeJtDsWQ` = commit **`b12b254`**, branch
+**`staging`**, `"target": null` — a **PREVIEW** deployment created **the same afternoon the founder
+asked**. Not an old build. The failure is not staleness:
+
+> One Inngest app + the SAME keys in both Vercel scopes → **every deployment on either branch syncs
+> to the same Inngest environment and overwrites its serve URL. Last deploy wins, regardless of
+> branch.** Production case execution runs on whatever deployed most recently — as of the diagnosis,
+> staging code in a `VERCEL_ENV=preview` runtime — and flips on the next deploy either side.
+
+| # | Finding | State |
+|---|---|---|
+| 0-P.1a | Registered URL is a preview deployment of `staging`, minutes old — not a stale build | ✅ measured |
+| 0-P.1b | `serveOrigin: process.env.INNGEST_SERVE_ORIGIN` **already exists** in `app/api/inngest/route.ts`, with a comment describing this exact problem. **The mechanism was built and the variable was never set.** | ✅ |
+| 0-P.1c | ⚠ SEVEN CRON FUNCTIONS are registered and have been firing against that preview deployment — `retention-sweep` (daily 03:00, permanently deletes client documents), `pipeline-watchdog` (15 min), `stalled-case-alarm` (hourly), `email-reminders` (daily 13:00), plus three sweeps | ✅ |
+| 0-P.1d | Whether it auto-syncs every deploy or was synced once could NOT be determined from here. **Both are broken and both take the same fix.** If it does not auto-sync, a second failure waits: preview deployments are subject to retention, and when that one is removed every Inngest call 404s | 🔴 F to observe |
+
+### 0-P.2 · What the crons have actually DONE — the founder's urgent question, answered
+
+**NOTHING HAS BEEN DELETED, AND IT WAS STRUCTURALLY IMPOSSIBLE FOR IT TO BE.** Read-only queries
+against the shared production database:
+
+| probe | result |
+|---|---|
+| `uploaded_files` total | **3** |
+| `uploaded_files` with a retention deletion stamp | **0** |
+| files past `delete_after` and still live | **0** |
+| earliest `delete_after` on any file | **2027-06-20** — twenty-two months away |
+| `email_log` `retention_warning` rows | **0** |
+| dormant-notice rows | **0** |
+| `audit_log` retention rows | **0** |
+
+Phase 2 only deletes a file whose `delete_after` **has passed**. Nothing qualifies until **June
+2027**. Even with `RETENTION_SWEEP_ENABLED=1` set in both scopes, the sweep had nothing to act on.
+
+**What the crons DID do, four days of it:** 4 `admin_alert` emails **to the founder**, and 108
+`audit_log` rows from `stalled-case-alarm` recording `stalled_alert: true` / `hours_overdue` against
+long-waiting cases. Those rows carry an **empty `old_value`** — they are AUDIT-ONLY, which is why
+`cases.updated_at` still maxes at 2026-08-21 while the audit log runs to today. The one `welcome`
+email was a real signup, not a cron.
+
+**Zero client emails. Zero deletions. Zero case mutations.** The crons ran from the wrong runtime and
+did nothing harmful — by luck of the calendar, not by design.
+
+### 0-P.3 · Which build has been executing cases — and why the sync history cannot change the answer
+
+The founder asked for the Inngest sync history, correctly, as the only authoritative record of what
+was registered when. **I have no Inngest API access and could not read it.** But the underlying
+question is answered without it:
+
+| probe | result |
+|---|---|
+| cases created ≥ 2026-08-22 | **0** |
+| cases updated ≥ 2026-08-22 | **0** |
+| cases delivered ≥ 2026-08-22 | **0** |
+| MAX `created_at` across all cases | **2026-08-20 15:48** |
+| MAX `delivered_at` | **2026-08-20 16:07** |
+
+The verdict-absence and email guards landed **2026-08-22**. **No case has executed since 2026-08-20.**
+So every case in the system predates those guards *by commit date*, whatever URL was registered —
+the sync history cannot move that. And the engine code in the registered build is **byte-identical to
+production `main`** (`lib/research`, `lib/inngest`, `lib/pdf`, `lib/verdict`, `lib/data` — zero diff;
+last engine commit `cb88053`, 2026-08-24). **It does not predate this month's engine fixes.**
+
+🟡 **Still worth reading** when the founder is in the dashboard: the sync history would show whether
+the URL churns per deploy (0-P.1d). That is an observation, not a blocker.
+
+### 0-P.4 · The fix — TWO independent defects, both required
+
+The founder framed three options as alternatives; **two of them are both needed**, and they
+confirmed the point.
+
+| Defect | Fix |
+|---|---|
+| The URL is deployment-specific | `INNGEST_SERVE_ORIGIN` → a stable alias per environment |
+| Production and staging share ONE Inngest environment | Separate Inngest **environments**, each with its own keys |
+
+⚠ **VERIFIED AGAINST INNGEST'S LIVE DOCS, not memory** (the founder's instruction, and the right
+call — my knowledge of their variable names was a year stale):
+
+- `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` — **confirmed**. The signing key is what decides
+  *which environment an app syncs into*.
+- `INNGEST_ENV` — **confirmed** to exist; it names the Inngest environment to send/receive from,
+  is auto-detected on some platforms and needs setting manually on others, and can be overridden by
+  `env` in `new Inngest()`.
+- **The Vercel Marketplace integration auto-creates a Branch Environment per Git branch**, sending
+  the branch name and the preview URL to Inngest. **All Branch Environments share one Event Key and
+  one Signing Key**, distinct from Production's.
+- For a **custom** environment (e.g. "staging"), the documented route is exactly what is prescribed
+  below: add `INNGEST_EVENT_KEY`/`INNGEST_SIGNING_KEY` scoped to that Vercel environment only.
+
+**This also confirms the integration is NOT installed** — if it were, staging deploys would have
+landed in a `staging` Branch Environment instead of overwriting Production's serve URL.
+
+**Env vars to set — Vercel → hyprriq → Settings → Environment Variables. Four entries, four
+DISTINCT values:**
+
+| Variable | Scope | Value |
+|---|---|---|
+| `INNGEST_SERVE_ORIGIN` | **Production only** | `https://hyprriq.com` |
+| `INNGEST_SERVE_ORIGIN` | **Preview only** | `https://hyprriq-git-staging-hyprrx-hyprriq.vercel.app` |
+| `INNGEST_EVENT_KEY` | **Production only** | Event Key from Inngest's **Production** environment |
+| `INNGEST_SIGNING_KEY` | **Production only** | Signing Key from Inngest's **Production** environment |
+| `INNGEST_EVENT_KEY` | **Preview only** | Event Key from a **new custom Inngest environment** ("staging") |
+| `INNGEST_SIGNING_KEY` | **Preview only** | Signing Key from that same environment |
+
+⚠ The Preview scope covers **every** branch's previews, not just staging — a PR branch will register
+the staging alias and staging will serve it. Acceptable today. If per-PR isolation is ever wanted,
+install the Marketplace integration and branch environments arrive automatically.
+
+### 0-P.5 · Switchover — nothing is lost, but the crons must be handled DURING it
+
+**▶ THE STEP-BY-STEP IS `docs/runbooks/RUNBOOK_INNGEST_ENVIRONMENT_SPLIT.md`** (written 2026-08-25,
+founder executes). It carries the dashboard paths, the six variables with scopes, the redeploy order,
+the exact serve URL to expect after each, and the failure signatures.
+
+⚠ **AND IT CORRECTS ONE THING THE FOUNDER RULED ON MY FRAMING.** I said a stale app would keep seven
+cron triggers alive and that it must be archived as part of the switch. Inngest identifies an app by
+its app ID (`"hyprriq"`) **within an environment** — so there is almost certainly only ONE app, and
+**the production redeploy corrects its serve URL in place with nothing to archive.** The runbook
+therefore CHECKS the Apps page rather than assuming a duplicate, and archives only if one is there.
+The archive action is real and is the right tool if it is needed (it archives every function on the
+app, stopping new runs) — the error was assuming it would be.
+
+
+
+**No in-flight case exists.** Verified, not assumed: `awaiting_review` 19 (a human wait, not a live
+run), `delivered` 14, `manual_override_required` 8, `research_failed` 3, `submission_failed` 1.
+**Nothing is running.** The window is clean.
+
+1. Set the six variables above.
+2. Redeploy **production**; confirm Inngest's Production environment shows `https://hyprriq.com/api/inngest`.
+3. Redeploy **staging**; confirm the staging environment shows the branch alias.
+4. ⚠ **ARCHIVE THE OLD REGISTRATION AS PART OF THIS, NOT AFTER** (founder-ruled). The old app keeps
+   its **seven cron triggers** pointed at the old URL. Left alive, `retention-sweep` can fire twice
+   daily, from a stale build, against shared production data — and after June 2027 it would have
+   something to delete.
+5. Submit nothing during the window: an event sent with the old key lands in the old environment.
+
+### 0-P.6 · Deployment protection is off entirely — same root cause as the prototype exposure
+
+Verified: `passwordProtection` false, `ssoProtection` false, `trustedIps` false. The founder is right
+that this is the same class as §0-M — **the default posture is "reachable", and nothing was ever
+deliberately opened.**
+
+**What turning it on would break, and the founder's suspicion is correct:** Vercel Authentication on
+**Preview** blocks every external caller that must reach a preview deployment — Inngest (which is why
+it works today), plus any Stripe/Clerk/Resend webhook pointed at staging. On **Production** it would
+break the live site outright; never enable it there.
+
+**The out, verified against Vercel's live docs:** **Protection Bypass for Automation**. Vercel injects
+the secret as `VERCEL_AUTOMATION_BYPASS_SECRET`, and a caller presents it as the
+`x-vercel-protection-bypass` header, or as a **query parameter** when the tool cannot set headers —
+which is the documented route for third-party webhooks. It covers Password Protection, Vercel
+Authentication and Trusted IPs.
+
+### 0-P.7 · What actually points at staging — the enumeration, 2026-08-25
+
+Read from the route table, not recalled. `app/api/**` has **one** inbound third-party webhook.
+
+| caller | endpoint | breaks? | the route |
+|---|---|---|---|
+| **Inngest** (staging env) | `/api/inngest` | **YES** | ⚠ No clean bypass. Inngest posts to `<serveOrigin>/api/inngest`; there is nowhere to attach a header, and putting the secret in the path would break signature/path matching. **Realistically: enabling Preview protection stops staging's Inngest.** |
+| **Stripe** (test mode) | `/api/webhooks/stripe` | **YES, if an endpoint is configured against the staging alias** | **Query parameter** — Stripe cannot set custom headers. Append `?x-vercel-protection-bypass=<VERCEL_AUTOMATION_BYPASS_SECRET>` to the endpoint URL in the Stripe test dashboard. |
+| Uptime / monitoring | `/api/health` | YES if any exists | Header `x-vercel-protection-bypass`, or query parameter |
+| **Clerk** | — | **NO** | ⚠ **There is NO Clerk webhook in this codebase** — `app/api/webhooks/` contains `stripe` only, and nothing uses svix. Clerk runs in the browser; a protected preview blocks the *person* before Clerk loads, which is the intended effect. |
+| **Resend** | — | **NO** | Outbound only. No inbound handler exists. |
+
+**JUDGEMENT, offered not taken:** the protection this would add to Preview is thin. Every app route is
+already Clerk-gated, the marketing pages are public by design, `SEARCH_INDEXING_ENABLED=false` puts
+`noindex` site-wide, and the one thing that was genuinely exposed — `public/prototype/**` — is
+deleted. The cost is that staging's Inngest stops, with no clean bypass. **A defensible answer is to
+leave Preview unprotected and treat Clerk as the control it already is.** The founder decides.
+
+🔴 **F — ORDER MATTERS AND THE FOUNDER HAD IT RIGHT: separate the environments FIRST.** While
+production execution depends on a preview deployment being reachable, enabling protection on Preview
+takes production down. Once the environments are split, the only thing that breaks is *staging's own*
+Inngest — which is then a contained, testable problem with a documented bypass.
+
+---
+
+## 0-O. RESPONSIVE AUDIT — PORTAL AND ADMIN — 2026-08-25 (measured, not surveyed)
+
+**Owner: UX. AUDIT ONLY — one functional bug fixed, nothing else.** Founder ruling: audit before
+fixing, because every time this project has fixed before measuring it fixed the wrong thing.
+
+### 0-O.1 · METHOD, and why it had to change twice
+
+The portal and admin routes are auth-gated, so they cannot be driven in a browser without a session.
+The first instrument was a static scanner over the source. **It produced three different answers to
+the same question**, and each correction is worth recording because each is a way a layout audit
+lies:
+
+1. it read the grid's own class string and reported `components/portal/case-table.tsx` as broken —
+   but that component's gate is on the WRAPPER (`hidden … md:block`) with a `md:hidden` card list
+   behind it. **A correctly-built component was reported as a defect.**
+2. its backward scan for that wrapper stopped at the `return (` of an inner `.map` callback, so it
+   missed wrappers more than a few lines up.
+3. it skipped `/admin/support` entirely, because that file keeps the word `grid` INSIDE its `COLS`
+   constant, so the className string never contains it. **The single worst grid in the codebase was
+   invisible to three passes of its own detector.**
+
+At that point the scanner had earned no trust, so the numbers below come from **a real browser**: a
+temporary dev-only route rendering the real markup, loaded in **same-origin iframes of exact width**
+so `sm:`/`md:`/`lg:` resolve exactly as they would on a device. Every figure is
+`getBoundingClientRect`, `scrollWidth` or `document.elementFromPoint`. The instrument was deleted and
+`git status` verified clean before this entry was written.
+
+**Content box, measured from the shells** — this is what a row actually gets:
+
+| viewport | admin | portal | note |
+|---|---|---|---|
+| 360px | 328px | 328px | |
+| 390px | 358px | 358px | |
+| 768px | 720px | 712px | |
+| **1024px** | **728px** | **720px** | ⚠ **CORRECTED 2026-08-25 — see 0-O.6.** 1024 is NOT narrower than 768; it is 8px WIDER. The sidebar becomes a static 248px column at `lg` and eats 248 of the 256 extra pixels, so crossing the breakpoint gains almost nothing. The real gap is against 1280px, which hands you 984px — **256px more than a real 1024 laptop.** |
+
+### 0-O.2 · THE FUNCTIONAL BUG — diagnosed, fixed, verified
+
+Case links on `/admin/cases` did nothing when tapped. **It was none of the four candidates.**
+
+| what it looked like | what it was |
+|---|---|
+| tap target too small | the link is 62×23px — under 44px, but irrelevant here |
+| an overlay intercepting | nothing overlays it |
+| a hydration failure | it hydrates; it is a real `<Link>` in the DOM |
+| not rendering as a link at that breakpoint | it renders, correctly, as a link |
+
+**MEASURED at 360px:** the row grid demands **604px** (528px fixed tracks + 60px gaps + 32px
+padding) inside a **328px** box, the wrapper is `overflow-hidden`, and there is no scroll container
+anywhere above it. The link had **0px of itself inside the clip**; `elementFromPoint` at its centre
+returned **nothing at all**, because the centre sits **267px past the right edge of the viewport**.
+At 390px it is still 0px visible, 237px past the edge.
+
+**And the reason "doesn't work" was the right description rather than "too small": the case number
+in that row is a `<span>`, not a link. There was NO REACHABLE LINK IN THE ROW AT ALL.**
+
+Fixed with the pattern this codebase already had and admin never got — a `md:hidden` card list where
+**the whole card is the link**, dense grid kept behind `hidden md:block`. Verified with the same hit
+test that proved the bug: 360px → card 328×148px fully in viewport, `elementFromPoint` → the card
+link, document overflow 0. Committed as `4798cdc`.
+
+### 0-O.3 · THE FULL TABLE — route · width · issue · severity
+
+**BROKEN = cannot be used · POOR = usable but bad · MINOR.** `+N` is measured overflow in px.
+
+| route | 360 | 390 | 768 | 1024 | issue | severity |
+|---|---|---|---|---|---|---|
+| `/admin/support` | +374 | +344 | ok | ok | row grid needs 734px, `overflow-hidden`. **The row contains no `<Link>` at all** — nothing on this screen can be opened on a phone | **BROKEN** |
+| `/admin/billing` | +320 | +290 | ok | ok | row grid 680px, `overflow-hidden`; the row's only link measured 0px visible, hit test returns nothing | **BROKEN** |
+| `/admin/dashboard` (cases list) | +166 | +136 | ok | ok | row grid 526px, `overflow-hidden`; only link 0px visible | **BROKEN** |
+| `/admin/cases` | — | — | ok | ok | **FIXED this sitting** (0-O.2) | ✅ |
+| `/admin/users` | +196 | +166 | ok | ok | row grid 556px with **no wrapper at all** → the whole document scrolls sideways by **229px** at 360, 199px at 390. Content is reachable, so not BROKEN | POOR |
+| `/admin/dashboard` (second list) | +62 | +32 | ok | ok | row grid 422px, `overflow-hidden`. Informational row with no action — **data is lost, not navigation** | POOR |
+| `/admin/clients` | +2 | ok | ok | ok | row grid 362px. **The row IS a `<Link>`**, so it still navigates; the trailing column is clipped 17px at 360 | POOR |
+| `/admin/brands` | squeeze | squeeze | ok | ok | 5-col `<table>`, no scroll container. No `whitespace-nowrap`, so cells wrap rather than overflow — ~65px per column | POOR |
+| `/admin/outcomes` | squeeze | squeeze | ok | ok | **7-col** `<table>`, no scroll container — ~47px per column | POOR |
+| `/admin/suppliers` | squeeze | squeeze | ok | ok | 4-col `<table>`, no scroll container | POOR |
+| `/admin/revenue` | squeeze | squeeze | ok | ok | `<table>`, no scroll container | POOR |
+| `/admin/clients/[id]/accounting` | squeeze | squeeze | ok | ok | **FOUR** `<table>`s, none with a scroll container | POOR |
+| `/admin/cases/[id]/review` | squeeze | squeeze | ok | ok | 2 unwrapped `<table>`s + `attempt-history`'s; **16 controls under 44px, smallest 28px**; 33 paragraphs under 16px. The founder's second priority screen | POOR |
+| `/admin/clients/[id]` | ok | ok | ok | ok | 4 controls under 44px (min 32px) | MINOR |
+| `/admin/acquisition` | ok | ok | ok | ok | 5 controls under 44px (min 32px) | MINOR |
+| `/admin/cases/run` | ok | ok | ok | ok | 2 controls under 44px (min 32px) | MINOR |
+| `/admin/bulk`, `/admin/integrity`, `/admin/prompts`, `/admin/settings`, `/admin/design-system` | ok | ok | ok | ok | `design-system` has a `min-w-[640px]` block, but it is an internal specimen sheet | MINOR |
+| **CLIENT SURFACES** | | | | | | |
+| `/portal`, `/portal/dashboard`, `/portal/cases` | ok | ok | ok | ok | **No overflow at any width.** `case-table.tsx` already ships a `md:hidden` card list where the whole card is a link | ✅ |
+| `/portal/cases/[id]` | ok | ok | ok | ok | report renders; `report-view` carries 4 controls under 44px (min 28px, the "Got it — hide this" dismiss) | POOR |
+| `/portal/submit` | ok | ok | ok | ok | 6 controls under 44px — **all 40px**, so close; 17 paragraphs under 16px. **The surface a client spends a credit on** | POOR |
+| `/portal/billing` | ok | ok | ok | ok | fixed grid needs only 294px — **measured to fit**; 4 controls under 44px (min 36px) | MINOR |
+| `/portal/onboarding` | ok | ok | ok | ok | 2 controls under 44px (min 36px) | MINOR |
+| `/portal/settings`, `/portal/support`, `/portal/cases/[id]/change` | ok | ok | ok | ok | 1–3 controls at 40px | MINOR |
+| `/portal/guides`, `/portal/help` | ok | ok | ok | ok | clean | ✅ |
+| `/sign-in`, `/sign-up`, `/unsubscribe` | ok | ok | ok | ok | `sign-up` has one 36px control; Clerk's own fields were fixed in sitting three | MINOR |
+
+**Totals: 3 BROKEN, 10 POOR, the rest MINOR or clean. Every BROKEN one is admin. No client surface
+has horizontal overflow at any of the four widths.**
+
+Site-wide, computed from source: **84 interactive elements under 44px across 31 files** (smallest
+24px), and **187 paragraphs under 16px across 49 files**. The 16px floor for FORM CONTROLS is
+already locked (`mobile.lock.test.ts`, the iOS zoom bug); 44px targets and reading prose are not.
+
+### 0-O.4 · THE SHAPE OF THE WORK
+
+**Yes — the admin was built desktop-only and needs a responsive layer.** Saying it plainly, as asked.
+
+But it is **not** five sittings of page-by-page work, and the reason is the good news in this audit:
+**the correct pattern already exists in this repo and is already proven.**
+`components/portal/case-table.tsx` renders a dense grid above `md` and a card list below it where
+the whole card is a link. The portal got that in sitting three. Admin never did.
+
+So the work is ONE PRIMITIVE plus application sites, not N designs:
+
+| # | Work | Sitting |
+|---|---|---|
+| 1 | Extract `case-table.tsx`'s two-form pattern into a shared `<ListTable>` primitive: columns declared once, dense grid ≥md, card list <md, whole card the link. | 1 |
+| 2 | Apply it to the 3 BROKEN admin lists (`/admin/support`, `/admin/billing`, `/admin/dashboard`) and the 3 POOR ones (`/admin/users`, `/admin/clients`, dashboard's second list). Six application sites, no new design decisions. | 1 |
+| 3 | Wrap the 10 unwrapped `<table>`s — one `overflow-x-auto` container, applied as a class. `/admin/cases/[id]/review` first, per the narrowed ruling. | 1 (shared with 2) |
+| 4 | Tap targets and reading sizes on CLIENT surfaces. Mechanical, and the smallest values are 36–40px rather than 24px. | ½ |
+| 5 | The lock (0-O.5), so this cannot recur. | ½ |
+
+**Honest estimate: two sittings after this one.** Not five, because nothing here needs a new layout
+idea — it needs one component built once and used six times.
+
+### 0-O.5 · HOW ADMIN GOT BUILT DESKTOP-ONLY, AND WHAT STOPS THE NEXT SCREEN
+
+**How.** Three things compounding, and only the third is fixable:
+
+1. **A ruling, applied wider than it was meant.** "Admin usable, not beautiful — operators work at a
+   desk" was read as permission to skip mobile in admin. It was narrowed on 2026-08-25 to exclude the
+   cases list and case detail; §0-K already recorded the same mis-reading once ("that meant do not
+   restyle admin, not leave a shell that breaks on a phone").
+2. **The shell fix looked like the whole fix.** Sitting three gave admin a mobile drawer, and the
+   screens then LOADED on a phone. Loading is not working. The drawer made the failure quieter.
+3. **⚠ AND THE REAL ONE: CROSSING 1024px BUYS EIGHT PIXELS.** ⚠ *This row was WRONG when first
+   written — it said 1024 was NARROWER than 768. The lock's own arithmetic assertion caught it: 728
+   is not less than 720. Corrected here rather than quietly edited, because the founder acted on the
+   wrong version.* The sidebar is an off-canvas drawer below `lg` and a **static 248px column** at
+   `lg` and above, so it eats 248 of the 256 pixels the viewport gains: **768 → 720px of content,
+   1024 → 728px.** 1024 is effectively tablet-portrait width. The flattering width is **1280 → 984px,
+   which is 256px more than a real 1024 laptop hands over.** The screens were not carelessly built;
+   they were built and verified in a window that gives a third more room than the machine they were
+   being built for.
+
+**What stops the next screen shipping the same way.** Not a note, and not a review habit — the same
+answer this project reaches every time: **a lock**, and this audit already contains its
+implementation. The rule it encodes:
+
+> A grid whose fixed tracks + gaps + padding exceed the 328px content box must either carry a
+> breakpoint prefix, or its file must ship a `md:hidden` alternative form. A `<table>` must have an
+> `overflow-x-auto` ancestor.
+
+The scanner written for this audit computes exactly that and is wrapper-aware — including the three
+blind spots it was caught by, which are the three a naive version would repeat. **It also has to
+assert it finds the known offenders**, because a scanner that silently matches nothing is the failure
+mode this project has already hit twice (the backspace regexes, standing rule 11).
+
+🔴 **F — the lock is NOT built.** The founder's brief was audit only, and building it is item 5 above.
+
+### 0-O.6 · THE 1024px STANDING NOTE — and a correction to this entry
+
+**Founder ruling 2026-08-25: this becomes a standing note.** It is standing rule 13 in §8.
+
+⚠ **AND THE FIRST VERSION OF IT WAS WRONG — THE FOUNDER ACTED ON IT.** I wrote "1024px is the
+tightest width in the system". The founder did not merely read that: **they issued a ruling from it**
+("THE 1024px FINDING goes in the tracker as a standing note … the sidebar makes 1024 the tightest
+width in the system"), and standing rule 13 was drafted off the back of it. A wrong measurement
+became a standing instruction inside one exchange. **It is not true.** The arithmetic:
+
+| viewport | admin content | what happens |
+|---|---|---|
+| 360px | 328px | sidebar is an off-canvas drawer |
+| 768px | 720px | still a drawer |
+| **1024px** | **728px** | sidebar becomes a **static 248px column** — it eats 248 of the 256 pixels gained, so crossing `lg` buys **EIGHT PIXELS** |
+| 1280px | 984px | the width everything was verified at |
+
+So 1024 is **not** narrower than 768 — it is 8px wider, which is the same thing in practice.
+
+**FOUNDER RULING 2026-08-25 ON WHICH HALF SURVIVES: the 1280 claim is the useful one, not the 1024
+one.** "1024 is the tightest width" was wrong and is struck. "A 1280px window hands you 256px more
+than a real 1024px laptop" is right, is the reason the console shipped desktop-only, and is what the
+standing rule tests against. The correct statement:
+
+> **Crossing the `lg` breakpoint gains nothing. 1024px is tablet-portrait width with a sidebar bolted
+> on. A 1280px window hands you 256px MORE content than a real 1024px laptop — test at 1024.**
+
+**How the error was caught matters more than the error.** It was not caught by re-reading; it was
+caught by `responsive.lock.test.ts` asserting the relationship as arithmetic, which failed with
+`expected 728 to be less than 720`. **A lock built before the fixes caught a mistake in the audit
+that produced it** — which is exactly the argument the founder made for building it first.
+
+### 0-O.7 · THE LOCK — BUILT FIRST, founder-ruled 2026-08-25
+
+**Ruling: "if it ships last, the fixes are verified by the same eye that missed these. If it ships
+first, every fix is verified by the lock as it lands."** So it shipped first.
+
+| # | Piece | State |
+|---|---|---|
+| a | `lib/design/responsiveScan.ts` — ONE analyser, used by the lock AND by `scripts/responsive-audit.ts`. The standalone `.mjs` is deleted: it drifted from the lock's understanding three times in one sitting. | ✅ |
+| b | Each of the scanner's three blind spots is named in its header with the case that caught it — wrapper gates, inner `.map` returns, and `COLS` constants. Those are the three a rewrite would reintroduce. | ✅ |
+| c | **THE SELF-TEST THE FOUNDER REQUIRED.** Five assertions prove the scanner is looking at something: it finds grids at all; it resolves `/admin/support`'s constant-declared grid *including the gap and padding held in the constant*; it sees `case-table.tsx`'s wrapper gate above an inner `.map` return **and does not report that correct component as an offender**; it still finds every measured offender; and it names the three BROKEN routes explicitly. | ✅ |
+| d | **THE LIST CAN ONLY SHRINK.** `KNOWN_OFFENDERS` pairs with a staleness test: fix one and the lock FAILS until its row is deleted. The list cannot describe a world that no longer exists, and the scanner cannot go blind without saying so. | ✅ |
+| e | 44px tap-target floor on **client surfaces** — same scope discipline as the 16px form floor. 36 controls currently listed. Inline links are exempt and fall out for free: only elements with an explicit size class are measured. | ✅ |
+| f | `<table>` must have a horizontal scroll container. 7 files listed. | ✅ |
+| g | Client surfaces are held to **zero overflow at all four widths**, with no allowlist — the bar that does not bend. | ✅ locked |
+
+**16 assertions, all passing against the current broken state**, because the breakage is recorded
+rather than tolerated silently.
+
+---
+
+## 0-N. SITTING FIVE — SPEC GRAPHICS, THREE PAGE GRAPHICS, AND WHAT PRODUCTION DOES DIFFERENTLY — 2026-08-25
+
+**Owner: UX.** Parts 1 and 3 of the founder's sitting-five brief. Part 2 is answered below, honestly,
+including the half of it a Windows build cannot prove.
+
+### 0-N.1 · The homepage gets its spec graphics back
+
+| # | Item | State |
+|---|---|---|
+| a | The six capability line-art marks, restored from the spec. The first build had reduced them to a coloured dot. Drawn in `currentColor`, so the tint/ink pair is the only thing carrying colour. | ✅ |
+| b | **Subgrid baselines, in both places.** Six capability cards and three walkthrough steps were independent stacks that only LOOKED aligned while the copy happened to be the same length. MEASURED: all six h3 tops on one pixel, all six bodies on one pixel, all three panel tops on one pixel. | ✅ |
+| c | Progress ring — **geometry computed, not copied.** The spec's `188.5`/`113.1` are 2π·30 and that circumference times three-fifths; correct only while there are five areas and two are done. Derived from `ASSESSMENT_AREA_KEYS`; the lock proves the derived form still reproduces the spec's numbers today. | ✅ locked |
+| d | State markers — filled / pulsing / hollow. The pulse REUSES `.hq-pulse-dot`, the existing named motion, so it is already covered by the reduced-motion block. | ✅ |
+| e | The flow visual — every line of copy inside it is a grey bar; the only real words are the verdict name and the turnaround, both read from constants, warm pair from `VERDICT_PALETTE`. | ✅ |
+| f | **BOTH WARM HUES CHANGED — founder-ruled 2026-08-25, and the ruling corrected my reasoning as well as the code.** I applied the ORIGINAL wide rule; the narrowed rule is "reserved on client-facing report surfaces and anywhere a verdict is depicted". On these two the narrow rule reaches the same answer by a better argument. | ✅ |
+| f1 | **"Researching" marker → blue.** The decisive fact is not that warm appears on a marketing page — it is that **THIS CARD ALSO SHOWS "Verify Before Purchase" in the same amber-orange family, a few rows below.** Two meanings for one hue on one card is precisely what the rule exists to prevent. It now takes the blue already on that card for the SLA countdown. MEASURED: `--blue` on `--blue-tint` = 4.58:1, and the pair joined `CONTRAST_CONTRACTS` so the lock recomputes it. | ✅ |
+| f2 | **Account-risk mark → neutral ink on subtle.** Same reasoning one step removed: the strip sits on a page that teaches the verdict scale. It is the ONE neutral mark deliberately, and that is a design argument rather than a colour dodge — the other five are SUBJECTS WE RESEARCH; account risk is the CONSEQUENCE they feed into. A sixth accent would have said "sixth subject", and there is no cool accent left that is not already carrying one of the five. MEASURED: `--ink` on `--subtle` = 15.69:1. | ✅ |
+| f3 | 🔴 **F — ONE MORE OF THE SAME SHAPE, RAISED NOT CHANGED.** The homepage's `1 · The problem` section kicker is `text-verify-ink`, and the actual "Verify Before Purchase" verdict card sits further down the same page. By the f1 argument that is two meanings for one hue on one page. It was not in the founder's two-item ruling and the narrowed rule stands everywhere else, so it is raised rather than swept. *(The chain's final step keeping a verdict-adjacent tint is NOT this — the visual plan calls for it explicitly.)* | 🔴 F |
+| g | **The 9.5px verdict text in the flow visual STAYS — founder-ruled 2026-08-25.** It is not a control, the graphic carries an `aria-label` stating the same thing in words, and the stacked mobile form covers the small screen. **Nothing is available only at that size** — that clause is the whole test, and the code now says so, so a later session does not enlarge it "for accessibility" and gain nothing. | ✅ |
+
+### 0-N.2 · The three page graphics
+
+| # | Item | State |
+|---|---|---|
+| a | **The masked invoice** → `/what-we-check`, under Documentation Review. | ✅ |
+| b | ⚠ **"A fourteen-point read" had NO LIST BEHIND IT.** The phrase appeared in three places and nothing could tell you whether it was still true. `lib/content/documentFields.ts` now holds all fourteen — six pinned, eight listed — the graphic enumerates every one, and the lock counts them. A word in a paragraph became a checkable claim. | ✅ |
+| c | Every callout says what is CHECKED, never that a field is wrong. Pin 6 carries **escalate, do not accuse** verbatim; the lock refuses twelve accusatory words outright. Pins are `--action`, never a verdict hue. | ✅ locked |
+| d | **The boundary** → `/method`. Both columns DERIVED — left one line per assessment area, right from the four limits /method publishes. `CANNOT` moved out of the page into `lib/content/methodBoundary.ts`; it was about to exist twice. Cool accents both sides: the right column is a boundary, not a warning. | ✅ |
+| e | **The verdict ladder** → `/how-to-read`, replacing four equal cards. Rungs widen with the level, so the shape carries the ranking. MEASURED 677/741/804/868 units with the four registry tints in scale order. Certainty chips stay in neutral ink. | ✅ |
+| f | **Rule 5 of the visual plan is the one that would have been skipped.** All three are 900-unit viewBoxes; at 360px their text renders at about 5px. Each ships TWO FORMS FROM ONE SOURCE — drawn above `md`, stacked below. The lock fails any graphic that has only the drawn one. MEASURED at 360px: drawn form `display:none` on all three, all fourteen invoice fields readable as real text, zero horizontal overflow. | ✅ locked |
+| g | **THE SPEC'S FIFTH BOUNDARY ITEM IS CUT — founder-ruled 2026-08-25.** "Where the stock came from before your supplier" would have been a new refusal written into product copy, and there are enough already. **The rule this fixes in place:** if a fifth is ever wanted it is added to `CANNOT` FIRST, as prose the site stands behind, and the graphic picks it up on its own. Never the other way round — **a graphic is not where a product claim debuts.** | ✅ |
+| h | The banned-language scanner flagged a line of MY new copy ("whether an invoice will be accepted") as an outcome prediction, and it was right — the banned construction is "&lt;document&gt; will be accepted" and the rule cannot tell a question from an assertion. Rewritten to name whose decision it is. **This was new copy, not closed founder copy** — the rule against editing closed copy to satisfy a gate still stands. | ✅ |
+
+### 0-N.3 · Part 2 — the PDF renderer on production infrastructure, without running a case
+
+Verified by reading the **build trace**, `.next/server/app/api/inngest/route.js.nft.json`, which is the
+actual manifest of what ships in the serverless bundle — not by inspecting source and hoping.
+
+| # | Check | Result |
+|---|---|---|
+| a | `launchBrowser()` takes the `@sparticuz/chromium` branch when `process.env.VERCEL` is set — a **different browser binary from the one any local run uses**. "It works locally" says nothing about this path. | ✅ by design |
+| b | All four Chromium brotli payloads are traced into `/api/inngest`: `chromium.br`, `al2023.tar.br`, `fonts.tar.br`, `swiftshader.tar.br`. | ✅ present |
+| c | `@napi-rs/canvas` is traced (the `DOMMatrix` failure layer from 2026-08-20). | ✅ present |
+| d | `maxDuration = 300` on the Inngest route, far above the platform default a cold Chromium boot would blow through. | ✅ |
+| e | `@sparticuz/chromium` ^149 with `puppeteer-core` ^25 — a compatible pairing, and Vercel's runtime is Amazon Linux 2023 (glibc), which is what `-linux-x64-gnu` targets. | ✅ |
+| f | ⚠ **THE ONE THING A WINDOWS BUILD CANNOT PROVE.** The platform binary traced here is `@napi-rs/canvas-win32-x64-msvc`, because this build ran on Windows. On Vercel's Linux builder npm installs `-linux-x64-gnu` instead. `next.config.ts` covers it at BOTH hoisting locations and the local trace proves the include MECHANISM resolves — but the Linux artefact itself has not been seen in a bundle. | ⚠ unproven |
+| g | 🔴 **And no case has run through the path since.** All three previously measured failure layers (ENOENT on fonts, missing Chromium bin, DOMMatrix) were found by RUNNING real renders. A static trace cannot find a fourth. The cheapest close is one render on production infrastructure — the founder's call, since it spends budget. | 🔴 F |
+
+### 0-N.4 · WHAT PRODUCTION DOES DIFFERENTLY FROM STAGING — the founder's closing question
+
+Measured against the Vercel deployment list, not recalled. **Staging deploys carry `target: null` —
+they are PREVIEW deployments, so `VERCEL_ENV === "preview"` there and `"production"` only on `main`.
+Every gate written as `VERCEL_ENV === "production"` is therefore OFF on staging by construction.**
+That is the exact shape of the console-switcher bug (§0-K) and it will be the shape of the next one.
+
+| # | What differs | Why it matters |
+|---|---|---|
+| a | 🔴 **The `/prototype` gate is NOT on production.** Live production is `553f917`; the gate landed on `staging` at `d71651e`. **The files are still answering 200 on hyprriq.com as this is written.** | 🔴 F — merging to `main` stops at the founder |
+| b | **Supabase is SHARED between the two.** Staging is not an isolated environment — a staging write lands in the same database production reads. Anything that looks like a safe rehearsal on staging is not one. | the most under-appreciated item here |
+| c | **Clerk runs a different instance per environment.** Production is bound to the apex domain; the branch alias is not. Sessions do not cross, and a development identity is a different `sub` — which is why the founder holds two `super_admin` rows under one email (§0-K). | auth behaviour genuinely differs |
+| d | **Stripe: a live key is REFUSED outside Vercel Production** by `envGuard`, deliberately using `VERCEL_ENV` and never `NODE_ENV` (which reads "production" on previews too). Staging is structurally test-mode-only. | condition 2 of the domain move holds by construction, not by discipline |
+| e | **`INNGEST_SERVE_ORIGIN` is set per environment**, and it decides which deployment URL Inngest calls back. If production's value is unset or still points at the staging branch alias, a production case would be executed by staging's code. **Cannot be read from here — the founder should check both environments' value.** | 🔴 F — highest-risk unknown on this list |
+| f | **The PDF renderer uses a different browser on Vercel than anywhere else** (0-N.3a). | a local render proves nothing about the deployed one |
+| g | Sentry tags `environment` from `VERCEL_ENV`, so preview and production errors are separated. | reporting only, not behaviour |
+| h | `SEARCH_INDEXING_ENABLED` is a CODE constant, currently `false` in both. No difference today — it becomes one the moment anyone makes it env-driven, which the lock does not prevent. | worth knowing before flipping it |
+
+---
+
+## 0-M. A PUBLIC DIRECTORY NOBODY MEANT TO PUBLISH — 2026-08-24 (design sitting five)
+
+**Owner: UX. Found by the sweep the founder ordered after ruling on the retired sample module.**
+
+| # | Item | State |
+|---|---|---|
+| 0-M.1 | `lib/content/sample-report.ts` DELETED — unreferenced, tracked, and carrying real company names lifted unmasked from a delivered case. It rendered nowhere, so no client saw it. | ✅ |
+| 0-M.2 | ⚠ **THE NAMES REMAIN IN GIT HISTORY.** Founder-ruled not worth rewriting history over. Recorded here so a future reader does not assume deletion cleaned the repo. | ✅ recorded |
+| 0-M.3 | **`public/prototype/**` WAS ANSWERING 200 TO THE OPEN INTERNET** on the live domain — internal admin mockups, client report mockups, the design-system reference, with company names and a real case ID across them. MEASURED on hyprriq.com, not inferred. | ✅ gated |
+| 0-M.4 | Cause: the middleware matcher deliberately skips extensioned paths, so **no `.html` under `public/` ever reached Clerk**. The same skip list that hid `/robots.txt` behind auth by omitting `.txt` was, by including `.html`, exposing these. One list, two opposite defects. | ✅ |
+| 0-M.5 | Fix: an explicit `"/prototype/:path*"` matcher entry. Runs middleware for those paths regardless of extension; changes no other static file's handling; deletes nothing. Measured after: `/prototype/*` → 307, `/`, `/pricing`, `/robots.txt`, `/sitemap.xml` → 200. Locked. | ✅ |
+| 0-M.6 | **DELETED, not gated — founder-ruled 2026-08-25.** All 59 files, 957 KB, gone from the repo. **The ruling's reasoning is the part worth keeping: gated means ONE MATCHER EDIT FROM PUBLIC AGAIN, and that matcher has now failed twice IN OPPOSITE DIRECTIONS** — hiding `/robots.txt` behind auth by omitting `.txt`, and exposing `/prototype` by including `.html`. A control that has been wrong in both directions is not one to lean a data-exposure risk on. **Deletion removes the class; gating only manages it.** | ✅ |
+| 0-M.6a | Confirmed before deleting: nothing renders or links them. The only live source pointer was a comment in `report-view.tsx` naming the prototype it was built from — updated to say the file is gone and where. Handover docs keep their references: they are historical records of what was true then. The email previews under it are REGENERABLE from `scripts/email-preview.ts` and were not a loss. | ✅ |
+| 0-M.6b | ⚠ **THE NAMES REMAIN IN GIT HISTORY** at `c1b57ec~1`. The deletion cleans the DEPLOY, not the REPO. Recorded so nobody reads "deleted" as "gone". | ✅ recorded |
+| 0-M.6c | The lock now asserts `public/prototype` **DOES NOT EXIST**, and separately keeps the matcher entry — belt and braces. Deletion is the control; the matcher is only what shortens the interval between a careless re-add and someone noticing. | ✅ locked |
+| 0-M.7 | **MERGED TO `main` AND VERIFIED LIVE, 2026-08-25.** Cherry-picked as `c1b57ec` — the gate alone, no unreviewed design work riding with it. MEASURED on hyprriq.com after the deploy: all four previously-200 paths now answer **404**, while `/`, `/pricing`, `/what-we-check`, `/robots.txt` and `/sitemap.xml` all stay 200. | ✅ |
+| 0-M.7a | ⚠ **PRODUCTION ANSWERS 404 WHERE LOCAL ANSWERED 307.** Same gate, different response shape — noted so a future smoke test written against the local 307 does not read the live 404 as a different bug. Neither serves the file, which is the property that matters. | ✅ recorded |
+
+**THE LESSON, and the reason the founder ordered the sweep.** Last sitting I argued the retired
+module was safe to leave *because it was unreferenced*. Unreferenced said nothing about what was
+inside it, and — as 0-M.3 shows — nothing about whether it was reachable either. **"Nothing links
+to it" is not a security property. A URL does not need a link.**
+
+---
+
 ## 0-L. THE DOMAIN MOVE — EXECUTED 2026-08-24 (sitting four)
 
 > `main` fast-forwarded from `c9f1934` (the empty Create-Next-App commit) to `c077ab7`.
@@ -1323,6 +1886,38 @@ founder-run scripts:** the probe template is now
 8. Any new client-facing string joins the must-pass fixture in the SAME commit.
 9. Client wording is a RENDERING concern — never a stored-literal change. No client-wording ruling may reopen a freeze.
 10. **Productization gets built fast and rough — NOT gated like the engine.** The heavy gates are done.
+11. **NEVER write a regex through a bash heredoc.** Bit twice in one sitting, silently both times.
+    A `` word-boundary typed into a heredoc is interpreted by the shell as a **literal backspace
+    byte, 0x08**, before the file is ever written. The result compiles, the test passes, and the
+    pattern it claims to enforce **can never match anything** — a lock that is permanently green and
+    permanently blind, which is worse than no lock. The same trap catches `	`, `
+`, ``, ``,
+    `
+` and ``. Write regexes with the editing tools, or a quoted heredoc, or without a regex at
+    all; and if a new lock finds zero offenders, prove the scanner sees anything before believing it.
+    Sweep command when in doubt: `grep -rlP '' --include='*.ts' --include='*.tsx' .`
+12. **"Unreferenced" and "unlinked" are not security properties** (§0-M). Whether a file is *reached*
+    is decided by the middleware matcher and the deploy, never by whether the codebase imports it.
+13. **TEST AT 1024px, NOT AT 1280px** (§0-O.6, founder-ruled 2026-08-25). The app sidebar is an
+    off-canvas drawer below `lg` and a **static 248px column** at `lg` and above. Crossing that
+    breakpoint therefore gains **eight pixels** of content (768 → 720px, 1024 → 728px): the sidebar
+    eats 248 of the 256 the viewport gained. A 1280px window gives 984px — **256px more than a real
+    1024px laptop.** "It works on my laptop" is measured at the one width that flatters the layout,
+    and that is how an entire console shipped desktop-only without anyone being careless. The four
+    ruled widths are **360 · 390 · 768 · 1024**, and 1024 is a TEST width, not a safe one.
+14. **AN INSTRUMENT MUST PROVE IT *LOOKED*, NEVER THAT IT *FOUND*** (founder-ruled 2026-08-25, on the
+    THIRD occurrence). Every scanner, census, lock or sweep must assert **how much it EXAMINED**, and
+    that assertion must stay true after the last defect is fixed. Three times now the same shape:
+      · a hand-run census reported a clean zero it had not earned;
+      · a marker pattern matched half the vocabulary and looked complete;
+      · the tap-target self-test proved itself by asserting it **found offenders** — so the moment
+        the last one was fixed it failed, and the only way to green it would have been to weaken it.
+    "Did it find something broken" and "did it look at anything" are different questions, and only
+    the second is proof of life. A detector whose proof-of-life is its own hit count is guaranteed to
+    go quiet exactly when you start trusting it. See `scanControls()` in `lib/design/responsiveScan.ts`
+    for the shape: count what was inspected, assert on that, and check the defects separately.
+    Related but distinct: rule 11 covers a pattern that CANNOT match; this covers one that stops
+    matching and is read as success.
 
 ---
 

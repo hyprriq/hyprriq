@@ -30,8 +30,14 @@ export const config = {
     // carries AWI-2607-022.
     //
     // This entry runs the middleware for those paths REGARDLESS of extension, so they fall to the
-    // default (authenticated) branch like every other non-public route. Surgical on purpose: it
-    // does not change how any other static file is handled, and it deletes nothing.
+    // default (authenticated) branch like every other non-public route.
+    //
+    // ⚠ THE FILES ARE NOW DELETED (2026-08-25, founder ruling) — this entry is NOT what protects
+    // them any more, and it must not be treated as permission to put them back. The ruling: gated
+    // means one matcher edit from public again, and THIS MATCHER HAS FAILED TWICE IN OPPOSITE
+    // DIRECTIONS — it hid /robots.txt behind auth by omitting .txt, and exposed /prototype by
+    // including .html. It stays as a second line only, for the day someone re-adds the directory
+    // without reading robots.lock.test.ts first.
     "/prototype/:path*",
   ],
 };

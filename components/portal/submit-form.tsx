@@ -235,7 +235,7 @@ export function SubmitForm({
         <div className="mt-6 flex flex-col gap-3">
           <Link
             href={`/portal/cases/${result.case_id}`}
-            className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
+            className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
           >
             View case →
           </Link>
@@ -243,13 +243,13 @@ export function SubmitForm({
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+              className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
             >
               Submit another
             </button>
             <Link
               href="/portal/cases"
-              className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+              className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
             >
               My cases
             </Link>
@@ -267,7 +267,7 @@ export function SubmitForm({
   return (
     <div className="mx-auto max-w-4xl">
       <h2 className="font-display text-2xl font-bold tracking-tight text-ink">Research a supplier</h2>
-      <p className="mt-1 text-sm text-ink-2">
+      <p className="field-help mt-1 text-ink-2">
         One case covers one supplier and their brands, for one credit. You&rsquo;ll review everything before it&rsquo;s submitted.
       </p>
 
@@ -341,7 +341,7 @@ export function SubmitForm({
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-bold text-ink">The brands</div>
-                  <p className="mt-0.5 text-[13px] text-muted">
+                  <p className="field-help mt-0.5 text-muted">
                     {`Up to ${cap} brands per case — one credit covers them all.`}
                   </p>
                 </div>
@@ -383,7 +383,7 @@ export function SubmitForm({
                       <span className="text-[14px] font-medium text-ink">
                         ASINs <span className="font-normal text-muted">(optional — one per brand)</span>
                       </span>
-                      <p className="text-[13px] text-ink-2">
+                      <p className="field-help text-ink-2">
                         Enter the ASIN you&rsquo;re actually planning to buy from this supplier — the
                         exact listing, not just any product of the brand.
                       </p>
@@ -403,7 +403,7 @@ export function SubmitForm({
                       ))}
                     </div>
                   )}
-                  <p className="mt-2 text-[13px] text-ink-2">
+                  <p className="field-help mt-2 text-ink-2">
                     {brandHelper}{" "}
                     <a
                       href={brandHelperLearnMore.href}
@@ -422,7 +422,7 @@ export function SubmitForm({
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-bold text-ink">What they&rsquo;ve sent you <span className="font-normal text-muted">(optional)</span></div>
-                  <p className="mt-0.5 text-[13px] text-muted">
+                  <p className="field-help mt-0.5 text-muted">
                     An invoice, quote, or price list gives our review something concrete to check. Nothing is shared with the supplier.
                   </p>
                 </div>
@@ -432,13 +432,13 @@ export function SubmitForm({
                       <label className="cursor-not-allowed rounded-md bg-subtle px-3.5 py-2 text-[13px] font-semibold text-muted" aria-disabled="true">
                         Choose file
                       </label>
-                      <p className="mt-2 text-[13px] text-ink-2">
+                      <p className="field-help mt-2 text-ink-2">
                         Document review is included from the {PLAN_PRICE_LABEL.single_149} report up.
                       </p>
                     </div>
                   ) : (
                     <>
-                      <p className="text-[13px] text-ink-2">
+                      <p className="field-help text-ink-2">
                         Optional. A PO or letterhead helps us confirm the vendor&rsquo;s entity and address.
                         The brands and vendor you enter above are what we research.
                       </p>
@@ -508,7 +508,7 @@ export function SubmitForm({
                     className="mt-1 w-full rounded-lg border border-line bg-canvas min-h-11 px-3 py-2.5 text-[16px] text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                   {notesRequired && (
-                    <p className="mt-1 text-[13px] text-ink-2">
+                    <p className="field-help mt-1 text-ink-2">
                       No document uploaded — please describe what you know about this vendor and brand
                       relationship in as much detail as possible. This is the only evidence we&rsquo;ll
                       have to work from.
@@ -522,7 +522,7 @@ export function SubmitForm({
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-bold text-ink">Review before it&rsquo;s submitted</div>
-                  <p className="mt-0.5 text-[13px] text-muted">
+                  <p className="field-help mt-0.5 text-muted">
                     A minute here protects the credit — check the supplier, brands, and marketplace are exactly right, then submit.
                   </p>
                 </div>
@@ -585,7 +585,7 @@ export function SubmitForm({
             <button
               type="button"
               onClick={() => (step === 1 ? router.push("/portal/dashboard") : setStep((step - 1) as Step))}
-              className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
+              className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle"
             >
               ← {step === 1 ? "Cancel" : "Back"}
             </button>
@@ -594,7 +594,7 @@ export function SubmitForm({
                 type="button"
                 disabled={nextDisabled}
                 onClick={() => setStep((step + 1) as Step)}
-                className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 Next: {STEPS[step].label} →
               </button>
@@ -603,7 +603,7 @@ export function SubmitForm({
                 type="button"
                 disabled={!canSubmit || busy}
                 onClick={submit}
-                className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 {busy ? "Submitting…" : "Submit for research"}
               </button>

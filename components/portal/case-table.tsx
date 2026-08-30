@@ -26,7 +26,7 @@ function RowAction({ c }: { c: CaseRow }) {
     return (
       <Link
         href={`/portal/cases/${c.id}`}
-        className="rounded-md bg-brand px-2.5 py-1 text-[12px] font-bold text-white hover:bg-brand-hover"
+        className="min-h-11 inline-flex items-center justify-center rounded-md bg-brand px-2.5 py-1 text-[12px] font-bold text-white hover:bg-brand-hover"
       >
         View report
       </Link>
@@ -35,7 +35,7 @@ function RowAction({ c }: { c: CaseRow }) {
   return (
     <Link
       href={`/portal/cases/${c.id}`}
-      className="rounded-md border border-line bg-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 hover:bg-line"
+      className="min-h-11 inline-flex items-center justify-center rounded-md border border-line bg-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 hover:bg-line"
     >
       View
     </Link>

@@ -73,7 +73,51 @@ export default async function AdminCasesPage({
           No cases in this view.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-surface">
+        <>
+        {/* ── MOBILE: the same rows as tappable cards ────────────────────────────────────────
+            THE BUG THIS FIXES, and it was none of the things it looked like. The dense grid below
+            demands 604px of track, gap and padding; the content box on a 360px phone is 328px; and
+            its wrapper is `overflow-hidden`. MEASURED in a 360px viewport: the row's only <Link>
+            — the trailing Review button — had 0px of itself inside the clip, and
+            document.elementFromPoint at its centre returned nothing at all because the centre was
+            off the viewport entirely.
+            So it was not a tap target, not hydration, and not an overlay. The link rendered, was a
+            real link, and was horizontally clipped out of existence with no scroll container to
+            reach it. And because the case number in that row is a <span> rather than a <Link>,
+            there was NO reachable link in the row at all — the operator's primary navigation.
+            The card carries the WHOLE ROW as the link, so the tap target is the card, not a 62×23px
+            button. Same destination, same data, same pattern components/portal/case-table.tsx
+            already uses for clients — see the note at the end of this file. */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {cases.map((c) => (
+            <Link
+              key={c.id}
+              href={`/admin/cases/${c.id}/review`}
+              className="block rounded-card border border-line bg-surface p-4"
+            >
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate font-mono text-[13px] font-semibold text-brand">
+                  {c.case_number}
+                </span>
+                <StatusBadge status={c.status} />
+              </div>
+              <div className="mt-2 text-[15px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
+              <div className="mt-0.5 truncate text-[13px] text-ink-2">
+                {c.clients?.full_name ? `${c.clients.full_name} · ` : ""}
+                {(c.brands_submitted ?? []).join(" • ") || "—"}
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <VerdictBadge verdict={c.verdict} />
+                <span className="ml-auto text-[13px] text-muted">
+                  {c.plan_type ? PLAN_NAME[c.plan_type] : "—"}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* ── ≥md: the dense grid, unchanged. An operator at a desk keeps the table. ───────── */}
+        <div className="hidden overflow-hidden rounded-card border border-line bg-surface md:block">
           <div className="grid grid-cols-[96px_1fr_90px_130px_140px_72px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
             <span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>Stage</span><span>Verdict</span><span></span>
           </div>
@@ -101,7 +145,19 @@ export default async function AdminCasesPage({
             </div>
           ))}
         </div>
+        </>
       )}
     </AdminShell>
   );
 }
+
+// ── THE SAME PATTERN IS BROKEN ON FIVE MORE ADMIN LISTS (audited 2026-08-25) ──────────────────
+// Measured in a 360px viewport, minimum track width vs a 328px content box:
+//   /admin/support     734px  · overflow-hidden · NO link in the row at all
+//   /admin/billing     680px  · overflow-hidden · only link clipped to 0px
+//   /admin/dashboard   526px  · overflow-hidden · only link clipped to 0px
+//   /admin/dashboard   422px  · overflow-hidden · informational row, data lost
+//   /admin/users       556px  · no wrapper      · pushes the document 229px sideways
+//   /admin/clients     362px  · overflow-hidden · row IS a Link, so it still navigates
+// They are NOT fixed here: the founder ruled audit-before-fix, and the remedy is one shared list
+// primitive rather than six copies of the block above. This note is the pointer to it.

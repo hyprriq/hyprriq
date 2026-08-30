@@ -48,7 +48,7 @@ export default async function CasesPage({
             <Link
               key={t.key}
               href={t.key === "all" ? "/portal/cases" : `/portal/cases?filter=${t.key}`}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[14px] font-semibold transition-colors ${
+              className={`min-h-11 inline-flex items-center justify-center flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[14px] font-semibold transition-colors ${
                 isOn ? "bg-brand text-white" : "text-ink-2 hover:bg-subtle"
               }`}
             >

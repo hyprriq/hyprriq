@@ -131,7 +131,7 @@ export function SupportForm({
           type="button"
           onClick={submit}
           disabled={busy}
-          className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+          className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
         >
           {busy ? "Submitting…" : "Submit Request →"}
         </button>

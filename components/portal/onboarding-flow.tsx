@@ -388,7 +388,7 @@ export function OnboardingFlow({
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+                    className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
                   >
                     Continue →
                   </button>
@@ -402,7 +402,7 @@ export function OnboardingFlow({
                   <button
                     type="button"
                     onClick={() => router.refresh()}
-                    className="mt-3 rounded-lg bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+                    className="min-h-11 inline-flex items-center justify-center mt-3 rounded-lg bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
                   >
                     Refresh
                   </button>

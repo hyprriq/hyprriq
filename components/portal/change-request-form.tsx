@@ -55,7 +55,7 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
         </p>
         <Link
           href={`/portal/cases/${caseId}`}
-          className="mt-5 inline-block rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
+          className="min-h-11 mt-5 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
         >
           Back to case →
         </Link>
@@ -94,14 +94,14 @@ export function ChangeRequestForm({ caseId, caseNumber }: { caseId: string; case
         </div>
         {error && <p className="text-[14px] text-deny-ink">{error}</p>}
         <div className="flex items-center justify-between">
-          <Link href={`/portal/cases/${caseId}`} className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle">
+          <Link href={`/portal/cases/${caseId}`} className="min-h-11 inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-subtle">
             Cancel
           </Link>
           <button
             type="button"
             onClick={submit}
             disabled={busy}
-            className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+            className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
           >
             {busy ? "Submitting…" : "Submit Change Request"}
           </button>

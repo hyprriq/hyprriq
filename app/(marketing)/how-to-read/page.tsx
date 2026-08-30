@@ -5,7 +5,7 @@ import {
   HOW_TO_READ, VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, AREA_DEFS, CHIP_DEFS, CLOSING_STATEMENT,
 } from "@/lib/content/reportCopy";
 import { verdicts, verdictDisclaimer } from "@/lib/content/help";
-import { VERDICT_CLASSES } from "@/lib/design/palette";
+import { VerdictLadder } from "@/components/marketing/graphics/verdict-ladder";
 
 export const metadata: Metadata = {
   title: "How to read your report — HyprrIQ",
@@ -51,26 +51,22 @@ export default function HowToReadPage() {
             <p className="mt-2 text-[15px] text-ink-2">
               A verdict is a position on a four-level scale, not a pass/fail.
             </p>
-            <div className="mt-6 space-y-4">
+            {/* FOUR EQUAL CARDS BECAME A LADDER (2026-08-25). Side by side implies alternatives you
+                choose between; the rungs widen with the level, so the shape carries the ranking
+                before a single number is read. Colour still comes from VERDICT_PALETTE. */}
+            <VerdictLadder className="mt-6" />
+
+            <dl className="mt-6 space-y-4">
               {VERDICT_SCALE_ORDER.map((key) => {
                 const v = VERDICT_COPY[key];
-                const help = verdicts.find((h) => h.key === key);
                 return (
                   <div key={key} className="rounded-card border border-line bg-canvas p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className={`rounded-chip px-2.5 py-1 text-[13px] font-semibold ${VERDICT_CLASSES[key].bg} ${VERDICT_CLASSES[key].ink}`}>
-                        {v.name}
-                      </span>
-                      <span className="shrink-0 font-mono text-[12px] text-muted">
-                        level {v.level} of {VERDICT_SCALE_ORDER.length}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{v.means}</p>
-                    {help && <p className="mt-2 text-[13px] font-semibold text-muted">{help.action}</p>}
+                    <dt className="text-[15px] font-bold text-ink">{v.name}</dt>
+                    <dd className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{v.means}</dd>
                   </div>
                 );
               })}
-            </div>
+            </dl>
             <p className="mt-4 text-[13px] text-muted">{verdictDisclaimer}</p>
           </Reveal>
         </div>

@@ -210,6 +210,9 @@ export const CONTRAST_CONTRACTS: readonly {
   { fg: ACCENT.cyan, bg: NEUTRAL.canvas, floor: 4.5, what: "--cyan on --base (section kicker)" },
   { fg: ACCENT.cyan, bg: NEUTRAL.surface, floor: 4.5, what: "--cyan on --surface" },
   { fg: ACCENT.cyan, bg: ACCENT.cyanTint, floor: 4.5, what: "--cyan on its tint (coming-soon chip)" },
+  // Added 2026-08-25 with the warm-hue ruling: the homepage's "Researching" state chip moved off the
+  // verify pair onto this one, so the pair is now load-bearing and has to be recomputed like the rest.
+  { fg: ACCENT.blue, bg: ACCENT.blueTint, floor: 4.5, what: "--blue on its tint (in-progress chip)" },
   { fg: ACCENT.cyan, bg: "#E4F0F1", floor: 4.5, what: "--cyan on the hero gradient's darkest stop" },
   { fg: ACCENT.plum, bg: NEUTRAL.pale, floor: 4.5, what: "--plum on --pale (section kicker)" },
   { fg: ACCENT.violet, bg: NEUTRAL.sand, floor: 4.5, what: "--violet on --sand (section kicker)" },

@@ -4,6 +4,7 @@ import { PageHero, PageSection, Prose, LimitNote, RelatedLinks, PageCta } from "
 import { AREAS, CERTAINTY } from "@/lib/content/whatWeCheck";
 import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
+import { MaskedInvoice } from "@/components/marketing/graphics/masked-invoice";
 
 // /what-we-check — the full version of the five areas. The homepage rail is the summary, and BOTH
 // render from lib/content/whatWeCheck.ts so the two cannot drift (dev brief build note 4).
@@ -64,6 +65,12 @@ export default function WhatWeCheckPage() {
                     <p className="mt-1.5 text-[14.5px] leading-[1.5] text-ink-2">{a.delivers}</p>
                   </div>
                 </div>
+
+                {/* THE MASKED INVOICE, under Documentation Review and nowhere else. It is the one
+                    area where showing the work beats describing it — "a fourteen-point read" means
+                    nothing until a reader can see and count the points. Every callout says what is
+                    CHECKED, never that a field is wrong. */}
+                {a.key === "documentation_review" && <MaskedInvoice className="mt-6" />}
 
                 <div className="max-w-[68ch]">
                   <LimitNote>{a.limit}</LimitNote>

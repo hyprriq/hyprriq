@@ -41,7 +41,7 @@ export default async function CaseDetailPage({
             <div className="mt-5">
               <Link
                 href="/portal/support"
-                className="inline-flex items-center rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90"
+                className="min-h-11 inline-flex items-center rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90"
               >
                 Message support
               </Link>

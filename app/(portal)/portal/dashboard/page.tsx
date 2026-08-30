@@ -126,7 +126,7 @@ export default async function DashboardPage() {
             <div className="text-sm font-bold text-conditional-ink">Your plan is inactive</div>
             <div className="text-[14px] text-ink-2">Your completed reports stay available. Reactivate to submit new research.</div>
           </div>
-          <Link href="/portal/billing" className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
+          <Link href="/portal/billing" className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
             Reactivate plan →
           </Link>
         </div>
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
                 { label: "View Reports", href: "/portal/cases?filter=completed", d: "M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6ZM14 2v6h6" },
                 { label: "Get Help", href: "/portal/help", d: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" },
               ] as const).map((q) => (
-                <Link key={q.label} href={q.href} className="flex items-center justify-start gap-2 rounded-lg border border-line bg-canvas px-3 py-2.5 text-[13px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
+                <Link key={q.label} href={q.href} className="min-h-11 flex items-center justify-start gap-2 rounded-lg border border-line bg-canvas px-3 py-2.5 text-[13px] font-semibold text-ink-2 hover:bg-subtle hover:text-ink">
                   <span aria-hidden className="text-accent-data">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={q.d} /></svg>
                   </span>
@@ -257,7 +257,7 @@ export default async function DashboardPage() {
                   CTA now exists only where an on-sale upgrade actually awaits (one-time clients
                   → Growth, offered on Billing), and names no tier. */}
               {PLAN_CATEGORY[plan] === "one_time" && (
-                <Link href="/portal/billing" className="mt-3 block rounded-lg bg-brand px-3 py-2 text-center text-[14px] font-semibold text-white hover:bg-brand-hover">
+                <Link href="/portal/billing" className="min-h-11 mt-3 flex items-center justify-center rounded-lg bg-brand px-3 py-2 text-center text-[14px] font-semibold text-white hover:bg-brand-hover">
                   Move to a monthly plan →
                 </Link>
               )}

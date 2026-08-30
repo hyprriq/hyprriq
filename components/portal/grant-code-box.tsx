@@ -59,7 +59,7 @@ export function GrantCodeBox() {
             <button
               type="submit"
               disabled={busy || !code.trim()}
-              className="shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+              className="min-h-11 inline-flex items-center justify-center shrink-0 rounded-lg bg-ink px-4 py-2 text-[13px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
             >
               {busy ? "Applying…" : "Apply"}
             </button>

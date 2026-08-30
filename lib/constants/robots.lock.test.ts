@@ -68,15 +68,33 @@ describe("LOCK — domain move condition 1: the site is not indexable until live
     expect(list, "sitemap.xml must be publicly reachable").toContain("/sitemap.xml");
   });
 
-  it("/prototype is not reachable by the open internet", () => {
+  it("public/prototype DOES NOT EXIST — deleted, not managed", () => {
     // FOUND BY SWEEP, 2026-08-24, LIVE ON THE PRODUCTION DOMAIN. public/prototype/** answered 200
     // to anyone with the URL — internal admin mockups, client report mockups, the design-system
-    // reference, real company names and live-shaped case references among them. The proxy matcher
-    // deliberately skips extensioned paths, so Clerk never saw a single .html under it.
+    // reference, company names and a real case ID among them. The proxy matcher deliberately skips
+    // extensioned paths, so Clerk never saw a single .html under it.
     //
-    // "Unreferenced" and "not linked" say NOTHING about reachability, which is the lesson the
-    // retired sample-report module taught the same day. This asserts the middleware still runs for
-    // those paths and that nobody has quietly made them public again.
+    // ⚠ THE GATE WAS THE FIRST FIX AND IT WAS NOT THE RIGHT ONE. Founder ruling 2026-08-25:
+    // gated means ONE MATCHER EDIT FROM PUBLIC AGAIN, and that matcher has now failed twice in
+    // OPPOSITE DIRECTIONS — hiding /robots.txt behind auth by omitting .txt, and exposing these by
+    // including .html. A control that has been wrong in both directions is not a control to lean a
+    // data-exposure risk on. Nothing rendered these files. DELETION REMOVES THE CLASS; GATING ONLY
+    // MANAGES IT.
+    //
+    // They live in git history at c1b57ec~1 if ever needed. ⚠ AND THE NAMES REMAIN THERE — the
+    // deletion does not clean the repo, only the deploy.
+    expect(
+      fs.existsSync(path.join(repo, "public/prototype")),
+      "public/prototype is back. It carries company names and a real case ID, nothing renders it, " +
+        "and everything under public/ is served to the open internet by default. Keep it out of " +
+        "the repo, or out of public/ — never both back.",
+    ).toBe(false);
+  });
+
+  it("and the matcher still gates the path, so a re-add is not instantly public", () => {
+    // BELT AND BRACES, DELIBERATELY. The directory is gone, so this asserts nothing today — it is
+    // here for the day someone restores it without reading the test above. Deletion is the control;
+    // this is what stops the interval between a careless re-add and someone noticing.
     const proxy = fs.readFileSync(path.join(repo, "proxy.ts"), "utf8");
     expect(proxy, "the middleware matcher must cover /prototype regardless of file extension")
       .toMatch(/"\/prototype\/:path\*"/);

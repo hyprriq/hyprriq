@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { PageHero, PageSection, Prose, RelatedLinks, PageCta } from "@/components/marketing/page-shell";
 import { AREAS } from "@/lib/content/whatWeCheck";
 import { VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
+import { CANNOT } from "@/lib/content/methodBoundary";
+import { CheckableBoundary } from "@/components/marketing/graphics/checkable-boundary";
 
 // /method — the sceptic's page and the acquirer's page. Deliberately NOT search-optimised
 // (SEO note in the brief: it supports conversion and would only compete with /what-we-check).
@@ -26,12 +28,9 @@ const STANDARDS = [
   { t: "Absence of evidence is a gap.", b: "Where we cannot confirm something, we say we could not confirm it. We do not convert a gap into a suspicion, and we do not let a missing record become an accusation about a supplier who may be entirely legitimate." },
 ];
 
-const CANNOT = [
-  { t: "It cannot confirm authorization.", b: "Distribution agreements are private contracts. They are not filed anywhere public, and no method reaches them." },
-  { t: "It cannot predict a brand's behavior.", b: "The report shows how a brand has acted. What it decides next quarter is a decision inside a company neither of us can see into." },
-  { t: "It cannot make a document acceptable to a marketplace.", b: "The report names which fields would need correcting. The acceptance decision belongs to the marketplace and happens after you have bought." },
-  { t: "It cannot tell you a deal is good.", b: "It tells you whether the deal is what it appears to be. What you do about that is a commercial judgement, and it is yours." },
-];
+// CANNOT MOVED TO lib/content/methodBoundary.ts. It was about to be written twice — once here as
+// prose, once in the boundary graphic below — and two copies of a refusal is exactly how the version
+// a reader sees ends up depending on which surface they landed on. Same four limits, one array.
 
 export default function MethodPage() {
   return (
@@ -129,6 +128,11 @@ export default function MethodPage() {
         <p className="mt-2 max-w-[68ch] text-[16px] text-ink-2 sm:text-[17px]">
           The limits are structural, not modesty.
         </p>
+
+        {/* The boundary, drawn. It goes ABOVE the prose deliberately: the shape of the problem is
+            what makes the four limits below read as rigour rather than as hedging. */}
+        <CheckableBoundary className="mt-6" />
+
         <ul className="mt-5 space-y-3">
           {CANNOT.map((c) => (
             <li key={c.t} className="rounded-card border border-line bg-surface p-4 sm:p-5">

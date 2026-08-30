@@ -91,7 +91,7 @@ export default async function HelpPage() {
           </div>
           <Link
             href="/portal/support"
-            className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
+            className="min-h-11 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"
           >
             Submit a request
           </Link>
