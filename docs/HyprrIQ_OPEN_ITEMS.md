@@ -227,6 +227,20 @@ install the Marketplace integration and branch environments arrive automatically
 
 ### 0-P.5 · Switchover — nothing is lost, but the crons must be handled DURING it
 
+**▶ THE STEP-BY-STEP IS `docs/runbooks/RUNBOOK_INNGEST_ENVIRONMENT_SPLIT.md`** (written 2026-08-25,
+founder executes). It carries the dashboard paths, the six variables with scopes, the redeploy order,
+the exact serve URL to expect after each, and the failure signatures.
+
+⚠ **AND IT CORRECTS ONE THING THE FOUNDER RULED ON MY FRAMING.** I said a stale app would keep seven
+cron triggers alive and that it must be archived as part of the switch. Inngest identifies an app by
+its app ID (`"hyprriq"`) **within an environment** — so there is almost certainly only ONE app, and
+**the production redeploy corrects its serve URL in place with nothing to archive.** The runbook
+therefore CHECKS the Apps page rather than assuming a duplicate, and archives only if one is there.
+The archive action is real and is the right tool if it is needed (it archives every function on the
+app, stopping new runs) — the error was assuming it would be.
+
+
+
 **No in-flight case exists.** Verified, not assumed: `awaiting_review` 19 (a human wait, not a live
 run), `delivered` 14, `manual_override_required` 8, `research_failed` 3, `submission_failed` 1.
 **Nothing is running.** The window is clean.
