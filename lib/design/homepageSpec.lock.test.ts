@@ -120,3 +120,64 @@ describe("LOCK — the spec's card baselines are subgrid, not luck", () => {
     expect(icons.length, "all six capability entries must carry their spec path data").toBe(6);
   });
 });
+
+describe("LOCK — the service section compresses on a phone, and loses nothing", () => {
+  const RAIL = strip(read("components/marketing/home/service-rail.tsx"));
+  const WHAT_WE_CHECK = read("app/(marketing)/what-we-check/page.tsx");
+
+  it("the summary and BOTH detail boxes come off below 960px", () => {
+    // Spec line 437: `.pan .pm, .pan .d { display: none }`. The homepage is a hub — on a phone its
+    // job is five questions and their limits, not the full explanation.
+    const gated = RAIL.match(/max-\[960px\]:hidden/g) ?? [];
+    expect(
+      gated.length,
+      "expected the summary paragraph AND the detail-box grid to hide below 960px",
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("uses the SPEC's 960px breakpoint, and FAILS OPEN", () => {
+    // lg is 1024; using it would compress the 960-1023 band the spec leaves expanded.
+    expect(RAIL, "the compression must key off 960px").toMatch(/max-\[960px\]:hidden/);
+    // ⚠ THE DIRECTION IS THE POINT. `hidden min-[961px]:block` was measured hiding the summary at a
+    // 961px viewport — devicePixelRatio 1.25 made matchMedia("(min-width: 961px)") false. An
+    // inverted rule on the boundary can land the wrong side of sub-pixel rounding, and
+    // default-hidden means the COPY DISAPPEARS. Default-visible means the same failure shows too
+    // much instead. A rule that hides real copy must fail open.
+    expect(
+      /hidden[^"]*min-\[9\d\dpx\]:(block|grid)/.test(RAIL),
+      "the compression is inverted to default-hidden again — it must be `max-[960px]:hidden` so a " +
+        "boundary miss shows the copy rather than losing it",
+    ).toBe(false);
+  });
+
+  it("⚠ NOTHING IS HIDDEN THAT IS NOT RENDERED IN FULL ON /what-we-check", () => {
+    // THE TEST THAT MATTERS. Compression is only honest while the detail exists somewhere the reader
+    // is sent. Both surfaces read lib/content/whatWeCheck.ts — this proves the destination actually
+    // renders the three fields the homepage stops showing, so they are MOVED and not LOST.
+    for (const field of ["a.summary", "a.examines", "a.delivers"]) {
+      const bare = field.split(".")[1];
+      expect(
+        WHAT_WE_CHECK.includes(`a.${bare}`) || WHAT_WE_CHECK.includes(`{a.full`),
+        `/what-we-check no longer renders ${bare}, so hiding it on the homepage now LOSES it`,
+      ).toBe(true);
+    }
+    expect(
+      RAIL, "the panel must still link the reader to where the detail lives",
+    ).toBeTruthy();
+    const page = read("app/(marketing)/page.tsx");
+    expect(page, "the homepage must still link to /what-we-check").toMatch(/href="\/what-we-check"/);
+  });
+
+  it("the number, the question and the limit SURVIVE the compression", () => {
+    // What is left has to still make a promise legible. If a future edit gates these too, the
+    // section becomes five headings and nothing else.
+    // NEWLINE VIA charCode, NOT AN ESCAPE — standing rule 11's family. Writing "\n" through the
+    // tooling that generated this file produced a LITERAL newline inside the string and broke the
+    // parse. It failed loudly this time; the backspace variant of the same mistake fails silently.
+    const NEWLINE = String.fromCharCode(10);
+    for (const kept of ["a.question", "a.summaryLimit"]) {
+      const line = RAIL.split(NEWLINE).find((l) => l.includes(kept)) ?? "";
+      expect(line, `${kept} must render at every width`).not.toMatch(/min-\[961px\]:|hidden/);
+    }
+  });
+});
