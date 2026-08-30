@@ -105,7 +105,76 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
-## 0-P. INNGEST WAS REGISTERED AGAINST A PREVIEW DEPLOYMENT — 2026-08-25 (founder-found)
+## 0-Q. PRODUCTION IS FOURTEEN COMMITS BEHIND — THE "DRIFT" IS AN UNMERGED BRANCH — 2026-08-25
+
+**⛔ STOP-AND-TELL, per the standing rule "if the codebase contradicts the brief, STOP and tell me
+first." Nothing in the homepage/graphics brief was built this sitting.**
+
+The founder reported the live homepage as having **drifted from the spec** — the portal mock naming
+`Northgate Wholesale Co.` where the spec says `Example Trading LLC`, and the three portal cards not
+sharing a baseline. Both symptoms are real. **Neither is drift.**
+
+**`main` is at `d688377`. `staging` is fourteen commits ahead of it.** Every one of those symptoms —
+and almost every item in the brief's "newer additions" list — was built earlier in this same sitting
+and has been sitting on `staging`, unmerged, while `hyprriq.com` serves `main`.
+
+**MEASURED on both live origins, same probes, same minute:**
+
+| probe | staging | production |
+|---|---|---|
+| `Example Trading LLC` | **4** | **0** |
+| `Northgate` | **0** | **4** |
+| `hq-ring-arc` (the progress ring) | **1** | **0** |
+| `hq-pulse-dot` (the state markers) | **2** | **0** |
+| `role="img"` on `/what-we-check` | **1** | **0** |
+| `role="img"` on `/method` | **1** | **0** |
+| `role="img"` on `/how-to-read` | **1** | **0** |
+
+| brief item | actually |
+|---|---|
+| 2a — vendor name is `Northgate` | **fixed `0314ca1`**, on staging |
+| 2a — portal cards share no baseline | **fixed `9c77403`** (subgrid), on staging |
+| 2b — progress ring, 2 of 5 | **built `9c77403`**, geometry derived not copied |
+| 2b — state markers (filled / pulsing / hollow) | **built `9c77403`** |
+| 2b — one-in-one-back flow visual | **built `9c77403`** |
+| 2b — verdict text at 9.5px in that SVG | **built `9c77403`**, founder-ruled to stay |
+| 2b — **mobile compression below 960px** | 🔴 **GENUINELY NEW.** Not built. |
+| 2c — masked invoice → `/what-we-check` | **built `c07c434`** |
+| 2c — checkable/not-checkable → `/method` | **built `c07c434`** |
+| 2c — verdict ladder → `/how-to-read` | **built `c07c434`**, reads `VERDICT_PALETTE` |
+
+**ONE ITEM IN THE BRIEF IS GENUINELY NEW:** the service-section mobile compression, spec line 437 —
+`.pan .pm, .pan .d { display: none }` below 960px, leaving the number, the question and the limit.
+It post-dates the build and is not in the repo.
+
+🔴 **F — THE FIX IS A MERGE, NOT A BUILD.** Promoting `staging` to `main` is a deploy to `main`, which
+stops at the founder. A full "drift report" of the other twelve items would be a report on the gap
+between two branches, not on anything wrong with the code.
+
+**THE LESSON, and it is a new shape:** every prior finding this sitting came from measuring the live
+domain, and that was right. This one shows the other edge of the same habit — **the live domain is
+evidence of what is DEPLOYED, never of what is BUILT.** Fourteen commits of verified, locked,
+green-tested work were invisible to it, and read as regression.
+
+---
+
+## 0-P. INNGEST WAS REGISTERED AGAINST A PREVIEW DEPLOYMENT — 2026-08-25 (founder-found) ✅ FIXED
+
+### 0-P.0 · ✅ EXECUTED AND CONFIRMED BY THE FOUNDER, 2026-08-25
+
+| environment | app | serve URL |
+|---|---|---|
+| Production | `hyprriq` | `https://hyprriq.com/api/inngest` |
+| `staging` | `hyprriq` | `https://hyprriq-git-staging-hyprrx-hyprriq.vercel.app/api/inngest` — 10 functions |
+
+**THE PROOF WAS THE ONE THE RUNBOOK ASKED FOR:** the founder deployed staging and **production's URL
+did not move.** Before the fix a staging deploy would have overwritten it. That is the whole defect,
+demonstrated absent.
+
+**And the runbook's correction held: there was nothing to archive.** One app, corrected in place by
+the production redeploy — exactly as §0-P.5 predicted after I checked instead of assuming.
+
+
 
 **Owner: F executes, UX described. DESCRIBE-AND-STOP: nothing in here has been changed.** The
 founder found the Inngest dashboard showing one app whose serve URL was a single immutable Vercel
@@ -270,6 +339,24 @@ the secret as `VERCEL_AUTOMATION_BYPASS_SECRET`, and a caller presents it as the
 `x-vercel-protection-bypass` header, or as a **query parameter** when the tool cannot set headers —
 which is the documented route for third-party webhooks. It covers Password Protection, Vercel
 Authentication and Trusted IPs.
+
+### 0-P.7 · What actually points at staging — the enumeration, 2026-08-25
+
+Read from the route table, not recalled. `app/api/**` has **one** inbound third-party webhook.
+
+| caller | endpoint | breaks? | the route |
+|---|---|---|---|
+| **Inngest** (staging env) | `/api/inngest` | **YES** | ⚠ No clean bypass. Inngest posts to `<serveOrigin>/api/inngest`; there is nowhere to attach a header, and putting the secret in the path would break signature/path matching. **Realistically: enabling Preview protection stops staging's Inngest.** |
+| **Stripe** (test mode) | `/api/webhooks/stripe` | **YES, if an endpoint is configured against the staging alias** | **Query parameter** — Stripe cannot set custom headers. Append `?x-vercel-protection-bypass=<VERCEL_AUTOMATION_BYPASS_SECRET>` to the endpoint URL in the Stripe test dashboard. |
+| Uptime / monitoring | `/api/health` | YES if any exists | Header `x-vercel-protection-bypass`, or query parameter |
+| **Clerk** | — | **NO** | ⚠ **There is NO Clerk webhook in this codebase** — `app/api/webhooks/` contains `stripe` only, and nothing uses svix. Clerk runs in the browser; a protected preview blocks the *person* before Clerk loads, which is the intended effect. |
+| **Resend** | — | **NO** | Outbound only. No inbound handler exists. |
+
+**JUDGEMENT, offered not taken:** the protection this would add to Preview is thin. Every app route is
+already Clerk-gated, the marketing pages are public by design, `SEARCH_INDEXING_ENABLED=false` puts
+`noindex` site-wide, and the one thing that was genuinely exposed — `public/prototype/**` — is
+deleted. The cost is that staging's Inngest stops, with no clean bypass. **A defensible answer is to
+leave Preview unprotected and treat Clerk as the control it already is.** The founder decides.
 
 🔴 **F — ORDER MATTERS AND THE FOUNDER HAD IT RIGHT: separate the environments FIRST.** While
 production execution depends on a preview deployment being reachable, enabling protection on Preview
