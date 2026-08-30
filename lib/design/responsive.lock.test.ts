@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
 import path from "node:path";
 import {
   scanAll, scanTapTargets, scanControls, scanTables, appFiles, isOffender,
@@ -36,7 +37,8 @@ const repo = path.resolve(__dirname, "../..");
  * DELETE A ROW WHEN IT IS FIXED — the staleness test will tell you if you forget.
  */
 const KNOWN_OFFENDERS: { file: string; over: number; note: string }[] = [
-  { file: "app/(admin)/admin/support/page.tsx", over: 374, note: "worst in the codebase; the row contains NO <Link> at all, so nothing on it can be opened" },
+  // ✅ /admin/support MIGRATED to <ListTable> 2026-08-25 — was 374px over. Row deleted, as the
+  //    staleness test demands. It is now asserted FIXED in the BROKEN-three test below.
   { file: "app/(admin)/admin/billing/page.tsx", over: 320, note: "only link measured 0px visible; elementFromPoint returns nothing" },
   { file: "app/(admin)/admin/dashboard/page.tsx", over: 166, note: "two lists; the cases row's only link measured 0px visible" },
   { file: "components/admin/users-manager.tsx", over: 196, note: "no wrapper at all → the document scrolls sideways 229px" },
@@ -79,15 +81,27 @@ describe("LOCK — the scanner can actually see (self-test, founder-required)", 
       .toBeGreaterThan(15);
   });
 
-  it("resolves grids declared in a CONSTANT, not just inline (the /admin/support blind spot)", () => {
-    // `const COLS = "grid grid-cols-[…] gap-3"` rendered via className={`${COLS} …`}. The className
-    // string never contains "grid", and the widest grid in the codebase was invisible for it.
-    const support = sites.filter((s) => s.file === "app/(admin)/admin/support/page.tsx");
-    expect(support.length, "the constant-declared grid on /admin/support is invisible again").toBeGreaterThan(0);
+  it("resolves grids declared in a CONSTANT, not just inline", () => {
+    // ⚠ THIS TEST WAS ITSELF A RULE-14 VIOLATION AND IT BIT WITHIN THE HOUR. Its specimen used to be
+    // /admin/support's `const COLS = "grid grid-cols-[…] gap-3"` — the blind spot that hid the widest
+    // grid in the codebase from three scanner passes. Then /admin/support was MIGRATED, the constant
+    // was deleted, and the test failed: not because the scanner had regressed, but because THE
+    // DEFECT IT USED AS PROOF OF LIFE WAS FIXED. A capability test anchored to a specific defect
+    // expires the moment you succeed.
+    //
+    // It now anchors on components/portal/case-table.tsx, which declares its tracks in a TERNARY
+    // constant — a persistent specimen, and the harder case, because one initialiser yields TWO
+    // specs. If that file is ever migrated too, move this to a fixture rather than deleting it.
+    const ct = sites.filter((s) => s.file === "components/portal/case-table.tsx");
     expect(
-      Math.round(Math.max(...support.map((s) => s.minWidth))),
-      "the gap and padding from the CONSTANT must be merged into the render site",
-    ).toBeGreaterThanOrEqual(700);
+      ct.length,
+      "a grid declared in a constant is invisible again — the className string never contains the " +
+        "word `grid`, which is how /admin/support hid",
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      new Set(ct.map((s) => Math.round(s.minWidth))).size,
+      "a ternary constant declares TWO track lists; both must be resolved, not just the first",
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it("sees a wrapper gate above an inner .map return (the case-table blind spot)", () => {
@@ -120,15 +134,21 @@ describe("LOCK — the scanner can actually see (self-test, founder-required)", 
     ).toEqual([]);
   });
 
-  it("names the three the founder ruled BROKEN, explicitly", () => {
-    // Ordered priority for the remediation: /admin/support first.
+  it("tracks the founder's three BROKEN routes — one fixed, two to go", () => {
+    // The remediation order was /admin/support, then billing, then dashboard. This test moves with
+    // it rather than going stale: the fixed one is asserted ABSENT, the rest asserted PRESENT. Move
+    // a route from one list to the other only when you have actually migrated it.
     const found = new Set(offenders.map((o) => o.file));
+    expect(
+      found.has("app/(admin)/admin/support/page.tsx"),
+      "/admin/support was migrated to <ListTable> and must no longer overflow. If this fails, the " +
+        "migration regressed — or the scanner stopped seeing the file, which is worse.",
+    ).toBe(false);
     for (const f of [
-      "app/(admin)/admin/support/page.tsx",
       "app/(admin)/admin/billing/page.tsx",
       "app/(admin)/admin/dashboard/page.tsx",
     ]) {
-      expect(found.has(f), `${f} is one of the three BROKEN routes and the scanner cannot see it`).toBe(true);
+      expect(found.has(f), `${f} is still BROKEN and the scanner cannot see it`).toBe(true);
     }
   });
 });
@@ -276,5 +296,55 @@ describe("LOCK — the content-box arithmetic itself", () => {
     expect(min + 12 * (tracks.length - 1) + 16 * 2).toBe(620);
     expect(trackMin("minmax(200px,1.6fr)"), "minmax floors at its first argument").toBe(200);
     expect(trackMin("1fr"), "fr collapses to zero").toBe(0);
+  });
+});
+
+describe("LOCK — the <ListTable> primitive is safe by construction", () => {
+  // ⚠ WHY THIS BLOCK EXISTS, and it is standing rule 14 in a new place. ListTable builds its dense
+  // grid from an INLINE `gridTemplateColumns`, because the tracks come from the caller's column
+  // list. The width scanner reads Tailwind class strings and therefore CANNOT SEE IT. Migrating six
+  // lists into a primitive the lock is blind to would have turned the offender list green while
+  // deleting the coverage — a detector going quiet exactly as you start trusting it.
+  //
+  // So the primitive is policed STRUCTURALLY instead: gate the dense grid, ship a card form. Any
+  // consumer is then safe by construction, and a page that hand-rolls its own grid still trips the
+  // width scanner exactly as before.
+  const LIST = fs.readFileSync(path.join(repo, "components/admin/list-table.tsx"), "utf8");
+  const code = LIST.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
+  it("the dense grid never renders below md", () => {
+    expect(
+      code,
+      "the dense table must sit behind `hidden … md:block`, or it reaches a phone at full track width",
+    ).toMatch(/hidden[^"]*md:block/);
+  });
+
+  it("a card form exists for the widths the dense grid does not cover", () => {
+    expect(code, "there must be a md:hidden card list").toMatch(/md:hidden/);
+  });
+
+  it("the inline template is only ever used inside the gated half", () => {
+    // Both the header row and the body rows carry it; neither may escape the md:block wrapper.
+    const gateAt = code.indexOf("md:block");
+    const templates = [...code.matchAll(/gridTemplateColumns/g)].map((m) => m.index ?? 0);
+    expect(templates.length, "the dense grid should set its template on the header and the rows")
+      .toBeGreaterThanOrEqual(2);
+    expect(
+      templates.every((i) => i > gateAt),
+      "a gridTemplateColumns is set OUTSIDE the md:block wrapper — that is an ungated fixed grid " +
+        "the width scanner cannot see",
+    ).toBe(true);
+  });
+
+  it("a row's destination is the WHOLE card, never a button in a clipped column", () => {
+    // The /admin/cases defect: the row's only link was a 62x23px button in the last column, clipped
+    // to zero visible pixels. A card-sized target cannot be clipped out of existence the same way.
+    expect(code).toMatch(/<Link[\s\S]{0,200}className=\{shell\}/);
+  });
+
+  it("a column with no card slot still APPEARS on a phone", () => {
+    // Default `meta`, not `hide`. A column added without thinking must show up somewhere rather than
+    // silently vanish on mobile — the failure direction has to be "too much", never "missing".
+    expect(code, "the card-slot default must be `meta`").toMatch(/c\.card \?\? "meta"/);
   });
 });

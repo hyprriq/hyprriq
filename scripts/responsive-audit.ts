@@ -36,7 +36,8 @@ for (const s of [...sites].sort((a, b) => b.minWidth - a.minWidth)) {
 
 const offenders = sites.filter(isOffender);
 console.log("-".repeat(120));
-console.log(`! ${offenders.length} grid(s) render at 360px and do not fit. ${sites.length - offenders.length} are gated or fit already.`);
+console.log(`! ${offenders.length} grid(s) overflow the content box at a width where they render, with no way to reach the excess.`);
+console.log(`  ${sites.length - offenders.length} others fit, are gated above the widths that would break them, or scroll.`);
 
 const tables = appFiles(repo).flatMap((f) => scanTables(repo, f));
 const unwrapped = tables.filter((t) => t.overflow !== "scrolls");

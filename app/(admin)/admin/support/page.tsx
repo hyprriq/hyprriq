@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/data/admin";
 import { can } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { ListTable } from "@/components/admin/list-table";
 import { getAdminSupportRequests } from "@/lib/data/adminSupport";
 import { CAPABILITY_LABELS } from "@/lib/auth/capabilities";
 
@@ -22,7 +23,15 @@ const STATUS_CLS: Record<string, string> = {
   closed: "bg-subtle text-muted",
 };
 
-const COLS = "grid grid-cols-[104px_150px_104px_1fr_104px_92px_92px] gap-3";
+// COLS IS GONE. It was `grid grid-cols-[104px_150px_104px_1fr_104px_92px_92px] gap-3` — 750px of
+// track, gap and padding inside a 328px content box at 360px, wrapped in `overflow-hidden`, so the
+// subject, the status and both dates were CLIPPED AWAY ENTIRELY on a phone. The widest grid in the
+// codebase, and invisible to three passes of the audit scanner because the word `grid` lived inside
+// this constant rather than in any className. See §0-O.
+//
+// ⚠ AND THE MISSING <Link> WAS NOT A BUG. This queue is deliberately read-only — replies happen over
+// email — so there is nowhere for a row to navigate to. What was lost here was CONTENT, not
+// navigation, which is why a card form matters and a bigger tap target would not have helped.
 
 export default async function AdminSupportPage() {
   const admin = await requireAdmin();
@@ -55,37 +64,41 @@ export default async function AdminSupportPage() {
       <p className="mb-3 text-[13px] text-muted">
         Read-only queue. Replies happen over email — this list shows what is open and what was resolved, not a ticketing surface.
       </p>
-      <div className="overflow-hidden rounded-card border border-line bg-surface">
-        <div className={`${COLS} border-b border-line bg-subtle px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted`}>
-          <span>SR Number</span><span>Client</span><span>Type</span><span>Subject</span><span>Status</span>
-          <span className="text-right">Created</span><span className="text-right">Resolved</span>
-        </div>
-        {requests.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted">No support requests yet. New requests from the portal land here.</p>
-        ) : (
-          requests.map((r) => (
-            <div key={r.id} className={`${COLS} items-center border-b border-line px-4 py-2.5 transition-colors last:border-b-0 hover:bg-subtle`}>
-              <span className="font-mono text-[12.5px] font-semibold text-brand">{r.sr_number}</span>
-              <span className="truncate text-[13px] text-ink">{r.clients?.full_name ?? r.clients?.email ?? "—"}</span>
-              <span className="truncate text-[12.5px] capitalize text-muted">{r.type.replaceAll("_", " ")}</span>
+      <ListTable
+        rows={requests}
+        getKey={(r) => r.id}
+        empty="No support requests yet. New requests from the portal land here."
+        columns={[
+          { key: "sr", header: "SR Number", width: "104px", card: "title",
+            cell: (r) => <span className="font-mono text-[12.5px] font-semibold text-brand">{r.sr_number}</span> },
+          { key: "status", header: "Status", width: "104px", card: "badge",
+            cell: (r) => (
+              <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${STATUS_CLS[r.status] ?? "bg-subtle text-muted"}`}>
+                {r.status.replaceAll("_", " ")}
+              </span>
+            ) },
+          { key: "subject", header: "Subject", width: "1fr", card: "body",
+            cell: (r) => (
               <div className="min-w-0">
                 <div className="truncate text-[13.5px] font-semibold text-ink">{r.subject}</div>
                 <div className="truncate text-[12px] text-ink-2" title={r.body}>{r.body}</div>
                 {r.admin_response && (
-                  <div className="truncate text-[12px] text-muted" title={r.admin_response}>Response on file: {r.admin_response}</div>
+                  <div className="truncate text-[12px] text-muted" title={r.admin_response}>
+                    Response on file: {r.admin_response}
+                  </div>
                 )}
               </div>
-              <span>
-                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${STATUS_CLS[r.status] ?? "bg-subtle text-muted"}`}>
-                  {r.status.replaceAll("_", " ")}
-                </span>
-              </span>
-              <span className="text-right font-mono text-[11.5px] text-muted">{fmt(r.created_at)}</span>
-              <span className="text-right font-mono text-[11.5px] text-muted">{fmt(r.resolved_at)}</span>
-            </div>
-          ))
-        )}
-      </div>
+            ) },
+          { key: "client", header: "Client", width: "150px",
+            cell: (r) => <span className="truncate text-[13px] text-ink">{r.clients?.full_name ?? r.clients?.email ?? "—"}</span> },
+          { key: "type", header: "Type", width: "104px",
+            cell: (r) => <span className="truncate text-[12.5px] capitalize text-muted">{r.type.replaceAll("_", " ")}</span> },
+          { key: "created", header: "Created", width: "92px", align: "right",
+            cell: (r) => <span className="font-mono text-[11.5px] text-muted">{fmt(r.created_at)}</span> },
+          { key: "resolved", header: "Resolved", width: "92px", align: "right",
+            cell: (r) => <span className="font-mono text-[11.5px] text-muted">{fmt(r.resolved_at)}</span> },
+        ]}
+      />
     </AdminShell>
   );
 }

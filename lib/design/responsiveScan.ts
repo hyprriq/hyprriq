@@ -203,11 +203,26 @@ export function appFiles(repo: string): string[] {
   return out.filter((f) => !/\(marketing\)|components\/marketing/.test(f));
 }
 
-/** A grid is an OFFENDER when it renders at 360px and cannot fit the content box there. */
+/**
+ * A grid is an OFFENDER when, at ANY ruled width where it actually renders, it cannot fit the
+ * content box AND the excess is unreachable.
+ *
+ * ⚠ THIS USED TO CHECK 360px ONLY, AND THAT WAS A HOLE. A grid gated to `md` skips 360 and 390 and
+ * was therefore never examined at all — but the `md:` gate keys off the VIEWPORT while the grid
+ * lives in a CONTENT BOX the sidebar makes narrower. At a 1024px viewport admin content is 728px,
+ * so a 750px table gated to md passed this check while being clipped by 22px on a real laptop.
+ * Caught by measuring the migrated /admin/support in a browser, not by the scanner. Every ruled
+ * width is checked now.
+ *
+ * A grid whose wrapper SCROLLS is not an offender: wide is a legitimate choice for a dense operator
+ * table, and reachable-by-scrolling is the property that matters. Clipped or unwrapped is not.
+ */
 export function isOffender(site: GridSite): boolean {
-  const narrowest = TEST_WIDTHS[0];
-  if (site.gate !== null && site.gate > narrowest) return false;
-  return site.minWidth > contentBox(narrowest, site.surface);
+  if (site.overflow === "scrolls") return false;
+  return TEST_WIDTHS.some((w) => {
+    if (site.gate !== null && w < site.gate) return false;
+    return site.minWidth > contentBox(w, site.surface);
+  });
 }
 
 export function scanAll(repo: string): GridSite[] {
