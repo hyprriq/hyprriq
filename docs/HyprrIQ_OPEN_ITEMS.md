@@ -2,7 +2,7 @@
 
 **THE SSOT. Supersedes BOTH prior versions:** the founder's standalone v2 draft (preserved verbatim at commit `a1d883c`) and the accretion tracker 2026-07-04 → 2026-07-28 (archived with its full ruling history at `docs/HyprrIQ_OPEN_ITEMS_HISTORY.md` — read it for the WHY behind any line here).
 **Merged + source-verified:** 2026-07-29 (build thread). Every ✅/❌ correction below was checked against code/git/live-DB, not carried.
-**Last updated:** 2026-08-24 (**§0-J APP SHELL ALIGNMENT — the 60px headings were an UNLAYERED-CSS cascade bug, not a sizing choice (measured before/after; marketing keeps its scale); portal and admin now share one AppHeader and one top baseline; the five text-base headings are fixed. ⚠ THE text-base TOKEN COLLISION IS HANDED TO THE UI/UX THREAD — rename or lock, not a note. Prior: **§0-G THE AUDITS RUN THEMSELVES — every hand-run census is now a standing BLOCK/ALERT/SURFACE check with a measured zero false-positive rate, nightly sweep paging once per NEW finding, and /admin/integrity where green means measured green. Prior: **§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
+**Last updated:** 2026-08-31 (**§0-R THE RESPONSIVE REMEDIATION IS COMPLETE — the offender list is EMPTY; six lists migrated to the new `<ListTable>` primitive, 36 client controls to 44px, 16 reading paragraphs to 16px, the homepage service section compressed below 960px and the rail unified to the same breakpoint. THREE MISTAKES WORTH KEEPING, none caught by review: the primitive reintroduced the clipping it exists to end, the lock could not have caught that because it only checked 360px, and the compression was written default-hidden — which LOSES COPY when a boundary rule misses. ⚠ AN EMPTY OFFENDER LIST IS THE MOST DANGEROUS STATE THE LOCK CAN BE IN, so it now carries a CANARY. Prior: **§0-P INNGEST WAS REGISTERED AGAINST A PREVIEW DEPLOYMENT — split and confirmed; the retention sweep had deleted nothing and could not have until June 2027. Prior: **§0-Q PRODUCTION WAS FOURTEEN COMMITS BEHIND — the homepage had not drifted; deployed state was being read as build state. Prior: 2026-08-24 (**§0-J APP SHELL ALIGNMENT — the 60px headings were an UNLAYERED-CSS cascade bug, not a sizing choice (measured before/after; marketing keeps its scale); portal and admin now share one AppHeader and one top baseline; the five text-base headings are fixed. ⚠ THE text-base TOKEN COLLISION IS HANDED TO THE UI/UX THREAD — rename or lock, not a note. Prior: **§0-G THE AUDITS RUN THEMSELVES — every hand-run census is now a standing BLOCK/ALERT/SURFACE check with a measured zero false-positive rate, nightly sweep paging once per NEW finding, and /admin/integrity where green means measured green. Prior: **§0-F ADR-013 PENDINGS CLOSED — the marker leak was REAL and reached three delivered reports (measured, then closed at the class); the golden-case suite now replays 40 cases through the real verdict chain on every deploy. Prior: **§0-E CTO CLOSE-OUT AUDIT — dev-lane exit review: the delivery email no longer announces reports the client cannot read, the admin boundary is enforced by the layout instead of by every page remembering, the real-money dev routes are disarmed in production, and the last legacy admin check is gone. Live-DB verified; partner_requests is LIVE. DEV LANE CLOSED — the design lane is next.** Prior: **§0-D MONEY-SURFACES BATCH — 149/Scale + top-ups off sale behind ONE sellability registry with the checkout route as the control, paid top-ups land as unclippable purchased credits, four silent-zeros in the webhook money path now fail loud.** Prior: **§0-C FOUR-ITEM BATCH — /partners request flow live (mailto dead, public-route class fix), top-up copy pulled, rollover-RPC fix described-and-stopped, two operator runbooks.** Prior: **§0-B RULINGS EXECUTED — polarity gate 1.8.0, manufacturer-direct g003-1.2.0, download-in-place, email re-skins+lock+welcome+consent; two migrations + the 031 correction wait on the founder.** Prior: 2026-08-20 §0-A STALE-ROW CLEARANCE — seven rows were reporting fixed things as broken; all verified live and cleared. Plus: RLS proven as a 40-check suite with one latent escalation found (describe-and-stop SQL written, fix before Clerk→GUC wiring), env guard, Sentry, SEO plumbing, sample-report page, prose-override UI, resolved brand names on PDF covers.** Prior: 2026-08-18 §1 BUILT — token leaks + presence checkpoint; the P0's root cause CORRECTED, see the top dated block. Prior: END-TO-END AUDIT — see the dated block below §0; findings in `docs/AUDIT_FINDINGS_2026-08-18.md`. Prior: 2026-08-17 ENGINE-PROSE PASS built — see the dated block below §0. Prior: 2026-08-08 PRE-DESIGN BATCH opened — see the dated block below §0. Prior: 2026-08-02 ADR-008 RULED: superseded/demoted to post-launch, drop named — §6.13. *Dating note: sittings span midnights; a batch's entries may carry the opening date.*)
 **Purpose:** One durable list of every open thread across all lanes, so nothing falls off between
 sessions or between the planning thread, the UI/UX thread, and Fable.
 
@@ -102,6 +102,90 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 > | **② Top-ups off sale + unclippable when they return** — billing card flag-gated (one-flag return-to-sale); webhook lands paid packs via `add_purchased_credits` (balance + floor). AS-APPLIED records for the founder-run SQL, both live-verified by read-only MCP before writing: `20260822300000_purchased_credits.sql` + `20260822300100_acquisition_grants_growth_only.sql`. Cycle fixture-locked two-layer (SQL expressions verbatim + numeric proof: buy-3 → renewal → paid 3 survive, plan clips, plan-burns-first, 3-renewal survival) | ✅ SHIPPED | re-sale preconditions listed in the 2026-08-22 session deliverable |
 > | **③ Silent zeros in the money path DEAD** — the `?? 0` was one of FOUR: unknown paid top-up id (0 credits granted, "Top-up: 0 credits" recorded), paid subscription checkout with unmapped price (provisioned NOTHING, marked processed), paid one-time with garbage metadata kind (silent ACK), paid RENEWAL with lookup miss (card charged, zero cycle credits). All four throw via fixture-enforced helpers → `stripe_events.error` → retried + visible; `subscription.updated` deliberately logs-not-throws (status must survive) with an audit row on unmapped prices. B2 is fixtures now (`plans.paidLookups.test.ts`), incl. prototype-chain shapes that caught a real hole in the first draft | ✅ SHIPPED | |
 > | **④ Fabricated verdict** — CLOSED by the follow-up ruling same day (verdict-ADJACENT authority: display of absence only, never computation): **ABSENCE IS NOT A VALUE.** One shared presence notion (`lib/portal/verdictPresence.ts`, keys derived from `VERDICT_SCALE_ORDER`) + one loud reporter (console + `audit_log` `{verdict_absent_at_render}` + ops pager). PDF first: `no_verdict` joins the `no_client_name` refusal pattern; the template's three fallbacks (meta/ink/tone) are total lookups now. On-screen: the portal case page refuses with an honest panel (refusal state over a 500 — "Try again" would be false advice); report-view keeps the throwing belt; the admin review preview no longer shows a fabricated VBP client screen for a verdictless mid-review case (the live item-7 catch — a wrong preview becomes a wrong report). Filesystem lock over the render layers: no fallback TO a verdict value; honest non-verdicts ("pending", "—") stay legal. Engine untouched | ✅ SHIPPED | fixtures + caller lock |
+
+---
+
+## 0-R. THE RESPONSIVE REMEDIATION — COMPLETE — 2026-08-25/31
+
+**Owner: UX. The offender list is EMPTY.** Everything §0-O measured is fixed, the lock that measured
+it is green, and both are on `main`. This is the DOC-DELTA for six commits — `4798cdc`, `505242b`,
+`ec6eac4`, `174cd7f`, `ed8ef79`, `1bb01d6` — carried across four sittings and recorded here once.
+
+### 0-R.1 · What shipped
+
+| # | Item | State |
+|---|---|---|
+| a | **The lock BEFORE the fixes** (founder-ruled). "If it ships last, the fixes are verified by the same eye that missed these." It caught an error in the audit that produced it within the hour — see 0-O.6. | ✅ |
+| b | **Client surfaces first** (founder-ruled priority): 36 controls raised to the 44px floor, 16 reading paragraphs to 16px. `min-h-11` alone would not have worked — min-height does nothing on an inline element, so each control also got a display that respects it. | ✅ |
+| c | `<ListTable>` — one dense table for the desk, one card list for a phone, declared once. It is `components/portal/case-table.tsx` generalised; the portal had this since sitting three and admin never did. | ✅ |
+| d | Five lists migrated: `/admin/support` (374px over), `/admin/billing` (320), `/admin/dashboard` ×2 (166 + 110), `/admin/clients` (50). | ✅ |
+| e | `users-manager.tsx` stacked BY HAND, not through the primitive — its last cell holds an interactive Revoke button, and the card form has slots for text, not controls. **Forcing it through the primitive to make a number go green would have been the wrong instinct.** | ✅ |
+| f | The homepage service section compresses below 960px (spec line 437), measured 4811 → 2754px at 360. | ✅ |
+| g | The rail breakpoint unified at 960 so ONE NUMBER governs it and the compression. | ✅ |
+| h | 🔴 **F — the two admin screens the narrowed ruling named** (`/admin/cases`, `/admin/cases/[id]/review`) are still OUTSIDE the 44px tap-target scope. `case-review.tsx` carries 16 controls under 44px, smallest 28px. Deliberately deferred; not forgotten. | 🔴 F |
+| i | 🔴 **F — seven `<table>` elements still have no horizontal scroll container.** Listed in the lock, allowlisted, POOR not BROKEN: their cells wrap rather than overflow. | 🔴 F |
+
+### 0-R.2 · Measured, at every ruled width
+
+Same-origin iframes at exact widths, `getBoundingClientRect` / `scrollWidth` / `elementFromPoint`.
+**Document overflow 0 at 360, 390, 430, 768 and 1024 on every migrated surface.**
+
+| surface | below md | at 1024 |
+|---|---|---|
+| `/admin/support` | cards, all seven fields present | dense, 61px excess **scrollable** |
+| `/admin/billing` | cards, `elementFromPoint` → THE LINK | dense, scrollable |
+| `/admin/dashboard` ×2 | cards; the support strip has **no href by design** | dense, scrollable |
+| `/admin/clients` | cards, the credits figure present | dense, → THE LINK |
+| invitations sub-list | flex-wrap, long email readable, → THE BUTTON | grid, row overflow 0 |
+| homepage service section | number + question + limit | rail + summary + detail boxes |
+
+### 0-R.3 · The three mistakes worth keeping
+
+**None of these was caught by review. Each was caught by measuring, and two by the lock itself.**
+
+1. **THE PRIMITIVE REINTRODUCED THE DEFECT IT EXISTS TO END.** I wrapped its dense table in
+   `overflow-hidden`. The `md:` gate keys off the VIEWPORT while the table lives in a CONTENT BOX the
+   sidebar narrows — 1024px viewport gives 728px, the columns need 750px, so it was **clipped by
+   61px on a laptop.** Now `overflow-x-auto`.
+2. **AND THE LOCK COULD NOT HAVE CAUGHT IT**, because `isOffender` only checked 360px. A grid gated
+   to `md` skips 360 and 390 and was therefore **never examined at all** — while being clipped on a
+   real machine. It checks every ruled width the grid renders at now, and treats a SCROLLING wrapper
+   as acceptable.
+3. **THE COMPRESSION WAS WRITTEN THE DANGEROUS WAY FIRST.** `hidden min-[961px]:block` — measured at
+   a 961px iframe the copy STAYED HIDDEN, because devicePixelRatio 1.25 put the layout viewport at
+   ~960.8 and `matchMedia("(min-width: 961px)")` returned false. **Default-hidden means the copy
+   disappears when a boundary rule misses.** Rewritten as `max-[960px]:hidden`: the same failure now
+   shows too much rather than losing content. **A rule whose job is hiding real copy must fail open.**
+
+### 0-R.4 · ⚠ AN EMPTY OFFENDER LIST IS THE MOST DANGEROUS STATE THE LOCK CAN BE IN
+
+Standing rule 14 at its sharpest. With nothing left to find, every "is it still broken" assertion is
+trivially satisfied, and **a scanner that quietly stopped reading the codebase would look identical
+to a clean one.** Three defences, all in `responsive.lock.test.ts`:
+
+- **THE CANARY.** `isOffender()` is handed `/admin/support` AS IT WAS — 750px, ungated, clipped — and
+  must still return TRUE. Two mirrors must return FALSE: the same width when SCROLLABLE, and a width
+  that fits. *A detector that flags everything gets ignored as fast as one that flags nothing.*
+- **Proofs of life anchored on files that EXIST**, never on defects that no longer do. The lock made
+  that mistake once already: its constant-resolution self-test used `/admin/support`'s `COLS` as the
+  specimen, and **expired the moment that page was migrated** — rule 14 inside the test written to
+  enforce it. Re-anchored on `case-table.tsx`'s ternary constant.
+- **The migrated routes are asserted SEEN, not merely absent** — each must still render through
+  `<ListTable>`, and the scanner must still find grids under `app/(admin)`, so "clean" cannot be read
+  as "blind".
+
+### 0-R.5 · Does the lock catch a NEW admin screen?
+
+**Yes — it does not work from a list.** `KNOWN_OFFENDERS` is an allowlist of things already broken;
+the rule runs against everything `scanAll()` walks, and "no NEW offender" fails on anything not on
+it. A screen created next month is by definition not on it. It resolves `COLS` constants, sees
+wrapper gates above inner `.map` returns, and does not false-positive a correctly-built component.
+
+**Where it would miss, stated plainly:** a screen that overflows by a mechanism other than a
+fixed-track grid, an unwrapped `<table>`, or a sized control — a `min-w-[900px]`, a
+`whitespace-nowrap` row, a flex child that will not shrink. It polices three known shapes well and
+does not know a fourth exists. Under rule 14 the right response is not to claim coverage but to keep
+reporting how much was examined.
 
 ---
 
