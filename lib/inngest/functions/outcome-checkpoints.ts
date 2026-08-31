@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -59,6 +60,12 @@ export async function sweepOutcomeCheckpoints(now: Date = new Date()): Promise<{
 export const outcomeCheckpoints = inngest.createFunction(
   { id: "outcome-checkpoints", name: "Outcome checkpoints (30/90-day ground-truth sweep)", retries: 1, triggers: [{ cron: "0 6 * * *" }] },
   async () => {
+    // ⚠ PRODUCTION ONLY: writes checkpoint_30_sent_at / checkpoint_90_sent_at onto case_outcomes.
+    // Run twice, the second run stamps rows the first already claimed and the founder is paged twice.
+    // ⚠ PRODUCTION ONLY — see lib/inngest/productionOnly.ts. Both environments' schedulers fire
+    // against the SAME database; without this the job runs twice a day from two deployments.
+    const skip = skipOutsideProduction();
+    if (skip) return skip;
     const out = await sweepOutcomeCheckpoints();
     await recordHeartbeat(
       "outcome-checkpoints",

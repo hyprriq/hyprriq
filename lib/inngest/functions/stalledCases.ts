@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 import { CASE_SLA_HOURS } from "@/lib/constants/plans";
@@ -113,6 +114,13 @@ export async function sweepStalledCases(now: Date = new Date()): Promise<number>
 export const stalledCaseAlarm = inngest.createFunction(
   { id: "stalled-case-alarm", name: "Stalled-case alarm (human-wait states, no status writes)", retries: 1, triggers: [{ cron: "0 * * * *" }] },
   async () => {
+    // ⚠ PRODUCTION ONLY: writes audit rows and pages the founder. Two environments would double
+    // every alert — and "an alarm that fires twice is an alarm I will learn to ignore" is the same
+    // ruling that shaped the one-alert-per-NEW-finding rule on the integrity sweep.
+    // ⚠ PRODUCTION ONLY — see lib/inngest/productionOnly.ts. Both environments' schedulers fire
+    // against the SAME database; without this the job runs twice a day from two deployments.
+    const skip = skipOutsideProduction();
+    if (skip) return skip;
     const out = { paged: await sweepStalledCases() };
     await recordHeartbeat("stalled-case-alarm", out.paged === 0 ? "nothing newly stalled" : `paged on ${out.paged} case(s)`);
     return out;

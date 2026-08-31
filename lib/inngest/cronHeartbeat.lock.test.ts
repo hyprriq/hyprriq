@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { CRON_REGISTRY, assessCron, type CronId, type Heartbeat } from "./heartbeat";
+import { skipOutsideProduction, isVercelProduction } from "./productionOnly";
 
 const repo = path.resolve(__dirname, "../..");
 const read = (p: string) => fs.readFileSync(path.join(repo, p), "utf8");
@@ -170,5 +171,104 @@ describe("LOCK — the integrity sweep's read matches its write", () => {
     expect(strip(sweep), "the sweep must write with SYSTEM_TABLE").toMatch(/table_name:\s*SYSTEM_TABLE/);
     expect(strip(sweep), "load-previous must read SYSTEM_TABLE").toMatch(/eq\("table_name",\s*SYSTEM_TABLE\)/);
     expect(strip(latest), "the page's reader must read SYSTEM_TABLE").toMatch(/eq\("table_name",\s*SYSTEM_TABLE\)/);
+  });
+});
+
+describe("LOCK — the production-only gate (founder-ruled 2026-08-31)", () => {
+  // THE RULE: "anything that writes, deletes or emails a client is production-only. Read-only
+  // checks can run in both." Both environments schedule against the SAME database — demonstrated,
+  // not theorised: pipeline-watchdog recorded two heartbeats four seconds apart within minutes of
+  // shipping, one per environment.
+
+  it("every cron is CLASSIFIED — a new one cannot ship undecided", () => {
+    // The whole point. An unclassified cron would default to running everywhere, which is the
+    // permissive direction, and for retention-sweep that means deleting client documents twice.
+    for (const c of crons) {
+      const spec = CRON_REGISTRY[c.id as CronId];
+      expect(spec, `${c.id} is not in CRON_REGISTRY`).toBeDefined();
+      expect(typeof spec.productionOnly, `${c.id} has no productionOnly classification`).toBe("boolean");
+      expect(spec.why.length, `${c.id} has no stated reason for its classification`).toBeGreaterThan(10);
+    }
+  });
+
+  it("every production-only cron actually CALLS the gate", () => {
+    // Classified is not gated. The registry is documentation; this is the behaviour.
+    const ungated: string[] = [];
+    for (const c of crons) {
+      const spec = CRON_REGISTRY[c.id as CronId];
+      if (!spec?.productionOnly) continue;
+      if (!/skipOutsideProduction\(\)/.test(strip(c.src))) ungated.push(`${c.id} (${c.file})`);
+    }
+    expect(
+      ungated,
+      // Joined with a separator rather than an escaped newline: writing "\n" through the tooling
+      // that generated this file produced a LITERAL newline and broke the parse — standing rule 11's
+      // family, and the third time this session. It fails loudly here; the backspace variant does not.
+      "these are classified production-only but do NOT call skipOutsideProduction(), so they run " +
+        "from staging against the shared production database: " + ungated.join(" · "),
+    ).toEqual([]);
+  });
+
+  it("the destructive one is gated, named explicitly", () => {
+    // retention-sweep permanently deletes client documents. It gets its own assertion so that a
+     // refactor which loosens the general rule still trips on the job that matters most.
+    const rs = crons.find((c) => c.id === "retention-sweep");
+    expect(rs, "retention-sweep is not registered").toBeDefined();
+    expect(CRON_REGISTRY["retention-sweep"].productionOnly).toBe(true);
+    expect(strip(rs!.src)).toMatch(/skipOutsideProduction\(\)/);
+    // and its independent RETENTION_SWEEP_ENABLED control must survive alongside the gate
+    expect(strip(rs!.src), "the deliberate enable flag must remain a SECOND control")
+      .toMatch(/RETENTION_SWEEP_ENABLED/);
+  });
+
+  it("uses VERCEL_ENV, never NODE_ENV", () => {
+    // NODE_ENV is "production" on every deployed build, previews included — using it would defeat
+    // the gate exactly where it matters. Same reasoning as the live-Stripe-key guard.
+    const gate = read("lib/inngest/productionOnly.ts");
+    expect(gate).toMatch(/process\.env\.VERCEL_ENV === "production"/);
+    expect(/process\.env\.NODE_ENV/.test(strip(gate)), "NODE_ENV must play no part").toBe(false);
+  });
+
+  it("the gate runs BEFORE the heartbeat, so a skipped run records nothing", () => {
+    // Otherwise /admin/integrity would show two beats per interval and the founder would be reading
+    // staging's heartbeat as evidence that production ran.
+    for (const c of crons) {
+      const spec = CRON_REGISTRY[c.id as CronId];
+      if (!spec?.productionOnly) continue;
+      const code = strip(c.src);
+      const gateAt = code.indexOf("skipOutsideProduction()");
+      const beatAt = code.search(new RegExp(String.raw`recordHeartbeat\(\s*"${c.id}"`));
+      if (beatAt === -1) continue;
+      expect(gateAt, `${c.id}: the heartbeat is written before the gate`).toBeLessThan(beatAt);
+    }
+  });
+});
+
+describe("LOCK — the gate actually gates", () => {
+  // ⚠ THE FUNCTION TESTS STUB VERCEL_ENV=production so they exercise the real work. That means
+  // NOTHING ELSE EVER EXERCISES THE SKIP PATH — and a gate nobody tests is a gate that can silently
+  // stop gating. Standing rule 14: prove the instrument looked. These four cases are the proof.
+  afterEach(() => { vi.unstubAllEnvs(); });
+
+  it("skips on preview, on staging and locally", () => {
+    for (const env of ["preview", "development", ""]) {
+      vi.stubEnv("VERCEL_ENV", env);
+      expect(isVercelProduction(), `VERCEL_ENV=${env || "(unset)"} must not count as production`).toBe(false);
+      expect(skipOutsideProduction()?.skipped).toBe("skipped:not_production");
+    }
+  });
+
+  it("runs on a Vercel production deployment", () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(isVercelProduction()).toBe(true);
+    expect(skipOutsideProduction()).toBeNull();
+  });
+
+  it("NODE_ENV=production alone does NOT open the gate", () => {
+    // The trap that makes this worth a test: NODE_ENV is "production" on every deployed build,
+    // previews included. A gate keyed on it would be open exactly where it must be shut.
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(isVercelProduction(), "a preview build must stay gated whatever NODE_ENV says").toBe(false);
   });
 });

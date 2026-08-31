@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { isVercelProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -41,6 +42,14 @@ export async function sweepDegradedWrites(now: Date = new Date()): Promise<numbe
     const reason = String((h.new_value as Record<string, unknown>)[family ?? ""] ?? (h.new_value as Record<string, unknown>).reason ?? "");
     return `${h.record_id ?? "(no record id)"} · ${family} · ${h.created_at}${reason && reason !== "true" ? ` · ${reason}` : ""}`;
   });
+  // ⚠ THE CHECK RUNS IN BOTH ENVIRONMENTS — it is READ-ONLY, and the founder's rule is that
+  // read-only checks may. ONLY THE ALERT IS GATED, and that is an interpretation rather than a
+  // mechanical application of the rule, so it is written down: two environments both paging the
+  // founder daily is alert fatigue, and "an alarm that fires every day is an alarm I will learn to
+  // ignore" is his own standing ruling. Running the check everywhere proves it works on staging;
+  // alerting only from production keeps the alarm meaningful. Raised for a ruling either way.
+  if (!isVercelProduction()) return hits.length;
+
   await sendAdminAlert(
     `${hits.length} degraded write(s) in the last day — corpus/extension data is dropping`,
     `<p>Non-fatal by ruling, but never unnoticed (G006 item-4 tripwire):</p><p>${lines.join("<br/>")}</p>`,

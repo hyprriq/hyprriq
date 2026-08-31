@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat, SYSTEM_TABLE, SYSTEM_RECORD_ID } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 import { runIntegritySweep, type SweepResult } from "@/lib/integrity/sweep";
@@ -65,6 +66,14 @@ export const integritySweep = inngest.createFunction(
     triggers: [{ cron: "20 6 * * *" }],
   },
   async ({ step }: { step: InngestStep }) => {
+    // ⚠ PRODUCTION ONLY: writes the record /admin/integrity reads. Two environments would write two
+    // records per night, and `load-previous` would compare against whichever landed last — making
+    // the "NEW finding" dedup, the entire point of the alert rule, nondeterministic.
+    // ⚠ PRODUCTION ONLY — see lib/inngest/productionOnly.ts. Both environments' schedulers fire
+    // against the SAME database; without this the job runs twice a day from two deployments.
+    const skip = skipOutsideProduction();
+    if (skip) return skip;
+
     const previous = await step.run("load-previous", async () => {
       const { data } = await supabaseAdmin
         .from("audit_log")

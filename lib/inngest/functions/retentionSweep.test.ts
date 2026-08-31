@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // ── RETENTION SWEEP — fixture-locked, shapes-not-in-mind included. The load-bearing invariants:
 // the flag OFF (default) does NOTHING · the WARNING IS THE GATE — nothing deletes until the
@@ -47,6 +47,17 @@ vi.mock("@/lib/inngest/client", () => ({
 }));
 
 import { retentionSweep } from "./retentionSweep";
+
+// ⚠ THESE TESTS ASSERT THE PRODUCTION PATH, AND NOW SAY SO OUT LOUD.
+// The scheduled jobs gained a production-only gate on 2026-08-31 (founder-ruled): anything that
+// writes, deletes or emails a client runs only on a Vercel Production deployment, because both
+// Inngest environments schedule against the SAME database. `VERCEL_ENV` is undefined in a test
+// runner, so without this stub every one of these would pass by being SKIPPED — a green suite
+// proving nothing, which is standing rule 14 in the one place it would be least visible.
+// Stubbing it makes the gate part of what is under test rather than something the tests dodge.
+beforeEach(() => { vi.stubEnv("VERCEL_ENV", "production"); });
+afterEach(() => { vi.unstubAllEnvs(); });
+
 const run = () => (retentionSweep as unknown as { handler: (a: { step: unknown }) => Promise<Record<string, unknown>> }).handler({ step: {} });
 
 const DAY = 86_400_000;

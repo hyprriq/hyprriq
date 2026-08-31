@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // ── ADR-G006 ITEM-4 TRIPWIRE (founder-ruled 2026-07-28, with the loud-but-non-fatal RATIFICATION):
 // non-fatal is correct; non-fatal and UNNOTICED is not. The degraded-write audit rows
@@ -21,6 +21,17 @@ vi.mock("@/lib/supabase/admin", () => {
 vi.mock("@/lib/email/notify", () => ({ sendAdminAlert }));
 
 import { pickDegradedWrites, sweepDegradedWrites, DEGRADED_WRITE_KEYS } from "./degradedWrites";
+
+// ⚠ THESE TESTS ASSERT THE PRODUCTION PATH, AND NOW SAY SO OUT LOUD.
+// The scheduled jobs gained a production-only gate on 2026-08-31 (founder-ruled): anything that
+// writes, deletes or emails a client runs only on a Vercel Production deployment, because both
+// Inngest environments schedule against the SAME database. `VERCEL_ENV` is undefined in a test
+// runner, so without this stub every one of these would pass by being SKIPPED — a green suite
+// proving nothing, which is standing rule 14 in the one place it would be least visible.
+// Stubbing it makes the gate part of what is under test rather than something the tests dodge.
+beforeEach(() => { vi.stubEnv("VERCEL_ENV", "production"); });
+afterEach(() => { vi.unstubAllEnvs(); });
+
 
 beforeEach(() => { selectResult.mockReset().mockResolvedValue({ data: [] }); sendAdminAlert.mockClear(); });
 

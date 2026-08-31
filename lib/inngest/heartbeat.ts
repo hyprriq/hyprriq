@@ -36,6 +36,11 @@ export const SYSTEM_RECORD_ID = "corpus";
 /**
  * THE REGISTRY — every scheduled function, its cadence, and what to call it on the health page.
  *
+ * `productionOnly` applies the founder's rule of 2026-08-31: anything that WRITES, DELETES or
+ * EMAILS A CLIENT runs only on a Vercel Production deployment, because both environments' schedulers
+ * fire against the SAME database. Read-only checks may run in both. `why` is the one-line reason,
+ * and a lock asserts each production-only cron actually calls the gate.
+ *
  * `intervalHours` is the DECLARED cadence, taken from the function's own cron expression. The health
  * page reports a cron as overdue at TWICE this, per the founder's ruling: one missed run is a blip,
  * two is a pattern.
@@ -46,13 +51,20 @@ export const SYSTEM_RECORD_ID = "corpus";
  * blind spot this whole mechanism exists to close.
  */
 export const CRON_REGISTRY = {
-  "pipeline-watchdog": { intervalHours: 0.25, label: "Pipeline watchdog", does: "sweeps cases stuck mid-run" },
-  "stalled-case-alarm": { intervalHours: 1, label: "Stalled-case alarm", does: "flags cases waiting on a human too long" },
-  "retention-sweep": { intervalHours: 24, label: "Retention sweep", does: "warns then deletes expired source documents" },
-  "outcome-checkpoints": { intervalHours: 24, label: "Outcome checkpoints", does: "30/90-day ground-truth sweep" },
-  "degraded-writes-watchdog": { intervalHours: 24, label: "Degraded-write sweep", does: "tripwire for silently dropped writes" },
-  "integrity-sweep": { intervalHours: 24, label: "Nightly integrity sweep", does: "every corpus-wide standing check" },
-  "email-reminders": { intervalHours: 24, label: "Scheduled email reminders", does: "low-credit and renewal notices" },
+  "pipeline-watchdog": { intervalHours: 0.25, label: "Pipeline watchdog", does: "sweeps cases stuck mid-run",
+    productionOnly: true, why: "UPDATEs cases.status to research_failed" },
+  "stalled-case-alarm": { intervalHours: 1, label: "Stalled-case alarm", does: "flags cases waiting on a human too long",
+    productionOnly: true, why: "writes audit rows and pages the founder" },
+  "retention-sweep": { intervalHours: 24, label: "Retention sweep", does: "warns then deletes expired source documents",
+    productionOnly: true, why: "PERMANENTLY DELETES client documents and emails clients" },
+  "outcome-checkpoints": { intervalHours: 24, label: "Outcome checkpoints", does: "30/90-day ground-truth sweep",
+    productionOnly: true, why: "writes checkpoint stamps onto case_outcomes" },
+  "degraded-writes-watchdog": { intervalHours: 24, label: "Degraded-write sweep", does: "tripwire for silently dropped writes",
+    productionOnly: false, why: "READ-ONLY — reads audit_log and alerts; only the ALERT is production-gated" },
+  "integrity-sweep": { intervalHours: 24, label: "Nightly integrity sweep", does: "every corpus-wide standing check",
+    productionOnly: true, why: "writes the record /admin/integrity reads; two writers break the NEW-finding dedup" },
+  "email-reminders": { intervalHours: 24, label: "Scheduled email reminders", does: "low-credit and renewal notices",
+    productionOnly: true, why: "EMAILS CLIENTS — low-credit and renewal notices" },
 } as const;
 
 export type CronId = keyof typeof CRON_REGISTRY;

@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -41,6 +42,12 @@ export async function sweepWedgedCases(now: Date = new Date()): Promise<number> 
 export const pipelineWatchdog = inngest.createFunction(
   { id: "pipeline-watchdog", name: "Pipeline watchdog (stuck-case sweep)", retries: 1, triggers: [{ cron: "*/15 * * * *" }] },
   async () => {
+    // ⚠ PRODUCTION ONLY: this WRITES CASE STATE — `UPDATE cases SET status = 'research_failed'`.
+    // A preview deployment marking a real client's case failed is not a rehearsal.
+    // ⚠ PRODUCTION ONLY — see lib/inngest/productionOnly.ts. Both environments' schedulers fire
+    // against the SAME database; without this the job runs twice a day from two deployments.
+    const skip = skipOutsideProduction();
+    if (skip) return skip;
     const out = { swept: await sweepWedgedCases() };
     // Heartbeat LAST: a run that throws leaves no row, and the health page reports it exactly as
     // it reports one that never fired. Both mean the same thing — this check is not protecting you.

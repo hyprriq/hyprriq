@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendDormantNoticeEmail, sendRetentionWarningEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
@@ -40,6 +41,14 @@ const fmtDate = (d: Date) =>
 export const retentionSweep = inngest.createFunction(
   { id: "retention-sweep", name: "Retention sweep (warn → delete source documents + dormant notices)", retries: 1, triggers: [{ cron: "0 3 * * *" }] },
   async () => {
+    // ⚠ PRODUCTION ONLY, AND THIS IS THE JOB THE GATE EXISTS FOR. It PERMANENTLY DELETES client
+    // documents and emails clients. Running from a preview deployment against the shared production
+    // database would delete real client data from a build nobody reviewed as live.
+    // The RETENTION_SWEEP_ENABLED flag below is a SECOND, independent control — the founder turns
+    // deletion on deliberately. Neither replaces the other.
+    const skip = skipOutsideProduction();
+    if (skip) return skip;
+
     if (process.env.RETENTION_SWEEP_ENABLED !== "1") return { disabled: true };
 
     const now = Date.now();

@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { recordHeartbeat } from "@/lib/inngest/heartbeat";
+import { skipOutsideProduction } from "@/lib/inngest/productionOnly";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendLowCreditEmail, sendRenewalReminderEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
@@ -21,6 +22,11 @@ const RENEWAL_WINDOW_DAYS = 3;
 export const emailReminders = inngest.createFunction(
   { id: "email-reminders", name: "Scheduled email reminders (low-credit, renewal)", retries: 1, triggers: [{ cron: "0 13 * * *" }] },
   async () => {
+      // ⚠ PRODUCTION ONLY: this EMAILS CLIENTS — low-credit and renewal notices. A preview
+      // deployment sending real clients billing mail is the worst case on this list after
+      // deletion, and it would be invisible until a client replied to it.
+      const skip = skipOutsideProduction();
+      if (skip) return skip;
     const out = { low_credit_sent: 0, renewal_sent: 0, skipped_duplicate: 0, errors: 0 };
 
     const { data: clients, error } = await supabaseAdmin
