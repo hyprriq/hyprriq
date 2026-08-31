@@ -252,13 +252,19 @@ export function UsersManager({
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-2">Invitations</div>
             {invites.map((inv) => {
               const st = invitationStatus(inv);
+              // NOT <ListTable> — DELIBERATELY. This is a sub-list inside a card, and its last cell
+              // holds an interactive Revoke button; the primitive's card form has slots for TEXT,
+              // not controls, and wrapping a button inside a card-sized target is the wrong shape.
+              // It only needed the fixed grid to stop applying on a phone.
+              // Was 556px with NO WRAPPER AT ALL, so it pushed the whole DOCUMENT sideways by 229px
+              // at 360px rather than clipping — the only offender of that kind in the audit.
               return (
-                <div key={String(inv.id)} className="grid grid-cols-[minmax(160px,1.2fr)_76px_minmax(120px,1fr)_88px_64px] items-center gap-3 border-t border-line/60 py-2 first:border-t-0">
-                  <span className={`truncate text-[13px] font-medium ${st === "expired" || st === "revoked" ? "text-muted" : "text-ink"}`}>{inv.email}</span>
+                <div key={String(inv.id)} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 py-2 first:border-t-0 md:grid md:grid-cols-[minmax(160px,1.2fr)_76px_minmax(120px,1fr)_88px_64px] md:gap-3">
+                  <span className={`w-full min-w-0 truncate text-[13px] font-medium md:w-auto ${st === "expired" || st === "revoked" ? "text-muted" : "text-ink"}`}>{inv.email}</span>
                   <span className={`justify-self-start rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${INVITE_STATUS_CLS[st]}`}>{st}</span>
                   <CapChips caps={inv.capabilities ?? []} empty="No permissions" />
                   <span className="font-mono text-[11px] text-muted">exp {new Date(inv.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                  <span className="text-right">
+                  <span className="ml-auto text-right md:ml-0">
                     {st === "pending" && (
                       <button type="button" disabled={busy} onClick={() => revoke(inv.id)}
                         className="rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-ink-2 hover:bg-subtle">

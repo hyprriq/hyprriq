@@ -37,12 +37,20 @@ const repo = path.resolve(__dirname, "../..");
  * DELETE A ROW WHEN IT IS FIXED — the staleness test will tell you if you forget.
  */
 const KNOWN_OFFENDERS: { file: string; over: number; note: string }[] = [
-  // ✅ ALL THREE FOUNDER-RULED "BROKEN" ROUTES ARE MIGRATED to <ListTable>, 2026-08-25, and their
-  //    rows are deleted as the staleness test demands: /admin/support (374px over), /admin/billing
-  //    (320px), /admin/dashboard (166px, two lists). They are asserted FIXED below rather than
-  //    merely absent, so the migration cannot silently regress into "the scanner stopped looking".
-  { file: "components/admin/users-manager.tsx", over: 196, note: "no wrapper at all → the document scrolls sideways 229px" },
-  { file: "app/(admin)/admin/clients/page.tsx", over: 50, note: "the row IS a <Link>, so it still navigates; trailing column clipped" },
+  // ✅ EMPTY, 2026-08-25. Every grid the audit measured is migrated:
+  //      /admin/support    374px over → <ListTable>
+  //      /admin/billing    320px      → <ListTable>
+  //      /admin/dashboard  166px + 110px, two lists → <ListTable>
+  //      /admin/clients     50px      → <ListTable>
+  //      users-manager     196px, and the ONLY one that pushed the document rather than clipping →
+  //                        stacked below md by hand, NOT the primitive: its last cell holds an
+  //                        interactive control, and the card form has slots for text, not buttons.
+  //
+  // ⚠ AN EMPTY LIST IS THE MOST DANGEROUS STATE THIS FILE CAN BE IN — standing rule 14. With nothing
+  // to find, every "is it still broken" assertion is trivially satisfied, and a scanner that quietly
+  // stopped reading the codebase would look identical to a clean one. The self-tests above are what
+  // separate those two readings, and they are anchored on files that still EXIST rather than on
+  // defects that no longer do.
 ];
 
 /** Files whose <table> has no horizontal scroll container. MEASURED 2026-08-25. */
@@ -118,6 +126,28 @@ describe("LOCK — the scanner can actually see (self-test, founder-required)", 
       "case-table.tsx is being reported as an offender again. It is not one — it ships a md:hidden " +
         "card list. This is the false positive that made the first three scanner passes untrustworthy.",
     ).toBe(false);
+  });
+
+  it("THE CANARY — the detector still fires on a known-bad grid", () => {
+    // ⚠ THE OFFENDER LIST IS EMPTY, which makes every "is it still broken" assertion in this file
+    // trivially true. Standing rule 14: an instrument must prove it LOOKED. With nothing left to
+    // find, the only way to prove isOffender() still WORKS is to hand it something that must fail.
+    //
+    // This is /admin/support as it was on 2026-08-25 — 750px of track in a 328px box, clipped.
+    // If this ever returns false, the detector has been broken or loosened, and the clean sheet
+    // above means nothing.
+    const knownBad = {
+      file: "canary", line: 0, surface: "admin" as const, spec: "104px_150px_104px_1fr_104px_92px_92px",
+      gate: null, minWidth: 750, overflow: "clipped" as const, hasAlternative: false,
+    };
+    expect(isOffender(knownBad), "the detector no longer flags a 750px clipped grid").toBe(true);
+
+    // And the mirror: the same width, but SCROLLABLE, must NOT be flagged — wide is legitimate for a
+    // dense operator table; unreachable is not. A detector that flags both is one that gets ignored.
+    expect(isOffender({ ...knownBad, overflow: "scrolls" }), "a scrollable wide table is not a defect")
+      .toBe(false);
+    // And gated above every width it would break at: also not a defect.
+    expect(isOffender({ ...knownBad, minWidth: 300 }), "a grid that fits is not a defect").toBe(false);
   });
 
   it("still finds every offender the audit measured — the list is not stale", () => {
