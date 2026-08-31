@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendLowCreditEmail, sendRenewalReminderEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
@@ -66,6 +67,7 @@ export const emailReminders = inngest.createFunction(
       }
     }
 
+    await recordHeartbeat("email-reminders", (out.low_credit_sent + out.renewal_sent === 0 ? "no reminders due" : `${out.low_credit_sent} low-credit, ${out.renewal_sent} renewal`));
     return out;
   },
 );

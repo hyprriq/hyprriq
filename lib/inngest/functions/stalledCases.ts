@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 import { CASE_SLA_HOURS } from "@/lib/constants/plans";
@@ -111,5 +112,9 @@ export async function sweepStalledCases(now: Date = new Date()): Promise<number>
 // window is a day — a tighter cron would only add empty runs.
 export const stalledCaseAlarm = inngest.createFunction(
   { id: "stalled-case-alarm", name: "Stalled-case alarm (human-wait states, no status writes)", retries: 1, triggers: [{ cron: "0 * * * *" }] },
-  async () => ({ paged: await sweepStalledCases() }),
+  async () => {
+    const out = { paged: await sweepStalledCases() };
+    await recordHeartbeat("stalled-case-alarm", out.paged === 0 ? "nothing newly stalled" : `paged on ${out.paged} case(s)`);
+    return out;
+  },
 );

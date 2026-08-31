@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat, SYSTEM_TABLE, SYSTEM_RECORD_ID } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 import { runIntegritySweep, type SweepResult } from "@/lib/integrity/sweep";
@@ -20,6 +21,17 @@ import { CHECK_BY_ID } from "@/lib/integrity/checks";
 // runs those by hand and a health dashboard that waits on a migration is a dashboard that says
 // "never checked" for a week. audit_log already carries system records of exactly this kind
 // (grant_link_fail_open, verdict_absent_at_render, stripe_price_unmapped).
+//
+// ⚠ AND THAT DECISION IS EXACTLY WHAT BROKE IT FOR SIX DAYS. The row was written with
+// `record_id: null`, and `audit_log.record_id` is `text NOT NULL`, so EVERY run threw at the record
+// step, retried once, and failed. Six days of failed runs in Inngest, behind a page reading
+// "Never checked" — which is indistinguishable from "never scheduled". The migration this
+// sidestepped was not the problem; the CONSTRAINT it sidestepped is what rejected it.
+// FIXED 2026-08-31 (founder-ruled): table_name "system", record_id "corpus" — the shape every
+// system-wide audit row now uses, shared with the cron heartbeats in lib/inngest/heartbeat.ts.
+//
+// ⚠ THE READ MUST MOVE WITH THE WRITE. `load-previous` below AND lib/integrity/latest.ts both
+// filter on table_name; a mismatch would return "never checked" forever with the sweep working.
 //
 // COST: zero external spend — no LLM, no Serper, no WHOIS. DB reads plus pure replays.
 // CADENCE: daily at 06:20 UTC, deliberately AFTER the 13:00 email cron is irrelevant to it and
@@ -57,7 +69,7 @@ export const integritySweep = inngest.createFunction(
       const { data } = await supabaseAdmin
         .from("audit_log")
         .select("new_value")
-        .eq("table_name", "cases")
+        .eq("table_name", SYSTEM_TABLE)
         .contains("new_value", { [INTEGRITY_SWEEP_AUDIT]: true })
         .order("created_at", { ascending: false })
         .limit(1);
@@ -71,7 +83,7 @@ export const integritySweep = inngest.createFunction(
       // The record is what /admin/integrity reads. If this write fails the sweep is worthless,
       // so it is NOT swallowed — a failed record must retry.
       const { error } = await supabaseAdmin.from("audit_log").insert({
-        table_name: "cases", record_id: null, action: "INSERT",
+        table_name: SYSTEM_TABLE, record_id: SYSTEM_RECORD_ID, action: "INSERT",
         actor_id: "system", actor_type: "system",
         new_value: { [INTEGRITY_SWEEP_AUDIT]: true, result },
       });
@@ -100,6 +112,11 @@ ${meanings}
     }
 
     const totals = Object.fromEntries(result.checks.map((c) => [c.checkId, c.findings.length]));
+    const found = Object.values(totals).reduce((n, v) => n + v, 0);
+    await recordHeartbeat(
+      "integrity-sweep",
+      `${result.cases_total} cases checked, ${found} finding(s), ${fresh.length} new`,
+    );
     return { ran_at: result.ran_at, cases: result.cases_total, new_findings: fresh.length, totals };
   },
 );

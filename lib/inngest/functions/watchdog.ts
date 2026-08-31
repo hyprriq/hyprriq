@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -39,5 +40,11 @@ export async function sweepWedgedCases(now: Date = new Date()): Promise<number> 
 // Every 15 minutes. retries:1 — the next tick is the retry.
 export const pipelineWatchdog = inngest.createFunction(
   { id: "pipeline-watchdog", name: "Pipeline watchdog (stuck-case sweep)", retries: 1, triggers: [{ cron: "*/15 * * * *" }] },
-  async () => ({ swept: await sweepWedgedCases() }),
+  async () => {
+    const out = { swept: await sweepWedgedCases() };
+    // Heartbeat LAST: a run that throws leaves no row, and the health page reports it exactly as
+    // it reports one that never fired. Both mean the same thing — this check is not protecting you.
+    await recordHeartbeat("pipeline-watchdog", out.swept === 0 ? "no stuck cases" : `swept ${out.swept} stuck case(s)`);
+    return out;
+  },
 );

@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -57,5 +58,12 @@ export async function sweepOutcomeCheckpoints(now: Date = new Date()): Promise<{
 // Daily at 06:00 UTC. retries:1 — tomorrow's tick is the retry.
 export const outcomeCheckpoints = inngest.createFunction(
   { id: "outcome-checkpoints", name: "Outcome checkpoints (30/90-day ground-truth sweep)", retries: 1, triggers: [{ cron: "0 6 * * *" }] },
-  async () => sweepOutcomeCheckpoints(),
+  async () => {
+    const out = await sweepOutcomeCheckpoints();
+    await recordHeartbeat(
+      "outcome-checkpoints",
+      out.due30 + out.due90 === 0 ? "no checkpoints due" : `${out.due30} at 30 days, ${out.due90} at 90`,
+    );
+    return out;
+  },
 );

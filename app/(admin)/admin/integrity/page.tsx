@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CHECKS, CHECK_BY_ID } from "@/lib/integrity/checks";
 import { latestSweep, hoursSince } from "@/lib/integrity/latest";
+import { latestHeartbeats } from "@/lib/inngest/heartbeat";
 
 // ── SYSTEM HEALTH (founder-locked 2026-08-22, item 2) — the one place to look ────────────────
 //
@@ -31,6 +32,7 @@ function fmtWhen(iso: string): string {
 export default async function AdminIntegrityPage() {
   const admin = await requireAdmin();
   const sweep = await latestSweep();
+  const crons = await latestHeartbeats();
   const shell = {
     operator: admin,
     clientScope: admin.clientScope,
@@ -67,6 +69,43 @@ export default async function AdminIntegrityPage() {
         )}
       </div>
 
+      {/* ── SCHEDULED WORK — a row per cron, on EVERY run, clean or not ──────────────────────
+          ⚠ THIS SECTION EXISTS BECAUSE SIX OF THE SEVEN CRONS WROTE NOTHING WHEN THEY HAD NOTHING
+          TO REPORT. "No evidence" and "never ran" were the same observation, and the only reason
+          anyone found the integrity sweep had been failing for six days is that it happened to be
+          the one that wrote unconditionally. Absence is now rendered, never omitted. */}
+      <div className="mt-5 rounded-card border border-line bg-surface">
+        <div className="border-b border-line px-5 py-3">
+          <div className="font-display text-[15px] font-bold text-ink">Scheduled work</div>
+          <p className="mt-1 text-[13px] text-ink-2">
+            Every scheduled job records a heartbeat when it finishes. A job that runs and FAILS leaves
+            no heartbeat, so it reads here exactly like one that never started — both mean it is not
+            protecting you. Overdue is more than twice the declared interval.
+          </p>
+        </div>
+        {crons.map((c) => {
+          const tone =
+            c.state === "ok" ? "text-clear-ink"
+              : c.state === "overdue" ? "text-deny-ink"
+                : "text-muted";
+          const label =
+            c.state === "ok" ? `Ran ${fmtWhen(c.lastRun!)}`
+              : c.state === "overdue" ? `OVERDUE — last ran ${fmtWhen(c.lastRun!)}`
+                : "Never recorded a run";
+          return (
+            <div key={c.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-5 py-3 last:border-b-0">
+              <div className="min-w-0">
+                <span className="text-[14px] font-semibold text-ink">{c.label}</span>
+                <span className="ml-2 text-[13px] text-muted">{c.does}</span>
+              </div>
+              <div className="text-right">
+                <div className={`text-[13px] font-semibold ${tone}`}>{label}</div>
+                {c.summary && <div className="text-[12.5px] text-muted">{c.summary}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <div className="mt-5 space-y-4">
         {CHECKS.map((spec) => {
           const result = corpusChecks.find((c) => c.checkId === spec.id);

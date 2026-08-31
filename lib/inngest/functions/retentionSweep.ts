@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendDormantNoticeEmail, sendRetentionWarningEmail } from "@/lib/email/notify";
 import { SITE_URL } from "@/lib/constants/site";
@@ -175,6 +176,7 @@ export const retentionSweep = inngest.createFunction(
       else if (r.reason === "duplicate") out.dormant_skipped++;
     }
 
+    await recordHeartbeat("retention-sweep", `${out.warnings_sent} warned, ${out.files_deleted} deleted, ${out.dormant_notices} dormancy notice(s)`);
     return out;
   },
 );

@@ -1,4 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
+import { recordHeartbeat } from "@/lib/inngest/heartbeat";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendAdminAlert } from "@/lib/email/notify";
 
@@ -50,5 +51,12 @@ export async function sweepDegradedWrites(now: Date = new Date()): Promise<numbe
 // Daily, morning. retries:1 — tomorrow's tick is the retry, and the 25h window covers the seam.
 export const degradedWritesWatchdog = inngest.createFunction(
   { id: "degraded-writes-watchdog", name: "Degraded-write sweep (G006 item-4 tripwire)", retries: 1, triggers: [{ cron: "0 7 * * *" }] },
-  async () => ({ surfaced: await sweepDegradedWrites() }),
+  async () => {
+    const out = { surfaced: await sweepDegradedWrites() };
+    await recordHeartbeat(
+      "degraded-writes-watchdog",
+      out.surfaced === 0 ? "no degraded writes in the last day" : `${out.surfaced} degraded write(s) surfaced`,
+    );
+    return out;
+  },
 );
