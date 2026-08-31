@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { requireAdmin, getAdminClients } from "@/lib/data/admin";
 import { can } from "@/lib/auth/permissions";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { ListTable } from "@/components/admin/list-table";
 import { PLAN_NAME, PLAN_CATEGORY, type PlanType } from "@/lib/constants/plans";
 
 // ── BILLING — ALL-CLIENTS OVERVIEW (admin design pass 2026-08-12). Per-client accounting was
@@ -81,57 +81,64 @@ export default async function AdminBillingPage() {
         </div>
       </div>
 
-      {clients.length === 0 ? (
-        <div className="rounded-card border border-line bg-surface p-10 text-center text-sm text-muted">
-          No clients in your scope yet. Client accounting appears here as soon as one exists.
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-surface">
-          <div className="grid grid-cols-[minmax(200px,1.6fr)_130px_80px_110px_96px] items-center gap-3 border-b border-line bg-subtle px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            <span>Client</span>
-            <span>Plan</span>
-            <span className="text-right">Credits</span>
-            <span className="text-right">Since</span>
-            <span />
-          </div>
-          {clients.map((c) => {
-            const plan = c.plan_type as PlanType | null;
-            const low = plan && PLAN_CATEGORY[plan] === "subscription" && c.credits_available <= 1;
-            return (
-              <div
-                key={c.id}
-                className="grid grid-cols-[minmax(200px,1.6fr)_130px_80px_110px_96px] items-center gap-3 border-b border-line px-4 py-2 last:border-b-0"
-              >
+      {
+        /* MIGRATED TO <ListTable> 2026-08-25. Was a 696px grid in a 328px content box behind
+           overflow-hidden: at 360px the "Accounting" link measured ZERO visible pixels and
+           elementFromPoint at its centre returned nothing. THE WHOLE CARD IS THE LINK NOW, so the
+           destination cannot be clipped out of existence the way a 62px button in the last column
+           was. Credits keep their exception ink — low credit is the one thing an operator scans
+           this list for. */
+        <ListTable
+          rows={clients}
+          getKey={(c) => c.id}
+          href={(c) => `/admin/clients/${c.id}/accounting`}
+          empty="No clients in your scope yet. Client accounting appears here as soon as one exists."
+          columns={[
+            { key: "client", header: "Client", width: "minmax(200px,1.6fr)", card: "title",
+              cell: (c) => (
                 <div className="min-w-0">
                   <div className="truncate text-[13.5px] font-semibold text-ink">
                     {c.full_name || c.company_name || "—"}
                   </div>
                   <div className="mt-0.5 truncate font-mono text-[11px] text-muted">{c.email}</div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-[13px] font-medium text-ink-2">{plan ? PLAN_NAME[plan] : "No plan"}</span>
-                  {/* status is exception-only: "active" earns no ink; anything else does */}
-                  {c.billing_status && c.billing_status !== "active" && (
-                    <div className="mt-0.5 text-[11px] font-semibold capitalize text-verify-ink">
-                      {c.billing_status.replace(/_/g, " ")}
-                    </div>
-                  )}
-                </div>
-                <span className={`text-right font-mono text-[12.5px] font-medium ${low ? "text-verify-ink" : "text-ink"}`}>
-                  {c.credits_available}
-                </span>
-                <span className="text-right font-mono text-[11.5px] text-muted">{fmt(c.created_at)}</span>
-                <Link
-                  href={`/admin/clients/${c.id}/accounting`}
-                  className="justify-self-end rounded-md border border-line px-2.5 py-1 text-[11.5px] font-semibold text-ink-2 hover:bg-subtle"
-                >
+              ) },
+            { key: "credits", header: "Credits", width: "80px", align: "right", card: "badge",
+              cell: (c) => {
+                const plan = c.plan_type as PlanType | null;
+                const low = plan && PLAN_CATEGORY[plan] === "subscription" && c.credits_available <= 1;
+                return (
+                  <span className={`font-mono text-[12.5px] font-medium ${low ? "text-verify-ink" : "text-ink"}`}>
+                    {c.credits_available}
+                  </span>
+                );
+              } },
+            { key: "plan", header: "Plan", width: "130px",
+              cell: (c) => {
+                const plan = c.plan_type as PlanType | null;
+                return (
+                  <div className="min-w-0">
+                    <span className="text-[13px] font-medium text-ink-2">{plan ? PLAN_NAME[plan] : "No plan"}</span>
+                    {/* status is exception-only: "active" earns no ink; anything else does */}
+                    {c.billing_status && c.billing_status !== "active" && (
+                      <div className="mt-0.5 text-[11px] font-semibold capitalize text-verify-ink">
+                        {c.billing_status.replace(/_/g, " ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              } },
+            { key: "since", header: "Since", width: "110px", align: "right",
+              cell: (c) => <span className="font-mono text-[11.5px] text-muted">{fmt(c.created_at)}</span> },
+            { key: "go", header: "", width: "96px", card: "hide",
+              cell: () => (
+                <span className="justify-self-end rounded-md border border-line px-2.5 py-1 text-[11.5px] font-semibold text-ink-2">
                   Accounting
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                </span>
+              ) },
+          ]}
+        />
+      }
 
       {/* honest boundary — the console's voice, not the build log's */}
       <p className="mt-4 max-w-[72ch] text-[13px] leading-relaxed text-ink-2">

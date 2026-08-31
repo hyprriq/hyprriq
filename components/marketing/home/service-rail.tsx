@@ -9,11 +9,24 @@ import { AREAS } from "@/lib/content/whatWeCheck";
 // MOBILE: the rail is hidden below `lg`, because a sticky index costs a third of a phone screen and
 // duplicates headings that are already three lines away. The panels carry their own numbered
 // headings there instead, so nothing is lost with the rail gone.
-//   ⚠ FLAGGED, NOT CHANGED: this note used to claim "hidden below 760px, per the spec". The code
-//   hides it below `lg` (1024) and the spec hides it at 960 — THREE DIFFERENT NUMBERS, none of them
-//   agreeing. The comment was simply wrong. Corrected to describe the code; moving the breakpoint
-//   itself changes desktop-adjacent layout and is a separate decision, so it is raised rather than
-//   taken. See §0-R.
+//   ⚠ THE BREAKPOINT WAS THREE DIFFERENT NUMBERS. The comment claimed 760, the code used `lg`
+//   (1024), and the spec says 960. FOUNDER-RULED 2026-08-25: it is 960, matching the spec and the
+//   compression below, so ONE NUMBER GOVERNS BOTH — the rail hides at exactly the width the
+//   summary form appears. Two breakpoints doing related jobs at different widths is how a
+//   disagreement like this starts.
+//
+//   CHECKED BEFORE MOVING IT, as instructed: `lg` was NOT load-bearing here. Of its sixteen uses in
+//   this file, FOUR are structural (the two-column grid, its gap, the rail itself, and the panel's
+//   own number) — those move. The other twelve are TYPE AND SPACING POLISH and stay at `lg`,
+//   deliberately: in the 961-1023 band the panel column is ~570px rather than ~830px, and the
+//   smaller type is the right type for it. Nothing outside this file depends on the layout; only the
+//   homepage renders it.
+//
+//   ALL THREE STRUCTURAL RULES ARE `min-[961px]:`, SO THE MOBILE FORM IS THE DEFAULT. That is the
+//   fail-safe direction for each: a missed query leaves no rail (an index, not content) and leaves
+//   the panel's own number visible (the area name, which IS content). The compression below is
+//   `max-[960px]:` for the same reason in mirror image, and 960/961 are exactly complementary — at
+//   960 there is no rail and the section is compressed; at 961 the rail appears and it expands.
 //
 // ── MOBILE COMPRESSION BELOW 960px (spec line 437, founder-ruled 2026-08-25) ──────────────────
 // `.pan .pm, .pan .d { display: none }` — the summary paragraph and BOTH detail boxes come off the
@@ -73,9 +86,9 @@ export function ServiceRail() {
   }, []);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[290px_1fr] lg:gap-[60px]">
+    <div className="grid gap-8 min-[961px]:grid-cols-[290px_1fr] min-[961px]:gap-[60px]">
       {/* The rail. Hidden on phones by design; it is an index, not content. */}
-      <nav aria-label="Assessment areas" className="hidden lg:block">
+      <nav aria-label="Assessment areas" className="hidden min-[961px]:block">
         <div className="sticky top-[104px]">
           {AREAS.map((a, i) => {
             const on = i === active;
@@ -115,7 +128,7 @@ export function ServiceRail() {
             className="border-b border-line pb-9 pt-1 last:border-b-0 last:pb-6 lg:pb-[68px]"
           >
             {/* On phones the rail is gone, so each panel names itself. */}
-            <div className="flex items-baseline gap-3 lg:hidden">
+            <div className="flex items-baseline gap-3 min-[961px]:hidden">
               <span className={`font-mono text-[10.5px] ${ACCENTS[i]}`}>0{i + 1}</span>
               <span className="text-[13px] font-semibold uppercase tracking-wide text-muted">
                 {a.name}

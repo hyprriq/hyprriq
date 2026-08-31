@@ -135,6 +135,28 @@ describe("LOCK — the service section compresses on a phone, and loses nothing"
     ).toBeGreaterThanOrEqual(2);
   });
 
+  it("ONE NUMBER governs the rail and the compression (founder-ruled 2026-08-25)", () => {
+    // The breakpoint was three different numbers: the comment said 760, the code used lg (1024),
+    // the spec says 960. Ruling: 960 for both, so the rail hides at exactly the width the summary
+    // form appears. "Two breakpoints doing related jobs at different widths is how this kind of
+    // disagreement starts."
+    //
+    // The two halves are COMPLEMENTARY, not identical: content-hiding is `max-[960px]:` so a missed
+    // query SHOWS the copy, and the structural switches are `min-[961px]:` so a missed query leaves
+    // the MOBILE form — which keeps the panel's own number, and that number is content. Both
+    // default to the safe state; they just have opposite safe states.
+    expect(RAIL, "the rail must switch at 961, not at lg").toMatch(/min-\[961px\]:block/);
+    expect(RAIL, "the two-column layout must switch with the rail").toMatch(/min-\[961px\]:grid-cols-/);
+    expect(RAIL, "the panel's own number must disappear exactly when the rail appears")
+      .toMatch(/min-\[961px\]:hidden/);
+    // No structural rule may still be on lg — that would reopen the gap this ruling closed.
+    expect(
+      /lg:(block|grid-cols-|hidden)/.test(RAIL),
+      "a STRUCTURAL rule is still on lg (1024). The rail, its grid and the panel number all move " +
+        "together at 960; only type and spacing polish stays on lg.",
+    ).toBe(false);
+  });
+
   it("uses the SPEC's 960px breakpoint, and FAILS OPEN", () => {
     // lg is 1024; using it would compress the 960-1023 band the spec leaves expanded.
     expect(RAIL, "the compression must key off 960px").toMatch(/max-\[960px\]:hidden/);

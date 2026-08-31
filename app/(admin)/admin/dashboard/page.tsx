@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin, getAdminDashboard } from "@/lib/data/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { ListTable } from "@/components/admin/list-table";
 import { PLAN_NAME, CASE_SLA_HOURS, type PlanType } from "@/lib/constants/plans";
 import { StatusBadge } from "@/components/portal/badges";
 import { buildKpiTiles, type KpiTile } from "@/lib/admin/dashboard-tiles";
@@ -225,36 +226,46 @@ export default async function AdminDashboardPage() {
               <h2 className="font-display text-[16px] font-bold text-ink">Case Queue — Quality Review</h2>
               <span className="text-[13px] text-muted">{reviewQueue.length} in queue · nearest deadline first</span>
             </div>
-            <div className="overflow-hidden rounded-card border border-line bg-surface">
-              <div className="grid grid-cols-[96px_1fr_80px_132px_70px_72px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                <span>Case ID</span><span>Supplier / Brands</span><span>Plan</span><span>Stage</span><span>SLA</span><span></span>
-              </div>
-              {reviewQueue.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted">No cases in the queue — new submissions appear here.</div>
-              ) : (
-                reviewQueue.map((c) => {
-                  const overdue = slaText(c.sla_deadline) === "Overdue";
-                  return (
-                    <div key={c.id} className="grid grid-cols-[96px_1fr_80px_132px_70px_72px] items-center gap-3 border-b border-line px-4 py-3 transition-colors last:border-b-0 hover:bg-subtle">
-                      <span className="font-mono text-[13px] font-semibold text-brand">{c.case_number}</span>
-                      <div className="min-w-0">
-                        <div className="truncate text-[14px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
-                        <div className="truncate text-[12px] text-muted">{(c.brands_submitted ?? []).join(" • ") || "—"}</div>
-                      </div>
-                      <span className="text-[13px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span>
-                      <span><StatusBadge status={c.status} /></span>
-                      {/* Exception-only ink: only an overdue case earns colour — the countdown itself is calm. */}
-                      <span className={`text-right font-mono text-[13px] font-semibold ${overdue ? "text-deny-ink" : "text-ink-2"}`}>
+            {/* MIGRATED TO <ListTable> 2026-08-25. Was a 542px grid in a 328px content box behind
+                overflow-hidden — at 360px the row's only link had ZERO visible pixels, the same
+                defect as /admin/cases. The whole card is the link now. The SLA keeps its
+                exception-only ink: an overdue case is the one thing this queue exists to surface. */}
+            <ListTable
+              rows={reviewQueue}
+              getKey={(c) => c.id}
+              href={(c) => `/admin/cases/${c.id}/review`}
+              empty="No cases in the queue — new submissions appear here."
+              columns={[
+                { key: "case", header: "Case ID", width: "96px", card: "title",
+                  cell: (c) => <span className="font-mono text-[13px] font-semibold text-brand">{c.case_number}</span> },
+                { key: "stage", header: "Stage", width: "132px", card: "badge",
+                  cell: (c) => <StatusBadge status={c.status} /> },
+                { key: "supplier", header: "Supplier / Brands", width: "1fr", card: "body",
+                  cell: (c) => (
+                    <div className="min-w-0">
+                      <div className="truncate text-[14px] font-semibold text-ink">{c.vendor_name ?? "—"}</div>
+                      <div className="truncate text-[12px] text-muted">{(c.brands_submitted ?? []).join(" • ") || "—"}</div>
+                    </div>
+                  ) },
+                { key: "sla", header: "SLA", width: "70px", align: "right",
+                  cell: (c) => {
+                    const overdue = slaText(c.sla_deadline) === "Overdue";
+                    return (
+                      <span className={`font-mono text-[13px] font-semibold ${overdue ? "text-deny-ink" : "text-ink-2"}`}>
                         {slaText(c.sla_deadline)}
                       </span>
-                      <Link href={`/admin/cases/${c.id}/review`} className="rounded-md bg-brand px-2.5 py-1 text-center text-[12px] font-bold text-white hover:bg-brand-hover">
-                        Review
-                      </Link>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  } },
+                { key: "plan", header: "Plan", width: "80px",
+                  cell: (c) => <span className="text-[13px] text-ink-2">{c.plan_type ? PLAN_NAME[c.plan_type] : "—"}</span> },
+                { key: "go", header: "", width: "72px", card: "hide",
+                  cell: () => (
+                    <span className="rounded-md bg-brand px-2.5 py-1 text-center text-[12px] font-bold text-white">
+                      Review
+                    </span>
+                  ) },
+              ]}
+            />
           </section>
 
           <section>
@@ -262,23 +273,28 @@ export default async function AdminDashboardPage() {
               <h2 className="font-display text-[16px] font-bold text-ink">Support Queue</h2>
               <span className={`text-[13px] font-semibold ${openSupport.length > 0 ? "text-deny-ink" : "text-muted"}`}>{openSupport.length} open</span>
             </div>
-            <div className="overflow-hidden rounded-card border border-line bg-surface">
-              <div className="grid grid-cols-[140px_110px_1fr_120px] gap-3 border-b border-line bg-subtle px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                <span>SR Number</span><span>Type</span><span>Subject</span><span>Client</span>
-              </div>
-              {openSupport.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted">No open requests.</div>
-              ) : (
-                openSupport.map((r) => (
-                  <div key={r.id} className="grid grid-cols-[140px_110px_1fr_120px] items-center gap-3 border-b border-line px-4 py-3 transition-colors last:border-b-0 hover:bg-subtle">
-                    <span className="font-mono text-[13px] font-semibold text-brand">{r.sr_number}</span>
-                    <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold capitalize text-brand-ink">{r.type.replace("_", " ")}</span>
-                    <span className="truncate text-[14px] text-ink">{r.subject}</span>
-                    <span className="truncate text-[13px] text-ink-2">{r.clients?.full_name ?? "—"}</span>
-                  </div>
-                ))
-              )}
-            </div>
+            {/* MIGRATED TO <ListTable> 2026-08-25. Was a 438px grid, clipped — and this one has NO
+                href by design: the support queue is read-only, so there is nowhere for a row to go.
+                What the clipping destroyed here was the SUBJECT and the CLIENT, i.e. content. */}
+            <ListTable
+              rows={openSupport}
+              getKey={(r) => r.id}
+              empty="No open requests."
+              columns={[
+                { key: "sr", header: "SR Number", width: "140px", card: "title",
+                  cell: (r) => <span className="font-mono text-[13px] font-semibold text-brand">{r.sr_number}</span> },
+                { key: "type", header: "Type", width: "110px", card: "badge",
+                  cell: (r) => (
+                    <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold capitalize text-brand-ink">
+                      {r.type.replace("_", " ")}
+                    </span>
+                  ) },
+                { key: "subject", header: "Subject", width: "1fr", card: "body",
+                  cell: (r) => <span className="truncate text-[14px] text-ink">{r.subject}</span> },
+                { key: "client", header: "Client", width: "120px",
+                  cell: (r) => <span className="truncate text-[13px] text-ink-2">{r.clients?.full_name ?? "—"}</span> },
+              ]}
+            />
           </section>
 
           {/* Charts sit BELOW the work (founder brief 2026-08-13): the page opens on the queue. */}

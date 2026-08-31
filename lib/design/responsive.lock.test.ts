@@ -37,10 +37,10 @@ const repo = path.resolve(__dirname, "../..");
  * DELETE A ROW WHEN IT IS FIXED — the staleness test will tell you if you forget.
  */
 const KNOWN_OFFENDERS: { file: string; over: number; note: string }[] = [
-  // ✅ /admin/support MIGRATED to <ListTable> 2026-08-25 — was 374px over. Row deleted, as the
-  //    staleness test demands. It is now asserted FIXED in the BROKEN-three test below.
-  { file: "app/(admin)/admin/billing/page.tsx", over: 320, note: "only link measured 0px visible; elementFromPoint returns nothing" },
-  { file: "app/(admin)/admin/dashboard/page.tsx", over: 166, note: "two lists; the cases row's only link measured 0px visible" },
+  // ✅ ALL THREE FOUNDER-RULED "BROKEN" ROUTES ARE MIGRATED to <ListTable>, 2026-08-25, and their
+  //    rows are deleted as the staleness test demands: /admin/support (374px over), /admin/billing
+  //    (320px), /admin/dashboard (166px, two lists). They are asserted FIXED below rather than
+  //    merely absent, so the migration cannot silently regress into "the scanner stopped looking".
   { file: "components/admin/users-manager.tsx", over: 196, note: "no wrapper at all → the document scrolls sideways 229px" },
   { file: "app/(admin)/admin/clients/page.tsx", over: 50, note: "the row IS a <Link>, so it still navigates; trailing column clipped" },
 ];
@@ -134,22 +134,30 @@ describe("LOCK — the scanner can actually see (self-test, founder-required)", 
     ).toEqual([]);
   });
 
-  it("tracks the founder's three BROKEN routes — one fixed, two to go", () => {
-    // The remediation order was /admin/support, then billing, then dashboard. This test moves with
-    // it rather than going stale: the fixed one is asserted ABSENT, the rest asserted PRESENT. Move
-    // a route from one list to the other only when you have actually migrated it.
+  it("the founder's three BROKEN routes are all migrated, and still examined", () => {
+    // ⚠ "ABSENT FROM THE OFFENDER LIST" IS NOT ENOUGH — a scanner that stopped reading these files
+    // would also report them absent, which is standing rule 14 exactly. So each is asserted to be
+    // SEEN (the scanner still finds grids in it, or it now renders through <ListTable>) AND clean.
     const found = new Set(offenders.map((o) => o.file));
-    expect(
-      found.has("app/(admin)/admin/support/page.tsx"),
-      "/admin/support was migrated to <ListTable> and must no longer overflow. If this fails, the " +
-        "migration regressed — or the scanner stopped seeing the file, which is worse.",
-    ).toBe(false);
-    for (const f of [
+    const scanned = new Set(sites.map((s) => s.file));
+    const MIGRATED = [
+      "app/(admin)/admin/support/page.tsx",
       "app/(admin)/admin/billing/page.tsx",
       "app/(admin)/admin/dashboard/page.tsx",
-    ]) {
-      expect(found.has(f), `${f} is still BROKEN and the scanner cannot see it`).toBe(true);
+    ];
+    for (const f of MIGRATED) {
+      expect(found.has(f), `${f} overflows again — the migration regressed`).toBe(false);
+      expect(
+        fs.existsSync(path.join(repo, f)) && fs.readFileSync(path.join(repo, f), "utf8").includes("ListTable"),
+        `${f} no longer renders through <ListTable>. If the grid came back by hand, the scanner ` +
+          `should have caught it; if the FILE is gone, this test is lying about coverage.`,
+      ).toBe(true);
     }
+    // Proof the scanner is still reading admin at all, so "clean" means clean and not blind.
+    expect(
+      [...scanned].some((f) => f.startsWith("app/(admin)")),
+      "the scanner found NO grids anywhere under app/(admin) — it has gone blind, not green",
+    ).toBe(true);
   });
 });
 
