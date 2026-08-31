@@ -13,6 +13,7 @@ import { composeClientName } from "@/lib/pdf/clientName";
 import { buildClientFindings } from "@/lib/admin/reviewView";
 import { projectClientReport } from "@/lib/portal/clientReport";
 import { assertNoInternalTokens } from "@/lib/portal/clientTokenCheckpoint";
+import { clientReadableSurface } from "@/lib/pdf/clientReadableSurface";
 import { SECTIONS } from "@/lib/content/reportDocument";
 import { loadReportAssets } from "@/lib/pdf/reportAssets";
 import {
@@ -148,7 +149,17 @@ export async function loadReportContent(opts: LoadOptions): Promise<ReportConten
     report,
     findings: buildClientFindings(rows),
   };
-  assertNoInternalTokens(content, `PDF render ${row.case_number}`);
+  // ⚠ ASSERTED ON THE READABLE SURFACE, NOT THE WHOLE PAYLOAD (fixed 2026-08-31).
+  // This asserted `content` entire, structural fields included — and `findings[].track_key` holds
+  // `supplier_identity`, which IS one of the internal-content patterns. EVERY PDF failed, on all
+  // five areas, for nine days. The guard was reading its own lookup keys as a leak.
+  //
+  // ⛔ THE GUARD DID NOT CHANGE, and must not: its law forbids grammar-awareness. What changed is
+  // WHICH BYTES reach it. lib/integrity/sweep.ts already scans "ONLY the fields a client actually
+  // reads"; this makes the PDF agree with the three call sites that were already scoped.
+  // Every field is classified with its reason in lib/pdf/clientReadableSurface.ts, and a lock
+  // requires a NEW field to be classified rather than defaulting to either side.
+  assertNoInternalTokens(clientReadableSurface(content), `PDF render ${row.case_number}`);
   return content;
 }
 
