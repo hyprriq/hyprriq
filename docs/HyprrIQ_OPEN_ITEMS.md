@@ -105,6 +105,100 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-S. THE INSTRUMENTS BATCH — heartbeats, production gates, and a guard refusing its own keys — 2026-08-31
+
+**Owner: UX built, F ruled.** Four commits — `9ba1919`, `466575e`, `0d29f8b` and this. Every item
+here is one shape: **something that reports success while doing nothing.**
+
+### 0-S.1 · THE 2B TABLE — "has this guard ever run IN ITS CURRENT FORM?"
+
+**The founder's ruling: this question gets asked routinely, not once.** It is the most reusable thing
+in this batch, so it leads.
+
+**The method, which is the point.** Not "when was it written" — *has this guard's code changed since
+the last time real data flowed through it?* A guard modified after the last real case has never been
+exercised in the form that is deployed.
+
+- Last real case: **created 2026-08-20 15:48Z, delivered 16:07Z** (from `cases`, not recalled).
+- Any guard whose file was touched after that has had **no real input**.
+
+| guard | last modified | ever run in this form? |
+|---|---|---|
+| `content/reportDocument.ts` | 2026-08-24 15:56 | ❌ → ✅ *converted 08-31* |
+| `portal/clientTokenCheckpoint.ts` | 2026-08-23 11:28 | ❌ → ✅ *converted 08-31* |
+| `integrity/checks.ts` | 2026-08-23 11:28 | ❌ patterns ✅, corpus checks pending the nightly sweep |
+| `portal/clientReport.ts` | 2026-08-23 11:28 | ❌ → ✅ *converted 08-31* |
+| `portal/verdictPresence.ts` | 2026-08-22 16:04 | ❌ → ✅ *converted 08-31* |
+| `pdf/renderReportPdf.ts` | 2026-08-22 16:04 | ❌ **and it was BROKEN** → ✅ *fixed and converted* |
+| `portal/publishGate.ts` | 2026-08-20 09:21 | ✅ predates the cutoff |
+| `billing/envGuard.ts` | 2026-08-20 14:00 | ✅ |
+| `research/proseRepairLoop.ts` | 2026-08-20 11:10 | ✅ |
+| `research/methodScanReport.ts` | 2026-08-17 23:59 | ✅ |
+
+**Six of ten had never run. One of those six was broken, and only running it revealed that.** The
+other five were converted by the same successful render on 2026-08-31 — see 0-S.4.
+
+⚠ **THE LIMIT OF THE METHOD, STATED SO IT IS NOT OVERSOLD.** It proves *untested*, never *broken*.
+It is a question, not a verdict. The only thing that converts a ❌ is real data passing through.
+
+### 0-S.2 · THE PDF GUARD WAS REFUSING ITS OWN LOOKUP KEYS — nine days
+
+Both fired events triggered the function and **both FAILED**: `InternalTokenLeak … 5 occurrence(s)`,
+one per assessment area, every one at `findings[N].track_key`.
+
+`track_key` holds `supplier_identity` — one of `INTERNAL_CONTENT_PATTERNS`. **It never renders**: the
+PDF prints "Supplier Legitimacy" and the key is the lookup that produces it. All five areas match, so
+**every PDF failed**. Broken since the patterns shipped 2026-08-22, silent because no case had
+rendered since 08-20.
+
+**A publish gate that refuses every valid document is indistinguishable from a working one until
+someone tries it.** That is the crons' shape — five of seven could not be distinguished from never
+having run — one layer up.
+
+Fixed the **projection**, never the guard: `clientTokenCheckpoint.ts` is unchanged, per its own law
+against grammar-awareness. **And the pattern already existed — the PDF was the outlier.**
+`integrity/sweep.ts` scans "ONLY the fields a client actually reads"; the portal and publish paths
+see prose only. Four call sites, three already scoped; the fourth now agrees.
+
+**Every field classified with its reason** (`lib/pdf/clientReadableSurface.ts`), because the next
+person adding one needs to know the side. `verdict` is flagged as a lookup too — it passes today only
+because verdict keys are not yet in the pattern list, and it would fail identically if they were.
+
+**The canary matters more than the fix**: a track key IN PROSE still refuses, the same key as a
+LOOKUP passes. Narrowing what is scanned is exactly how a backstop gets quietly disabled.
+
+### 0-S.3 · EVERY CRON PROVES IT RAN, AND THE DESTRUCTIVE ONES ARE PRODUCTION-ONLY
+
+| # | Item | State |
+|---|---|---|
+| a | The integrity sweep inserted `record_id: null` into a `text NOT NULL` column — **every run threw for six days** behind a page reading "Never checked". Fixed to `table_name "system"`, `record_id "corpus"`. The read moved with the write in **two** places; a lock asserts all three agree. | ✅ |
+| b | ⚠ The irony is in the original comment: it avoided a migration so the dashboard would not say "never checked for a week". It said exactly that for six days **because** of that choice — the constraint it sidestepped is what rejected it. | ✅ recorded |
+| c | **All seven crons now write a heartbeat on every run.** Written at the END (a throw leaves no row, so a failure reads as a miss — both mean the check is not protecting you) and **best-effort** (a failed write raises a false alarm, never a false calm). | ✅ |
+| d | `/admin/integrity` renders a row per cron, overdue at **more than twice** the interval. Crons with no row at all are rendered, never omitted. | ✅ |
+| e | ⚠ **THE HEARTBEATS EARNED THEIR KEEP IN MINUTES.** `pipeline-watchdog` recorded two beats **four seconds apart** — one per Inngest environment, both against the SAME database. Demonstrated, not theorised. | ✅ |
+| f | So: **six of seven crons gated to `VERCEL_ENV === "production"`** — anything that writes, deletes or emails a client. `degraded-writes-watchdog` is read-only and runs in both, with only its ALERT gated. | ✅ |
+| g | ⚠ The gate broke **15 tests**, and that was the important part: `VERCEL_ENV` is undefined in a test runner, so every one would have **passed by being SKIPPED**. Rule 14 in the least visible place — not in an instrument, but in the suite that validates them. | ✅ |
+
+### 0-S.4 · THE RENDER THAT CONVERTED FIVE GUARDS
+
+Fired at production 2026-08-31 09:49:14Z. **Stored 8.4 seconds later**: 182,855 bytes, 10 pages.
+1,565 bytes larger than the 08-20 file, consistent with the signpost line added on 08-24.
+
+Verified by opening the PDF, not by trusting the job: page one carries the verdict and the signpost
+(`hyprriq.com/portal/…`), page two carries the `SECTIONS` contents with real page numbers, and **no
+internal token appears in either**. That output is the artefact proving `verdictPresence`,
+`clientReport`, `reportDocument`, `clientTokenCheckpoint` and `renderReportPdf` all executed on real
+case data — not merely imported.
+
+🔴 **F — COST TELEMETRY IS DEAD, AND THIS MATTERS BEFORE LIVE STRIPE.** `prompt_runs` has **zero
+rows**; `case_track_results.cost_usd` and `.token_count` are **zero on every case**. Only
+`case_acquisition_metrics` records anything — $0.027–$0.073 per case across 368 calls. **The LLM
+half, which is the entire cost, is recorded nowhere.** The code comment says this feeds AT-SYN-COST
+and OQ-S3. It is another "shipped, never exercised" — for observability rather than a guard — and it
+means there is no measured per-case margin to price against.
+
+---
+
 ## 0-R. THE RESPONSIVE REMEDIATION — COMPLETE — 2026-08-25/31
 
 **Owner: UX. The offender list is EMPTY.** Everything §0-O measured is fixed, the lock that measured
@@ -2002,6 +2096,16 @@ founder-run scripts:** the probe template is now
     for the shape: count what was inspected, assert on that, and check the defects separately.
     Related but distinct: rule 11 covers a pattern that CANNOT match; this covers one that stops
     matching and is read as success.
+15. **ASK OF EVERY GUARD: HAS IT RUN IN ITS CURRENT FORM?** (founder-ruled 2026-08-31, §0-S.1 — "one
+    I want asked routinely, not once.") The test is NOT when a guard was written. It is whether its
+    code has changed since real data last flowed through it: `git log -1` on the file against the
+    last real case in `cases`. A guard modified after that has **never been exercised in the form
+    that is deployed**, and a refusing gate in that state is indistinguishable from a working one —
+    **because a gate that refuses EVERYTHING looks exactly like a gate that refuses nothing until
+    somebody tries it.** Six of ten guards were in that state on 2026-08-31; one of them had been
+    failing every PDF for nine days, and only running it found out.
+    ⚠ It proves UNTESTED, never BROKEN. It is a question to ask, not a verdict to act on, and the
+    only thing that answers it is real data passing through.
 
 ---
 
