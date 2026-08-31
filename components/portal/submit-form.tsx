@@ -273,8 +273,28 @@ export function SubmitForm({
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div className="min-w-0">
-          {/* functional step rail — every chip is a button; movement is always free */}
-          <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Submission steps">
+          {/* functional step rail — every chip is a button; movement is always free.
+              ── 2×2 BELOW sm, ONE ROW ABOVE (founder-reported 2026-09-01) ────────────────────
+              `flex-wrap` on four pills of unequal width (measured 102.9 / 94.9 / 122.4 / 95.8px)
+              packs greedily, so what wraps depends on the width: 3+1 on a 390px phone, orphaning
+              "04 Review"; 2+2 at 360. A ragged rail reads as a broken row, not as a step.
+
+              THE GRID IS THE FIX AND A SCROLLING ROW IS NOT. The founder offered either; measured,
+              a one-line scroller needs 472px of track in 328px of rail, which puts "04 Review"
+              OFF-SCREEN — the same orphaning, now invisible instead of merely ragged. On a TABLIST
+              that is worse: a step you cannot see is a step you do not know you can jump to. The
+              grid keeps all four visible, equal (160px each), in the same 84px the wrap already
+              occupied. Above sm the pills fit one row, so the flex rail returns unchanged.
+
+              ⚠ AND THEY ARE 44px NOW, not 38. The old `min-h-[38px]` was under the locked tap
+              floor AND INVISIBLE TO THE LOCK — scanTapTargets derived a height only from `h-N` or
+              `py-N`, so an arbitrary `min-h-[Npx]` was neither measured nor flagged. The scanner
+              was taught to read that form in the same commit. */}
+          <div
+            className="mb-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+            role="tablist"
+            aria-label="Submission steps"
+          >
             {STEPS.map((s) => (
               <button
                 key={s.n}
@@ -282,7 +302,7 @@ export function SubmitForm({
                 role="tab"
                 aria-selected={step === s.n}
                 onClick={() => setStep(s.n)}
-                className={`inline-flex min-h-[38px] items-center gap-2 rounded-full border px-3.5 text-[13px] font-semibold ${
+                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full border px-3.5 text-[13px] font-semibold sm:justify-start ${
                   step === s.n ? "border-brand bg-brand text-white" : "border-line-strong bg-surface text-ink-2 hover:bg-subtle"
                 }`}
               >

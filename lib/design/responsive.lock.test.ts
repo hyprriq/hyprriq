@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import {
   scanAll, scanTapTargets, scanControls, scanTables, appFiles, isOffender,
   contentBox, splitTracks, trackMin, TEST_WIDTHS, type GridSite,
@@ -290,6 +291,39 @@ describe("LOCK — 44px tap targets on client surfaces", () => {
       fresh,
       `a control on a client surface is under 44px. Add min-h-11:\n${fresh.join("\n")}`,
     ).toEqual([]);
+  });
+
+  it("the scanner can measure EVERY size form it accepts — the arbitrary-value canary", () => {
+    // ⚠ THE HOLE THIS CLOSES, 2026-09-01. `scanTapTargets` skipped anything matching
+    // `min-h-[44px]`+ as PASSING, but derived a height only from `h-N` or `py-N`. So a control
+    // written `min-h-[38px]` was neither admitted nor measured — height stayed null and the
+    // `height !== null` filter dropped it in silence. FOUR step pills on /portal/submit and the
+    // delivered report's tab row sat under the floor while this suite reported the list EMPTY.
+    //
+    // A scanner that RECOGNISES a form for passing but cannot MEASURE it for failing is worse than
+    // one that has never heard of the form, because the half it knows makes the blind half look
+    // covered. So the lock now asserts the two halves agree: every form the skip-test accepts must
+    // be a form the measurer can read.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tapcanary-"));
+    const rel = "canary.tsx";
+    fs.writeFileSync(
+      path.join(dir, rel),
+      [
+        '<button className="min-h-[38px] px-3">under, arbitrary</button>',
+        '<button className="min-h-[44px] px-3">at the floor, arbitrary</button>',
+        '<button className="min-h-11 px-3">at the floor, scale</button>',
+        '<button className="h-8 px-3">under, h-N</button>',
+      ].join(String.fromCharCode(10)),
+      "utf8",
+    );
+    const found = scanTapTargets(dir, rel);
+    const heights = found.map((t) => t.height).sort((a, b) => (a ?? 0) - (b ?? 0));
+    expect(
+      heights,
+      "the scanner must flag BOTH under-floor forms and neither at-floor one. If min-h-[38px] is " +
+        "missing here, the arbitrary-value hole is back and controls are passing by being unseen.",
+    ).toEqual([32, 38]);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 
   it("the small-target list is not stale", () => {

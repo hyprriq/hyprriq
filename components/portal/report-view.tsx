@@ -268,7 +268,10 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
       role="tab"
       aria-selected={tab === key}
       onClick={() => setTab(key)}
-      className={`inline-flex min-h-[42px] items-center gap-2 rounded-full border px-4 text-[13.5px] font-semibold print:hidden ${
+      // min-h-11, not min-h-[42px]: 42 was under the client-surface tap floor and the scanner
+      // could not see it — same arbitrary-value hole as the submit rail, found the moment the
+      // scanner was taught the form. This is the DELIVERED REPORT's tab row.
+      className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[13.5px] font-semibold print:hidden ${
         tab === key ? "border-brand bg-brand text-white" : "border-line-strong bg-surface text-ink-2 hover:bg-subtle"
       }`}
     >

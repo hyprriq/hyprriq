@@ -280,10 +280,28 @@ export function scanTapTargets(repo: string, file: string): TapTarget[] {
     if (/\bmin-h-11\b|\bmin-h-\[(?:4[4-9]|[5-9]\d)px\]|\bh-(?:1[1-9]|[2-9]\d)\b/.test(tag)) continue;
     let height: number | null = null;
     let from = "";
-    const h = tag.match(/(?:^|\s)h-(\d+(?:\.\d+)?)(?:\s|"|`)/);
+    // ⚠ THE LEADING BOUNDARY ACCEPTS A QUOTE, and it did not until 2026-09-01. The trailing
+    // one always did — `(?:\s|"|`)` — so a class written FIRST, `className="h-8 px-3"`, was
+    // unmeasured while the identical `className="px-3 h-8"` was flagged. The canary in the
+    // lock found this while proving the min-h-[Npx] fix; same oversight, three regexes.
+    const h = tag.match(/(?:^|[\s"'`])h-(\d+(?:\.\d+)?)(?:\s|"|`)/);
     if (h) { height = parseFloat(h[1]) * 4; from = `h-${h[1]}`; }
+    // ⚠ THE ARBITRARY-VALUE FORM WAS A HOLE, AND A REAL CONTROL FELL THROUGH IT (2026-09-01).
+    // The skip-test above already recognises `min-h-[44px]`+ as PASSING, but nothing below ever
+    // derived a height from `min-h-[Npx]`. So a control written `min-h-[38px]` — the /portal/submit
+    // step pills, four of them, on the surface where a client spends a credit — was neither
+    // admitted nor measured: `height` stayed null and `height !== null` dropped it silently. The
+    // sweep that reported KNOWN_SMALL_TARGETS empty had never looked at them.
+    // Rule 14 again: the instrument must prove it LOOKED. A form it half-knows is worse than one it
+    // does not know at all, because the half it knows makes the blind half look covered.
+    else if (/min-h-\[/.test(tag)) {
+      // The boundary accepts a QUOTE as well as whitespace: `className="min-h-[38px] …"`
+      // puts the class first, and requiring \s ahead of it would miss exactly that spelling.
+      const mh = tag.match(/(?:^|[\s"'`])min-h-\[(\d+(?:\.\d+)?)px\]/);
+      if (mh) { height = parseFloat(mh[1]); from = `min-h-[${mh[1]}px]`; }
+    }
     else {
-      const py = tag.match(/(?:^|\s)py-(\d+(?:\.\d+)?)(?:\s|"|`)/);
+      const py = tag.match(/(?:^|[\s"'`])py-(\d+(?:\.\d+)?)(?:\s|"|`)/);
       // py-N top and bottom, plus a ~20px line box for the 13–15px text these controls carry.
       if (py) { height = parseFloat(py[1]) * 8 + 20; from = `py-${py[1]} + line box`; }
     }
