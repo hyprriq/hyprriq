@@ -266,11 +266,32 @@ p {
   text-wrap: pretty;
 }
 
-/* Visible focus ring on every interactive element (WCAG 2.1 AA + 1.4.11). */
+/* Visible focus ring on every interactive element (WCAG 2.1 AA + 1.4.11).
+
+   ⚠ THE RING IS NARROWER AND TIGHTER BELOW md, AND IT IS STILL AN ACCESSIBILITY CONTROL
+   (founder-ruled 2026-09-01, on their own earlier spec: "that was my spec and it is wrong at this
+   width"). 3px at 3px offset bleeds SIX PIXELS past the control on every side — twelve across a
+   field. In a phone-width form stack, where /portal/submit puts a label ~6px above an input and
+   `.field-help` prose ~4px below it, the ring lands ON both. It reads as a rendering fault rather
+   than as focus, which is the opposite of what a focus indicator is for.
+
+   2px at 2px offset is FOUR pixels of bleed — half — and it still satisfies WCAG 2.2 SC 2.4.13,
+   whose floor is a 2px-thick perimeter. Nothing here weakens the CONTRAST, which is the part that
+   carries visibility: --color-focus is unchanged, and the ring is unchanged from 768px up.
+
+   ⛔ DO NOT REMOVE THE RING AT ANY WIDTH to solve a crowding complaint. The lever is thickness
+   and offset, never presence. */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
   border-radius: 6px;
+}
+
+@media (min-width: 768px) {
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline-width: 3px;
+    outline-offset: 3px;
+  }
 }
 
 /* Numeric / case-id figures align in tables */
