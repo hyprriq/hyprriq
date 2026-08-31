@@ -12,7 +12,15 @@ export default async function GuidesPage() {
   return (
     <PortalShell client={client} active="guides" title="How-to Guides">
       <div className="mx-auto max-w-2xl">
-        <h2 className="font-display text-2xl font-bold tracking-tight text-ink">Get more from every report</h2>
+        {/* ⚠ text-lg, NOT text-2xl (founder-reported 2026-09-01 as "noticeably more top padding
+            than sibling pages"). MEASURED, and IT IS NOT PADDING AND NOT THE SHELL: the content
+            container reports padding-top 20px and first ink at exactly 20px on guides, help,
+            dashboard and support alike. What differed was the INTRO HEADING'S RUNG. This page set
+            it at 24px — the PAGE-TITLE rung, which AppHeader is already using for "How-to Guides"
+            one line above. Two 24px serif lines stacked read as a taller, emptier block; that is
+            the space the founder saw. 18px matches /portal/help, the nearest sibling and the other
+            content-index page, and puts the intro a clear step below the title that governs it. */}
+        <h2 className="font-display text-lg font-bold tracking-tight text-ink">Get more from every report</h2>
         <p className="mt-1 text-sm text-ink-2">
           Short, practical guides. This section will grow — the entries below are the launch set.
         </p>
