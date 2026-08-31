@@ -203,26 +203,53 @@ function Sidebar({ client, active, access }: { client: Client; active: PortalNav
 
 // ACTIONS ONLY (2026-08-24): the page title moved into the shared AppHeader, which portal and
 // admin both render. This contributes the right-hand slot and nothing else.
+//
+// ── THE HEADER'S RIGHT-HAND SLOT SPENDS THE TITLE'S WIDTH (founder-ruled 2026-09-01) ─────────
+//
+// The founder reported the "+ New" button on every portal page including /portal/submit, and that
+// it "eats header width on mobile". BOTH HALVES ARE THE SAME DEFECT, and the second was the larger
+// one. Measured at 360px: this slot took 134.5px, leaving the title 133.5px — and FOUR of the eight
+// portal titles need more than that. The button was not merely redundant on one page; it was
+// truncating page titles on all of them.
+//
+// TWO RULES, and they are separate on purpose:
+//
+//  1. HIDDEN ON THE PAGE IT NAVIGATES TO. The founder's own lean, adopted. Keyed on the ACTIVE NAV
+//     KEY, not on a pathname — the shell already receives `active`, so the rule cannot drift from
+//     the nav, and moving /portal/submit's URL cannot silently un-hide the button.
+//  2. ICON-ONLY BELOW sm, at a full 44×44. This is what actually returns the width: 78.5px → 44px,
+//     handing 34.5px back to the title. With it, ALL EIGHT titles fit whole at 360px — measured,
+//     including "Support & Escalation" at 168px into 167.7px+ of room.
+//
+// ⚠ IT STAYS A 44px SQUARE, NEVER A SNUG ICON. `px-3` around a 16px glyph measures 38px, which is
+// under the locked tap floor. The size is `h-11 w-11`, stated explicitly, not inferred from padding.
+//
+// ⛔ THE CTA IS NOT REMOVED ON MOBILE, ONLY RELABELLED. Dropping it outright would have bought the
+// same 90px, and it was rejected: the sidebar's "New Case" is behind a drawer, and this is the one
+// action the whole product exists to get a client to take. An aria-label carries the name the
+// visible text no longer does.
 function TopbarActions({
   client,
   access,
   showSwitcher,
+  active,
 }: {
   client: Client;
   access: Access;
   showSwitcher: boolean;
+  active: PortalNavKey;
 }) {
   const initial = (client.full_name || client.email || "?").charAt(0).toUpperCase();
   return (
     <>
-        {access.canSubmit && (
+        {access.canSubmit && active !== "new" && (
           <Link
             href="/portal/submit"
-            className="min-h-11 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-brand-hover"
+            aria-label="New research"
+            className="inline-flex h-11 min-h-11 w-11 items-center justify-center gap-1.5 rounded-lg bg-brand text-[14px] font-semibold text-white transition-colors hover:bg-brand-hover sm:w-auto sm:px-3.5"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
             <span className="hidden sm:inline">New Research</span>
-            <span className="sm:hidden">New</span>
           </Link>
         )}
         <UserMenu
@@ -275,7 +302,7 @@ export async function PortalShell({
     <ShellChrome
       sidebar={<Sidebar client={client} active={active} access={access} />}
       title={title}
-      actions={<TopbarActions client={client} access={access} showSwitcher={showSwitcher} />}
+      actions={<TopbarActions client={client} access={access} showSwitcher={showSwitcher} active={active} />}
     >
       {/* Invite-grant attach (2026-08-21): plan-less accounts only — consumes the parked invite
           cookie via the attach route and makes every outcome VISIBLE (silent grant loss was the
