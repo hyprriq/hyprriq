@@ -37,7 +37,24 @@ export function AppHeader({
       style={{ height: APP_SHELL_TOP }}
     >
       {leading}
-      <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight text-ink">
+      {/* ⛔ THE TITLE MUST NEVER CHANGE THE BAR'S HEIGHT (founder-reported 2026-09-01:
+          "Support & Escalation" broke over two lines and pushed the bar out of alignment with
+          every other page). TWO THINGS make that true, and both are needed:
+
+          1. `truncate` — which DID NOTHING here until 2026-09-01. globals.css carried
+             `h1, h2 { text-wrap: balance }` UNLAYERED; `text-wrap` is shorthand for
+             `text-wrap-mode` + `text-wrap-style`, and `white-space: nowrap` (what `truncate`
+             emits) is itself shorthand for `text-wrap-mode: nowrap`. Unlayered beats every
+             layered utility, so `balance` reset the mode to `wrap` and the title wrapped with
+             `truncate` written right there on it. That declaration is now in @layer base.
+          2. `text-xl` below sm — because truncation is the BACKSTOP, not the plan. Measured at
+             360px: FOUR of the eight portal titles overflowed at 24px, including "How-to Guides"
+             by 11.5px. At 20px, with the header's own action row trimmed, all eight fit whole.
+
+          ⚠ THE TITLE'S WIDTH IS NOT ITS OWN. It is whatever the actions slot leaves, so any
+          control added to the right shortens every page title on every phone. Measure before
+          adding one — see the note in portal-shell.tsx's TopbarActions. */}
+      <h1 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
         {title}
       </h1>
       {actions && <div className="ml-auto flex shrink-0 items-center gap-3">{actions}</div>}

@@ -173,7 +173,6 @@ h2 {
   font-weight: 500;
   letter-spacing: -0.022em;
   line-height: 1.06;
-  text-wrap: balance;
 }
 
 h3,
@@ -181,7 +180,33 @@ h4 {
   font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.25;
-  text-wrap: balance;
+}
+
+/* ⛔ `text-wrap: balance` IS LAYERED AND THE OTHERS ARE NOT. THIS IS NOT AN OVERSIGHT.
+   It is the SAME defect the type-scale comment below describes, in the block that comment sits
+   under — that fix wrapped the sizes and left this declaration unlayered, where it survived.
+
+   `text-wrap` IS A SHORTHAND for `text-wrap-mode` + `text-wrap-style`, and Tailwind's `truncate`
+   emits `white-space: nowrap`, which is itself shorthand for `text-wrap-mode: nowrap`. Unlayered
+   beats every layered utility, so `balance` reset the mode back to `wrap` and TRUNCATE DID
+   NOTHING ON ANY h1–h4 IN THE PRODUCT. Measured 2026-09-01 on a real stylesheet: an
+   `<h1 class="truncate">` in a 200px box rendered 50.9px over two lines; the identical `<div>`
+   rendered 32px on one. That is the shared AppHeader losing its height whenever a page title is
+   long — "Support & Escalation" over two lines, the bar out of line with every other page.
+
+   ONLY THIS DECLARATION MOVES. The weights stay unlayered deliberately: `font-weight: 500` is
+   also beating `font-bold`/`font-semibold` on 42 headings, and correcting that would restyle the
+   product on a layout-bug commit. It is recorded, not silently fixed.
+
+   Layered in `base`, Tailwind's `utilities` layer wins where a utility is written, and every
+   heading that writes none still balances exactly as before. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
 }
 
 /* ── THE RULED TYPE SCALE, as ELEMENT defaults ────────────────────────────────────────────────
