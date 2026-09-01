@@ -4,6 +4,7 @@ import type {
   SourcingLogicOutput, SourcingContradictionRecord,
 } from "@/lib/research/contracts";
 import { SOURCING_CONTRADICTION_CONTRACT_VERSION } from "@/lib/research/contracts";
+import { sourcingClientSummary } from "@/lib/research/sourcingLogicSummary";
 import { weightFor } from "@/lib/research/weights";
 import type { TrackKey } from "@/lib/constants/tracks";
 
@@ -151,10 +152,25 @@ export async function runTrack5(ctx: TrackContext): Promise<TrackOutput> {
         ? { assessment: "insufficient_data", basis: `fewer than two scored dimensions available for arbitration (${signalList || "none"})` }
         : { assessment: "consistent", basis: `no cross-dimension contradictions over [${signalList}]` };
 
+  // ── WHAT THE CLIENT READS (founder-ruled 2026-09-01) ─────────────────────────────────
+  // "When it finds no contradictions that is a RESULT, not an absence." Previously the client saw
+  // only the scope note, so a track that RAN and found nothing rendered as an empty section.
+  //
+  // ⚠ comparability is computed from the SAME inputs the detectors used, not re-derived from the
+  // conclusion — `contradictions.length === 0` cannot tell "compared and clear" from "nothing to
+  // compare", and on the case that exposed this it was the latter.
+  const comparability = {
+    documentsToCompare: doc4Positive.length > 0,
+    opposingSignals: passRows.length > 0 && hardRows.length > 0,
+  };
+  const client_summary = sourcingClientSummary(scenario_coherence.assessment, comparability);
+
   const sourcing_logic: SourcingLogicOutput = {
     contract_version: SOURCING_CONTRADICTION_CONTRACT_VERSION,
     flags, b2b_archetype_flag, b2b_brands,
     scenario_coherence,
+    comparability,
+    client_summary,
     contradiction_count: contradictions.length,
     contradictions,
   };

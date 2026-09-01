@@ -139,6 +139,11 @@ export interface SourcingLogicOutput {
   b2b_archetype_flag: boolean;
   b2b_brands: string[];
   scenario_coherence: { assessment: "consistent" | "tension" | "insufficient_data"; basis: string };
+  /** What the two detectors had to work with — see lib/research/sourcingLogicSummary.ts.
+   *  OPTIONAL because the 15 cases delivered before 2026-09-01 have no such field. */
+  comparability?: { documentsToCompare: boolean; opposingSignals: boolean };
+  /** The client-visible RESULT sentence. Optional for the same backward reason. */
+  client_summary?: string;
   contradiction_count: number;
   contradictions: SourcingContradictionRecord[];
 }

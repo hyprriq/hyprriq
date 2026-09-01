@@ -409,7 +409,26 @@ export function projectFindingJsonForClient(
 ): Record<string, unknown> {
   const projected: Record<string, unknown> = {};
   for (const k of FINDING_CLIENT_ALLOWLIST) if (k in cf) projected[k] = cf[k];
-  if (trackKey === "sourcing_logic" && "summary" in projected) projected.summary = SOURCING_NEUTRAL_SUMMARY;
+  // ── TRACK 5's CLIENT SENTENCE (founder-ruled 2026-09-01) ─────────────────────────────
+  //
+  // ⚠ THIS LINE IS WHY THE SECTION RENDERED EMPTY. It overwrote whatever track 5 wrote with the
+  // scope note, so a track that RAN and found nothing printed a heading, "Informational", and no
+  // content. The founder's ruling: a clean consistency check is a RESULT and must say so.
+  //
+  // The sentence is now taken from track 5's own deterministic `client_summary`, which is
+  // code-templated from what the detectors actually compared (never model prose, so it reproduces
+  // on replay and carries no method vocabulary).
+  //
+  // ⛔ THE CONSTANT REMAINS THE FALLBACK, AND IT MUST. The 15 cases delivered before 2026-09-01
+  // have no `client_summary` in their stored rows; re-rendering one of those PDFs must not produce
+  // an empty section or a crash. Absent field → the old scope note, exactly as they shipped.
+  if (trackKey === "sourcing_logic" && "summary" in projected) {
+    const sl = (cf.sourcing_logic ?? null) as { client_summary?: unknown } | null;
+    const written = typeof sl?.client_summary === "string" && sl.client_summary.trim()
+      ? sl.client_summary
+      : null;
+    projected.summary = written ?? SOURCING_NEUTRAL_SUMMARY;
+  }
   if (trackKey === "category_compliance") {
     const cc = projectCategoryComplianceForClient(cf.category_compliance);
     // Absent or unusable → the key simply does not appear. The renderer must treat a missing
