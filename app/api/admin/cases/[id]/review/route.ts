@@ -24,18 +24,12 @@ import { REPORT_PDF_EVENT, type ReportPdfEvent } from "@/lib/inngest/events";
 const VALID_VERDICTS = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"];
 type Action = "publish" | "override" | "request_investigation";
 
-async function isAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return !!data && data.role !== "client";
-}
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!(await isAdmin(userId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const { id } = await params;
   let body: { action?: Action; override_verdict?: string; reason?: string; notes?: string } = {};
@@ -49,9 +43,30 @@ export async function POST(
   if (action !== "publish" && action !== "override" && action !== "request_investigation") {
     return NextResponse.json({ error: "invalid_action" }, { status: 400 });
   }
-  // ADMIN BATCH — capability layer over the legacy isAdmin gate: publish/override need
-  // review_publish; the re-run action needs rerun. (Transitional founder role passes both.)
-  // CLIENT PARTITIONING (2026-08-02): scoped operators only review assigned clients' cases.
+  // ── AUTHORISATION — getOperator IS THE ONE NOTION (defect fixed 2026-09-01) ───────────────
+  //
+  // ⛔ THIS ROUTE USED TO OPEN WITH A SECOND, LEGACY GATE that read `clients.role` directly and
+  // refused anything whose clients row said "client". IT 403'd THE SUPER ADMIN, and publish is the
+  // only step between a finished case and a client receiving it, so it blocked the product.
+  //
+  // WHY IT REFUSED, and it was never about capabilities: the founder's own identity ruling says
+  // "roles live on their OWN identities — never on client rows". admin_permissions therefore
+  // carries role=super_admin, and the clients row correctly says role=client. The legacy gate read
+  // the wrong table, so the MORE correct the data was, the harder it refused.
+  //
+  // ⚠ AND IT PASSED FOR YEARS ON AN ACCIDENT. The identity that published every case through this
+  // route (9 of them, 2026-06-20 to 2026-08-20) is an OLDER Clerk user whose clients row still
+  // holds the pre-ruling role='founder'. A second identity for the SAME PERSON, created under the
+  // ruling, could never publish. The route did not break on 24 August; it only ever worked for a
+  // row shape the ruling forbids creating again.
+  //
+  // getOperator() reads admin_permissions AND already carries the legacy clients.role fallback
+  // inside it, so nothing is lost by deleting the duplicate — the notions go from two to one, the
+  // fix the dev tools took on 2026-07-30 and this route missed.
+  //
+  // What still refuses, and is strictly stronger than what was removed: publish/override need the
+  // review_publish capability, re-run needs rerun, and a scoped operator only reaches assigned
+  // clients' cases. A non-operator gets op=null, and can(null, …) is false.
   {
     const op = await getOperator(userId);
     const needed = action === "request_investigation" ? "rerun" : "review_publish";

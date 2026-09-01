@@ -21,8 +21,10 @@ const MAX = 8000;
 
 async function guard(userId: string | null, id: string) {
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  if (!data || data.role === "client") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  // ⛔ NO clients.role GATE HERE. It was removed 2026-09-01 with the one on the review route,
+  // which 403'd the super admin: the identity ruling puts roles on admin_permissions and leaves
+  // the clients row saying "client", so a legacy gate reading that table refuses the very operator
+  // it exists to admit. getOperator() is the one notion and carries the legacy fallback itself.
   const op = await getOperator(userId);
   if (!can(op, "review_publish")) return NextResponse.json({ error: "forbidden: requires review_publish" }, { status: 403 });
   if (!(await caseInScope(op, id))) return NextResponse.json({ error: "forbidden" }, { status: 403 });

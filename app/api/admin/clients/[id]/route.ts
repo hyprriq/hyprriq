@@ -19,10 +19,15 @@ import { getOperator } from "@/lib/auth/permissions";
 async function getActor(userId: string): Promise<{ role: string } | null> {
   // ADMIN ACCESS FIX (2026-07-30): operator identities (admin_permissions, possibly no clients
   // row) act as elevated here too — pages and APIs can never disagree.
+  //
+  // THE clients.role FALLBACK WAS DELETED 2026-09-01, and it was pure duplication: getOperator()
+  // ALREADY contains that fallback (role='founder' → super_admin, role='admin' → sub_user), so
+  // this second copy could only ever agree with it or drift from it. On the review route the same
+  // duplicated read was not a fallback but a PRE-gate, and it 403'd the super admin. Removing it
+  // everywhere is what makes the lock absolute: no admin route reads the CALLER's role off
+  // `clients`. Reading a TARGET's role, further down, is a different question and stays.
   const op = await getOperator(userId);
-  if (op) return { role: op.role };
-  const { data } = await supabaseAdmin.from("clients").select("role").eq("id", userId).maybeSingle();
-  return data ?? null;
+  return op ? { role: op.role } : null;
 }
 
 export async function DELETE(

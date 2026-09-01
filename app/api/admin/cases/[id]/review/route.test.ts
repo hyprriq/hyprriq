@@ -18,7 +18,14 @@ const { auth, caseMaybeSingle, roleMaybeSingle, casesUpdate, casesNot, casesEq, 
   return {
     auth: vi.fn().mockResolvedValue({ userId: "admin_1" }),
     caseMaybeSingle: vi.fn(),
-    roleMaybeSingle: vi.fn().mockResolvedValue({ data: { role: "admin" } }),
+    // ⚠ THE PRODUCTION SHAPE, role "client", AND THAT IS THE POINT (changed 2026-09-01).
+    // This mock used to return { role: "admin" } — fabricating a clients row the real super admin
+    // does not have and cannot have, because the identity ruling puts operator roles in
+    // admin_permissions and leaves the clients row a plain client. The route had a legacy gate
+    // reading THIS table, so the mock supplied the one value that made it pass: the suite stayed
+    // green while production returned 403 on publish. The gate is gone; the mock now carries the
+    // real shape, so these tests fail if anything ever gates on clients.role here again.
+    roleMaybeSingle: vi.fn().mockResolvedValue({ data: { role: "client" } }),
     casesUpdate: vi.fn(() => chain),
     casesNot, casesEq,
     auditInsert: vi.fn().mockResolvedValue({ error: null }),
