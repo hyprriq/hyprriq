@@ -82,6 +82,18 @@ export const CLIENT_SUMMARY_INSTRUCTION = [
   "not a finding against the supplier. Say it plainly and move on.",
   "If you have nothing to say for this area, return a single honest sentence saying so. NEVER leave",
   "client_summary empty and NEVER copy reasoning_notes into it.",
+  // ── MARKETPLACE-GATING VOCABULARY (founder-ruled 2026-09-01) ────────────────────────
+  // "ungating" reached a client in AWI-2608-045, inside a sentence the founder judged CORRECT.
+  // The ruling was about the word, not the sentence: it is PROMISE-SHAPED — "a refused client
+  // quotes the word, never the careful clause around it" — and it is the MARKETPLACE's vocabulary
+  // rather than ours. We assess suppliers; we never speak to marketplace decisions.
+  // Measured across delivered prose: present in 4 of 15 cases, every one allowed by the previous
+  // ruling. The gate now blocks it, so this instruction is what keeps the pipeline from walking
+  // into that block on roughly a quarter of cases.
+  "MARKETPLACE-GATING VOCABULARY: never write 'ungating', 'ungated', or 'get ungated' in prose a",
+  "client reads. It is the marketplace's word and it reads as a promise about a decision we do not",
+  "make. Say the underlying fact instead: what the brand requires before it will supply a reseller,",
+  "or what the record does and does not show about a distribution relationship.",
 ].join("\n");
 
 /** The JSON key list fragment — kept beside the instruction so the two can never drift apart. */

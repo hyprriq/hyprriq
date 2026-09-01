@@ -92,23 +92,45 @@ function makeVerdictGuard(re: RegExp): (text: string) => boolean {
   };
 }
 
-// ── GATE RULING 2026-08-16 (#4): ungating splits SERVICE from SUBJECT-MATTER. Blocking only
-// the service-offer shape (our subject or an offer verb before "ungat", or "ungating service");
-// descriptive gating-state vocabulary ("ungated resale", reported "Amazon ungating alone is
-// insufficient") is the product's subject matter and passes. The mandated service DENIAL
-// ("We do not provide ungating services") stays passing via the in-sentence negation check. ──
-function hasUngatingServiceClaim(text: string): boolean {
+// ── GATE RULING 2026-09-01 (SUPERSEDES 2026-08-16 #4): the WORD goes, not just the offer ─────
+//
+// THE 2026-08-16 RULING split SERVICE from SUBJECT-MATTER: only an offer shape ("we provide
+// ungating services") blocked, while descriptive gating vocabulary passed as the product's subject
+// matter. THAT RULING WORKED AS WRITTEN AND IS NOW NARROWED, not repaired.
+//
+// WHY IT CHANGED. "ungating" reached a client in the first real delivered report (AWI-2608-045),
+// inside a sentence the founder read and judged CORRECT. The ruling is about the word regardless:
+//
+//   "It is promise-shaped — a refused client quotes the word, never the careful clause around it —
+//    and it is the marketplace's vocabulary rather than ours. We assess suppliers; we never speak
+//    to marketplace decisions."
+//
+// ⚠ THE MEASURED COST, STATED SO NOBODY DISCOVERS IT AT A PUBLISH. Across the 15 delivered cases,
+// the word appears in FOUR — every one previously allowed. Blocking it means roughly a quarter of
+// cases would stop at the gate for an operator reword. The prompts were changed in the same commit
+// (clientSummary.prompt.ts and synthesisCallC.prompt.ts) so the pipeline stops PRODUCING it rather
+// than being blocked by it; this rule is the backstop for when that instruction is not obeyed.
+//
+// ⛔ THE MANDATED DENIALS STILL PASS, and that is what the negation check is for: "We do not
+// provide ungating services" and "we don't ungate brands" are REQUIRED language on the marketing
+// surface and must never be blocked by the rule that bans the claim.
+// ⚠ NO REGEX HERE, AND THAT IS DELIBERATE (standing rule 11). The first version of this check
+// used word boundaries; they were stripped in transit, leaving /(?:not|...|no)/i, which matches
+// "no" INSIDE other words and would have silently made the negation escape hatch fire almost
+// always — gutting the rule while looking like it worked. Word-set membership cannot fail that way.
+const UNGATING_NEGATIONS = new Set([
+  "not", "no", "never", "cannot", "dont", "doesnt", "wont", "cant",
+  "don't", "doesn't", "won't", "can't", "does", "do",
+]);
+function hasUngatingLanguage(text: string): boolean {
   const re = /ungat/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     const start = sentenceStartIndex(text, m.index);
-    const beforeInSentence = text.slice(start, m.index);
-    const serviceShape =
-      /\b(?:we|our|hyprriq)\b[^.?!]*$/i.test(beforeInSentence) ||
-      /\b(?:provide|offer|sell|perform|promise|handle|guarantee)\w*\s+(?:\w+\s+)?$/i.test(beforeInSentence) ||
-      /^ing\s+services?\b/i.test(text.slice(m.index + 5, m.index + 19));
-    if (!serviceShape) continue;
-    if (/\b(?:not|don'?t|does\s+not|doesn'?t|never|won'?t|no)\b/i.test(beforeInSentence)) continue;
+    const before = text.slice(start, m.index).toLowerCase();
+    // A denial earlier in the SAME sentence is mandated copy ("we do not provide ungating services").
+    const words = before.split(/[^a-z']+/).filter(Boolean);
+    if (words.some((w) => UNGATING_NEGATIONS.has(w))) continue;
     return true;
   }
   return false;
@@ -168,10 +190,11 @@ function hasUnnegatedConfirmAuth(text: string): boolean {
 // CONSTRUCTION: "Verify Before Purchase" carries no recommendation verb, "Do Not Rely" keeps
 // "rely" deliberately OUT of H10's verb alternation. Two-sided fixtures name both.
 // (H1's 2026-07-24 any-voice ungating guard retired by the 2026-08-16 ruling — replaced by
-// hasUngatingServiceClaim above: service-offer shapes block, subject-matter vocabulary passes.)
+// hasUngatingLanguage above. The 2026-08-16 service/subject split was NARROWED on 2026-09-01:
+// the word itself blocks in client prose; only mandated denials pass.)
 
 const HARD: Rule[] = [
-  { re: /ungat/i, label: "ungating", test: hasUngatingServiceClaim },                           // H1 — RULING 2026-08-16: service-offer shape only; subject-matter gating vocabulary passes
+  { re: /ungat/i, label: "ungating", test: hasUngatingLanguage },                               // H1 — RULING 2026-09-01: the WORD blocks in client prose; mandated denials pass via negation
   { re: /\bguarantee/i, label: "guarantee", test: hasUnnegatedGuarantee },                      // H2 — HARD even attributed (founder ruling); negation-aware (mandated disclaimers pass)
   // H3 — the PROMISE forms only ("account is safe", "we ensure account safety"). The bare noun
   // "account safety" appears in the MANDATED disclaimer's denial list and must not match — hence
@@ -289,3 +312,20 @@ export const scanFindingsForBannedLanguage = walkWith(scanHard);
 
 // Admin review: walk a jsonb blob with the ASSERTION tier — advisories, never blocking here.
 export const assertionAdvisories = walkWith(scanAssertion);
+
+// ── THE PATTERNS, EXPOSED READ-ONLY FOR MEASUREMENT (2026-09-01) ─────────────────────────────
+//
+// scripts/banned-language-corpus.ts sweeps DELIVERED prose with each rule's BARE pattern and the
+// refinement (`test`) switched OFF, then subtracts what the gate actually raised. The difference is
+// the CARVE-OUT SURFACE: vocabulary that shipped to a client because a ruling permits it.
+//
+// ⚠ EXPORTED SO THE SWEEP CANNOT DRIFT FROM THE RULES. Re-listing these patterns in the script
+// would be a second copy of the one thing that must have a single definition — the scanner/locator
+// drift class this file's own history is made of. The sweep reads the live arrays or it reads
+// nothing.
+//
+// ⛔ THIS IS NOT A BYPASS. `test` is what makes a rule correct; measurement deliberately looks
+// underneath it, and the script says so in both directions. Nothing here changes what blocks.
+export type BannedRule = Readonly<{ re: RegExp; label: string }>;
+export const HARD_PATTERNS: readonly BannedRule[] = HARD.map(({ re, label }) => ({ re, label }));
+export const ASSERTION_PATTERNS: readonly BannedRule[] = ASSERTION.map(({ re, label }) => ({ re, label }));

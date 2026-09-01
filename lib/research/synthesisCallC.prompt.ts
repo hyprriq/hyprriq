@@ -66,6 +66,13 @@ export function buildCallCPrompt(
     "equivalent for any marketplace) in any field, in any shell INCLUDING QUESTIONS — the platform never confirms or",
     "denies marketplace approval. Ask about the underlying fact instead: whether the brand gates the marketplace,",
     "what documentation the brand requires for marketplace listings, whether a Letter of Authorization exists.",
+    // 2026-09-01: the SAME family as the rule above, simply never named. "ungating" reached a client
+    // in AWI-2608-045 via leading_interpretation and a vendor question. Founder ruling: the word is
+    // promise-shaped and belongs to the marketplace, not to us.
+    "MARKETPLACE-GATING VOCABULARY (same word rule): never write 'ungating', 'ungated' or 'get ungated' in any",
+    "field, in any shell INCLUDING QUESTIONS. It names a marketplace decision we neither make nor predict. Ask or",
+    "state the underlying fact instead: what the brand requires of a reseller before it will supply them, or what",
+    "the record shows about the distribution relationship.",
     "CORROBORATION VOCABULARY (same word rule): never write 'corroborate', 'corroborated', 'corroboration' in any",
     "field. Naming a source is fine ('the state registry lists…'); describing sources agreeing with each other, or",
     "how many did, is not. Say what the record shows or does not show.",

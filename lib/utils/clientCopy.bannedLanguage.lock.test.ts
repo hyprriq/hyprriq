@@ -102,6 +102,14 @@ const PENDING_REFUSAL_REVIEW: { text: string; why: string }[] = [
     why: "H3 account safe — the /faq QUESTION whose answer is 'No.' The rule cannot see that the sentence is interrogative, let alone that the answer beneath it refuses the claim outright.",
   },
   {
+    text: "Will this get me ungated?",
+    why: "H1 ungating — the /faq QUESTION whose answer refuses it, exactly the precedent set by 'Will this keep my Amazon account safe?' above. The 2026-09-01 narrowing blocks the WORD in client prose; the scanner cannot see that this literal is interrogative, nor that the answer beneath it says no. The page exists to refuse the service and must be able to name what it refuses.",
+  },
+  {
+    text: "The promises this product refuses to make",
+    why: "H1 ungating — /what-we-dont-do names the three refused promises in a list ('ungating, authorization, account safety'). 'refuses' is a denial the sentence-scoped negation check does not model, and widening the check to verbs like 'refuses' would weaken it for REPORT prose, where a supplier sentence could easily contain that word. The exemption is recorded here instead, on the static surface only.",
+  },
+  {
     // The offender line truncates the literal at 80 characters, so an exemption must be matched on
     // the literal's OPENING, not on the clause that trips the rule. The tripping clause is
     // "We do not sell your data and we do not tell suppliers they were checked."

@@ -142,3 +142,57 @@ describe("H3 account-safe — disclaimer-safe boundary", () => {
     expect(scanHard("we ensure your account safety").length).toBeGreaterThan(0);
   });
 });
+
+// ── H1 UNGATING — NARROWED 2026-09-01, AND BOTH DIRECTIONS ARE LOCKED THIS TIME ──────────────
+//
+// ⚠ THE 2026-08-16 RULING HAD NO TEST FOR THE HALF IT INTRODUCED. It split SERVICE from
+// SUBJECT-MATTER so that descriptive gating vocabulary would PASS — and only the blocking side was
+// ever asserted ("ungating service", "we can help with ungating"). The permissive branch, which is
+// what the ruling actually changed, was never locked. That is why narrowing it on 2026-09-01 broke
+// nothing: there was nothing to break. A ruling that changes behaviour and locks only the half that
+// already worked leaves its real content unguarded.
+//
+// The 2026-09-01 ruling: the WORD goes from client prose. "It is promise-shaped — a refused client
+// quotes the word, never the careful clause around it — and it is the marketplace's vocabulary
+// rather than ours."
+describe("H1 ungating — the word blocks; mandated denials pass", () => {
+  // THE SENTENCE THAT PROMPTED THE RULING, from AWI-2608-045 page 8. The founder judged it correct
+  // and ruled the word out anyway, so it must block — this is the regression that matters.
+  it("blocks the delivered sentence that started this", () => {
+    const shipped =
+      "The record carries a residual question about whether the Mattel portal listing reflects " +
+      "active authorized-distributor standing sufficient for marketplace ungating purposes.";
+    expect(scanHard(shipped)).toContain("ungating");
+  });
+
+  it("blocks the descriptive forms the previous ruling allowed", () => {
+    // Each of these PASSED before 2026-09-01. Locking them is the whole point of the change.
+    for (const s of [
+      "Amazon ungating alone is insufficient for this brand.",
+      "Sellers report ungating friction on this brand.",
+      "invoice requirements have been found insufficient for ungating",
+      "a date within the period Amazon requires for ungating",
+      "the category is ungated for most sellers",
+    ]) {
+      expect(scanHard(s), `should block: ${s}`).toContain("ungating");
+    }
+  });
+
+  it("the mandated DENIALS still pass — the copy this rule must never break", () => {
+    for (const s of [
+      "We do not provide ungating services.",
+      "We don't ungate brands and we don't guarantee approval.",
+      "This is not an ungating service.",
+      "We never promise ungating.",
+      "We cannot get you ungated.",
+    ]) {
+      expect(scanHard(s), `denial must pass: ${s}`).not.toContain("ungating");
+    }
+  });
+
+  it("the negation must be in the SAME sentence — a denial elsewhere does not clear it", () => {
+    // Without this, one disclaimer anywhere in a payload would license the word everywhere in it.
+    const two = "We do not provide ungating services. This supplier's paperwork is sufficient for ungating.";
+    expect(scanHard(two)).toContain("ungating");
+  });
+});

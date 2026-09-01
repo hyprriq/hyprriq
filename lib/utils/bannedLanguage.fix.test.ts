@@ -370,14 +370,17 @@ describe("BL fix — the H4 negation carve-out (BL4)", () => {
 // proving every ban still bites. Advisory: the demoted evidence-subject form must flag, not block.
 import { scanAssertion } from "./banned-language";
 
-describe("gate ruling 2026-08-16 — census corpus passes, real violations still block", () => {
+describe("gate rulings 2026-08-16 (+ 2026-09-01 ungating narrowing) — census corpus, real violations still block", () => {
   const CORPUS_MUST_PASS: [string, string][] = [
     ["#1 request-voice with e.g. abbreviation", "Can TD SYNNEX provide documentation (e.g., distributor agreement, vendor portal screenshot, or Lenovo partner portal confirmation) confirming its authorized distributor status for Lenovo in the specific geography?"],
     ["#3 fraud clearing", "No scam reports naming NVE Pharmaceuticals as a fraudulent vendor were found; src_1 and src_18 concern unrelated parties."],
     ["#3 fraud attribution (impersonation)", "The only negative signals are a low-volume Trustpilot score and third-party recruitment fraud impersonation - the latter concerns scammers posing AS TD SYNNEX, not TD SYNNEX itself."],
     ["#3 legitimacy inside a whether-question", "It is ambiguous whether the seller was a legitimate reseller or counterfeit."],
-    ["#4 ungating subject-matter (gating state)", "Broad resale is supported through authorized channels, but unauthorized or ungated marketplace resale faces friction."],
-    ["#4 ungating reported speech", "Multiple seller forum posts consistently report that the brand requires a brand-issued LOA and that Amazon ungating alone is insufficient."],
+    // ⚠ THE TWO #4 SUBJECT-MATTER SENTENCES MOVED TO MUST_BLOCK ON 2026-09-01. They are REAL
+    // corpus sentences and they passed correctly under the 2026-08-16 service/subject split. The
+    // founder narrowed that ruling after the word reached a client in AWI-2608-045: the word itself
+    // is promise-shaped and belongs to the marketplace, not to us. They are kept — moved, never
+    // deleted — so the census still carries the sentences and now records the opposite verdict.
     ["#4 mandated service denial still passes", "We do not provide ungating services."],
   ];
   it.each(CORPUS_MUST_PASS)("PASS %s", (_n, s) => expect(scanHard(s)).toEqual([]));
@@ -391,6 +394,9 @@ describe("gate ruling 2026-08-16 — census corpus passes, real violations still
     ["bare legitimacy verdict", "The supplier is legitimate."],
     ["ungating service offer", "We can handle ungating for your account."],
     ["ungating service noun", "Our package includes ungating services for restricted categories."],
+    // ── MOVED FROM CORPUS_MUST_PASS 2026-09-01 (ruling narrowed) ───────────────────────
+    ["#4 ungating subject-matter (was PASS until 2026-09-01)", "Broad resale is supported through authorized channels, but unauthorized or ungated marketplace resale faces friction."],
+    ["#4 ungating reported speech (was PASS until 2026-09-01)", "Multiple seller forum posts consistently report that the brand requires a brand-issued LOA and that Amazon ungating alone is insufficient."],
   ];
   it.each(MUST_BLOCK)("BLOCK %s", (_n, s) => expect(scanHard(s).length).toBeGreaterThan(0));
 
