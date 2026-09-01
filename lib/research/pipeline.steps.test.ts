@@ -347,7 +347,7 @@ describe("Track 5 — stageFindingTrack non_voting branch (never votes, never es
   const sourcingBlock = {
     contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"], b2b_archetype_flag: true, b2b_brands: ["Petzl"],
     scenario_coherence: { assessment: "consistent", basis: "signals agree" },
-    contradiction_count: 0, contradictions: [],
+    coherence_conflict_count: 0, coherence_conflicts: [],
   };
 
   it("non_voting → signal n_a (NOT the empty-set soft_fail floor), approved, not escalated, not failed", async () => {

@@ -4,6 +4,7 @@ import type {
 } from "@/lib/research/contracts";
 import type { TrackKey } from "@/lib/constants/tracks";
 import type { PlanType } from "@/lib/constants/plans";
+import { readCoherenceConflicts } from "@/lib/research/contracts";
 import { TRACK_REGISTRY } from "@/lib/research/pipeline.registry";
 import { assembleM1Record, type M1TrackInput } from "@/lib/research/m1Assembler";
 import { runCallA, type CallAModelFn } from "@/lib/research/synthesisCallA";
@@ -91,7 +92,12 @@ export async function runSynthesis(input: SynthesisRunInput): Promise<{ synthesi
   const m1Inputs: M1TrackInput[] = input.trackOutputs.map((output) => ({ output }));
   const record = assembleM1Record(m1Inputs, input.identity);
   const dimensionRunRecord = deriveDimensionRunRecord(input.planType, input.trackOutputs);
-  const track5Records = input.trackOutputs.find((o) => o.track_key === "sourcing_logic")?.sourcing_logic?.contradictions ?? [];
+  // ⚠ TOLERANT READ, and this is the ONLY consumer of these records. Track 5's container field was
+  // renamed to `coherence_conflicts` on 2026-09-01; rows written before that hold `contradictions`
+  // and are frozen delivered artifacts, never migrated. readCoherenceConflicts accepts both.
+  const track5Records = readCoherenceConflicts(
+    input.trackOutputs.find((o) => o.track_key === "sourcing_logic")?.sourcing_logic,
+  );
   const trackQuestions = input.trackOutputs.flatMap((o) => (o.questions_to_ask ?? []).map((q) => q.question));
 
   // CALL A — M2 + M3, code-certified (firewall-wins, pairing, dangling drops, the roster lock).

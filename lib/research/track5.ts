@@ -3,7 +3,7 @@ import type {
   TrackContext, TrackOutput, EvidenceItem,
   SourcingLogicOutput, SourcingContradictionRecord,
 } from "@/lib/research/contracts";
-import { SOURCING_CONTRADICTION_CONTRACT_VERSION } from "@/lib/research/contracts";
+import { SOURCING_CONTRADICTION_CONTRACT_VERSION, SOURCING_LOGIC_CONTAINER_VERSION } from "@/lib/research/contracts";
 import { sourcingClientSummary } from "@/lib/research/sourcingLogicSummary";
 import { weightFor } from "@/lib/research/weights";
 import type { TrackKey } from "@/lib/constants/tracks";
@@ -167,12 +167,16 @@ export async function runTrack5(ctx: TrackContext): Promise<TrackOutput> {
 
   const sourcing_logic: SourcingLogicOutput = {
     contract_version: SOURCING_CONTRADICTION_CONTRACT_VERSION,
+    container_version: SOURCING_LOGIC_CONTAINER_VERSION,
     flags, b2b_archetype_flag, b2b_brands,
     scenario_coherence,
     comparability,
     client_summary,
-    contradiction_count: contradictions.length,
-    contradictions,
+    // RENAMED 2026-09-01 — see the note on SourcingLogicOutput. The local variable keeps the
+    // detectors' own word (each record IS a contradiction in the m4c sense); the FIELD is what
+    // stopped colliding with Module 4's verdict-bearing set.
+    coherence_conflict_count: contradictions.length,
+    coherence_conflicts: contradictions,
   };
 
   return {

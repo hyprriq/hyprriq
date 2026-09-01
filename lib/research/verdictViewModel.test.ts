@@ -61,8 +61,8 @@ describe("buildVerdictViewModel — Track 5 sourcing_logic", () => {
       sourcing_logic: {
         contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"], b2b_archetype_flag: true, b2b_brands: ["Petzl"],
         scenario_coherence: { assessment: "tension", basis: "contradiction detected" },
-        contradiction_count: 1,
-        contradictions: [{ contradiction_type: "cross_track_signal_divergence",
+        coherence_conflict_count: 1,
+        coherence_conflicts: [{ contradiction_type: "cross_track_signal_divergence",
           assertion_a: { track_key: "supplier_identity", statement: "a", evidence_ids: [] },
           assertion_b: { track_key: "brand_risk_assessment", statement: "b", evidence_ids: [] },
           interpretation: "divergent", risk_level: "medium", is_load_bearing: false }],
@@ -76,7 +76,7 @@ describe("buildVerdictViewModel — Track 5 sourcing_logic", () => {
     const track5 = vm.tracks.find((t) => t.track_number === 5)!;
     expect(track5.sourcing_logic?.flags).toContain("b2b_only_archetype");
     expect(track5.sourcing_logic?.scenario_coherence.assessment).toBe("tension");
-    expect(track5.sourcing_logic?.contradictions).toHaveLength(1);
+    expect(track5.sourcing_logic?.coherence_conflicts).toHaveLength(1);
     const track1 = vm.tracks.find((t) => t.track_number === 1)!;
     expect(track1.sourcing_logic ?? null).toBeNull();
   });

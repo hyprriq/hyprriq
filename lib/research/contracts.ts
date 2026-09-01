@@ -133,8 +133,23 @@ export interface SourcingContradictionRecord {
   // the record carries the raw tension, not the arbitration verdict.
   is_load_bearing: boolean;
 }
+// ── THE CONTAINER VERSION, WHICH IS NOT THE RECORD VERSION (founder-ruled 2026-09-01) ────────
+//
+// ⚠ TWO DIFFERENT THINGS ARE VERSIONED HERE AND CONFLATING THEM WOULD BE A LIE.
+//   · SOURCING_CONTRADICTION_CONTRACT_VERSION ("m4c-1.0.0") describes the RECORD shape, shared
+//     with Synthesis Module 4 and FROZEN. Nothing about it changed on 2026-09-01.
+//   · SOURCING_LOGIC_CONTAINER_VERSION describes the OBJECT THAT HOLDS those records, and that
+//     is what the 2026-09-01 rename moved.
+// Bumping the m4c version for a container rename would announce that the frozen record shape had
+// moved, which is exactly the claim the freeze exists to prevent. So the container gets its own.
+export const SOURCING_LOGIC_CONTAINER_VERSION = "sl-2.0.0";
+
 export interface SourcingLogicOutput {
+  /** The RECORD contract of the entries in `coherence_conflicts` — frozen, see above. */
   contract_version: typeof SOURCING_CONTRADICTION_CONTRACT_VERSION;
+  /** The shape of THIS object. "sl-2.0.0" = the 2026-09-01 rename. Optional: rows written before
+   *  it carry no such field, and `readCoherenceConflicts` below is what makes that safe. */
+  container_version?: typeof SOURCING_LOGIC_CONTAINER_VERSION;
   flags: string[];
   b2b_archetype_flag: boolean;
   b2b_brands: string[];
@@ -144,9 +159,30 @@ export interface SourcingLogicOutput {
   comparability?: { documentsToCompare: boolean; opposingSignals: boolean };
   /** The client-visible RESULT sentence. Optional for the same backward reason. */
   client_summary?: string;
-  contradiction_count: number;
-  contradictions: SourcingContradictionRecord[];
+  // ── RENAMED 2026-09-01 (founder-ruled), container field ONLY ────────────────────────────────
+  //
+  // ⚠ THE DEFECT WAS A NAME COLLISION, and the founder named the cost: "Two objects sharing a
+  // name, one hardcoded is_load_bearing: false and one that decides the verdict, will confuse
+  // whoever reads it next, and 'whoever' includes me in six months."
+  //
+  // On AWI-2608-045 the review screen said "3 load-bearing contradictions" while
+  // `sourcing_logic.contradictions` was `[]`. BOTH WERE CORRECT. They measure different things:
+  //   · Module 4's contradictions  — CROSS-TRACK assertion conflicts, load-bearing, drive the verdict.
+  //   · Track 5's, now these       — an internal COHERENCE check over one attempt's stored rows,
+  //                                  always is_load_bearing: false, structurally verdict-inert.
+  // "Contradiction" now means exactly one thing in this codebase: Module 4's.
+  //
+  // ⛔ THE RECORD TYPE AND `contradiction_type` DELIBERATELY DID NOT MOVE. They are the frozen
+  // m4c-1.0.0 shape that Module 4's reader accepts from both producers; renaming them would break
+  // the one contract this rename exists to keep legible.
+  coherence_conflict_count: number;
+  coherence_conflicts: SourcingContradictionRecord[];
 }
+
+// The tolerant reader lives in lib/portal/coherenceConflicts.ts — NOT here — because the admin
+// review panel is a "use client" file and s2.locks.test.ts forbids runtime `@/lib/research/`
+// imports in client components. Re-exported so server callers still import it from the contract.
+export { readCoherenceConflicts } from "@/lib/portal/coherenceConflicts";
 
 // Layer 1 output — evidence ONLY (the LLM never decides the authoritative signal).
 export interface EvidenceItem {

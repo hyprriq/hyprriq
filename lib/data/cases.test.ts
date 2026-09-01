@@ -111,7 +111,7 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
       { id: "r5", track: "track_5", track_key: "sourcing_logic", attempt_number: 1,
         compiled_findings_json: { signal: "n_a", non_voting: true,
           sourcing_logic: { contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"],
-            contradictions: [{ interpretation: "INTERNAL arbitration reasoning" }] } } },
+            coherence_conflicts: [{ interpretation: "INTERNAL arbitration reasoning" }] } } },
     ]});
     const rows = await getCaseFindings("c1");
     expect(rows).toHaveLength(1);
@@ -137,7 +137,7 @@ describe("Track 5 — the sourcing_logic block is stripped from the delivered cl
         compiled_findings_json: { signal: "n_a", non_voting: true,
           summary: "sourcing-logic arbitration (non-voting): tension; 2 flag(s), 1 contradiction record(s) — derived from this attempt's stored track outputs only",
           sourcing_logic: { contract_version: "m4c-1.0.0", flags: ["b2b_only_archetype"],
-            scenario_coherence: { assessment: "tension", basis: "x" }, contradictions: [] } } },
+            scenario_coherence: { assessment: "tension", basis: "x" }, coherence_conflicts: [] } } },
       { id: "r3", track: "track_3", track_key: "brand_risk_assessment", attempt_number: 1,
         compiled_findings_json: { signal: "flag", summary: "brand summary stays untouched" } },
     ]});

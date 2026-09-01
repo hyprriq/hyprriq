@@ -25,8 +25,8 @@ const outputs = (): TrackOutput[] => [
   track("brand_risk_assessment", { evidence_items: [item("e3", { supports: "brand_risk_assessment", weight_key: "no_enforcement_found", brand: "bosch" })] }),
   track("sourcing_logic", { non_voting: true, sourcing_logic: {
     contract_version: "m4c-1.0.0", flags: [], b2b_archetype_flag: false, b2b_brands: [],
-    scenario_coherence: { assessment: "consistent", basis: "x" }, contradiction_count: 1,
-    contradictions: [{ contradiction_type: "cross_track_signal_divergence", assertion_a: { track_key: "supplier_identity", statement: "a", evidence_ids: [] }, assertion_b: { track_key: "brand_risk_assessment", statement: "b", evidence_ids: [] }, interpretation: "i", risk_level: "high", is_load_bearing: false }],
+    scenario_coherence: { assessment: "consistent", basis: "x" }, coherence_conflict_count: 1,
+    coherence_conflicts: [{ contradiction_type: "cross_track_signal_divergence", assertion_a: { track_key: "supplier_identity", statement: "a", evidence_ids: [] }, assertion_b: { track_key: "brand_risk_assessment", statement: "b", evidence_ids: [] }, interpretation: "i", risk_level: "high", is_load_bearing: false }],
   } }),
 ];
 
@@ -38,11 +38,11 @@ const models = (over: Partial<Record<keyof SynthesisModels, unknown>> = {}): Syn
     assertions: [{ assertion_id: "a1", assertion: "the vendor operates a real business", brand: "", status: "supported", supporting_evidence: ["e1"], contradicting_evidence: [], confidence: "high" }],
   }, schema_fallback: false, cost_usd: 0.01 }),
   callB: async () => ({ json: over.callB ?? {
-    contradictions: [], risk_gaps: [], what_would_change_the_leader: "w",
+    coherence_conflicts: [], risk_gaps: [], what_would_change_the_leader: "w",
     hypotheses: [{ label: "genuine-wholesaler", interpretation: "A genuine wholesale operation.", supporting_evidence: ["e1"], contradicting_evidence: [], likelihood: "leading" }],
   }, schema_fallback: false, cost_usd: 0.02 }),
   callBRefuter: async () => ({ json: over.callBRefuter ?? {
-    contradictions: [], risk_gaps: [], what_would_change_the_leader: "w",
+    coherence_conflicts: [], risk_gaps: [], what_would_change_the_leader: "w",
     hypotheses: [{ label: "genuine-wholesaler", interpretation: "Survives the attack.", supporting_evidence: [], contradicting_evidence: [], likelihood: "leading" }],
   }, schema_fallback: false, cost_usd: 0.02 }),
   callC: async () => ({ json: over.callC ?? {
@@ -82,7 +82,7 @@ describe("S-1f Step 1 — runSynthesis wires the four frozen calls end to end", 
 
   it("a disagreeing refuter degrades the conviction artifact + admin flag (advisory only — the verdict path is untouched)", async () => {
     const m = models({ callBRefuter: {
-      contradictions: [], risk_gaps: [], what_would_change_the_leader: "w",
+      coherence_conflicts: [], risk_gaps: [], what_would_change_the_leader: "w",
       hypotheses: [{ label: "grey-market-reseller", interpretation: "x", supporting_evidence: [], contradicting_evidence: [], likelihood: "leading" }],
     } });
     const { artifacts } = await runSynthesis(runInput(m));

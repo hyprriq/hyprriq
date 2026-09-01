@@ -148,7 +148,7 @@ describe("Track 5 — contradiction records (m4c-1.0.0, AT-B3 shape locks)", () 
   it("documentation comfort vs web risk: Track 4 positive + Track 2 veto → one record citing BOTH sides' evidence ids", async () => {
     rowsResult.mockResolvedValue({ data: vetoScenario(), error: null });
     const s = await sl();
-    const rec = s.contradictions.find((c) => c.contradiction_type === "documentation_comfort_vs_web_risk");
+    const rec = s.coherence_conflicts.find((c) => c.contradiction_type === "documentation_comfort_vs_web_risk");
     expect(rec).toBeDefined();
     expect(rec?.assertion_a.track_key).toBe("documentation_review");
     expect(rec?.assertion_a.evidence_ids).toContain("d1");
@@ -156,7 +156,7 @@ describe("Track 5 — contradiction records (m4c-1.0.0, AT-B3 shape locks)", () 
     expect(rec?.assertion_b.evidence_ids).toContain("w1");
     expect(rec?.risk_level).toBe("high");
     expect(rec?.is_load_bearing).toBe(false); // load-bearing is Module 4's judgment, never code's
-    expect(s.contradiction_count).toBe(s.contradictions.length);
+    expect(s.coherence_conflict_count).toBe(s.coherence_conflicts.length);
     expect(s.scenario_coherence.assessment).toBe("tension");
   });
 
@@ -166,7 +166,7 @@ describe("Track 5 — contradiction records (m4c-1.0.0, AT-B3 shape locks)", () 
       row(3, "brand_risk_assessment", "hard_fail", { evidence_items: [item("v1", "active_ip_complaints")] }),
     ], error: null });
     const s = await sl();
-    const rec = s.contradictions.find((c) => c.contradiction_type === "cross_track_signal_divergence");
+    const rec = s.coherence_conflicts.find((c) => c.contradiction_type === "cross_track_signal_divergence");
     expect(rec).toBeDefined();
     expect(rec?.assertion_a.track_key).toBe("supplier_identity");
     expect(rec?.assertion_b.track_key).toBe("brand_risk_assessment");
@@ -177,14 +177,14 @@ describe("Track 5 — contradiction records (m4c-1.0.0, AT-B3 shape locks)", () 
   it("risk_level is NEVER critical — Track 5 cannot arm computeVerdict's critical-contradiction lock", async () => {
     rowsResult.mockResolvedValue({ data: vetoScenario(), error: null });
     const s = await sl();
-    expect(s.contradictions.length).toBeGreaterThan(0);
-    for (const c of s.contradictions) expect(["low", "medium", "high"]).toContain(c.risk_level);
+    expect(s.coherence_conflicts.length).toBeGreaterThan(0);
+    for (const c of s.coherence_conflicts) expect(["low", "medium", "high"]).toContain(c.risk_level);
   });
 
   it("every record carries the full frozen contract shape", async () => {
     rowsResult.mockResolvedValue({ data: vetoScenario(), error: null });
     const s = await sl();
-    for (const c of s.contradictions) {
+    for (const c of s.coherence_conflicts) {
       expect(typeof c.contradiction_type).toBe("string");
       expect(Array.isArray(c.assertion_a.evidence_ids)).toBe(true);
       expect(Array.isArray(c.assertion_b.evidence_ids)).toBe(true);
@@ -205,7 +205,7 @@ describe("Track 5 — detector fan-out (F6 coverage locks)", () => {
       row(4, "documentation_review", "infer", { evidence_items: [item("d1", "invoice_full", "Petzl")] }),
     ], error: null });
     const s = await sl();
-    const docRecs = s.contradictions.filter((c) => c.contradiction_type === "documentation_comfort_vs_web_risk");
+    const docRecs = s.coherence_conflicts.filter((c) => c.contradiction_type === "documentation_comfort_vs_web_risk");
     expect(docRecs).toHaveLength(2);
     expect(docRecs.map((c) => c.assertion_b.track_key).sort()).toEqual(["brand_risk_assessment", "supply_chain_relationship"]);
   });
@@ -217,7 +217,7 @@ describe("Track 5 — detector fan-out (F6 coverage locks)", () => {
       row(3, "brand_risk_assessment", "hard_fail", { evidence_items: [item("v1", "active_ip_complaints")] }),
     ], error: null });
     const s = await sl();
-    const div = s.contradictions.filter((c) => c.contradiction_type === "cross_track_signal_divergence");
+    const div = s.coherence_conflicts.filter((c) => c.contradiction_type === "cross_track_signal_divergence");
     expect(div).toHaveLength(2);
     expect(div.map((c) => c.assertion_a.track_key).sort()).toEqual(["supplier_identity", "supply_chain_relationship"]);
     for (const c of div) expect(c.assertion_a.track_key).not.toBe(c.assertion_b.track_key); // self-skip holds
@@ -251,7 +251,7 @@ describe("Track 5 — honest edges", () => {
     expect(out.llm_failed).toBeUndefined();
     const s = out.sourcing_logic as SourcingLogicOutput;
     expect(s.scenario_coherence.assessment).toBe("insufficient_data");
-    expect(s.contradiction_count).toBe(0);
+    expect(s.coherence_conflict_count).toBe(0);
   });
 
   it("a DB read failure THROWS (H2 — the durable step retries; never a silent empty arbitration)", async () => {
@@ -265,6 +265,6 @@ describe("Track 5 — honest edges", () => {
       row(2, "supply_chain_relationship", "hard_fail", { attempt_number: 1, evidence_items: [item("old1", "counterfeit_channel")] }),
     ], error: null });
     const s = await sl(); // attempt 2 — the attempt-1 veto must not manufacture a contradiction
-    expect(s.contradictions.find((c) => c.assertion_b.evidence_ids.includes("old1"))).toBeUndefined();
+    expect(s.coherence_conflicts.find((c) => c.assertion_b.evidence_ids.includes("old1"))).toBeUndefined();
   });
 });

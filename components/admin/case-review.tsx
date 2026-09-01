@@ -4,6 +4,7 @@ import { useState } from "react";
 import { buildPublishConfirm, buildDeliveredToast } from "@/lib/admin/publish-confirm";
 import { useRouter } from "next/navigation";
 import type { VerdictViewModel } from "@/lib/research/verdictViewModel";
+import { readCoherenceConflicts } from "@/lib/portal/coherenceConflicts";
 import type { TrackSignal, Verdict, AdditionalQuestion, SupplierIdentity } from "@/lib/research/contracts";
 import { mergeCaseQuestions } from "@/lib/portal/questions-view";
 import type { AreaView, LastDecision } from "@/lib/admin/reviewView";
@@ -568,9 +569,12 @@ export function CaseReview({
                       <span className="font-semibold capitalize">{a.sourcing.scenario_coherence.assessment.replace(/_/g, " ")}</span>
                       <span className="text-muted"> — {a.sourcing.scenario_coherence.basis}</span>
                     </p>
-                    {a.sourcing.contradictions.length > 0 && (
+                    {/* ⚠ TOLERANT READ (2026-09-01 rename). Delivered rows written before the
+                        rename hold `contradictions`; they are frozen and never migrated, and the
+                        admin panel must render them exactly as it always did. */}
+                    {readCoherenceConflicts(a.sourcing).length > 0 && (
                       <ul className="mt-1.5 space-y-1.5">
-                        {a.sourcing.contradictions.map((c, i) => (
+                        {readCoherenceConflicts(a.sourcing).map((c, i) => (
                           <li key={i} className="text-[12px] text-ink-2">
                             <span className="font-semibold">{c.contradiction_type.replace(/_/g, " ")}</span>
                             <span className="text-muted"> · {c.risk_level}</span>
