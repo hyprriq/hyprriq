@@ -105,6 +105,102 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-T. PUBLISH REFUSED THE SUPER ADMIN — and the route census that came out of it — 2026-09-01
+
+**Owner: F found, UX diagnosed and fixed.** Commits `37ffc6f`, `eca2236`. Publish is the only step
+between a finished case and a client receiving it, so this blocked the product outright.
+
+### 0-T.1 · THE ROUTE CENSUS — A STANDING QUESTION, NOT A TO-DO
+
+**The founder's ruling: this is the part to carry forward.** Not a backlog — a question asked of a
+route BEFORE it is depended on for the first time.
+
+> **Before a route is depended on for the first time, has it ever run?**
+
+**EIGHT OF NINETEEN admin routes have never run against real traffic.** Measured 2026-09-01 from
+production, read-only — row counts and audit provenance, never from recollection.
+
+| route | evidence | ever run? |
+|---|---|---|
+| `cases/[id]/review` | 9 publishes, to 2026-08-20 | ⚠ **only by ONE grandfathered identity** |
+| `cases/[id]/prose-override` | 5 overrides, same identity | ⚠ **same** |
+| `clients/[id]/assignments` | `staff_client_assignments` = **0 rows** | ❌ never |
+| `invitations`, `invitations/[id]` | `admin_invitations` = **0 rows** | ❌ never |
+| `partner-requests/[id]` | `partner_requests` = **0 rows** | ❌ never |
+| `users`, `users/[id]` | `created_by` = `founder-production-bootstrap`, `seed-founder-ruling-option-b` — **script markers, not Clerk ids** | ❌ never |
+| `cases/[id]/questions` | cases carrying `additional_questions` = **0** | ❌ never |
+| `clients/[id]` DELETE | no deletion audit rows | ❌ never |
+| `clients/[id]/credits` | `billing_audit` 7 rows to 2026-08-31 | ✅ |
+| `cases/run`, `cases/[id]/outcome` | 46 cases, 14 outcomes | ✅ |
+| `cases/[id]/report` | GET — leaves no trace | ➖ unmeasurable by this method |
+
+🔴 **`users` IS THE ONE THAT MATTERS NEXT, and the founder named it:** *"I have never successfully
+created an operator through the product. Both rows were inserted by script, and the next person I
+onboard exercises that route for the first time."* Proven, not assumed — the route sets
+`created_by: userId` (a Clerk id) and **neither production row carries one**.
+
+⚠ **THE METHOD, so it can be re-run rather than re-derived.** A route is *exercised* only if real
+traffic left a trace: rows in the table it writes, or an `audit_log` row whose `actor_id` is a real
+Clerk id. Read-only GETs leave nothing and must be reported as **unmeasurable**, never as "never" —
+overstating absence is the same error as overstating coverage.
+
+### 0-T.2 · WHAT THE DEFECT WAS, AND WHY IT LOOKED LIKE A CAPABILITIES PROBLEM
+
+`/api/admin/cases/[id]/review` opened with a legacy gate reading **the wrong table**: it selected
+`role` from `clients` for the caller and refused anything whose row said `client`.
+
+`clients` does not carry operator roles. **The identity ruling puts them in `admin_permissions` and
+leaves the clients row a plain client — so the more correctly the data followed the ruling, the
+harder the gate refused.**
+
+| identity | `admin_permissions` | `clients.role` | old gate |
+|---|---|---|---|
+| `user_3IN1WU…` (current sign-in) | super_admin | **`client`** | ❌ **403** |
+| `user_3FMpve…` (older identity) | super_admin | **`founder`** | ✅ passes |
+
+⛔ **IT WAS NEVER CAPABILITIES, AND THE FOUNDER'S BOOTSTRAP WAS CORRECT.** `getOperator` returns
+`FULL_ACCESS` for super_admin and `can()` short-circuits on the role, so `capabilities: []` is
+already sufficient. Anyone debugging a 403 here by adding capability strings is fixing the wrong
+thing — hence the lock assertion that says so.
+
+**IT ONLY EVER WORKED BY ACCIDENT.** All 9 route-published cases were published by an OLDER Clerk
+identity whose clients row still holds the pre-ruling `role='founder'`. The route did not break on
+24 August; **it only ever admitted a row shape the ruling forbids creating again.** Independent
+confirmation: `audit_log` admin actor ids are only `founder`, a script session, and that old
+identity — **the current identity has never written a single admin audit row.**
+
+**THE FIX: delete the duplicate notion**, in three files (`review`, `prose-override`, and a
+redundant fallback in `clients/[id]`). `getOperator` already contains the legacy `clients.role`
+fallback, so nothing was lost — the same one-notion fix the dev tools took on 2026-07-30 and these
+routes missed. What still refuses is strictly stronger: `review_publish` / `rerun` capabilities,
+client-scope partitioning, and a null operator failing `can()`.
+
+**THE LOCK** (`lib/auth/adminRouteGate.lock.test.ts`, 6 assertions): no admin route reads the
+CALLER's role off `clients`; every 403-ing admin route consults `getOperator`; review still requires
+capability *and* scope — **because "fixed the 403" must stay distinguishable from "removed the
+authorisation"**; and super_admin passes every capability on an empty array while an empty sub_user
+still cannot publish. Self-tested: reintroducing the gate fails it.
+
+### 0-T.3 · THE TEST'S FIXTURE ASSERTED A WORLD THAT DOES NOT EXIST — see standing rule 16
+
+`review/route.test.ts` mocked the clients lookup to return `role: "admin"` — **the exact row
+production does not have and, under the identity ruling, cannot have.** The suite was green and the
+route was unusable by anyone but one grandfathered identity.
+
+**This is a DIFFERENT shape from §0-S.** There, an instrument had never run. Here it ran, passed,
+and proved nothing — because the fixture supplied the one value that made the gate pass. The mock
+encoded the bug's precondition. Now fixed to the real shape, `client`, so the tests fail if anything
+gates on `clients.role` there again.
+
+### 0-T.4 · COSMETIC — a label outliving its condition
+
+The account menu's "Client portal" link carried a hardcoded **DEV** badge on production. It was left
+over from when the switcher was gated on `VERCEL_ENV !== "production"` — the console-switcher bug
+(§0-K) — removed 2026-08-24 when the switcher became a permanent capability-gated route. **The label
+survived the condition it described** and told the founder production was a dev build.
+
+---
+
 ## 0-S. THE INSTRUMENTS BATCH — heartbeats, production gates, and a guard refusing its own keys — 2026-08-31
 
 **Owner: UX built, F ruled.** Four commits — `9ba1919`, `466575e`, `0d29f8b` and this. Every item
@@ -2106,6 +2202,19 @@ founder-run scripts:** the probe template is now
     failing every PDF for nine days, and only running it found out.
     ⚠ It proves UNTESTED, never BROKEN. It is a question to ask, not a verdict to act on, and the
     only thing that answers it is real data passing through.
+16. **A FIXTURE THAT CANNOT OCCUR IN PRODUCTION TESTS NOTHING.** (founder-ruled 2026-09-01, §0-T.3.)
+    `review/route.test.ts` mocked the caller's clients row as `role: "admin"` to satisfy a gate
+    reading `clients.role`. **That row cannot exist** — the identity ruling puts operator roles in
+    `admin_permissions` and leaves the clients row a plain client. So the fixture asserted the world
+    the code needed rather than the world that ships: **the suite was green and PUBLISH was unusable
+    by anyone but one grandfathered identity.**
+    THE TEST: for every value a fixture supplies to get PAST a gate, ask *does this value occur in
+    production, and how would I know?* If the answer is a shape the system's own rules forbid, the
+    test is measuring itself. Prefer the shape production actually holds, even when it makes the
+    test harder to write — **especially** then, because the difficulty IS the finding.
+    ⚠ DISTINCT FROM RULE 15, and the pair is the point. Rule 15 catches a guard that never ran.
+    This catches one that ran, passed, and proved nothing. A green suite is evidence about the
+    fixtures, never about production, and the two only agree when someone has checked that they do.
 
 ---
 
