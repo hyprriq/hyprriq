@@ -1,3 +1,5 @@
+import { TRACKS } from "@/lib/constants/tracks";
+
 // ── THE STANDING INTEGRITY CHECKS (founder-locked 2026-08-22) ────────────────────────────────
 //
 // THE PRINCIPLE, in the founder's words: every census run by hand this week becomes a standing
@@ -90,15 +92,48 @@ export const CHECK_BY_ID = new Map(CHECKS.map((c) => [c.id, c]));
 // ⚠ These are asserted because a client would never write or read them. Compare the shapes that
 // are deliberately NOT here: product models, ASINs, SEC filing names (S-1, 10-K) — real client
 // content that a wider rule would corrupt. See clientTokenCheckpoint's header.
+// ── THE TRACK-KEY ALTERNATION IS GENERATED, NOT HAND-LISTED (founder-ruled 2026-09-01) ───────
+//
+// ⚠ WHY. `(EV-011, supply_chain)` reached a client PDF. The pattern matched
+// `supply_chain_relationship`, so the TRUNCATED form walked past it — standing rule 11, a pattern
+// that cannot match the shape that actually occurs.
+//
+// ⛔ AND IT HAD ALREADY HAPPENED ONCE, WHICH IS THE REAL FINDING. A 2026-08-22 census found
+// "(brand_risk)" on a delivered report and the fix ADDED `brand_risk` to this alternation by hand.
+// That fixed the instance and left the class, so `supply_chain` leaked the same way nine days
+// later. The founder's read: "The pattern list was written from full keys and the prose carries
+// short ones." A list that must be remembered will be forgotten; a derivation cannot be.
+//
+// THE BOUNDARY, stated so it can be argued with: every MULTI-SEGMENT prefix of a registered track
+// key. Two segments minimum — single words ("supply", "brand", "sourcing", "documentation") are
+// ordinary English and a rule matching them would corrupt real client content, which is exactly
+// the failure this file's header warns about for ASINs and SEC filing names.
+//
+// Adding a track now extends the pattern automatically. Nobody has to remember.
+const TRACK_KEY_FORMS: string[] = (() => {
+  const out = new Set<string>();
+  // category_compliance is track 6 and carries no TRACKS row; it is named here for that reason
+  // ONLY, and any key with a row must never be added by hand.
+  for (const key of [...TRACKS.map((t) => t.track_key as string), "category_compliance"]) {
+    const parts = key.split("_");
+    for (let n = 2; n <= parts.length; n++) out.add(parts.slice(0, n).join("_"));
+  }
+  // Longest first so the reported match is the fullest form present, not its prefix.
+  return [...out].sort((a, b) => b.length - a.length);
+})();
+
 export const INTERNAL_CONTENT_PATTERNS: { name: string; re: RegExp }[] = [
-  // Track keys and their short aliases. The substitution derives from AREA_NAMES, but a cleaner
-  // may always miss; this is the backstop that refuses instead of guessing.
-  { name: "track-key", re: /(?<![A-Za-z0-9_])(?:supplier_identity|supply_chain_relationship|brand_risk_assessment|brand_risk|documentation_review|sourcing_logic|category_compliance|intake_scope_guard)(?![A-Za-z0-9_])/ },
+  // Track keys AND every multi-segment prefix — generated above from the registry.
+  { name: "track-key", re: new RegExp(`(?<![A-Za-z0-9_])(?:${TRACK_KEY_FORMS.join("|")})(?![A-Za-z0-9_])`) },
   // Internal signal enums — the operator's vocabulary, never the client's.
   { name: "signal-enum", re: /(?<![A-Za-z0-9_])(?:soft_fail|hard_fail|manual_review_required|founder_review_status|n_a)(?![A-Za-z0-9_])/ },
   // Engine reasoning scaffold left in prose.
   { name: "hypothesis-tag", re: /\[(?:leading|alternative)\s+hypothesis[^\]]*\]/i },
   // Synthesis module / track numbering.
   { name: "module-ref", re: /(?<![A-Za-z0-9])Module\s*\d(?![0-9])/i },
-  { name: "track-number", re: /(?<![A-Za-z0-9])Track\s*\d(?![0-9])/i },
+  // ⚠ THE SEPARATOR IS NOT ALWAYS A SPACE. This required whitespace ("Track 3") and therefore
+  // never matched `track_3`, which the 2026-09-01 census found in client prose on TWO delivered
+  // cases ("stub track_3 for case 6c4ad68d-…"). Same rule-11 shape as the track keys above: the
+  // pattern was written from how a human writes it and the prose carries how code writes it.
+  { name: "track-number", re: /(?<![A-Za-z0-9])Track[\s_-]*\d(?![0-9])/i },
 ];
