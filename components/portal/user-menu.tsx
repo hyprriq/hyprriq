@@ -4,9 +4,17 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useClerk } from "@clerk/nextjs";
 
-// Topbar avatar menu: sign out (Clerk) + optional dev-only view switcher.
-// The switcher is passed in already gated (VERCEL_ENV + is_admin) by the server
-// shell — this component never decides visibility itself.
+// Topbar avatar menu: sign out (Clerk) + the optional console switcher.
+// The switcher is passed in already gated by the server shell — this component never decides
+// visibility itself.
+//
+// ⚠ IT IS NOT A DEV AFFORDANCE ANY MORE, AND THE "Dev" BADGE IS GONE WITH THE GATE THAT MADE IT
+// TRUE (2026-09-01). This carried a hardcoded "Dev" chip left over from when the switcher was
+// hidden behind `VERCEL_ENV !== "production"`. That gate was removed on 2026-08-24 — it was the
+// console-switcher bug, where the link existed on staging and vanished on the only domain that
+// mattered — and the switcher became a PERMANENT, capability-gated route. The chip outlived its
+// gate and told the founder their production console was a dev build. A label that survives the
+// condition it described is worse than no label.
 export function UserMenu({
   initial,
   email,
@@ -69,9 +77,6 @@ export function UserMenu({
               className="min-h-11 flex items-center gap-2 border-b border-line px-3 py-2.5 text-[14px] font-medium text-ink-2 hover:bg-subtle hover:text-ink"
             >
               <span aria-hidden>🔁</span> {switcher.label}
-              <span className="ml-auto rounded bg-conditional-bg px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-conditional-ink">
-                Dev
-              </span>
             </Link>
           )}
           <button
