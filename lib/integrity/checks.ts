@@ -136,4 +136,24 @@ export const INTERNAL_CONTENT_PATTERNS: { name: string; re: RegExp }[] = [
   // cases ("stub track_3 for case 6c4ad68d-…"). Same rule-11 shape as the track keys above: the
   // pattern was written from how a human writes it and the prose carries how code writes it.
   { name: "track-number", re: /(?<![A-Za-z0-9])Track[\s_-]*\d(?![0-9])/i },
+  // ── A RAW UUID IS INTERNAL CONTENT BY ANY DEFINITION (founder-ruled 2026-09-01) ───────────
+  //
+  // Found by the snake_case census, not by anyone looking for it: FOUR case UUIDs sit in delivered
+  // client prose — "stub track_3 for case 6c4ad68d-b2a7-446a-9064-e60f0683c13c" on AWI-2607-023 and
+  // the seed case. Those two are frozen and stay frozen; this closes the class.
+  //
+  // ⚠ THE ONE REAL FALSE POSITIVE, MEASURED AND DISCLOSED RATHER THAN DISCOVERED LATER. The 8-4-4-4-12
+  // hex shape is shared by HARDWARE/SYSTEM UUIDs — a Dell service tag reports as
+  // 4C4C4544-0033-4D10-8035-B7C04F423233 — and a client vetting a computer-hardware supplier could
+  // legitimately hold one. That is not hypothetical for this corpus: TD SYNNEX is in it.
+  //
+  // IT STAYS CASE-INSENSITIVE ANYWAY, and the reason is the one this codebase already ruled on for
+  // the focus ring: crying wolf is recoverable, going quiet is not. A false refusal costs an
+  // operator one prose override; a missed identifier ships a client someone else's database key.
+  // Narrowing to lowercase would exempt the Dell shape and is a ONE-CHARACTER change if the founder
+  // prefers it — recorded here so the trade is visible rather than rediscovered.
+  //
+  // Measured clean against the shapes a client legitimately writes: ASINs, SKUs, Amazon order ids
+  // (114-3941689-2851415), EANs, part numbers, MAC addresses and invoice numbers are all ignored.
+  { name: "uuid", re: /(?<![A-Za-z0-9-])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?![A-Za-z0-9-])/i },
 ];
