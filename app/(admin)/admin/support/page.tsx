@@ -5,11 +5,14 @@ import { ListTable } from "@/components/admin/list-table";
 import { getAdminSupportRequests } from "@/lib/data/adminSupport";
 import { CAPABILITY_LABELS } from "@/lib/auth/capabilities";
 
-// ── SUPPORT QUEUE (founder-ruled 2026-08-02) — function-only, READ-ONLY BY LAW: a list is not
-// ticketing. No reply, no assign, no status change; helpdesk stays email-only at launch. The
-// list AND the nav badge are client-partitioned (lib/data/adminSupport). Console restyle
-// 2026-08-13: sunk header strip, explicit grid columns, hairline rows, hover-paper, mono
-// IDs/dates — same read, same rules, zero controls added. ──
+// ── SUPPORT QUEUE — NOW A QUEUE YOU CAN ANSWER (ruling superseded 2026-09-01) ────────────────
+//
+// The 2026-08-02 ruling made this read-only because "helpdesk stays email-only at launch". Email
+// replies were never receivable (Resend receiving off, From: support@hyprriq.com), so the queue
+// could show a ticket and offer no way to answer it. The founder found it by raising one.
+//
+// The list AND the nav badge remain client-partitioned (lib/data/adminSupport); the detail view
+// applies the same scope in its query, so an out-of-scope ticket 404s like a missing one.
 
 function fmt(iso: string | null) {
   if (!iso) return "—";
@@ -61,12 +64,17 @@ export default async function AdminSupportPage() {
         </span>
       }
     >
+      {/* ⚠ THE OLD COPY SAID "Replies happen over email". They did not: nothing received them.
+          It now says where the answer actually happens, because a surface that describes a
+          workflow the product does not perform is how the founder lost a reply. */}
       <p className="mb-3 text-[13px] text-muted">
-        Read-only queue. Replies happen over email — this list shows what is open and what was resolved, not a ticketing surface.
+        Open a request to reply. The client reads the answer in their portal and is emailed that
+        it is waiting — the reply itself is never sent by email.
       </p>
       <ListTable
         rows={requests}
         getKey={(r) => r.id}
+        href={(r) => `/admin/support/${r.id}`}
         empty="No support requests yet. New requests from the portal land here."
         columns={[
           { key: "sr", header: "SR Number", width: "104px", card: "title",
@@ -82,9 +90,12 @@ export default async function AdminSupportPage() {
               <div className="min-w-0">
                 <div className="truncate text-[13.5px] font-semibold text-ink">{r.subject}</div>
                 <div className="truncate text-[12px] text-ink-2" title={r.body}>{r.body}</div>
+                {/* This line read a column NOTHING WROTE for a month — the visible symptom of
+                    a chain with no writer, and the reason the standing check in
+                    lib/integrity/deadEndChecks.ts now looks for exactly this shape. */}
                 {r.admin_response && (
                   <div className="truncate text-[12px] text-muted" title={r.admin_response}>
-                    Response on file: {r.admin_response}
+                    Replied: {r.admin_response}
                   </div>
                 )}
               </div>

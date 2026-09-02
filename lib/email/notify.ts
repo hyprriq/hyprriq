@@ -14,6 +14,8 @@ import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 import { DormantNotice } from "@/lib/email/templates/DormantNotice";
 import { RetentionWarning } from "@/lib/email/templates/RetentionWarning";
+import { SupportReplyNotice } from "@/lib/email/templates/SupportReplyNotice";
+import { SITE_URL } from "@/lib/constants/site";
 
 // Key-safe email helper. Resend is only instantiated when RESEND_API_KEY is
 // present, so the portal works in environments where email isn't configured yet
@@ -241,6 +243,38 @@ export async function sendSubmissionConfirmation(opts: {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     await logSend("submission_confirmation", opts.to);
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+// ── EMAIL AS THE ALERT — "we answered, read it in your portal" (founder-ruled 2026-09-01) ────
+//
+// ⛔ IT DOES NOT CONTAIN THE ANSWER, DELIBERATELY. The founder's ruling is that email is the
+// alert and the product is the channel: "email has no state. A ticket answered by email is
+// answered nowhere — nothing shows what is open, what is waiting on me, or what is resolved,
+// and a second operator would never see it."
+//
+// Putting the reply text in here would recreate exactly that: the client would read it in their
+// inbox, hit Reply, and be back in the silent-loss path this batch exists to close. So this says
+// an answer exists and where to read it, and nothing else.
+export async function sendSupportReplyNotice(opts: {
+  to: string | null;
+  srNumber: string;
+  subject: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  if (!opts.to) return { sent: false, reason: "no_client_email" };
+  const subject = `We've replied to ${opts.srNumber}`;
+  const rendered = await render(createElement(SupportReplyNotice, {
+    srNumber: opts.srNumber, subject: opts.subject, portalUrl: `${SITE_URL}/portal/support`,
+  }));
+  if ((await emailGate("support_reply", subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    await logSend("support_reply", opts.to);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
