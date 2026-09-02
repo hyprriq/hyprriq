@@ -42,6 +42,28 @@ import { RetentionWarning } from "@/lib/email/templates/RetentionWarning";
 const from = () => process.env.RESEND_FROM ?? "HyprrIQ <support@hyprriq.com>";
 const adminInbox = () => process.env.SUPPORT_INBOX ?? null;
 
+// ── REPLY-TO IS A NET, NOT A CHANNEL (founder-ruled 2026-09-01) ────────────────────────
+//
+// ⚠ THE DEFECT THIS STOPS BLEEDING. Every email goes out From `support@hyprriq.com` — a real,
+// human, reply-inviting address — and Resend's "Enable Receiving" is OFF for the domain. A client
+// who hits Reply gets NO BOUNCE and NO ERROR; the message is accepted and discarded. Confirmed by
+// the founder by experiment, on a support acknowledgement that says "we typically respond within
+// 1 business day". The worst kind of failure: silent, and on the client's side.
+//
+// SUPPORT_INBOX (hello@hyprriq.com) is a mailbox that actually receives. Pointing replies there
+// converts silent loss into a real inbox with a one-line change and no infrastructure decision.
+//
+// ⛔ IT IS EXPLICITLY A TEMPORARY NET AND NOT A SECOND CHANNEL. The founder's ruling: "EMAIL IS
+// THE ALERT, NEVER THE CHANNEL — email has no state. A ticket answered by email is answered
+// nowhere; nothing shows what is open, what is waiting on me, or what is resolved, and a second
+// operator would never see it." Once the in-product reply path exists, the CLIENT email stops
+// inviting a reply. This line stays as the backstop for the client who replies anyway.
+//
+// Applied to every send, including admin-bound ones. A reply-to pointing at the mailbox that
+// received the message is a no-op, and universal application is what guarantees no client-facing
+// template is missed — the alternative is a list somebody has to keep correct.
+const replyTo = () => adminInbox() ?? undefined;
+
 export function emailEnabled(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
@@ -124,7 +146,7 @@ export async function sendAdminAlert(subject: string, html: string): Promise<{ s
   if (!inbox) return { sent: false, reason: "no_admin_inbox" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: inbox, subject: `[HyprrIQ ops] ${subject}`, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: inbox, subject: `[HyprrIQ ops] ${subject}`, html: rendered });
     await logSend("admin_alert", inbox);
     return { sent: true };
   } catch (e) {
@@ -148,7 +170,7 @@ export async function sendAdminInvitation(opts: {
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     await logSend("admin_invitation", opts.to);
     return { sent: true };
   } catch (e) {
@@ -185,7 +207,7 @@ export async function sendDeliveryNotification(opts: {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: from(), to: opts.to, subject, html: rendered,
+      from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered,
       ...(opts.attachment
         ? { attachments: [{ filename: opts.attachment.filename, content: opts.attachment.content }] }
         : {}),
@@ -217,7 +239,7 @@ export async function sendSubmissionConfirmation(opts: {
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     await logSend("submission_confirmation", opts.to);
     return { sent: true };
   } catch (e) {
@@ -243,10 +265,10 @@ export async function sendDualNotification(opts: {
     const inbox = adminInbox();
     await Promise.allSettled([
       opts.clientEmail
-        ? resend.emails.send({ from: from(), to: opts.clientEmail, subject: opts.subject, html: clientRendered })
+        ? resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.clientEmail, subject: opts.subject, html: clientRendered })
         : Promise.resolve(null),
       inbox
-        ? resend.emails.send({ from: from(), to: inbox, subject: `[Support] ${opts.subject}`, html: adminRendered })
+        ? resend.emails.send({ from: from(), replyTo: replyTo(), to: inbox, subject: `[Support] ${opts.subject}`, html: adminRendered })
         : Promise.resolve(null),
     ]);
     if (opts.clientEmail) await logSend("dual_notification", opts.clientEmail);
@@ -278,7 +300,7 @@ export async function sendPaymentFailedEmail(opts: {
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -314,7 +336,7 @@ export async function sendLowCreditEmail(opts: {
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -345,7 +367,7 @@ export async function sendRenewalReminderEmail(opts: {
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -380,7 +402,7 @@ export async function sendRetentionWarningEmail(opts: {
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -409,7 +431,7 @@ export async function sendDormantNoticeEmail(opts: {
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -433,7 +455,7 @@ export async function sendWelcomeEmail(opts: {
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), to: opts.to, subject, html: rendered });
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
     await logSend("welcome", opts.to);
     return { sent: true };
   } catch (e) {
