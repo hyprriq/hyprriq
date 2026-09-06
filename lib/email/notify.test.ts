@@ -8,18 +8,39 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // key check — a violation is a violation whether or not email is configured. ──
 
 const { sendMock, auditInsert } = vi.hoisted(() => ({
-  sendMock: vi.fn().mockResolvedValue({ id: "email-1" }),
+  // ⚠ PRODUCTION-SHAPED (standing rule 16). This mock resolved { id } — the pre-v3 SDK shape —
+  // while the real Resend v6 returns { data, error } and NEVER THROWS on an API rejection. That
+  // fictional shape is part of how the discarded-response bug lived: the suite could not have
+  // noticed a return nobody read, in a shape the SDK does not produce.
+  sendMock: vi.fn().mockResolvedValue({ data: { id: "email-1" }, error: null }),
   auditInsert: vi.fn().mockResolvedValue({ error: null }),
 }));
 vi.mock("resend", () => ({ Resend: class { emails = { send: sendMock }; } }));
+const updateMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/admin", () => ({
-  supabaseAdmin: { from: vi.fn(() => ({ insert: auditInsert })) },
+  supabaseAdmin: {
+    from: vi.fn(() => ({
+      insert: auditInsert,
+      // release (soft-delete) and stampMessageId both chain .update().eq().eq()[.is()] — a
+      // thenable chain that always resolves ok is enough to observe the CALL.
+      update: (patch: unknown) => {
+        updateMock(patch);
+        const chain: Record<string, unknown> = {
+          then: (r: (v: { error: null }) => void) => r({ error: null }),
+        };
+        chain.eq = () => chain; chain.is = () => chain;
+        return chain;
+      },
+    })),
+  },
 }));
 
-import { sendAdminAlert, sendDualNotification, sendDeliveryNotification, sendSubmissionConfirmation } from "./notify";
+import { sendAdminAlert, sendDualNotification, sendDeliveryNotification, sendSubmissionConfirmation, sendPaymentFailedEmail } from "./notify";
 
 beforeEach(() => {
   sendMock.mockClear();
+  sendMock.mockResolvedValue({ data: { id: "email-1" }, error: null });
+  updateMock.mockClear();
   auditInsert.mockReset().mockResolvedValue({ error: null });
   process.env.RESEND_API_KEY = "re_test_key";
   process.env.SUPPORT_INBOX = "ops@example.com";
@@ -155,5 +176,43 @@ describe("submission confirmation (2026-08-10 gap-close — founder ruled two em
     const r = await sendSubmissionConfirmation({ ...base, to: null });
     expect(r).toEqual({ sent: false, reason: "no_recipient" });
     expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+// ── THE DELIVERY SEAM (founder-found 2026-09-06) — regression locks ──────────────────────────
+//
+// The Resend SDK returns { data, error } and NEVER THROWS on an API rejection. Before the seam,
+// every site discarded that return: a refused send wrote its ledger row and reported
+// { sent: true } — the ledger recorded INTENT, and on dedup'd paths the burned key made every
+// retry read "duplicate": permanently unsent, logged as sent. These tests are the lock on the
+// three behaviors that were broken.
+describe("the delivery seam — a refusal is a refusal, and delivery is recorded by id", () => {
+  it("an API-level rejection is { sent:false } and writes NO ledger row — failure was previously logged as success", async () => {
+    sendMock.mockResolvedValue({ data: null, error: { message: "domain not verified" } });
+    const r = await sendAdminAlert("subject", "<p>body</p>");
+    expect(r).toEqual({ sent: false, reason: "domain not verified" });
+    expect(auditInsert).not.toHaveBeenCalled();
+  });
+
+  it("a successful send stores the Resend message id — the ledger records DELIVERY, not intent", async () => {
+    const r = await sendAdminAlert("subject", "<p>body</p>");
+    expect(r.sent).toBe(true);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ resend_message_id: "email-1" }));
+  });
+
+  it("a rejected dedup'd send FREES its reservation so a retry can resend — the burned-key trap", async () => {
+    sendMock.mockResolvedValue({ data: null, error: { message: "quota" } });
+    const r = await sendPaymentFailedEmail({ to: "c@example.com", name: "C", invoiceId: "in_1", billingUrl: "https://x" });
+    expect(r).toEqual({ sent: false, reason: "quota" });
+    // the reservation row was inserted, then soft-deleted (the release .update call)
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ dedup_key: "payment_failed:in_1" }));
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ deleted_at: expect.any(String) }));
+  });
+
+  it("dual: both legs refused is { sent:false } and logs NOTHING — it previously logged both and said sent", async () => {
+    sendMock.mockResolvedValue({ data: null, error: { message: "refused" } });
+    const r = await sendDualNotification({ clientEmail: "c@example.com", subject: "S", clientHtml: "<p>a</p>", adminHtml: "<p>b</p>" });
+    expect(r).toEqual({ sent: false, reason: "refused" });
+    expect(auditInsert).not.toHaveBeenCalled();
   });
 });

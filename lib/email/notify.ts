@@ -92,14 +92,56 @@ async function emailGate(kind: string, subject: string, htmls: string[]): Promis
 }
 
 /** The one send ledger (ADR-EMAIL-001). Fail-soft by contract: the mail already went. */
-async function logSend(template: string, recipient: string, caseId?: string | null): Promise<void> {
+async function logSend(template: string, recipient: string, caseId?: string | null, resendMessageId?: string | null): Promise<void> {
   try {
     await supabaseAdmin.from("email_log").insert({
       recipient, template, case_id: caseId ?? null, sent_at: new Date().toISOString(),
+      resend_message_id: resendMessageId ?? null,
     });
   } catch (e) {
     console.error(`[notify] email_log write failed (${template} → ${recipient}): ${e instanceof Error ? e.message : String(e)}`);
   }
+}
+
+
+// ── THE DELIVERY SEAM (founder-found 2026-09-06: "resend_message_id was NULL on the admin_alert
+// that arrived — if the ID is not stored, email_log records intent rather than delivery") ─────
+//
+// ⚠ THE DIAGNOSIS WAS WORSE THAN THE SYMPTOM. Every send site did
+//     `await resend.emails.send(…)` — and DISCARDED THE RETURN. The Resend SDK does not throw
+// on an API-level rejection; it returns { data, error }. So a refused send (bad recipient,
+// domain problem, quota) hit no catch, wrote its ledger row, and reported { sent: true }.
+// FAILURE WAS LOGGED AS SUCCESS. On the reserve-then-send paths it was worse still: the burned
+// dedup_key made every retry read "duplicate" — permanently unsent, with a ledger row saying
+// sent. The founder's phrase is the precise truth: the ledger recorded INTENT.
+//
+// Every send now flows through here. { ok:false } surfaces to the caller's { sent:false,
+// reason } like any other refusal, and { ok:true } carries the Resend message id into the
+// ledger — logSend for plain sends, stampMessageId onto the reservation row for dedup'd ones.
+// A NULL resend_message_id on a sent_at row is now a finding, not the steady state.
+type Delivery = { ok: true; id: string | null } | { ok: false; reason: string };
+
+async function deliverViaResend(args: {
+  from: string; replyTo?: string; to: string; subject: string; html: string;
+}): Promise<Delivery> {
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const res = await resend.emails.send(args);
+    if (res?.error) return { ok: false, reason: res.error.message ?? "resend_error" };
+    return { ok: true, id: res?.data?.id ?? null };
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
+/** Enrich a reserve-then-send row with the id — the row already exists from the reservation. */
+async function stampMessageId(template: string, dedupKey: string, id: string | null): Promise<void> {
+  if (!id) return;
+  try {
+    await supabaseAdmin.from("email_log")
+      .update({ resend_message_id: id })
+      .eq("template", template).eq("dedup_key", dedupKey).is("deleted_at", null);
+  } catch { /* ledger enrichment never blocks a sent mail */ }
 }
 
 // ── RESERVE-THEN-SEND (the dedup_key idempotency, live since the founder ran the migration
@@ -148,9 +190,9 @@ export async function sendAdminAlert(subject: string, html: string): Promise<{ s
   const inbox = adminInbox();
   if (!inbox) return { sent: false, reason: "no_admin_inbox" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: inbox, subject: `[HyprrIQ ops] ${subject}`, html: rendered });
-    await logSend("admin_alert", inbox);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: inbox, subject: `[HyprrIQ ops] ${subject}`, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("admin_alert", inbox, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -172,9 +214,9 @@ export async function sendAdminInvitation(opts: {
   if ((await emailGate("admin_invitation", subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
-    await logSend("admin_invitation", opts.to);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("admin_invitation", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -208,14 +250,14 @@ export async function sendDeliveryNotification(opts: {
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const out = await deliverViaResend({
       from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered,
       ...(opts.attachment
         ? { attachments: [{ filename: opts.attachment.filename, content: opts.attachment.content }] }
         : {}),
     });
-    await logSend("delivery_notification", opts.to);
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("delivery_notification", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -241,9 +283,9 @@ export async function sendSubmissionConfirmation(opts: {
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
-    await logSend("submission_confirmation", opts.to);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("submission_confirmation", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -279,9 +321,9 @@ export async function sendGrantInviteEmail(opts: {
   if ((await emailGate("grant_invite", subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
-    await logSend("grant_invite", opts.to);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("grant_invite", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -301,9 +343,9 @@ export async function sendSupportReplyNotice(opts: {
   if ((await emailGate("support_reply", subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
-    await logSend("support_reply", opts.to);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("support_reply", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
@@ -324,19 +366,20 @@ export async function sendDualNotification(opts: {
   }
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
     const inbox = adminInbox();
-    await Promise.allSettled([
-      opts.clientEmail
-        ? resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.clientEmail, subject: opts.subject, html: clientRendered })
-        : Promise.resolve(null),
-      inbox
-        ? resend.emails.send({ from: from(), replyTo: replyTo(), to: inbox, subject: `[Support] ${opts.subject}`, html: adminRendered })
-        : Promise.resolve(null),
-    ]);
-    if (opts.clientEmail) await logSend("dual_notification", opts.clientEmail);
-    if (inbox) await logSend("dual_notification", inbox);
-    return { sent: true };
+    // Each leg is tracked and LOGGED ONLY IF IT WENT — the allSettled this replaces logged both
+    // legs unconditionally and returned { sent: true } even when Resend refused both.
+    const clientOut = opts.clientEmail
+      ? await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.clientEmail, subject: opts.subject, html: clientRendered })
+      : null;
+    const adminOut = inbox
+      ? await deliverViaResend({ from: from(), replyTo: replyTo(), to: inbox, subject: `[Support] ${opts.subject}`, html: adminRendered })
+      : null;
+    if (opts.clientEmail && clientOut?.ok) await logSend("dual_notification", opts.clientEmail, null, clientOut.id);
+    if (inbox && adminOut?.ok) await logSend("dual_notification", inbox, null, adminOut.id);
+    if (clientOut?.ok || adminOut?.ok) return { sent: true };
+    const reason = (clientOut && !clientOut.ok && clientOut.reason) || (adminOut && !adminOut.ok && adminOut.reason) || "no_recipients";
+    return { sent: false, reason };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
   }
@@ -362,8 +405,12 @@ export async function sendPaymentFailedEmail(opts: {
   const reservation = await reserveSend(template, dedupKey, opts.to);
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    // A refused send FREES the dedup key — a burned reservation on a failed send was the
+    // permanently-unsent trap the delivery seam exists to close. On THIS email that trap was
+    // sharpest: one invoice id = one key, so a refused dunning notice could never retry.
+    if (!out.ok) { await releaseReservation(template, dedupKey); return { sent: false, reason: out.reason }; }
+    await stampMessageId(template, dedupKey, out.id);
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -398,8 +445,11 @@ export async function sendLowCreditEmail(opts: {
   const reservation = await reserveSend(template, dedupKey, opts.to);
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    // A refused send FREES the dedup key — a burned reservation on a failed send was the
+    // permanently-unsent trap this seam exists to close.
+    if (!out.ok) { await releaseReservation(template, dedupKey); return { sent: false, reason: out.reason }; }
+    await stampMessageId(template, dedupKey, out.id);
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -429,8 +479,11 @@ export async function sendRenewalReminderEmail(opts: {
   const reservation = await reserveSend(template, dedupKey, opts.to);
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    // A refused send FREES the dedup key — a burned reservation on a failed send was the
+    // permanently-unsent trap this seam exists to close.
+    if (!out.ok) { await releaseReservation(template, dedupKey); return { sent: false, reason: out.reason }; }
+    await stampMessageId(template, dedupKey, out.id);
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -464,8 +517,11 @@ export async function sendRetentionWarningEmail(opts: {
   const reservation = await reserveSend(template, dedupKey, opts.to);
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    // A refused send FREES the dedup key — a burned reservation on a failed send was the
+    // permanently-unsent trap this seam exists to close.
+    if (!out.ok) { await releaseReservation(template, dedupKey); return { sent: false, reason: out.reason }; }
+    await stampMessageId(template, dedupKey, out.id);
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -493,8 +549,11 @@ export async function sendDormantNoticeEmail(opts: {
   const reservation = await reserveSend(template, dedupKey, opts.to);
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    // A refused send FREES the dedup key — a burned reservation on a failed send was the
+    // permanently-unsent trap this seam exists to close.
+    if (!out.ok) { await releaseReservation(template, dedupKey); return { sent: false, reason: out.reason }; }
+    await stampMessageId(template, dedupKey, out.id);
     return { sent: true };
   } catch (e) {
     await releaseReservation(template, dedupKey);
@@ -517,9 +576,9 @@ export async function sendWelcomeEmail(opts: {
   if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
   if (!opts.to) return { sent: false, reason: "no_recipient" };
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
-    await logSend("welcome", opts.to);
+    const out = await deliverViaResend({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    if (!out.ok) return { sent: false, reason: out.reason };
+    await logSend("welcome", opts.to, null, out.id);
     return { sent: true };
   } catch (e) {
     return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
