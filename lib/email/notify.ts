@@ -14,6 +14,7 @@ import { LowCredit } from "@/lib/email/templates/LowCredit";
 import { RenewalReminder } from "@/lib/email/templates/RenewalReminder";
 import { DormantNotice } from "@/lib/email/templates/DormantNotice";
 import { RetentionWarning } from "@/lib/email/templates/RetentionWarning";
+import { GrantInvite } from "@/lib/email/templates/GrantInvite";
 import { SupportReplyNotice } from "@/lib/email/templates/SupportReplyNotice";
 import { SITE_URL } from "@/lib/constants/site";
 
@@ -259,6 +260,34 @@ export async function sendSubmissionConfirmation(opts: {
 // Putting the reply text in here would recreate exactly that: the client would read it in their
 // inbox, hit Reply, and be back in the silent-loss path this batch exists to close. So this says
 // an answer exists and where to read it, and nothing else.
+// ── THE PARTNER GRANT INVITE (founder-ruled 2026-09-06) ─────────────────────────────
+//
+// Fired by the Approve action — AFTER the grant exists, never before, and loud-but-non-fatal
+// like every sibling: a failed send leaves a real grant whose link the operator can copy from
+// the grants panel, and the route reports {sent:false, reason} so the panel says so instead of
+// implying the requester heard something. The GRANT is the deliverable; the email is the courier.
+export async function sendGrantInviteEmail(opts: {
+  to: string;
+  name: string | null;
+  grantUrl: string;
+  expiresDays: number;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const subject = "Your HyprrIQ partner assessment is ready";
+  const rendered = await render(createElement(GrantInvite, {
+    name: opts.name, grantUrl: opts.grantUrl, expiresDays: opts.expiresDays,
+  }));
+  if ((await emailGate("grant_invite", subject, [rendered])).length > 0) return { sent: false, reason: "banned_language" };
+  if (!emailEnabled()) return { sent: false, reason: "no_api_key" };
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from: from(), replyTo: replyTo(), to: opts.to, subject, html: rendered });
+    await logSend("grant_invite", opts.to);
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "send_failed" };
+  }
+}
+
 export async function sendSupportReplyNotice(opts: {
   to: string | null;
   srNumber: string;
