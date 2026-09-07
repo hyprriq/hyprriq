@@ -105,6 +105,34 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-U. THE ACQUISITION PATH'S FIRST REAL EXERCISE WAS THE FAILURE MODE — 2026-09-07
+
+**Owner: F found by accident, UX diagnosed and built.** Commits `a33c9da` (Approve), `a211d8d`
+(binding batch), migration `20260907000000` (founder-run, BEFORE deploy).
+
+**The census line, as ruled to be carried:** the acquisition path's first real exercise was the
+failure mode, and it found two more behind it. The first partner grant ever sent was redeemed by
+its ISSUER's admin account — no recipient binding existed (the email lived in `note` free text)
+and `created_by` was never compared to the redeemer. Deliberate on 2026-08-21 (the founder's
+hands were the binding); an omission from 2026-09-06, when Approve made the system choose where
+the link goes.
+
+**Alongside it, the second find:** `billing_audit`'s insert has failed on EVERY redemption since
+it was written — `billing_audit_event_check` never included `'grant_redeemed'` — and the
+fail-soft catch hid it. **Rule 14 in a place we had not looked: a swallowed error inside a
+success path.** Measured, not inferred: 1 real redemption, 0 rows. (First hypothesis — column
+drift — was wrong; the schema disproved it in one query.)
+
+**The ruling now in the RPC, verbatim because the next reader will want to merge the checks:**
+*binding is per-grant, self-dealing is per-system. A coupon may be unbound to recipients; it is
+never redeemable by its creator.* And the masked refusal (`g•••@hyprrbrands.com`) is a security
+control, not cosmetics — the full address would turn a refusal into an information leak.
+
+The accidental redemption was fully reverted (four statements, read-back clean) and the unbound
+link revoked. The never-run walk list and per-path verification live in the 2026-09-07 session
+report; expiry remains time-gated and the credit-spend path is the only one that costs research
+budget.
+
 ## 0-T. PUBLISH REFUSED THE SUPER ADMIN — and the route census that came out of it — 2026-09-01
 
 **Owner: F found, UX diagnosed and fixed.** Commits `37ffc6f`, `eca2236`. Publish is the only step
