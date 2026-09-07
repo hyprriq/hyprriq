@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { redeemGrant, REDEEM_COPY, REDEEM_SUCCESS_COPY } from "@/lib/data/grants";
+import { redeemGrant, REDEEM_COPY, REDEEM_SUCCESS_COPY, wrongAccountMessage, getGrantRecipientByCode } from "@/lib/data/grants";
 
 // ── COUPON REDEMPTION (founder-ruled 2026-08-21) — the typed-code mode. Authenticated client
 // posts their code; the RPC does every check atomically; this route only maps status words to
@@ -23,5 +23,9 @@ export async function POST(req: Request) {
   const status = await redeemGrant(code, userId);
   if (status === "ok") return NextResponse.json({ ok: true, message: REDEEM_SUCCESS_COPY });
   const httpStatus = status === "unavailable" ? 503 : 400;
-  return NextResponse.json({ error: status, message: REDEEM_COPY[status] }, { status: httpStatus });
+  // Same masked upgrade as the attach route — ONE message definition (wrongAccountMessage).
+  const message = status === "wrong_account"
+    ? wrongAccountMessage(await getGrantRecipientByCode(code))
+    : REDEEM_COPY[status];
+  return NextResponse.json({ error: status, message }, { status: httpStatus });
 }

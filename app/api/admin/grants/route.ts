@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const gate = await requireSuperAdmin();
   if (gate.res) return gate.res;
 
-  let body: { mode?: unknown; note?: unknown; expiresDays?: unknown; maxRedemptions?: unknown };
+  let body: { mode?: unknown; note?: unknown; expiresDays?: unknown; maxRedemptions?: unknown; recipientEmail?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -38,6 +38,14 @@ export async function POST(req: Request) {
   if (!mode) return NextResponse.json({ error: "mode must be 'link' or 'coupon'" }, { status: 400 });
   const note = typeof body.note === "string" ? body.note.slice(0, 200) : "";
   const expiresDays = Math.min(30, Math.max(1, Number(body.expiresDays) || 30)); // 30 = the ruled ceiling
+  // Optional binding (2026-09-07): filled = only this verified email can redeem; empty = the
+  // hand-delivered case, where the founder's hands are the binding. Shape-checked, never
+  // silently coerced — a malformed address must not create an unbound grant that LOOKS bound.
+  const rawRecipient = typeof body.recipientEmail === "string" ? body.recipientEmail.trim() : "";
+  if (rawRecipient && (rawRecipient.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawRecipient))) {
+    return NextResponse.json({ error: "invalid_recipient", message: "That recipient email doesn't look valid." }, { status: 400 });
+  }
+  const recipientEmail = rawRecipient || null;
   const maxRedemptions = Math.min(1000, Math.max(1, Number(body.maxRedemptions) || 1));
 
   // The grant value is RULED (one free full assessment — GRANT_PLAN_TYPE growth_279, 1 credit;
@@ -45,14 +53,14 @@ export async function POST(req: Request) {
   // — that value was in fact a data-layer fallback the founder never chose) and deliberately NOT
   // settable from this form: a campaign that needs a different value is a new ruling, not a
   // dropdown. Unsold tiers are structurally ungrantable — no plan input exists on any API.
-  const { grant, error } = await createGrant({ mode, note, createdBy: gate.userId!, expiresDays, maxRedemptions });
+  const { grant, error } = await createGrant({ mode, note, createdBy: gate.userId!, recipientEmail, expiresDays, maxRedemptions });
   if (error || !grant) return NextResponse.json({ error: error ?? "create_failed" }, { status: 500 });
 
   try {
     await supabaseAdmin.from("audit_log").insert({
       table_name: "acquisition_grants", record_id: grant.id, action: "INSERT",
       actor_id: gate.userId, actor_type: "admin",
-      new_value: { grant_created: true, mode, code_prefix: grant.code.slice(0, 6), max_redemptions: maxRedemptions, expires_at: grant.expires_at, note },
+      new_value: { grant_created: true, mode, code_prefix: grant.code.slice(0, 6), max_redemptions: maxRedemptions, expires_at: grant.expires_at, note, bound: recipientEmail !== null },
     });
   } catch { /* reporter never blocks */ }
 

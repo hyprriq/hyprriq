@@ -45,6 +45,11 @@ export interface AcquisitionGrant {
   redemption_count: number;
   expires_at: string;
   created_by: string;
+  /** The intended recipient, normalized lower/trim — NULL = unbound (the campaign-coupon case).
+   *  Set by Approve from the partner request; optional on the manual form. The RPC refuses any
+   *  other verified email with 'wrong_account'. Added 2026-09-07 after the issuer consumed a
+   *  partner grant whose recipient existed only as free text in `note`. */
+  recipient_email?: string | null;
   note: string | null;
   revoked_at: string | null;
   created_at: string;
@@ -60,7 +65,12 @@ export interface GrantRedemption {
 
 export type RedeemStatus =
   | "ok" | "invalid_code" | "revoked" | "expired" | "exhausted"
-  | "no_client" | "already_has_plan" | "email_already_used" | "unavailable";
+  | "no_client" | "already_has_plan" | "email_already_used" | "unavailable"
+  // ── 2026-09-07, two words for two LAWS (founder-ruled; do not fold them together):
+  // wrong_account       — per-GRANT: a recipient was named at creation and this is not them.
+  // issuer_cannot_redeem — per-SYSTEM: unconditional, both modes. "A coupon may be unbound to
+  //                        recipients; it is never redeemable by its creator."
+  | "wrong_account" | "issuer_cannot_redeem";
 
 /**
  * TERMINAL statuses can never succeed on retry with the same code+account — the attach flow
@@ -91,6 +101,10 @@ export async function createGrant(opts: {
   mode: GrantMode;
   note: string;
   createdBy: string;
+  /** REQUIRED (may be null) — the caller DECIDES bound vs unbound; no silent default, the same
+   *  law as expiry and the cap. Approve passes the request's email; the manual form passes its
+   *  optional field or null. */
+  recipientEmail: string | null;
   /** REQUIRED — the admin route clamps to the ruled 30-day ceiling; no silent default here. */
   expiresDays: number;
   /** REQUIRED — the admin route decides the cap explicitly; no silent default here. */
@@ -108,6 +122,9 @@ export async function createGrant(opts: {
       expires_at: new Date(Date.now() + opts.expiresDays * 86_400_000).toISOString(),
       created_by: opts.createdBy,
       note: opts.note || null,
+      // Normalized HERE, at the one write site, with the same lower/trim the RPC applies to the
+      // redeemer's email — the comparison must never fail on case or whitespace.
+      recipient_email: opts.recipientEmail?.trim() ? opts.recipientEmail.trim().toLowerCase() : null,
     })
     .select("*")
     .single();
@@ -189,6 +206,13 @@ export async function redeemGrant(code: string, clientId: string): Promise<Redee
   if (status === "ok") {
     // Billing history (the 7a design note carried forward): grant redemptions are money-shaped
     // events and belong in billing_audit. Fail-soft — the redemption already landed atomically.
+    //
+    // ⚠ THIS INSERT FAILED ON EVERY REDEMPTION FROM 2026-08-21 TO 2026-09-07 and the catch below
+    // hid it: billing_audit_event_check did not include 'grant_redeemed', so the write violated
+    // the CHECK and the fail-soft swallowed the error inside a success path — rule 14 in a place
+    // nobody had looked. Found only because the path's FIRST real redemption prompted a count
+    // (1 redemption, 0 rows). The 20260907000000 migration widens the CHECK; the catch stays
+    // fail-soft (the redemption already landed) but is no longer the only witness.
     try {
       await supabaseAdmin.from("billing_audit").insert({
         client_id: clientId,
@@ -205,6 +229,32 @@ export async function redeemGrant(code: string, clientId: string): Promise<Redee
 }
 
 /** Client-facing copy per status — "full assessment", never the tier name (ruled framing). */
+// ── THE MASKED REFUSAL (founder-ruled 2026-09-07): "never echo the full target address to
+// whoever is holding a forwarded link — the full address turns a refusal into an information
+// leak." First character + ••• + full domain: enough for the right person to recognize their
+// own address, nothing for a stranger to harvest.
+export function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) return "•••";
+  return `${email[0]}•••${email.slice(at)}`;
+}
+
+/** ONE definition of the wrong-account message, shared by the attach and coupon-redeem routes —
+ *  two hand-kept copies of a refusal string is the scanner/locator drift class. */
+export function wrongAccountMessage(recipientEmail: string | null): string {
+  return recipientEmail
+    ? `This invite was issued to a different email address (${maskEmail(recipientEmail)}). Sign in with that address and open your invite link again, or ask us to reissue it.`
+    : REDEEM_COPY.wrong_account;
+}
+
+/** Read-only recipient lookup so a refusal can name its mask. Null on any miss — the generic
+ *  copy is the fallback, never an error in a refusal path. */
+export async function getGrantRecipientByCode(code: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("acquisition_grants").select("recipient_email").eq("code", code.trim()).maybeSingle();
+  return (data?.recipient_email as string | null) ?? null;
+}
+
 export const REDEEM_COPY: Record<Exclude<RedeemStatus, "ok">, string> = {
   invalid_code: "That code isn't recognized — check it and try again.",
   revoked: "This code is no longer active.",
@@ -214,6 +264,9 @@ export const REDEEM_COPY: Record<Exclude<RedeemStatus, "ok">, string> = {
   already_has_plan: "Your account already has a plan, so this code can't be applied to it.",
   email_already_used: "This code has already been used with this email address.",
   unavailable: "Codes can't be applied right now — please try again shortly.",
+  // The generic form — the routes upgrade it to the MASKED form when the recipient is known.
+  wrong_account: "This invite was issued to a different email address. Sign in with the address it was sent to, or ask us to reissue it.",
+  issuer_cannot_redeem: "This code was created from your own operator account and can't be redeemed by it.",
 };
 export const REDEEM_SUCCESS_COPY =
   "Your free full assessment is ready — one report credit has been added to your account. Submit a supplier whenever you're ready.";

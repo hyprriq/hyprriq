@@ -36,6 +36,7 @@ export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: 
   const router = useRouter();
   const [mode, setMode] = useState<"link" | "coupon">("link");
   const [note, setNote] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [maxRedemptions, setMaxRedemptions] = useState(1);
   const [expiresDays, setExpiresDays] = useState(30);
   const [busy, setBusy] = useState(false);
@@ -55,7 +56,7 @@ export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: 
       const res = await fetch("/api/admin/grants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, note, maxRedemptions, expiresDays }),
+        body: JSON.stringify({ mode, note, maxRedemptions, expiresDays, recipientEmail }),
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) throw new Error(data?.error ?? "Could not create the grant.");
@@ -108,6 +109,15 @@ export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: 
             <input type="number" min={1} max={30} value={expiresDays}
               onChange={(e) => setExpiresDays(Math.max(1, Math.min(30, Number(e.target.value) || 30)))}
               className="mt-1 block w-24 rounded-lg border border-line bg-canvas px-2.5 py-2 text-[13px] text-ink" />
+          </label>
+          <label className="min-w-[220px] flex-1 text-[12px] text-muted">
+            {/* Optional BINDING (2026-09-07): filled = only that verified email can redeem
+                (wrong accounts get a masked refusal); empty = unbound, the hand-delivered case.
+                The note stays free text; THIS field is the one the RPC enforces. */}
+            Recipient email (optional — binds the code)
+            <input value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)}
+              placeholder="empty = anyone with the link" type="email"
+              className="mt-1 block w-full rounded-lg border border-line bg-canvas px-2.5 py-2 text-[13px] text-ink placeholder:text-muted" />
           </label>
           <label className="min-w-[220px] flex-1 text-[12px] text-muted">
             Note (who this is for)
@@ -167,6 +177,9 @@ export function GrantsManager({ grants, redemptions, attachFailures, siteUrl }: 
                     <tr key={g.id} className="border-b border-line/60 align-top">
                       <td className="py-2.5 pr-3">
                         <div className="font-semibold text-ink">{g.note || "(no note)"}</div>
+                        {g.recipient_email
+                          ? <div className="text-[11.5px] text-clear-ink">bound to {g.recipient_email}</div>
+                          : <div className="text-[11.5px] text-muted">unbound — first eligible account wins</div>}
                         <div className="mt-0.5 font-mono text-[12px] text-muted">
                           {g.mode === "link" ? `/grant/${g.code.slice(0, 8)}…` : g.code}
                         </div>

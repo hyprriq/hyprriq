@@ -47,7 +47,7 @@ describe("code generation", () => {
 
 describe("createGrant — the ruled value, never a default (item 3, founder-locked 2026-08-22)", () => {
   it("writes GRANT_PLAN_TYPE + GRANT_CREDITS and the caller's explicit cap/expiry", async () => {
-    const { grant, error } = await createGrant({ mode: "link", note: "tester", createdBy: "user_admin", expiresDays: 30, maxRedemptions: 1 });
+    const { grant, error } = await createGrant({ mode: "link", recipientEmail: null, note: "tester", createdBy: "user_admin", expiresDays: 30, maxRedemptions: 1 });
     expect(error).toBeNull();
     const row = insertReturning.mock.calls[0][0] as Record<string, unknown>;
     expect(row.grant_plan_type).toBe(GRANT_PLAN_TYPE);
@@ -69,7 +69,7 @@ describe("createGrant — the ruled value, never a default (item 3, founder-lock
   });
 
   it("createGrant writes the constant regardless of caller — no parameter can steer the tier", async () => {
-    await createGrant({ mode: "coupon", note: "x", createdBy: "u", expiresDays: 7, maxRedemptions: 5 });
+    await createGrant({ mode: "coupon", recipientEmail: null, note: "x", createdBy: "u", expiresDays: 7, maxRedemptions: 5 });
     const row = insertReturning.mock.calls[0][0] as Record<string, unknown>;
     expect(row.grant_plan_type).toBe("growth_279");
     expect(row.max_redemptions).toBe(5);
@@ -125,5 +125,36 @@ describe("isTerminalRedeemStatus — the attach route's cookie-clearing law", ()
     expect(isTerminalRedeemStatus("ok")).toBe(false);
     expect(isTerminalRedeemStatus("unavailable")).toBe(false); // RPC/transport down → next session retries
     expect(isTerminalRedeemStatus("no_client")).toBe(false);   // provisioning race → next load succeeds
+  });
+});
+
+// ── BINDING BATCH (founder-ruled 2026-09-07) ─────────────────────────────────────────────────
+import { maskEmail, wrongAccountMessage } from "./grants";
+
+describe("the masked refusal — a refusal must never become an information leak", () => {
+  it("masks to first char + ••• + domain, and NEVER contains the local part", () => {
+    expect(maskEmail("g@hyprrbrands.com")).toBe("g•••@hyprrbrands.com");
+    const m = maskEmail("gautam.longname@example.co");
+    expect(m).toBe("g•••@example.co");
+    expect(m.includes("autam")).toBe(false);
+  });
+
+  it("wrongAccountMessage carries the mask, never the full address", () => {
+    const msg = wrongAccountMessage("recipient@partner.example");
+    expect(msg).toContain("r•••@partner.example");
+    expect(msg.includes("recipient@partner.example")).toBe(false);
+  });
+
+  it("degrades to the generic copy when no recipient is known — a refusal path never errors", () => {
+    expect(wrongAccountMessage(null)).toContain("different email address");
+  });
+});
+
+describe("two words for two laws — both terminal, neither retried by the attach loop", () => {
+  it("wrong_account and issuer_cannot_redeem clear the cookie like every other final answer", () => {
+    // Retrying the SAME account cannot change either verdict; the copy tells the right person
+    // to sign in correctly and re-open their link, which sets a fresh cookie.
+    expect(isTerminalRedeemStatus("wrong_account")).toBe(true);
+    expect(isTerminalRedeemStatus("issuer_cannot_redeem")).toBe(true);
   });
 });

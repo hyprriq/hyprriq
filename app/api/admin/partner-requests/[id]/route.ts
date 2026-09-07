@@ -86,6 +86,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     mode: "link",
     note: `Partner request — ${r.name} <${r.email}>`,
     createdBy: userId,
+    // THE BINDING (founder-ruled 2026-09-07): the grant carries the decision Approve already
+    // made. Before this, the recipient lived only in `note` free text and the issuer's own
+    // click redeemed the first partner grant ever sent.
+    recipientEmail: r.email,
     expiresDays: GRANT_EXPIRES_DAYS,
     maxRedemptions: 1,
   });

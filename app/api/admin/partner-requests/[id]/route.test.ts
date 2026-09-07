@@ -71,7 +71,10 @@ describe("approve — the whole yes in one click", () => {
     expect(data.grant.code_prefix).toBe(GRANT.code.slice(0, 8));
     expect(data.emailed.sent).toBe(true);
     // The RULED value: link mode, single redemption, the 30-day ceiling — never chosen here.
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "link", maxRedemptions: 1, expiresDays: 30 }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "link", maxRedemptions: 1, expiresDays: 30,
+      // THE BINDING (2026-09-07): the grant carries the request's email — the defect that let
+      // the issuer redeem the first partner grant was this field not existing.
+      recipientEmail: "priya@example.com" }));
     // The email carries the /grant/<code> link to the REQUESTER's address.
     expect(sendInvite).toHaveBeenCalledWith(expect.objectContaining({
       to: "priya@example.com",

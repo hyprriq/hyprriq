@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { redeemGrant, isTerminalRedeemStatus, REDEEM_COPY, REDEEM_SUCCESS_COPY } from "@/lib/data/grants";
+import { redeemGrant, isTerminalRedeemStatus, REDEEM_COPY, REDEEM_SUCCESS_COPY, wrongAccountMessage, getGrantRecipientByCode } from "@/lib/data/grants";
 import { GRANT_COOKIE } from "@/lib/constants/grantCookie";
 
 // ── INVITE-LINK ATTACH (grant-carrier rework, founder-directed 2026-08-21) ───────────────────
@@ -27,10 +27,15 @@ export async function POST() {
   if (!code) return NextResponse.json({ status: "no_cookie" });
 
   const status = await redeemGrant(code, userId);
-  const res = NextResponse.json({
-    status,
-    message: status === "ok" ? REDEEM_SUCCESS_COPY : REDEEM_COPY[status],
-  });
+  // wrong_account upgrades to the MASKED form (founder-ruled 2026-09-07): first char + ••• +
+  // domain — enough for the right person to recognize their own address, nothing for a stranger
+  // holding a forwarded link to harvest. The full address never leaves the server.
+  const message = status === "ok"
+    ? REDEEM_SUCCESS_COPY
+    : status === "wrong_account"
+      ? wrongAccountMessage(await getGrantRecipientByCode(code))
+      : REDEEM_COPY[status];
+  const res = NextResponse.json({ status, message });
   if (status === "ok" || isTerminalRedeemStatus(status)) {
     res.cookies.set(GRANT_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 0 });
   }
