@@ -14,19 +14,32 @@
 -- "…without an operator's click": the click is the decision, the code is only the courier.
 --
 -- WHAT CHANGES:
---   1. status gains 'approved'. 'contacted' leaves the CHECK — it was the word that made
---      approval look like it had sent something, and the table is empty (0 rows measured
---      2026-09-06), so no row is stranded by removing it.
+--   1. status gains 'approved'.
 --   2. grant_id — which grant an approval produced. NULL on declined/new rows, and the panel
 --      renders an approved row with a NULL grant_id as the visible remnant of a failed
 --      creation, never as success.
+--
+-- ⚠ 'contacted' STAYS IN THE CHECK, AND THE FOUNDER'S OWN REVIEW IS WHY THIS FILE DIDN'T FAIL.
+-- The first draft dropped it, written against a table measured empty on 2026-09-06 morning.
+-- By evening ONE REAL ROW held status='contacted' (the founder's test, decided 16:35Z), and
+-- ADD CONSTRAINT validates existing rows — the draft would have errored mid-run. The founder
+-- caught the stale premise before executing: "That was true when you wrote it and is not true
+-- now." The alternatives were all worse than keeping the value:
+--   · backfill → 'declined' rewrites the founder's decision; → 'approved' trips the panel's
+--     "approved but no grant attached" failure warning — a false alarm manufactured by a
+--     migration;
+--   · NOT VALID leaves the constraint permanently unvalidated — an asterisk forever.
+-- So 'contacted' remains a VALID-BUT-UNISSUABLE legacy value: the API accepts only
+-- approve/decline, the panel has no button for it, and the TS type marks it legacy-read-only.
+-- The CHECK's job is refusing garbage, not smoothing recorded history — the divergence law,
+-- one layer down.
 
 alter table public.partner_requests
   drop constraint if exists partner_requests_status_check;
 
 alter table public.partner_requests
   add constraint partner_requests_status_check
-  check (status in ('new', 'approved', 'declined'));
+  check (status in ('new', 'approved', 'declined', 'contacted'));
 
 alter table public.partner_requests
   add column if not exists grant_id uuid references public.acquisition_grants(id);
@@ -34,13 +47,21 @@ alter table public.partner_requests
 -- READ-BACK VERIFICATION (run after; never trust "Success. No rows returned"):
 --   select pg_get_constraintdef(oid) from pg_constraint
 --     where conname = 'partner_requests_status_check';
---       -- CHECK ((status = ANY (ARRAY['new','approved','declined'])))
+--       -- CHECK ((status = ANY (ARRAY['new','approved','declined','contacted'])))
+--   select convalidated from pg_constraint
+--     where conname = 'partner_requests_status_check';                               -- true
 --   select count(*) from information_schema.columns
---     where table_name = 'partner_requests' and column_name = 'grant_id';             -- 1
--- FUNCTIONAL PROBE (proves 'approved' is accepted and 'contacted' refused, then cleans up):
+--     where table_name = 'partner_requests' and column_name = 'grant_id';            -- 1
+--   select status, count(*) from partner_requests group by status;
+--       -- the 2026-09-06 'contacted' test row survives untouched: contacted | 1
+-- FUNCTIONAL PROBE (proves 'approved' is accepted and garbage refused, then cleans up):
 --   insert into partner_requests (name, email, role, clients_band, status)
 --     values ('Probe', 'probe-approval@example.com', 'va', '1-2', 'approved');
---   update partner_requests set status = 'contacted'
+--   update partner_requests set status = 'nonsense'
 --     where email = 'probe-approval@example.com';
 --       -- must ERROR: violates check constraint "partner_requests_status_check"
 --   delete from partner_requests where email = 'probe-approval@example.com';
+--
+-- OPTIONAL, NOT PART OF THE MIGRATION — only if you want your test row back in the queue so
+-- Approve's first real exercise can run against it:
+--   update partner_requests set status = 'new', decided_at = null where status = 'contacted';

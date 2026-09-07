@@ -19,8 +19,10 @@ import type { ClientsBand, PartnerRole, PartnerRequestInput } from "@/lib/conten
 // status='new') is the authority. A resubmission while a request is open returns 'duplicate' —
 // no second row, and the caller sends no second email. After a decision the address may ask again.
 
-// 'contacted' is LEGACY-READ-ONLY (pre-2026-09-06 rows; prod had zero when the CHECK changed,
-// but a dev database may still hold one and a render must not lie about it). Nothing issues it.
+// 'contacted' is LEGACY-READ-ONLY: valid in the DB CHECK, issuable by nothing. ONE real prod
+// row holds it — the founder's 2026-09-06 test, kept as recorded history rather than backfilled
+// (the migration header has the full reasoning; the empty-table premise this comment first
+// carried was stale within hours, founder-caught before the migration ran on it).
 export type PartnerRequestStatus = "new" | "approved" | "declined" | "contacted";
 
 export interface PartnerRequest {
