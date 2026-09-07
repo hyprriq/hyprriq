@@ -33,7 +33,13 @@ import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
   BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter,
 } from "@/lib/content/reportDocument";
-import { CHIP_DEFS } from "@/lib/content/reportCopy";
+// ── SHARED COPY IMPORTED, NOT RETYPED (2026-09-08, extending the CHIP_DEFS rewire): the locals
+// this file carried ("Locked display copy — verbatim from the shipping report") were verbatim by
+// convention only — the drift-armed class the census named. They now read the one module.
+import {
+  VERDICT_COPY as VERDICT_META, VERDICT_SCALE_ORDER as SCALE_ORDER, AREA_NAMES, CHIP_DEFS,
+  CHECKLIST_INTRO, CATEGORY_NOTE, CLOSING_STATEMENT as CLOSING,
+} from "@/lib/content/reportCopy";
 
 // ── Palette: print inks + reference-style tint fills ──
 const COLOUR = {
@@ -69,26 +75,11 @@ function toneFor(label: string): string {
   return "navy";
 }
 
-// ── Locked display copy — verbatim from the shipping report (components/portal/report-view.tsx) ──
-const VERDICT_META: Record<string, { name: string; level: number; means: string }> = {
-  source_clear: { name: "Source Clear", level: 1, means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours." },
-  usable_with_conditions: { name: "Usable With Conditions", level: 2, means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote." },
-  verify_before_purchase: { name: "Verify Before Purchase", level: 3, means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved." },
-  do_not_rely: { name: "Do Not Rely", level: 4, means: "The evidence does not support relying on this source. The report explains what drove this." },
-};
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
-};
-// CHIP_DEFS imported, not retyped (founder-ruled 2026-09-07 with the Verified reword): the local
-// copy here carried the old overstated "multiple independent sources" wording — the exact drift
-// the reportCopy module header warns about, in a file its lock does not walk.
-const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
-const CATEGORY_NOTE = "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";
-const CLOSING = "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.";
+// VERDICT_META / AREA_NAMES / CHIP_DEFS / CHECKLIST_INTRO / CATEGORY_NOTE / CLOSING / SCALE_ORDER
+// all import from reportCopy.ts now (see the import note above). Only the two document-only
+// headings remain this file's own:
 const RISK_HEAD = "The single most important risk";
 const LIMITS_HEAD = "The reading, and its limits";
-const SCALE_ORDER = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"] as const;
 
 function areaStatus(f: Finding): { label: string; tone: string } {
   if (f.track_key === "sourcing_logic") return { label: "Informational", tone: "navy" };

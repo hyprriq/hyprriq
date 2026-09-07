@@ -1,4 +1,5 @@
 import type { TrackContext, TrackOutput, EvidenceItem } from "@/lib/research/contracts";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 import { Orchestrator } from "@/lib/research/acquisition/orchestrator";
 import { serperPlugin } from "@/lib/research/acquisition/plugins/serper";
 import { nativeWebSearchPlugin } from "@/lib/research/acquisition/plugins/nativeWebSearch";
@@ -259,7 +260,11 @@ export async function runTrack2(ctx: TrackContext): Promise<TrackOutput> {
   // verified finding leads; vocabulary rules observed — no confirm/authorized pairings). The LLM's
   // narrative (remaining brands) follows unchanged.
   const sameEntityFinding = sameEntityConfirmed.map((r) =>
-    `For ${r.brand}: the vendor and the brand are the same business — ${resolvedForSameEntity ?? "the vendor's own domain"} is the brand's own site, so the products come directly from the business that makes them and the supply chain has no third party for this brand. This finding covers the supply-chain relationship only: the vendor's operational legitimacy is assessed under Supplier Identity, and how the brand treats third-party marketplace sellers is assessed under Brand Risk.`,
+    // Area names DERIVED from the registry (founder-ordered 2026-09-08): this sentence used to
+    // say "under Supplier Identity" — the INTERNAL dimension name — and the report renders no
+    // section by that name (it renders AREA_NAMES.supplier_identity). The AWI-2608-038 dangling-
+    // reference class, in engine-templated client prose; interpolation makes it structural.
+    `For ${r.brand}: the vendor and the brand are the same business — ${resolvedForSameEntity ?? "the vendor's own domain"} is the brand's own site, so the products come directly from the business that makes them and the supply chain has no third party for this brand. This finding covers the supply-chain relationship only: the vendor's operational legitimacy is assessed under ${AREA_NAMES.supplier_identity}, and how the brand treats third-party marketplace sellers is assessed under ${AREA_NAMES.brand_risk_assessment}.`,
   ).join("\n\n");
   const sameEntitySummary = sameEntityConfirmed.map((r) =>
     `Our research shows the vendor and ${r.brand} are the same business — you would be buying directly from the maker of the products, so the usual middleman questions about this brand's supply chain do not apply.`,

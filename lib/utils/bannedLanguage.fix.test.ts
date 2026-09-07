@@ -91,7 +91,8 @@ const MUST_PASS: [string, string][] = [
   ["unconfirmed-brands FAQ (corrected)", "The brands and vendor you enter on the form are what we research — every brand gets the full research treatment regardless of what your paperwork shows."],
   // — Verified/Assessed vocabulary (founder-ruled 2026-08-07) + upload-security messages —
   ["certainty chip: Assessed", "Assessed"],
-  ["verified/assessed FAQ", "Verified: at least one piece of evidence behind the finding comes from a source we could confirm directly. Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is."],
+  // Reworded 2026-09-08 — the FAQ now interpolates both ruled chip definitions.
+  ["verified/assessed FAQ", "Verified: supported by at least one source independent of the supplier; the supplier repeating themselves in a different format does not count. Assessed: our reading of the evidence available, with that evidence set out so you can check it. Assessed is the normal state for many findings and never means something is wrong."],
   ["file size message", "File must be 10MB or smaller."],
   ["file type message", "Only PDF, JPG, or PNG files are accepted."],
   ["dashboard attention line", "needs your attention"],
@@ -147,7 +148,8 @@ const MUST_PASS: [string, string][] = [
   ["report area def: sourcing logic", "A consistency check across the assessed areas. Informational — it does not change the verdict."],
   // Reworded 2026-09-07 (founder-ruled: at least ONE independent source; old wording overstated).
   ["report chip def: verified", "Supported by at least one source independent of the supplier; the supplier repeating themselves in a different format does not count."],
-  ["report chip def: assessed", "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation."],
+  // Reworded 2026-09-08 (founder-ruled: our reading, positively framed — never defined by absence).
+  ["report chip def: assessed", "Our reading of the evidence available, with that evidence set out so you can check it."],
   ["report chip def: not assessed", "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict."],
   ["report how-to-read (claims ruling 2026-08-14)", "This report gives you one clear verdict, the single most important risk in plain language, findings across the assessment areas your plan includes, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit."],
   ["report honesty tooltip", "What we looked for but public evidence did not confirm. This marks the limits of the research — not a finding against the supplier. Absence of evidence is not evidence of a problem."],

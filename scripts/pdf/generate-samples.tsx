@@ -40,7 +40,10 @@ import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import type { Finding } from "@/lib/data/cases";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { DOC_TITLE, ISSUER, confidentialityLine as confidentiality, runningFooter } from "@/lib/content/documentIdentity";
-import { CHIP_DEFS } from "@/lib/content/reportCopy";
+import {
+  VERDICT_COPY, AREA_NAMES, CHIP_DEFS, CHECKLIST_INTRO, CATEGORY_NOTE,
+  CLOSING_STATEMENT as CLOSING,
+} from "@/lib/content/reportCopy";
 
 // ── Settled palette (globals.css values — no new hex) ──
 const C = {
@@ -51,31 +54,22 @@ const C = {
   verifyBg: "#F8EDE2", verifyInk: "#A5560F", denyBg: "#F3E0DE", denyInk: "#9A2F2A",
 };
 
-// ── Locked display copy — VERBATIM from components/portal/report-view.tsx ──
-const VERDICT_META: Record<string, { name: string; level: number; ink: string; bg: string; means: string }> = {
-  source_clear: { name: "Source Clear", level: 1, ink: C.clearInk, bg: C.clearBg,
-    means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours." },
-  usable_with_conditions: { name: "Usable With Conditions", level: 2, ink: C.condInk, bg: C.condBg,
-    means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote." },
-  verify_before_purchase: { name: "Verify Before Purchase", level: 3, ink: C.verifyInk, bg: C.verifyBg,
-    means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved." },
-  do_not_rely: { name: "Do Not Rely", level: 4, ink: C.denyInk, bg: C.denyBg,
-    means: "The evidence does not support relying on this source. The report explains what drove this." },
+// ── SHARED COPY IMPORTED, NOT RETYPED (2026-09-08, extending the CHIP_DEFS rewire). This block
+// said "VERBATIM from components/portal/report-view.tsx" — verbatim by convention, the
+// drift-armed class. Copy comes from reportCopy.ts; only this document's print INKS stay local
+// (the same copy/presentation split the portal and the PDF template already observe).
+const VERDICT_TONE: Record<string, { ink: string; bg: string }> = {
+  source_clear: { ink: C.clearInk, bg: C.clearBg },
+  usable_with_conditions: { ink: C.condInk, bg: C.condBg },
+  verify_before_purchase: { ink: C.verifyInk, bg: C.verifyBg },
+  do_not_rely: { ink: C.denyInk, bg: C.denyBg },
 };
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy",
-  supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk",
-  documentation_review: "Documentation Review",
-  sourcing_logic: "Sourcing Logic",
-};
-// CHIP_DEFS imported, not retyped (founder-ruled 2026-09-07 with the Verified reword): the local
-// copy here carried the old overstated "multiple independent sources" wording.
-const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
-const CATEGORY_NOTE =
-  "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";
-const CLOSING =
-  "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.";
+const VERDICT_META: Record<string, { name: string; level: number; ink: string; bg: string; means: string }> =
+  Object.fromEntries(Object.entries(VERDICT_COPY).map(([k, v]) => {
+    const tone = VERDICT_TONE[k];
+    if (!tone) throw new Error(`verdict "${k}" has copy but no tone — VERDICT_TONE has drifted from VERDICT_COPY`);
+    return [k, { ...v, ...tone }];
+  }));
 const FROM_REVIEW_TEAM = "From our review team";
 // (Document-identity strings are imported at the top from lib/content/documentIdentity — the
 //  single fixture-covered source.)

@@ -10,7 +10,7 @@ import { isAssessmentArea } from "@/lib/constants/tracks";
 import { splitHeadline, HEADLINE_QUALIFIER_LABEL } from "@/lib/portal/headlineParts";
 import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
 import {
-  VERDICT_COPY, AREA_NAMES, AREA_DEFS, CHIP_DEFS, HOW_TO_READ,
+  VERDICT_COPY, VERDICT_TOOLTIP, AREA_NAMES, AREA_DEFS, CHIP_DEFS, HOW_TO_READ,
   CHECKLIST_INTRO, NON_VERDICT_SUBHEAD, NON_VERDICT_SUBHEAD_NOTE, isNonVerdictArea,
 } from "@/lib/content/reportCopy";
 import { requireVerdict } from "@/lib/portal/verdictPresence";
@@ -53,8 +53,8 @@ const VERDICT_META: Record<string, VerdictMeta> = Object.fromEntries(
   }),
 );
 
-const VERDICT_TOOLTIP =
-  "The verdict is one of four levels, strongest to weakest: Source Clear, Usable With Conditions, Verify Before Purchase, Do Not Rely. It reflects what the observable evidence supported at the time of research — not a guarantee. The verdict is the recommendation.";
+// VERDICT_TOOLTIP now imports from reportCopy.ts (2026-09-08) — it lived here hand-typed,
+// agreeing with the MUST_PASS fixture by convention only: the drift-armed class.
 
 // ── §2 TRACK 6 — THE CATEGORY SECTION (founder-ruled 2026-08-18) ────────────────────────────
 // TWO VISIBLY SEPARATE BLOCKS WITH SEPARATE ATTRIBUTION, AND THE BOUNDARY IS STRUCTURAL, NOT A

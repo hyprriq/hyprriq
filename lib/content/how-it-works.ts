@@ -1,6 +1,8 @@
 // Marketing copy (ADR-004). No "Track 0–5" language anywhere client-facing
 // (ADR-005) — client dimension names only.
 import { CASE_SLA_HOURS } from "@/lib/constants/plans";
+import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 
 export const hero = {
   title: "Before you commit capital, we research what matters.",
@@ -23,28 +25,27 @@ export const layers = [
   },
 ];
 
-export const dimensions = [
-  {
-    name: "Supplier Identity Check",
-    body: "We verify the supplier is a real, operating wholesale business — not a shell, broker, or grey-market source. Physical presence, business registration, and online signals.",
-  },
-  {
-    name: "Supply Chain Relationship Check",
-    body: "We look for any observable connection between the supplier and the brand — dealer locators, distributor pages, public sources. We classify what we can, and state clearly what we can't confirm.",
-  },
-  {
-    name: "Brand Risk Assessment",
-    body: "We read the brand's actual enforcement posture from real marketplace signals — seller counts, brand storefronts, enforcement records, reseller policies. Invoice risk and enforcement risk are always reported separately.",
-  },
-  {
-    name: "Document Review",
-    body: "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty.",
-  },
-  {
-    name: "Sourcing Logic Review",
-    body: "We check whether the whole scenario makes commercial sense — does the supplier type match the brands, are there category flags, does the story hold together or contradict itself.",
-  },
-];
+// ── AREA NAMES FROM THE REGISTRY (founder-ordered 2026-09-08). All five hand-typed names here
+// had drifted from what the paid report renders ("Supplier Identity Check", "Supply Chain
+// Relationship Check", "Brand Risk Assessment", "Document Review", "Sourcing Logic Review") — a
+// prospect who bought after reading this page received a report whose section headings matched
+// none of them. The marketing-length bodies are this page's own; names come from AREA_NAMES.
+const DIMENSION_BODY: Record<string, string> = {
+  supplier_identity:
+    "We verify the supplier is a real, operating wholesale business — not a shell, broker, or grey-market source. Physical presence, business registration, and online signals.",
+  supply_chain_relationship:
+    "We look for any observable connection between the supplier and the brand — dealer locators, distributor pages, public sources. We classify what we can, and state clearly what we can't confirm.",
+  brand_risk_assessment:
+    "We read the brand's actual enforcement posture from real marketplace signals — seller counts, brand storefronts, enforcement records, reseller policies. Invoice risk and enforcement risk are always reported separately.",
+  documentation_review:
+    "If you upload a document, we check that its entity and address line up with what our other research found independently. Only runs when a document is provided — no documents, no penalty.",
+  sourcing_logic:
+    "We check whether the whole scenario makes commercial sense — does the supplier type match the brands, are there category flags, does the story hold together or contradict itself.",
+};
+export const dimensions = ASSESSMENT_AREA_KEYS.map((key) => ({
+  name: AREA_NAMES[key] ?? key,
+  body: DIMENSION_BODY[key] ?? "",
+}));
 
 export const dataPoints = {
   title: "What “60+ data points” actually means",

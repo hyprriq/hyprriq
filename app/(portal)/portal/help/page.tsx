@@ -52,10 +52,11 @@ export default async function HelpPage() {
         <Section title="Understanding Your Verdict" sub="We deliver one of four structured verdicts. Each tells you what we observed — not what Amazon will decide.">
           <div className="grid gap-3 sm:grid-cols-2">
             {verdicts.map((v) => (
+              // The action row is GONE (founder-ruled 2026-09-08): a verdict gloss is a finding,
+              // never an action — the verdict itself is the recommendation.
               <div key={v.key} className={`rounded-card border ${VERDICT_CLS[v.key]} p-4`}>
                 <div className={`text-sm font-bold ${VERDICT_INK[v.key]}`}>{v.name}</div>
                 <p className="mt-1 text-[13px] text-ink-2">{v.desc}</p>
-                <div className={`mt-2 text-[13px] font-semibold ${VERDICT_INK[v.key]}`}>{v.action}</div>
               </div>
             ))}
           </div>

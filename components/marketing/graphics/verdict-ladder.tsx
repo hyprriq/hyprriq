@@ -1,5 +1,8 @@
+// The help-content import is GONE (founder-ruled 2026-09-08): this graphic pulled the portal
+// help page's `action` glosses ("Proceed with standard due diligence") onto its rungs — a
+// verdict glossed as an ACTION, on marketing. A verdict gloss is a finding; the rung now carries
+// name + level, and the stacked form carries the verdict's own MEANS from the one copy module.
 import { VERDICT_COPY, VERDICT_SCALE_ORDER, CHIP_DEFS } from "@/lib/content/reportCopy";
-import { verdicts } from "@/lib/content/help";
 import { VERDICT_PALETTE, VERDICT_CLASSES } from "@/lib/design/palette";
 
 /**
@@ -48,7 +51,6 @@ export function VerdictLadder({ className = "" }: { className?: string }) {
           {VERDICT_SCALE_ORDER.map((key, i) => {
             const v = VERDICT_COPY[key];
             const { ink, bg } = VERDICT_PALETTE[key];
-            const help = verdicts.find((h) => h.key === key);
             const y = PAD + i * (RUNG_H + GAP);
             return (
               <g key={key}>
@@ -76,11 +78,9 @@ export function VerdictLadder({ className = "" }: { className?: string }) {
                 >
                   {v.name}
                 </text>
-                {help && (
-                  <text x={PAD + 324} y={y + 47} fontSize="14" fill="var(--color-ink-2)">
-                    {help.action.replace(/^→\s*/, "")}
-                  </text>
-                )}
+                {/* The action gloss is GONE (ruling 2026-09-08); an SVG <text> cannot wrap the
+                    verdict's real MEANS, so the rung carries name + level and the meaning lives
+                    in the stacked form and on the report itself. */}
               </g>
             );
           })}
@@ -93,7 +93,6 @@ export function VerdictLadder({ className = "" }: { className?: string }) {
         {VERDICT_SCALE_ORDER.map((key) => {
           const v = VERDICT_COPY[key];
           const c = VERDICT_CLASSES[key];
-          const help = verdicts.find((h) => h.key === key);
           return (
             <li key={key} className={`rounded-card-lg p-4 ${c.bg}`}>
               <p className={`font-mono text-[10.5px] uppercase tracking-[0.14em] ${c.ink} opacity-85`}>
@@ -102,11 +101,9 @@ export function VerdictLadder({ className = "" }: { className?: string }) {
               <p className={`mt-1.5 font-display text-[21px] leading-tight tracking-[-0.02em] ${c.ink}`}>
                 {v.name}
               </p>
-              {help && (
-                <p className="mt-2 text-[15px] leading-[1.5] text-ink-2">
-                  {help.action.replace(/^→\s*/, "")}
-                </p>
-              )}
+              {/* The verdict's own MEANS, from the one copy module — the action gloss it used to
+                  pull from the portal help page is gone (ruling 2026-09-08). */}
+              <p className="mt-2 text-[15px] leading-[1.5] text-ink-2">{v.means}</p>
             </li>
           );
         })}

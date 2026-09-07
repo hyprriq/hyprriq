@@ -25,6 +25,7 @@ import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import type { Finding } from "@/lib/data/cases";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { DOC_TITLE, ISSUER, confidentialityLine, runningFooter } from "@/lib/content/documentIdentity";
+import { VERDICT_COPY as VERDICT_META, VERDICT_SCALE_ORDER as SCALE_ORDER, AREA_NAMES } from "@/lib/content/reportCopy";
 
 // ── PRINT PALETTE (PRINT_DESIGN_SPEC §1) — derived for ink, not carried from screen ──
 const COLOUR = {
@@ -51,18 +52,8 @@ const GREY: typeof COLOUR = {
 };
 type Palette = typeof COLOUR;
 
-// Locked display copy — verbatim (components/portal/report-view.tsx).
-const VERDICT_META: Record<string, { name: string; level: number; means: string }> = {
-  source_clear: { name: "Source Clear", level: 1, means: "The evidence supported this source at the time of research. Standard diligence still applies — the decision stays yours." },
-  usable_with_conditions: { name: "Usable With Conditions", level: 2, means: "Workable — with the stated conditions handled first. The conditions are part of the verdict, not a footnote." },
-  verify_before_purchase: { name: "Verify Before Purchase", level: 3, means: "Do not place a large order — resolve the listed items first. Re-submit for an updated review once resolved." },
-  do_not_rely: { name: "Do Not Rely", level: 4, means: "The evidence does not support relying on this source. The report explains what drove this." },
-};
-const AREA_NAMES: Record<string, string> = {
-  supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
-  brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
-};
-const SCALE_ORDER = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"] as const;
+// VERDICT_META / AREA_NAMES / SCALE_ORDER import from reportCopy.ts (2026-09-08) — "verbatim"
+// locals were verbatim by convention only: the drift-armed class the vocabulary lock now fails.
 
 // ── Fonts (ligature-stripped faces — spec §7) ──
 const F = (f: string) => path.join(process.cwd(), "scripts/pdf/fonts", f);

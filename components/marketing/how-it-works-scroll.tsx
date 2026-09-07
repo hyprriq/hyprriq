@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { SAMPLE_CASE_ID, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
 import { FileSearch, UserCheck, ScrollText, Check, Loader, Upload } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
+import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 
 const STEPS = [
   {
@@ -38,13 +40,9 @@ const STEPS = [
   },
 ];
 
-const DIMENSIONS = [
-  "Supplier Identity",
-  "Supply Chain Relationship",
-  "Brand Risk",
-  "Document Review",
-  "Sourcing Logic",
-];
+// Area names from the registry (founder-ordered 2026-09-08) — this list hand-typed three of
+// five wrong ("Supplier Identity", unhyphenated "Supply Chain Relationship", "Document Review").
+const DIMENSIONS = ASSESSMENT_AREA_KEYS.map((k) => AREA_NAMES[k] ?? k);
 
 // Stage visual — crossfades between three states as the active step changes.
 // Fixed height so the absolutely-positioned layers don't collapse the sticky box.

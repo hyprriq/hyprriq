@@ -1,6 +1,7 @@
 import { SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
 import { ArrowRight } from "lucide-react";
 import { VerdictBadge } from "./verdict-badge";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 
 // The hero artifact: a tasteful mock of HyprrIQ's one-page Decision Snapshot.
 // The product's deliverable IS the hero image — anonymized, on-brand, no stock
@@ -9,11 +10,13 @@ import { VerdictBadge } from "./verdict-badge";
 // component is the marketing homepage hero — the most-seen surface we have — and it shipped
 // "Inferred", a word that was never ruled and reads weaker and more speculative than "Assessed"
 // on an evidence surface. Corrected 2026-08-22; the chip definitions live in reportCopy.
+// Labels from the registry (founder-ordered 2026-09-08) — "Supplier Identity" and unhyphenated
+// "Supply Chain Relationship" were hand-typed drift on the most-seen surface we have.
 const DIMENSIONS = [
-  { label: "Supplier Identity", state: "Verified", tone: "text-clear-ink" },
-  { label: "Supply Chain Relationship", state: "Assessed", tone: "text-conditional-ink" },
-  { label: "Brand Risk", state: "Verified", tone: "text-clear-ink" },
-  { label: "Sourcing Logic", state: "Holds together", tone: "text-clear-ink" },
+  { label: AREA_NAMES.supplier_identity, state: "Verified", tone: "text-clear-ink" },
+  { label: AREA_NAMES.supply_chain_relationship, state: "Assessed", tone: "text-conditional-ink" },
+  { label: AREA_NAMES.brand_risk_assessment, state: "Verified", tone: "text-clear-ink" },
+  { label: AREA_NAMES.sourcing_logic, state: "Holds together", tone: "text-clear-ink" },
 ];
 
 const ASK = [

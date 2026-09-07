@@ -1,3 +1,5 @@
+import { CHECKLIST_INTRO, CATEGORY_NOTE, CLOSING_STATEMENT } from "@/lib/content/reportCopy";
+
 // ── THE SAMPLE REPORT — A REAL DELIVERED CASE, MASKED ─────────────────────────────────────────
 //
 // SOURCE: AWI-2608-037. Growth plan, house account, delivered 2026-08-20, verdict
@@ -153,8 +155,9 @@ export const sampleMonitor = [
   "Resolution of [Brand B]'s brand identity and any public authorized-reseller program that brand may operate",
 ];
 
-export const sampleChecklistIntro =
-  "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
+// READS the report's own intro (2026-09-08) — it lived here as a hand-copy that agreed with
+// CHECKLIST_INTRO by coincidence: the drift-armed class.
+export const sampleChecklistIntro = CHECKLIST_INTRO;
 
 export const sampleChecklist = [
   "Can you provide a current Letter of Authorization or supply agreement from [Brand A's parent] or a [Brand A's parent]-documented distributor that establishes your right to resell [Brand A] products?",
@@ -178,9 +181,10 @@ export const sampleChecklist = [
 
 export const sampleNotes = {
   heading: "Category requirements",
-  body: "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report's verdict — confirm your category status before you commit.",
-  closing:
-    "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.",
+  // READ from reportCopy (2026-09-08): both lines were hand-copies — the category note had
+  // already drifted typographically (straight apostrophe vs the canon's curly one).
+  body: CATEGORY_NOTE,
+  closing: CLOSING_STATEMENT,
 };
 
 /** Scope notes the delivered report carries under two of the areas. */

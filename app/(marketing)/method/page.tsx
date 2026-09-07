@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero, PageSection, Prose, RelatedLinks, PageCta } from "@/components/marketing/page-shell";
 import { AREAS } from "@/lib/content/whatWeCheck";
-import { VERDICT_SCALE_ORDER, CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
+import { VERDICT_SCALE_ORDER, CHIP_DEF_VERIFIED_CLAUSE, CHIP_DEF_ASSESSED_CLAUSE } from "@/lib/content/reportCopy";
 import { CANNOT } from "@/lib/content/methodBoundary";
 import { CheckableBoundary } from "@/components/marketing/graphics/checkable-boundary";
 
@@ -93,9 +93,10 @@ export default function MethodPage() {
           <p>
             <strong>Verified</strong> — {CHIP_DEF_VERIFIED_CLAUSE}
           </p>
+          {/* READS the ruled definition (founder-ruled 2026-09-08) — the ruling's wording came
+              from this paragraph. */}
           <p>
-            <strong>Assessed</strong> — a reading of the evidence available, with that evidence set
-            out so you can check it.
+            <strong>Assessed</strong> — {CHIP_DEF_ASSESSED_CLAUSE}
           </p>
           <p>
             There is no third level. We do not publish anything as &ldquo;likely&rdquo; or

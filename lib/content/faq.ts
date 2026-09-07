@@ -9,7 +9,7 @@
 // clientCopy.bannedLanguage.lock.test.ts for the scanner's blind spot on that class.
 
 import { AREAS } from "@/lib/content/whatWeCheck";
-import { CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
+import { CHIP_DEF_VERIFIED_CLAUSE, CHIP_DEF_ASSESSED_CLAUSE } from "@/lib/content/reportCopy";
 
 export type FaqItem = { q: string; a: string };
 export type FaqGroup = { heading: string; items: FaqItem[] };
@@ -42,9 +42,9 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: 'What do "Verified" and "Assessed" mean?',
-        // Verified READS the single ruled definition (founder-ruled 2026-09-07); this surface had
-        // the substance right and now cannot drift. Assessed stays hand-typed pending its ruling.
-        a: `Verified means ${CHIP_DEF_VERIFIED_CLAUSE} Assessed means it is a reading of the evidence available, and the report states what that evidence was. There is no third level. Anything we could not establish goes under what we could not confirm.`,
+        // Both READ the single ruled definitions (founder-ruled: verified 2026-09-07, assessed
+        // 2026-09-08); this surface had the substance right and now cannot drift.
+        a: `Verified means ${CHIP_DEF_VERIFIED_CLAUSE} Assessed means ${CHIP_DEF_ASSESSED_CLAUSE} There is no third level. Anything we could not establish goes under what we could not confirm.`,
       },
     ],
   },

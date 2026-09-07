@@ -12,10 +12,16 @@ export const signIn = {
   heading: "Welcome back",
   sub: "Sign in to access your research portal and reports.",
   tagline: ["Know what you're buying", "before you commit capital."],
+  // ── GLOSSES ARE FINDINGS, NEVER ACTIONS (founder-ruled 2026-09-08): "Proceed" was removed —
+  // Source Clear means the evidence supports what the supplier described; it has never meant
+  // proceed, which is a commercial decision we do not make. "Due diligence" went with it (an
+  // action gloss in noun's clothing). ⚠ UNRULED WORDING: "Evidence supports" and "Unresolved
+  // items" are my finding-shaped replacements pending founder ratification; "With caveats" and
+  // "High risk" were already finding-shaped and stand.
   pills: [
-    { tone: "clear" as const, name: "Source Clear", desc: "Proceed" },
+    { tone: "clear" as const, name: "Source Clear", desc: "Evidence supports" },
     { tone: "conditional" as const, name: "Usable With Conditions", desc: "With caveats" },
-    { tone: "verify" as const, name: "Verify Before Purchase", desc: "Due diligence" },
+    { tone: "verify" as const, name: "Verify Before Purchase", desc: "Unresolved items" },
     { tone: "deny" as const, name: "Do Not Rely", desc: "High risk" },
   ],
   switch: { text: "Don't have an account?", linkText: "Sign up free", href: "/sign-up" },

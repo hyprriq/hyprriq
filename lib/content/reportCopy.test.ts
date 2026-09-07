@@ -85,26 +85,25 @@ describe("the copy itself — it ships to clients, so it meets the client-copy b
     for (const s of ALL) expect(findInternalTokens({ _: s }), s.slice(0, 60)).toEqual([]);
   });
 
-  // ⚠ CHIP_DEFS.verified WAS RULED (founder, 2026-09-07) — the pending list below shrank by one.
+  // ⚠ THE PENDING LIST SHRANK TWICE — both chip definitions are now RULED:
+  //   · verified (founder, 2026-09-07): AT LEAST ONE source independent of the supplier. The old
+  //     CHIP_DEFS wording ("multiple independent sources confirm this") was WRONG and overstated,
+  //     while /method, /what-we-check and /faq had it right.
+  //   · assessed (founder, 2026-09-08): "Our reading of the evidence available, with that
+  //     evidence set out so you can check it." — the report-surface substance, positively framed;
+  //     defining it by absence ("without a directly confirmed source") was weaker than what we do.
+  // Both reworded entries carry no corroboration vocabulary, left the carve-out, and are held to
+  // the scanner like the rest (the ruled-wording locks below pin the substance).
   //
-  // The old wording ("Independently corroborated — multiple independent sources confirm this")
-  // sat in this list as UNRULED threshold voice. The ruling: Verified means AT LEAST ONE source
-  // independent of the supplier — the old CHIP_DEFS wording was WRONG and overstated, while
-  // /method, /what-we-check and /faq had it right. The reworded entry no longer carries
-  // corroboration vocabulary, so it left the carve-out and is held to the scanner like the rest
-  // (the ruled-wording lock further down pins the substance).
-  //
-  // TWO strings remain, still awaiting their own rulings — listed rather than waved through:
-  //   CHIP_DEFS.assessed  — "could not independently corroborate it": corroboration vocabulary,
-  //                          negated, in OUR definition of the chip.
+  // ONE string remains, still awaiting a ruling — listed rather than waved through:
   //   AREA_DEFS.documentation_review — "What any documents you provided corroborate": an ORDINARY
   //                          VERB about the client's own documents. This one is a clear false
   //                          positive of a scanner written for model output.
   const CORROBORATION_PENDING_RULING: string[] = [
-    CHIP_DEFS.assessed, AREA_DEFS.documentation_review,
+    AREA_DEFS.documentation_review,
   ];
 
-  it("carries no method vocabulary — except the two strings awaiting a ruling", () => {
+  it("carries no method vocabulary — except the one string awaiting a ruling", () => {
     for (const s of ALL.filter((x) => !CORROBORATION_PENDING_RULING.includes(x))) {
       expect(scanForMethodLeakage({ _: s }), s.slice(0, 60)).toEqual([]);
     }
@@ -113,6 +112,12 @@ describe("the copy itself — it ships to clients, so it meets the client-copy b
   it("the RULED Verified definition holds: at-least-one, independent of the supplier", () => {
     expect(CHIP_DEFS.verified).toContain("at least one source independent of the supplier");
     expect(CHIP_DEFS.verified).not.toContain("multiple");
+  });
+
+  it("the RULED Assessed definition holds: our reading, evidence set out, never defined by absence", () => {
+    expect(CHIP_DEFS.assessed).toContain("Our reading of the evidence available");
+    expect(CHIP_DEFS.assessed).toContain("set out so you can check it");
+    expect(CHIP_DEFS.assessed).not.toContain("without a directly confirmed source");
   });
 
   it("never promises an outcome — the no-guarantee law", () => {

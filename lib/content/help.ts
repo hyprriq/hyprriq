@@ -1,7 +1,11 @@
 // Help Centre content — static, editable without a code review/redeploy of the
 // page logic. Rendered by app/(portal)/portal/help/page.tsx.
 
-import { CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
+import {
+  CHIP_DEF_VERIFIED_CLAUSE, CHIP_DEF_ASSESSED_CLAUSE,
+  VERDICT_COPY, VERDICT_SCALE_ORDER, AREA_NAMES, AREA_DEFS,
+} from "@/lib/content/reportCopy";
+import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
 
 export const howItWorks = {
   title: "How HyprrIQ Works",
@@ -18,50 +22,36 @@ export type VerdictInfo = {
   key: "source_clear" | "usable_with_conditions" | "verify_before_purchase" | "do_not_rely";
   name: string;
   desc: string;
-  action: string;
 };
 
-export const verdicts: VerdictInfo[] = [
-  {
-    key: "source_clear",
-    name: "Source Clear",
-    desc: "Observable indicators are consistent with a credible wholesale supplier. Identity confirmed, no significant red flags found.",
-    action: "→ Proceed with standard due diligence",
-  },
-  {
-    key: "usable_with_conditions",
-    name: "Usable With Conditions",
-    desc: "Credible supplier but specific concerns noted. Review the conditions before purchasing.",
-    action: "→ Review conditions before proceeding",
-  },
-  {
-    key: "verify_before_purchase",
-    name: "Verify Before Purchase",
-    desc: "Significant signals require independent verification. Additional documentation recommended.",
-    action: "→ Get more information first",
-  },
-  {
-    key: "do_not_rely",
-    name: "Do Not Rely",
-    desc: "Observable concerns are significant enough that relying on this supplier carries material risk.",
-    // BL fix gate (2026-07-24): "Do not purchase from this supplier" was recommendation language
-    // beyond the verdict — the exact class the verdict-is-the-recommendation ruling bans, caught
-    // by the BL6 static lock. PROPOSED rewording (evidence-status framing); the client-surface
-    // gate confirms exact wording.
-    action: "→ Resolve the listed concerns before relying on this source",
-  },
-];
+// ── DERIVED FROM VERDICT_COPY (founder-ordered 2026-09-08): "portal help has its own everything
+// — it is not drifting from the source; it never read the source." This page carried a SECOND
+// full set of verdict meanings; its Source Clear said "Identity confirmed, no significant red
+// flags found" — stronger than the report's own meaning and stronger than /terms. The `action`
+// rows ("→ Proceed with standard due diligence", …) are GONE with the same ruling, not reworded:
+// a verdict gloss is a finding, never an action, and the verdict is already the recommendation.
+export const verdicts: VerdictInfo[] = VERDICT_SCALE_ORDER.map((key) => ({
+  key,
+  name: VERDICT_COPY[key].name,
+  desc: VERDICT_COPY[key].means,
+}));
 
 export const verdictDisclaimer =
   "Important: HyprrIQ reports reflect what we can observe externally. We cannot confirm whether Amazon will accept an invoice.";
 
-export const dimensions = [
-  { icon: "🏢", name: "Supplier Identity", desc: "We verify the supplier is a real, operating business — registration, address, web presence, domain age, contact consistency." },
-  { icon: "🔗", name: "Supply Chain Relationship", desc: "We surface any observable connection between the supplier and the brands you're sourcing — distributor listings, brand references, marketplace history." },
-  { icon: "🛡", name: "Brand Risk Assessment", desc: "We assess the brand's enforcement posture — how aggressively they pursue IP complaints and whether their distribution model creates risk." },
-  { icon: "📄", name: "Documentation Review", desc: "We check that the paperwork's entity and address line up with what our other research found independently. Documents usually cannot confirm the brands you plan to buy — that comes from the research areas above." },
-  { icon: "🧠", name: "Sourcing Logic", desc: "We assess whether the entire picture makes commercial sense — category risks, scenario coherence, and B2B archetype analysis." },
-];
+// ── NAMES AND DEFINITIONS FROM THE REGISTRY (founder-ordered 2026-09-08). The hand-typed list
+// had 3 of 5 names wrong on this page ("Supplier Identity", unhyphenated "Supply Chain
+// Relationship", "Brand Risk Assessment") — a client following the report's headings found no
+// such sections here. Only the icons are this page's own.
+const DIMENSION_ICONS: Record<string, string> = {
+  supplier_identity: "🏢", supply_chain_relationship: "🔗", brand_risk_assessment: "🛡",
+  documentation_review: "📄", sourcing_logic: "🧠",
+};
+export const dimensions = ASSESSMENT_AREA_KEYS.map((key) => ({
+  icon: DIMENSION_ICONS[key] ?? "•",
+  name: AREA_NAMES[key] ?? key,
+  desc: AREA_DEFS[key] ?? "",
+}));
 
 export type Faq = { id: string; q: string; a: string };
 
@@ -92,11 +82,10 @@ export const faqs: Faq[] = [
   {
     id: "certainty-levels",
     q: "What do Verified and Assessed mean?",
-    // Verified READS the single ruled definition (founder-ruled 2026-09-07: at least ONE source
-    // independent of the supplier). The old hand-typed sentence here ("a source we could confirm
-    // directly") had drifted from it. The Assessed sentence is deliberately NOT rewired — its
-    // cross-surface drift is census-reported, awaiting its own ruling.
-    a: `Verified: ${CHIP_DEF_VERIFIED_CLAUSE} Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is.`,
+    // Both READ the ruled definitions (verified 2026-09-07, assessed 2026-09-08 — the old
+    // Assessed here defined it by absence, which the ruling called weaker than what we do).
+    // The trailing reassurance is this surface's own context, not a definition.
+    a: `Verified: ${CHIP_DEF_VERIFIED_CLAUSE} Assessed: ${CHIP_DEF_ASSESSED_CLAUSE} Assessed is the normal state for many findings and never means something is wrong.`,
   },
   {
     id: "upgrade-midmonth",

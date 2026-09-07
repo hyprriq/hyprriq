@@ -42,6 +42,13 @@ export const VERDICT_COPY: Record<string, { name: string; level: number; means: 
 /** Strongest → weakest. The scale renders in this order on both surfaces. */
 export const VERDICT_SCALE_ORDER = ["source_clear", "usable_with_conditions", "verify_before_purchase", "do_not_rely"] as const;
 
+/** The scale tooltip — canonicalized here 2026-09-08 (it lived hand-typed in report-view.tsx,
+ *  agreeing with the MUST_PASS fixture by convention only). The scale line DERIVES from the
+ *  order + names above, so a renamed verdict flows in. */
+export const VERDICT_TOOLTIP =
+  `The verdict is one of four levels, strongest to weakest: ${VERDICT_SCALE_ORDER.map((k) => VERDICT_COPY[k].name).join(", ")}. ` +
+  "It reflects what the observable evidence supported at the time of research — not a guarantee. The verdict is the recommendation.";
+
 /**
  * Client-facing names for each track. FOUR copies of this existed — reviewView, reportTemplate,
  * report-view, and the Track 6 entry I added to two of them separately during §2 and §4, which is
@@ -78,14 +85,18 @@ export const AREA_DEFS: Record<string, string> = {
 // the portal help FAQ and guide 4 read CHIP_DEF_VERIFIED_CLAUSE below. Never retype it anywhere.
 export const CHIP_DEFS = {
   verified: "Supported by at least one source independent of the supplier; the supplier repeating themselves in a different format does not count.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
+  // ── ASSESSED, FOUNDER-RULED 2026-09-08: the report-surface substance, positively framed —
+  // defining it by absence ("without a directly confirmed source") is weaker than what we do.
+  assessed: "Our reading of the evidence available, with that evidence set out so you can check it.",
   not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
 } as const;
 
-/** The Verified definition in mid-sentence form ("Verified means …") — DERIVED from CHIP_DEFS,
+/** The chip definitions in mid-sentence form ("Verified means …") — DERIVED from CHIP_DEFS,
  *  never retyped, so a surface that needs the clause shape cannot drift from the chip. */
 export const CHIP_DEF_VERIFIED_CLAUSE =
   CHIP_DEFS.verified.charAt(0).toLowerCase() + CHIP_DEFS.verified.slice(1);
+export const CHIP_DEF_ASSESSED_CLAUSE =
+  CHIP_DEFS.assessed.charAt(0).toLowerCase() + CHIP_DEFS.assessed.slice(1);
 
 export const CHECKLIST_INTRO =
   "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";

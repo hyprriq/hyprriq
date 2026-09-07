@@ -105,6 +105,59 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-W. THE VOCABULARY BATCH — every census finding fixed, and the lock that retires the census — 2026-09-08
+
+**Founder rulings executed, all seven items + the standing question:**
+
+**① track2.ts:262 (first, as ordered)** — the same-entity narrative now interpolates
+`AREA_NAMES.supplier_identity` / `.brand_risk_assessment`; the dangling "under Supplier
+Identity" pointer is structurally impossible.
+
+**② Action-glosses hunted by SHAPE** — "Proceed" removed from the /sign-in pills (ruled: Source
+Clear means the evidence supports what the supplier described — never proceed). The hunt found
+THREE more instances of the shape: "Due diligence" on the same pills (action in noun's
+clothing → replaced), the portal help page's four `action` rows ("→ Proceed with standard due
+diligence", … → DELETED with the verdicts rewire, not reworded), and — found by typecheck —
+**verdict-ladder.tsx was pulling those same help-page action glosses onto the marketing verdict
+graphic's rungs**. The ladder now shows the verdict's own MEANS in the stacked form and
+name+level on the drawn rungs. ⚠ UNRULED wording: pill glosses "Evidence supports" and
+"Unresolved items" are mine, pending ratification.
+
+**③ Portal help rewired, not hand-corrected** — `verdicts` derives from
+VERDICT_COPY×VERDICT_SCALE_ORDER (the "Identity confirmed, no significant red flags found"
+meaning is gone with its whole parallel set); `dimensions` derives from
+ASSESSMENT_AREA_KEYS×AREA_NAMES×AREA_DEFS (only the icons remain the page's own); the FAQ
+interpolates both ruled chip clauses.
+
+**④ /how-it-works registry-fed** — all five drifted names gone; the marketing-length bodies
+stay, keyed by track_key. Same fix applied to the three marketing graphics carrying drifted
+names (report-preview, how-it-works-scroll, decision-snapshot).
+
+**⑤ ASSESSED RULED**: "Our reading of the evidence available, with that evidence set out so you
+can check it." CHIP_DEFS.assessed reworded; CHIP_DEF_ASSESSED_CLAUSE derived; wired to
+/what-we-check, /faq, /method, portal help FAQ, guide 4. The reportCopy.test.ts corroboration
+carve-out shrank AGAIN — both chip definitions are now ruled and scanner-held; only
+AREA_DEFS.documentation_review remains in it.
+
+**⑥ Drift-armed hand-copies rewired** — report-view's verdict tooltip (now VERDICT_TOOLTIP in
+reportCopy, scale line DERIVED from order+names); sampleReport's checklist intro, category note
+(which had ALREADY drifted typographically — straight vs curly apostrophe) and closing; all
+three scripts/pdf generators' locals (VERDICT_META / AREA_NAMES / CHIP_DEFS / intro / note /
+closing / scale order) now import — including **print-sample.tsx, a third generator the census
+had missed**; the two MUST_PASS fixtures tracking live copy updated.
+
+**⑦ THE STANDING QUESTION, ANSWERED WITH A LOCK** — `lib/content/vocabularyDerivation.lock.test.ts`,
+three DERIVED rules, no enumerated mistakes: (1) any track whose internal `dimension` differs
+from its AREA_NAMES entry may appear in NO client-surface string literal (catches "Supplier
+Identity Check" by substring); (2) every canonical definition sentence may exist ONLY in
+reportCopy.ts — surfaces must import, so a hand-copy that "agrees today" fails at birth
+(first-char-dropped matching catches the clause forms); (3) retired wordings never return (the
+retiredPricing pattern; the list grows with rulings, never shrinks). Walks BL6's dirs plus
+scripts/pdf and lib/email. Stated limit, in the file: it cannot catch a novel PARAPHRASE — no
+static rule reads meaning — but every drift actually found this month was one of its two
+mechanical classes. Proof it works: its first run caught print-sample.tsx and sampleReport's
+closing — two copies the manual census had missed.
+
 ## 0-V. THE WALK'S FIRST CATCH + THE GUIDES REVERSAL — 2026-09-07 (post-deploy)
 
 **Deploy happened first:** founder ran migration `20260907000000` with five read-backs, said

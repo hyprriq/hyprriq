@@ -1,5 +1,6 @@
 import { VerdictBadge } from "./verdict-badge";
 import { SAMPLE_CASE_ID, SAMPLE_VENDOR } from "@/lib/content/sampleIdentifiers";
+import { AREA_NAMES } from "@/lib/content/reportCopy";
 
 // SWAP POINT (post report-finalization): replace the mock document body with a
 // real rendered first page of the PDF report. Keep the blur overlay so the full
@@ -23,9 +24,10 @@ export function ReportPreview() {
 
         <div className="my-5 h-px bg-line" />
 
-        {/* finding blocks */}
+        {/* finding blocks — headings from the registry (founder-ordered 2026-09-08): this teaser
+            is a picture of the report, so its section names must be the report's section names. */}
         <p className="text-xs font-medium uppercase tracking-wide text-brand-ink">
-          Supplier Identity Check
+          {AREA_NAMES.supplier_identity}
         </p>
         <div className="mt-2 space-y-1.5">
           <div className="h-2.5 w-full rounded bg-subtle" />
@@ -34,7 +36,7 @@ export function ReportPreview() {
         </div>
 
         <p className="mt-5 text-xs font-medium uppercase tracking-wide text-brand-ink">
-          Supply Chain Relationship
+          {AREA_NAMES.supply_chain_relationship}
         </p>
         <div className="mt-2 space-y-1.5">
           <div className="h-2.5 w-[88%] rounded bg-subtle" />
@@ -43,7 +45,7 @@ export function ReportPreview() {
         </div>
 
         <p className="mt-5 text-xs font-medium uppercase tracking-wide text-brand-ink">
-          Brand Risk Assessment
+          {AREA_NAMES.brand_risk_assessment}
         </p>
         <div className="mt-2 space-y-1.5">
           <div className="h-2.5 w-[80%] rounded bg-subtle" />
