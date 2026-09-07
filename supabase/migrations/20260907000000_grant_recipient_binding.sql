@@ -110,10 +110,12 @@ commit;
 -- 1. Column exists:
 --      select count(*) from information_schema.columns
 --        where table_name='acquisition_grants' and column_name='recipient_email';    -- 1
--- 2. The billing CHECK accepts the redemption event (probe, then clean up):
+-- 2. The billing CHECK accepts the redemption event (probe, then clean up).
+--    client_id is NULL deliberately: billing_audit_client_id_fkey references clients(id), so a
+--    made-up id would fail the FK, not the CHECK — the probe must test exactly one constraint:
 --      insert into billing_audit (client_id, event, source, notes)
---        values ('probe', 'grant_redeemed', 'grant', 'constraint probe');
---      delete from billing_audit where client_id = 'probe';
+--        values (null, 'grant_redeemed', 'grant', 'constraint probe 20260907');
+--      delete from billing_audit where notes = 'constraint probe 20260907';
 -- 3. The RPC still refuses garbage as a WORD:
 --      select public.redeem_acquisition_grant('no-such-code', 'no-such-client');
 --        -- 'invalid_code'
