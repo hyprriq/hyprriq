@@ -105,6 +105,39 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-V. THE WALK'S FIRST CATCH + THE GUIDES REVERSAL — 2026-09-07 (post-deploy)
+
+**Deploy happened first:** founder ran migration `20260907000000` with five read-backs, said
+DEPLOY; four commits pushed (`401786a..f4d53d3`), Vercel READY in ~100s, live-probed (garbage
+code → the `invalid_code` copy over the wire, HTTP 400).
+
+**① Walk step 1's catch (founder-caught, copy not code):** the issuer block itself was CORRECT —
+the founder misreported it and then corrected the record. What was wrong was the RECOVERY TAIL:
+`grant-attach.tsx` appended "Have a different code? Enter it on your billing page…" to every
+failed attach — coupon-mode guidance on the LINK-mode surface, where the recipient holds no code
+(the email carries a link). Fix: the link-mode banner now says *sign in with the address this
+invite was sent to and open your link again, or reply to the person who sent it*; the coupon
+form on /portal/billing keeps its code guidance. One place, mode-matched — the founder walked
+back the check-every-refusal-word instruction ("small fix, not a class").
+
+**② GUIDES RULING REVERSED (founder, same message): "DO NOT CUT the guides section."** Guides 3
+(Working the verification checklist) and 4 (What the five assessment areas cover) are WRITTEN —
+`lib/content/guides.ts` + two subpages under /portal/guides, index rows flipped from Coming soon
+to links. Derivation, not invention: guide 4 renders `AREA_NAMES` over `ASSESSMENT_AREA_KEYS`
+(the registry — it cannot list an area the product definition doesn't) with limits drawn from the
+standing rules (absence-is-not-accusation, private-agreements-unreadable + per-brand isolation,
+environment-not-prediction, documents-never-raise, sourcing-logic-never-votes); guide 3 derives
+from the question-generation law (every open gap emits a tailored brand-scoped question; review
+additions labelled). Gate run as directed: **zero hits, both tiers, first pass** —
+`guides.test.ts` locks entries↔registry both directions AND holds guide prose to HARD +
+ASSERTION tiers (own-voice ⇒ assertion blocks, per the tier model's own rule).
+
+**⚠ UNRULED, found while deriving guide 4:** two client surfaces define "Verified" differently —
+`CHIP_DEFS.verified` (reportCopy.ts): "multiple independent sources confirm this" vs the /portal/help
+FAQ (`certainty-levels`): "at least one piece of evidence … from a source we could confirm
+directly." Multiple vs at-least-one, on the paid surface vs help. The guides sidestep it
+("independently corroborated"); which sentence is true is a founder ruling, not a reword.
+
 ## 0-U. THE ACQUISITION PATH'S FIRST REAL EXERCISE WAS THE FAILURE MODE — 2026-09-07
 
 **Owner: F found by accident, UX diagnosed and built.** Commits `a33c9da` (Approve), `a211d8d`

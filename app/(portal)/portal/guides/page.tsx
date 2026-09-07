@@ -2,10 +2,11 @@ import Link from "next/link";
 import { requireOnboardedClient } from "@/lib/data/client";
 import { PortalShell } from "@/components/portal/portal-shell";
 
-// ── HOW-TO GUIDES (full-build §1, wiki.html) — SHELL ONLY by the brief's ruling: guide content
-// lands with the content lane (Sanity); nothing here invents guides. The two rows that point at
-// real, existing destinations link there; the launch-set guide entries render as an honest
-// coming state, never as dead links pretending to be content. ──
+// ── HOW-TO GUIDES (full-build §1, wiki.html). The shell-only ruling (content lands with the
+// content lane) was REVERSED by the founder 2026-09-07: "DO NOT CUT the guides section. Write the
+// two missing guides." Guides 3 and 4 now live in-repo (lib/content/guides.ts + subpages here),
+// derived from the registry and the question-generation law, gate-locked by guides.test.ts. The
+// first two rows still point at their existing destinations (/portal/help, /portal/submit). ──
 
 export default async function GuidesPage() {
   const client = await requireOnboardedClient();
@@ -40,20 +41,20 @@ export default async function GuidesPage() {
             </div>
             <span className="text-muted" aria-hidden>›</span>
           </Link>
-          <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+          <Link href="/portal/guides/verification-checklist" className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5 hover:bg-subtle">
             <div>
-              <div className="text-[14px] font-semibold text-ink-2">Working the verification checklist</div>
+              <div className="text-[14px] font-semibold text-ink">Working the verification checklist</div>
               <div className="text-[13px] text-muted">Turning the report&rsquo;s questions into supplier answers</div>
             </div>
-            <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">Coming soon</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 px-5 py-3.5">
+            <span className="text-muted" aria-hidden>›</span>
+          </Link>
+          <Link href="/portal/guides/assessment-areas" className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-subtle">
             <div>
-              <div className="text-[14px] font-semibold text-ink-2">What the five assessment areas cover</div>
+              <div className="text-[14px] font-semibold text-ink">What the five assessment areas cover</div>
               <div className="text-[13px] text-muted">Supplier Legitimacy · Supply-Chain Relationship · Brand Risk · Documentation Review · Sourcing Logic</div>
             </div>
-            <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-muted">Coming soon</span>
-          </div>
+            <span className="text-muted" aria-hidden>›</span>
+          </Link>
         </div>
       </div>
     </PortalShell>
