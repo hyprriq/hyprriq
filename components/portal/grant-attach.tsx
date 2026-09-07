@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 // ── GRANT ATTACH (grant-carrier rework, 2026-08-21) — the VISIBLE half of the invite flow.
 // Mounted by the portal shell while the account is plan-less; calls /api/grants/attach once per
 // browser session. Silence was the ruled failure ("the VA sees no offer, nothing errors") — so
 // every outcome that had a cookie behind it gets a sentence: success in green, a terminal
-// failure in plain words with the typed-code recovery path. No cookie → renders nothing.
+// failure in plain words with LINK-MODE recovery (founder-caught 2026-09-07 on the walk's step 1:
+// the old tail offered "enter a code on billing" — right for a coupon holder, wrong for a link
+// recipient, who holds no code). The coupon form on /portal/billing keeps its own code guidance.
+// No cookie → renders nothing.
 // Copy rule holds: "a full assessment", never a tier name.
 
 const SESSION_KEY = "hyprriq_grant_attach_attempted";
@@ -52,9 +54,8 @@ export function GrantAttach() {
       {!result.ok && (
         <>
           {" "}
-          Have a different code? Enter it on your{" "}
-          <Link href="/portal/billing" className="font-semibold underline">billing page</Link>, or reply to
-          the person who sent your invite.
+          Sign in with the address this invite was sent to and open your link again, or reply to
+          the person who sent it.
         </>
       )}
     </div>
