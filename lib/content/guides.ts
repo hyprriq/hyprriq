@@ -19,6 +19,8 @@
 // examines/limit prose, keyed by track_key. guides.test.ts fails the build if the keys here and
 // the registry ever disagree in either direction.
 
+import { CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
+
 export type GuideSection = { heading: string; paras: string[]; bullets?: string[] };
 
 export const checklistGuide = {
@@ -122,7 +124,8 @@ export const areasGuide = {
   closing: {
     heading: "What every area has in common",
     paras: [
-      "Each finding tells you how firm the ground is. Verified means independently corroborated. Assessed means we evaluated the available evidence and formed a view without independent corroboration — a normal state for many findings, not a defect. Not assessed means the area was not evaluated, and it moves the verdict neither way.",
+      // Verified READS the single ruled definition (founder-ruled 2026-09-07).
+      `Each finding tells you how firm the ground is. Verified means ${CHIP_DEF_VERIFIED_CLAUSE} Assessed means we evaluated the available evidence and formed a view without independent corroboration — a normal state for many findings, not a defect. Not assessed means the area was not evaluated, and it moves the verdict neither way.`,
       "Everything above is about what we examine — how findings combine into a verdict is the engine’s job, and what reaches you is the verdict, the findings, and an honest split between what could and could not be corroborated. The report reflects observable evidence at the time of research, and the decision stays yours.",
     ],
   },

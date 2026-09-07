@@ -85,42 +85,34 @@ describe("the copy itself — it ships to clients, so it meets the client-copy b
     for (const s of ALL) expect(findInternalTokens({ _: s }), s.slice(0, 60)).toEqual([]);
   });
 
-  // ⚠⚠ UNRULED, FOUND BY THIS FIXTURE AND DELIBERATELY NOT "FIXED" — NEEDS A FOUNDER RULING.
+  // ⚠ CHIP_DEFS.verified WAS RULED (founder, 2026-09-07) — the pending list below shrank by one.
   //
-  // CHIP_DEFS.verified reads "Independently corroborated — multiple independent sources confirm
-  // this", and CHIP_DEFS.assessed says "could not independently corroborate it". Both TRIP the
-  // derivation scanner's corroboration rule — and on the face of it they should: "multiple
-  // independent sources confirm this" is exactly the threshold voice the rule exists to stop,
-  // stated to a client on both surfaces today.
+  // The old wording ("Independently corroborated — multiple independent sources confirm this")
+  // sat in this list as UNRULED threshold voice. The ruling: Verified means AT LEAST ONE source
+  // independent of the supplier — the old CHIP_DEFS wording was WRONG and overstated, while
+  // /method, /what-we-check and /faq had it right. The reworded entry no longer carries
+  // corroboration vocabulary, so it left the carve-out and is held to the scanner like the rest
+  // (the ruled-wording lock further down pins the substance).
   //
-  // WHY IT IS NOT CHANGED HERE: this is FOUNDER-RULED CLIENT COPY. Editing it changes what a
-  // paying client reads, which is a stop condition, and it is not obviously wrong — it is our
-  // DEFINITION of what the "Verified" chip means, not a claim about a particular supplier.
-  // Same shape as `flag_language`: our own ruled copy being measured by a scanner written to
-  // police MODEL output. The scanner is right that the words are there; whether they may be
-  // OURS is the ruling.
-  //
-  // The rest of the shared copy is held to the scanner, so this carve-out cannot quietly widen.
-  // THREE strings, and they are NOT all the same case — which is why they are listed rather than
-  // waved through as a class:
-  //   CHIP_DEFS.verified  — "multiple independent sources confirm this": genuinely the threshold
-  //                          voice, said in OUR definition of the chip rather than about a supplier.
-  //   CHIP_DEFS.assessed  — "could not independently corroborate it": the same word, negated.
+  // TWO strings remain, still awaiting their own rulings — listed rather than waved through:
+  //   CHIP_DEFS.assessed  — "could not independently corroborate it": corroboration vocabulary,
+  //                          negated, in OUR definition of the chip.
   //   AREA_DEFS.documentation_review — "What any documents you provided corroborate": an ORDINARY
   //                          VERB about the client's own documents. This one is a clear false
   //                          positive of a scanner written for model output.
   const CORROBORATION_PENDING_RULING: string[] = [
-    CHIP_DEFS.verified, CHIP_DEFS.assessed, AREA_DEFS.documentation_review,
+    CHIP_DEFS.assessed, AREA_DEFS.documentation_review,
   ];
 
-  it("carries no method vocabulary — except the three strings awaiting a ruling", () => {
+  it("carries no method vocabulary — except the two strings awaiting a ruling", () => {
     for (const s of ALL.filter((x) => !CORROBORATION_PENDING_RULING.includes(x))) {
       expect(scanForMethodLeakage({ _: s }), s.slice(0, 60)).toEqual([]);
     }
   });
 
-  it("RECORDS the exception rather than hiding it — if the copy is reworded, this fails and the note goes", () => {
-    expect(scanForMethodLeakage({ _: CHIP_DEFS.verified }).join(" ")).toContain("corroboration vocabulary");
+  it("the RULED Verified definition holds: at-least-one, independent of the supplier", () => {
+    expect(CHIP_DEFS.verified).toContain("at least one source independent of the supplier");
+    expect(CHIP_DEFS.verified).not.toContain("multiple");
   });
 
   it("never promises an outcome — the no-guarantee law", () => {

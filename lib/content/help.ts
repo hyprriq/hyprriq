@@ -1,6 +1,8 @@
 // Help Centre content — static, editable without a code review/redeploy of the
 // page logic. Rendered by app/(portal)/portal/help/page.tsx.
 
+import { CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
+
 export const howItWorks = {
   title: "How HyprrIQ Works",
   sub: "A quick overview of our research process from submission to delivery.",
@@ -90,7 +92,11 @@ export const faqs: Faq[] = [
   {
     id: "certainty-levels",
     q: "What do Verified and Assessed mean?",
-    a: "Verified: at least one piece of evidence behind the finding comes from a source we could confirm directly. Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is.",
+    // Verified READS the single ruled definition (founder-ruled 2026-09-07: at least ONE source
+    // independent of the supplier). The old hand-typed sentence here ("a source we could confirm
+    // directly") had drifted from it. The Assessed sentence is deliberately NOT rewired — its
+    // cross-surface drift is census-reported, awaiting its own ruling.
+    a: `Verified: ${CHIP_DEF_VERIFIED_CLAUSE} Assessed: the finding rests on our research and judgment without a directly confirmed source — this is the normal state for many findings and never means something is wrong; it means we are telling you exactly how firm the ground is.`,
   },
   {
     id: "upgrade-midmonth",

@@ -19,7 +19,7 @@
 // we do not control · show what is examined, never how it is weighed · absence of evidence is a
 // gap, never an accusation · no system names ("AI", "algorithm", "model", "engine").
 
-import { AREA_NAMES } from "@/lib/content/reportCopy";
+import { AREA_NAMES, CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
 
 export type AreaCopy = {
   /** canonical track_key — the reference, never a display string */
@@ -130,10 +130,12 @@ export const AREAS: readonly AreaCopy[] = [
 ];
 
 /** The two certainty words, and the fact that there is no third one. */
+// `verified` READS the single ruled definition (CHIP_DEF_VERIFIED_CLAUSE, founder-ruled
+// 2026-09-07) — this surface had the substance right before the ruling and now cannot drift.
 export const CERTAINTY = {
   heading: "Two words, and the difference between them",
   intro: "Every finding carries one of two certainty levels.",
-  verified: "means a source independent of the supplier confirmed it.",
+  verified: `means ${CHIP_DEF_VERIFIED_CLAUSE}`,
   assessed: "means it is a reading of the available evidence, and the report states what that evidence was.",
   closing:
     "There is no third word. Nothing is presented as more certain than it is, and where we could not reach either level, the report says so under what we could not confirm — a section that appears in every report, including the good ones.",

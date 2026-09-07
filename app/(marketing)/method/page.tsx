@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero, PageSection, Prose, RelatedLinks, PageCta } from "@/components/marketing/page-shell";
 import { AREAS } from "@/lib/content/whatWeCheck";
-import { VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
+import { VERDICT_SCALE_ORDER, CHIP_DEF_VERIFIED_CLAUSE } from "@/lib/content/reportCopy";
 import { CANNOT } from "@/lib/content/methodBoundary";
 import { CheckableBoundary } from "@/components/marketing/graphics/checkable-boundary";
 
@@ -88,8 +88,10 @@ export default function MethodPage() {
       <PageSection tone="surface">
         <h2 className="text-ink">Two certainty words, and only two</h2>
         <Prose className="mt-3">
+          {/* READS the single ruled definition (founder-ruled 2026-09-07) — this page's own
+              standards card above is where the ruling's wording came from. */}
           <p>
-            <strong>Verified</strong> — confirmed by a source independent of the supplier.
+            <strong>Verified</strong> — {CHIP_DEF_VERIFIED_CLAUSE}
           </p>
           <p>
             <strong>Assessed</strong> — a reading of the evidence available, with that evidence set

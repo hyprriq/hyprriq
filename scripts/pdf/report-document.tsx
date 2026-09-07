@@ -33,6 +33,7 @@ import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
   BOUNDARY_CALLOUT_LABEL, SCOPE_NOTE_LABEL, COVER_META_LABELS, coverInsideLine, documentFooter,
 } from "@/lib/content/reportDocument";
+import { CHIP_DEFS } from "@/lib/content/reportCopy";
 
 // ── Palette: print inks + reference-style tint fills ──
 const COLOUR = {
@@ -79,11 +80,9 @@ const AREA_NAMES: Record<string, string> = {
   supplier_identity: "Supplier Legitimacy", supply_chain_relationship: "Supply-Chain Relationship",
   brand_risk_assessment: "Brand Risk", documentation_review: "Documentation Review", sourcing_logic: "Sourcing Logic",
 };
-const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
-  not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
-} as const;
+// CHIP_DEFS imported, not retyped (founder-ruled 2026-09-07 with the Verified reword): the local
+// copy here carried the old overstated "multiple independent sources" wording — the exact drift
+// the reportCopy module header warns about, in a file its lock does not walk.
 const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
 const CATEGORY_NOTE = "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";
 const CLOSING = "This report reflects observable evidence available at the time of research. It is not a guarantee of marketplace approval, account safety, or brand action. The decision to purchase is yours.";

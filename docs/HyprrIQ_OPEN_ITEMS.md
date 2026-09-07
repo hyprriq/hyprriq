@@ -132,7 +132,52 @@ additions labelled). Gate run as directed: **zero hits, both tiers, first pass**
 `guides.test.ts` locks entries↔registry both directions AND holds guide prose to HARD +
 ASSERTION tiers (own-voice ⇒ assertion blocks, per the tier model's own rule).
 
-**⚠ UNRULED, found while deriving guide 4:** two client surfaces define "Verified" differently —
+**③ "VERIFIED" RULED AND CLASS-FIXED (founder, same day):** *at least ONE source independent of
+the supplier — CHIP_DEFS was wrong and overstates.* CHIP_DEFS.verified reworded to the ruled
+sentence ("Supported by at least one source independent of the supplier; the supplier repeating
+themselves in a different format does not count") and is now THE single definition: report-view,
+PDF, /how-to-read, /sample-report read CHIP_DEFS directly; /method, /what-we-check, /faq, the
+portal help FAQ and guide 4 read the derived `CHIP_DEF_VERIFIED_CLAUSE`; the two scripts/pdf
+generators' hand-copied CHIP_DEFS (carrying the wrong wording) now import it. The
+`CORROBORATION_PENDING_RULING` carve-out in reportCopy.test.ts shrank by one — verified left it
+(ruled + no longer trips the method scanner) and a ruled-wording lock pins the substance;
+CHIP_DEFS.assessed and AREA_DEFS.documentation_review remain in it, still awaiting rulings.
+
+**④ VOCABULARY CENSUS (founder-ordered, census-not-fix — nothing below was changed):**
+- **Verified** — ✅ all defining surfaces now read the one definition (see ③).
+- **Assessed** — ❌ SIX defining surfaces, THREE wording families: (A) CHIP_DEFS "evaluated …
+  could not independently corroborate … a reasoned read" (report, PDF, /how-to-read,
+  /sample-report; guide 4 paraphrases it); (B) portal help FAQ "rests on our research and
+  judgment without a directly confirmed source — the normal state…"; (C) /faq + /what-we-check
+  "a reading of the evidence available, and the report states what that evidence was" (/method
+  adds "set out so you can check it"). Substance compatible; wording drifted. One wiring step
+  once ruled.
+- **Not assessed** — ⚠ three surfaces (CHIP_DEFS, HOW_TO_READ, guide 4); substance agrees
+  ("did not evaluate; moves the verdict neither way"), wording varies mildly.
+- **Verdict NAMES** — ✅ the four names are consistent on every surface found.
+- **Verdict MEANINGS** — ❌ the portal help page (help.ts `verdicts[]`) carries a SECOND full
+  set of meanings that does not match VERDICT_COPY (report/PDF/how-to-read). Sharpest split:
+  help's Source Clear says **"Identity confirmed, no significant red flags found"** — stronger
+  than the report's own meaning and than /terms ("does not mean a supplier is safe … found
+  consistency and no significant gaps"). Also the /sign-in pills gloss the verdicts in one word
+  each and Source Clear's gloss is **"Proceed"** — recommendation-flavoured against the
+  verdict-is-the-recommendation ruling's careful wording.
+- **Area NAMES** — ❌ the widest drift. Reading the registry (correct): /what-we-check, /faq,
+  pricing (hand-typed but agreeing), guide 4, report-view, PDF, admin reviewView. DISAGREEING,
+  all client-facing: portal help `dimensions` (3 of 5 wrong: "Supplier Identity", "Supply Chain
+  Relationship" unhyphenated, "Brand Risk Assessment"); /how-it-works content (ALL FIVE drifted:
+  "Supplier Identity Check", "Supply Chain Relationship Check", "Brand Risk Assessment",
+  "Document Review", "Sourcing Logic Review"); marketing graphics report-preview.tsx,
+  how-it-works-scroll.tsx, decision-snapshot.tsx (partial). **Sharpest single find:
+  `lib/research/track2.ts:262`** — the same-entity client narrative tells the client legitimacy
+  "is assessed under Supplier Identity"; the report renders no section by that name. That is the
+  AWI-2608-038 dangling-reference class, live, in engine-templated client prose.
+- **Hand-copies currently agreeing (drift-armed, not yet wrong):** report-view's verdict tooltip;
+  sampleReport's checklist intro; scripts/pdf locals for VERDICT_META / AREA_NAMES /
+  CHECKLIST_INTRO / CATEGORY_NOTE / CLOSING (only their CHIP_DEFS was rewired under ③).
+
+**⚠ UNRULED, found while deriving guide 4 (RESOLVED by ③ above — kept for the paper trail):**
+two client surfaces defined "Verified" differently —
 `CHIP_DEFS.verified` (reportCopy.ts): "multiple independent sources confirm this" vs the /portal/help
 FAQ (`certainty-levels`): "at least one piece of evidence … from a source we could confirm
 directly." Multiple vs at-least-one, on the paid surface vs help. The guides sidestep it

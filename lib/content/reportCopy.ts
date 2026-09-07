@@ -69,11 +69,23 @@ export const AREA_DEFS: Record<string, string> = {
 };
 
 /** Verified / Assessed / Not assessed — the evidence-strength chips and their definitions. */
+// ── VERIFIED, FOUNDER-RULED 2026-09-07: at least ONE source independent of the supplier. The
+// previous wording here ("multiple independent sources confirm this") OVERSTATED the bar and
+// disagreed with /method, /what-we-check and /faq — which were right, and which /method already
+// published as "one independent source is corroboration; the supplier repeating themselves in a
+// different format is not". This entry is THE single definition of the word: report-view, the
+// PDF, /how-to-read and /sample-report read CHIP_DEFS directly; /method, /what-we-check, /faq,
+// the portal help FAQ and guide 4 read CHIP_DEF_VERIFIED_CLAUSE below. Never retype it anywhere.
 export const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
+  verified: "Supported by at least one source independent of the supplier; the supplier repeating themselves in a different format does not count.",
   assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
   not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
 } as const;
+
+/** The Verified definition in mid-sentence form ("Verified means …") — DERIVED from CHIP_DEFS,
+ *  never retyped, so a surface that needs the clause shape cannot drift from the chip. */
+export const CHIP_DEF_VERIFIED_CLAUSE =
+  CHIP_DEFS.verified.charAt(0).toLowerCase() + CHIP_DEFS.verified.slice(1);
 
 export const CHECKLIST_INTRO =
   "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";

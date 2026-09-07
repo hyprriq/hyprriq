@@ -40,6 +40,7 @@ import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import type { Finding } from "@/lib/data/cases";
 import type { TrackResultRow } from "@/lib/data/track-results";
 import { DOC_TITLE, ISSUER, confidentialityLine as confidentiality, runningFooter } from "@/lib/content/documentIdentity";
+import { CHIP_DEFS } from "@/lib/content/reportCopy";
 
 // ── Settled palette (globals.css values — no new hex) ──
 const C = {
@@ -68,11 +69,8 @@ const AREA_NAMES: Record<string, string> = {
   documentation_review: "Documentation Review",
   sourcing_logic: "Sourcing Logic",
 };
-const CHIP_DEFS = {
-  verified: "Independently corroborated — multiple independent sources confirm this.",
-  assessed: "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation.",
-  not_assessed: "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict.",
-} as const;
+// CHIP_DEFS imported, not retyped (founder-ruled 2026-09-07 with the Verified reword): the local
+// copy here carried the old overstated "multiple independent sources" wording.
 const CHECKLIST_INTRO = "Put these to the supplier before you commit. Satisfactory answers do not guarantee marketplace acceptance.";
 const CATEGORY_NOTE =
   "Selling these brands in their marketplace categories may require category approval or specific documentation before listing. This is a marketplace requirement independent of this report’s verdict — confirm your category status before you commit.";

@@ -145,7 +145,8 @@ const MUST_PASS: [string, string][] = [
   ["report area def: brand risk", "The brands' reseller environment and any enforcement signals against resellers of this profile."],
   ["report area def: documentation", "What any documents you provided corroborate. Documents can add support but never raise the verdict above what the research on its own supports."],
   ["report area def: sourcing logic", "A consistency check across the assessed areas. Informational — it does not change the verdict."],
-  ["report chip def: verified", "Independently corroborated — multiple independent sources confirm this."],
+  // Reworded 2026-09-07 (founder-ruled: at least ONE independent source; old wording overstated).
+  ["report chip def: verified", "Supported by at least one source independent of the supplier; the supplier repeating themselves in a different format does not count."],
   ["report chip def: assessed", "We evaluated the available evidence and formed a view, but could not independently corroborate it. A reasoned read, not an independent confirmation."],
   ["report chip def: not assessed", "We did not evaluate this area — for example, because no documents were provided. It neither raises nor lowers the verdict."],
   ["report how-to-read (claims ruling 2026-08-14)", "This report gives you one clear verdict, the single most important risk in plain language, findings across the assessment areas your plan includes, an honest split between what we confirmed and what we could not, and a short checklist to run before you commit."],
