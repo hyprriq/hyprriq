@@ -127,6 +127,17 @@ The P4.2 report-language column remains the STRUCTURE of what ships (pattern + n
 window); its causal clauses are re-worded under this ruling and the banned-language +
 method-leakage gates before any client sees them.
 
+**⚖ FOUNDER AMENDMENT 2026-09-08 (second ruling, same day — SELLER IDENTIFICATION LIMITS).**
+P4.4's ambition does not survive how aggregators actually operate: aggregators frequently sell
+under the ACQUIRED BRAND's storefront name, not their own, so name-matching against the P4.5
+list catches self-named aggregator storefronts and is blind to acquisitions run under brand-named
+storefronts. RULED: **brand-direct is a claim** (seller name ≈ brand name — tight match, low
+false-positive); **aggregator is asserted on exact list match ONLY, phrased as observed** ("the
+remaining seller's storefront matches [name], a known marketplace aggregator") — **never
+inferred from absence, never a guess about ownership.** P4.4's "Brand has been acquired by an
+aggregator" and P4.5's "almost certainly enforces" therefore do not ship as written; the
+positive-match observation ships. The next reader must see this limit beside the claim.
+
 **⚖ DESTINATION CONFIRMED: TRACK 3, not Track 6.** P4.6 says "Feed this data directly into
 Track 3 findings" — matching the three firewall-inert `brand_risk_assessment` weight keys.
 Whether the keys SCORE remains a separate ruled gate (firewall v-note riders, 2026-07-11);
