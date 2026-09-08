@@ -2,7 +2,7 @@ import { findingText, findingNotes } from "@/lib/portal/finding-view";
 import { isAssessmentArea } from "@/lib/constants/tracks";
 import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import type { Finding } from "@/lib/data/cases";
-import type { ClientReport, ClientCategoryCompliance } from "@/lib/portal/clientReport";
+import type { ClientReport, ClientCategoryCompliance, ClientMarketplaceHistory } from "@/lib/portal/clientReport";
 import { DOC_TITLE, ISSUER, confidentialityLine } from "@/lib/content/documentIdentity";
 import {
   SECTIONS, CONTENTS_TITLE, AREAS_TABLE, CHECKLIST_TABLE, MONITOR_TABLE_CAPTION,
@@ -112,6 +112,32 @@ function categorySection(c: ReportContent): string {
     <p style="font-size:9.5pt">${esc(CATEGORY_LEDE)}</p>
     ${brands}
     <p style="font-size:9pt;color:${PALETTE_COLOUR.soft}">${esc(CATEGORY_FOOTER)}</p>
+  </div>`;
+}
+
+// ── Marketplace listing history (Keepa stage 1, 2026-09-08) — PDF parity with the portal's
+// MarketplaceSection. Sentences arrive pre-built and gate-tested; the template adds furniture only.
+function marketplaceSection(c: ReportContent): string {
+  const data = c.findings
+    .filter((f) => isAssessmentArea(f.track_key))
+    .map((f) => (f.compiled_findings_json as { marketplace_history?: ClientMarketplaceHistory } | null)?.marketplace_history)
+    .find(Boolean);
+  if (!data) return "";
+  const note = !data.available && data.note ? `<p style="font-size:9.5pt">${esc(data.note)}</p>` : "";
+  const brands = data.per_brand.map((b) => {
+    const path = b.listing_category_path ? `<div style="font-size:9pt;color:${PALETTE_COLOUR.soft}">Listed under: ${esc(b.listing_category_path)}</div>` : "";
+    const identity = b.identity_sentence ? `<p style="font-size:9.5pt">${esc(b.identity_sentence)}</p>` : "";
+    const level = b.brand_level_sentence ? `<p style="font-size:9pt;color:${PALETTE_COLOUR.soft}">${esc(b.brand_level_sentence)}</p>` : "";
+    const monitor = b.monitor.length
+      ? `<div style="font-size:9pt;color:${PALETTE_COLOUR.soft}">Worth monitoring:</div>${b.monitor.map((m) => `<p style="font-size:9.5pt;margin-bottom:2pt">• ${esc(m)}</p>`).join("")}`
+      : "";
+    return `<div class="area"><div class="area-head"><span class="n">${esc(b.brand)} <span style="font-weight:400;color:${PALETTE_COLOUR.soft}">${esc(b.asin)}</span></span></div>
+      ${path}<p style="font-size:9.5pt">${esc(b.sentence)}</p>${identity}${level}${monitor}</div>`;
+  }).join("");
+  return `<div class="area keep">
+    <div class="area-head"><span class="n">Marketplace listing history</span><span class="s">Advisory</span></div>
+    <p style="font-size:9.5pt">Advisory only — this section does not affect the verdict. It reports how each listing&rsquo;s third-party seller count has moved over time, from marketplace history data.</p>
+    ${note}${brands}
   </div>`;
 }
 
@@ -387,6 +413,7 @@ h4.sub{font-weight:700;font-size:13pt;color:${P.ink};margin-bottom:6pt;break-aft
     return `<div class="area${isScope ? " keep" : ""}">${head}${bodyH}${notesH}</div>`;
   }).join("")}
   ${categorySection(c)}
+  ${marketplaceSection(c)}
 </div>
 
 <div class="section pagebody">

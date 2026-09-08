@@ -4,7 +4,7 @@ import { scanForMethodLeakage } from "@/lib/research/synthesisMethodScan";
 import { readSellerCounts, type CountPoint } from "./sellerCountReading";
 import {
   sellerCountSentence, sellerIdentitySentence, brandLevelSentence, monitorEntries,
-  SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE,
+  SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE, LISTING_UNRETRIEVABLE,
 } from "./sellerCountLanguage";
 import { classifySeller } from "./aggregators";
 
@@ -26,7 +26,7 @@ const READINGS = {
 };
 
 function allSentences(): string[] {
-  const out: string[] = [SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE];
+  const out: string[] = [SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE, LISTING_UNRETRIEVABLE];
   for (const r of Object.values(READINGS)) {
     for (const held of [true, false, null] as const) out.push(sellerCountSentence(r, held));
     out.push(...monitorEntries("B0EXAMPLE01", r));
@@ -36,6 +36,7 @@ function allSentences(): string[] {
     { name: "AcmeBrand Store", identity: classifySeller("AcmeBrand Store", "AcmeBrand") },
     { name: "Thrasio LLC", identity: classifySeller("Thrasio LLC", "AcmeBrand") },
     { name: "Random Deals 24", identity: classifySeller("Random Deals 24", "AcmeBrand") },
+    { name: "Amazon.com", identity: classifySeller("Amazon.com", "AcmeBrand", "ATVPDKIKX0DER") },
   ];
   const s = sellerIdentitySentence(ids);
   if (s) out.push(s);

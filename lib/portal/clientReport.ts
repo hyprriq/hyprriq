@@ -403,6 +403,41 @@ export function projectCategoryComplianceForClient(raw: unknown): ClientCategory
   return { per_brand, category_verdict: s(a.category_verdict) || null };
 }
 
+// ── MARKETPLACE HISTORY CLIENT SURFACE (Keepa stage 1, founder-approved 2026-09-08) ──────────
+// The category_compliance precedent: a PROJECTOR BRANCH with a FIELD filter, never the key
+// allowlist — generated_at and any future internal field stay private by default. Every string
+// that crosses was BUILT by lib/research/keepa/sellerCountLanguage.ts, which is held to the
+// HARD + ASSERTION + method-leakage gates from birth; the projection still re-derives shape.
+export interface ClientMarketplaceBrand {
+  brand: string; asin: string; sentence: string;
+  identity_sentence: string | null; brand_level_sentence: string | null;
+  listing_category_path: string | null; monitor: string[];
+}
+export interface ClientMarketplaceHistory {
+  available: boolean; note: string | null; per_brand: ClientMarketplaceBrand[];
+}
+
+export function projectMarketplaceHistoryForClient(raw: unknown): ClientMarketplaceHistory | null {
+  if (!raw || typeof raw !== "object") return null;
+  const a = raw as { available?: unknown; note?: unknown; per_brand?: unknown };
+  const s2 = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+  const brands = Array.isArray(a.per_brand) ? (a.per_brand as Record<string, unknown>[]) : [];
+  const per_brand: ClientMarketplaceBrand[] = brands
+    .map((b) => ({
+      brand: s2(b.brand), asin: s2(b.asin), sentence: s2(b.sentence),
+      identity_sentence: s2(b.identity_sentence) || null,
+      brand_level_sentence: s2(b.brand_level_sentence) || null,
+      listing_category_path: s2(b.listing_category_path) || null,
+      monitor: Array.isArray(b.monitor) ? (b.monitor as unknown[]).map(s2).filter(Boolean) : [],
+    }))
+    .filter((b) => b.brand && b.sentence);
+  const available = a.available === true;
+  const note = s2(a.note) || null;
+  if (!available && !note) return null;          // nothing honest to say → no section, never an empty one
+  if (available && per_brand.length === 0) return null;
+  return { available, note, per_brand };
+}
+
 export function projectFindingJsonForClient(
   cf: Record<string, unknown>,
   trackKey: string,
@@ -435,6 +470,11 @@ export function projectFindingJsonForClient(
     // block as "no category section", never as an empty one: $99 and Growth have no Track 6 at
     // all, and an empty bordered box on a paid report reads as something that failed.
     if (cc && cc.per_brand.length > 0) projected.category_compliance = cc;
+  }
+  if (trackKey === "brand_risk_assessment") {
+    const mh = projectMarketplaceHistoryForClient(cf.marketplace_history);
+    // Same absent-not-empty law: plans without ASINs have no block at all.
+    if (mh) projected.marketplace_history = mh;
   }
   return projected;
 }

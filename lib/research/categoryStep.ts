@@ -69,6 +69,26 @@ const liveModel: Track6Deps["model"] = async ({ brands, sources, tableAid }) => 
   return { json: r.json, cost_usd: r.cost_usd };
 };
 
+// ── LISTING-CATEGORY GROUND TRUTH (Keepa stage 1, founder-approved 2026-09-08) ───────────────
+// The ASIN's own category tree — the marketplace's statement of where the client's ACTUAL
+// product sits — rides into Hop 1 as additional sources for the model to cite. Hop 2's law is
+// unchanged: LLM proposes, CODE decides against the closed table. Source ids are keepa_<ASIN>;
+// their record-of-input is brand_cache.keepa_data_json (see marketplaceHistoryStep.ts header —
+// the pack-vs-cache placement is flagged UNRULED for founder review).
+export function modelWithListingCategories(
+  listing: { brand: string; asin: string; path: string[] }[],
+  inner: Track6Deps["model"] = liveModel,
+): Track6Deps["model"] {
+  if (listing.length === 0) return inner;
+  const extra = listing.map((l) => ({
+    source_id: `keepa_${l.asin}`,
+    title: `Amazon listing category for ${l.brand} (ASIN ${l.asin})`,
+    url: `https://www.amazon.com/dp/${l.asin}`,
+    snippet: `The marketplace lists this product under: ${l.path.join(" › ")}.`,
+  }));
+  return (input) => inner({ ...input, sources: [...input.sources, ...extra] });
+}
+
 async function auditDrop(caseId: string, attempt: number, reason: string): Promise<void> {
   // POST-FREEZE HUNT (2026-07-24): the containment must contain its own reporter — an audit-log
   // outage can never convert an advisory drop into a pipeline-killing throw. Console is the

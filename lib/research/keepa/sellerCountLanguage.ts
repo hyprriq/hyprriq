@@ -55,11 +55,15 @@ export function sellerIdentitySentence(identities: { name: string; identity: Sel
   const parts = identities.map(({ name, identity }) => {
     if (identity.kind === "brand_direct") return `"${name}" matches the brand itself`;
     if (identity.kind === "aggregator") return `"${name}" matches ${identity.matched}, a known marketplace aggregator`;
+    if (identity.kind === "amazon_retail") return `"${name}" is the marketplace's own retail presence on the listing`;
     return `"${name}" shows no match to the brand or to known aggregator storefronts`;
   });
   // RULED LIMIT stated in the copy itself: absence of a match is never an ownership claim.
   return `Remaining storefronts observed: ${parts.join("; ")}. A storefront that matches neither list is reported as unmatched — that is an observation about the storefront name, not a determination of who owns it.`;
 }
+
+export const LISTING_UNRETRIEVABLE =
+  "This listing could not be retrieved from marketplace history, so no reading is drawn for it.";
 
 export const SELLER_DATA_UNAVAILABLE =
   "Marketplace listing history could not be obtained for this case, so this advisory item is reported without it. This is a data-availability note about our research, not a finding about the supplier or the brand.";

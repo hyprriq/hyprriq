@@ -8,7 +8,7 @@ import { parseFindingStructure } from "@/lib/portal/findingStructure";
 import { changeRequestOpen } from "@/lib/portal/changeRequest";
 import { isAssessmentArea } from "@/lib/constants/tracks";
 import { splitHeadline, HEADLINE_QUALIFIER_LABEL } from "@/lib/portal/headlineParts";
-import type { ClientCategoryCompliance } from "@/lib/portal/clientReport";
+import type { ClientCategoryCompliance, ClientMarketplaceHistory } from "@/lib/portal/clientReport";
 import {
   VERDICT_COPY, VERDICT_TOOLTIP, AREA_NAMES, AREA_DEFS, CHIP_DEFS, HOW_TO_READ,
   CHECKLIST_INTRO, NON_VERDICT_SUBHEAD, NON_VERDICT_SUBHEAD_NOTE, isNonVerdictArea,
@@ -128,6 +128,56 @@ function CategorySection({ data }: { data: ClientCategoryCompliance }) {
           </div>
         ))}
         <p className="mt-4 border-t border-line pt-3 text-[12px] text-muted">{CATEGORY_FOOTER}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── MARKETPLACE LISTING HISTORY (Keepa stage 1, founder-approved 2026-09-08) ─────────────────
+// Every sentence arrives PRE-BUILT from lib/research/keepa/sellerCountLanguage.ts (gate-tested
+// from birth; cause-is-inference enforced there) — this component lays them out and adds no
+// words of its own beyond the section furniture. Advisory placement mirrors CategorySection.
+function MarketplaceSection({ data }: { data: ClientMarketplaceHistory }) {
+  return (
+    <div className="mt-6">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Marketplace listing history</span>
+      <div className="mt-2.5 rounded-card border border-line bg-surface p-5">
+        <p className="report-prose text-muted">
+          Advisory only — this section does not affect the verdict. It reports how each listing&rsquo;s
+          third-party seller count has moved over time, from marketplace history data.
+        </p>
+        {!data.available && data.note && (
+          <p className="mt-3 max-w-[68ch] font-reading report-prose leading-relaxed text-ink-2">{data.note}</p>
+        )}
+        {data.per_brand.map((b) => (
+          <div key={`${b.brand}-${b.asin}`} className="mt-4 border-t border-line pt-4 first:border-t-0">
+            <div className="text-[14px] font-bold text-ink">
+              {b.brand} <span className="ml-1 font-mono text-[12px] font-normal text-muted">{b.asin}</span>
+            </div>
+            {b.listing_category_path && (
+              <div className="mt-1 text-[12px] text-muted">Listed under: {b.listing_category_path}</div>
+            )}
+            <p className="mt-2 max-w-[68ch] font-reading report-prose leading-[1.7] text-ink-2">{b.sentence}</p>
+            {b.identity_sentence && (
+              <p className="mt-2 max-w-[68ch] font-reading report-prose leading-[1.7] text-ink-2">{b.identity_sentence}</p>
+            )}
+            {b.brand_level_sentence && (
+              <p className="mt-2 max-w-[68ch] font-reading report-prose leading-[1.7] text-muted">{b.brand_level_sentence}</p>
+            )}
+            {b.monitor.length > 0 && (
+              <div className="mt-2.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Worth monitoring</div>
+                <ul className="mt-1 max-w-[68ch] space-y-1">
+                  {b.monitor.map((m, i) => (
+                    <li key={i} className="flex gap-2 font-reading report-prose leading-[1.7] text-ink-2">
+                      <span className="text-muted" aria-hidden>•</span>{m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -256,6 +306,11 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
   // have no Track 6 row at all, so this is null and nothing renders.
   const category = (advisoryFindings
     .map((f) => (f.compiled_findings_json as { category_compliance?: ClientCategoryCompliance } | null)?.category_compliance)
+    .find(Boolean)) ?? null;
+  // Marketplace listing history (Keepa stage 1) — same absent-not-empty law: the projector emits
+  // it only with real content (or a degrade note), riding the Brand Risk row's projected finding.
+  const marketplace = (areaFindings
+    .map((f) => (f.compiled_findings_json as { marketplace_history?: ClientMarketplaceHistory } | null)?.marketplace_history)
     .find(Boolean)) ?? null;
   const areasLabel = areaFindings.length === 5
     ? "The five assessment areas"
@@ -595,6 +650,9 @@ export function ReportView({ c, findings, report, preview = false }: { c: CaseDe
               chip legend: it is supporting detail on the same surface, not a peer of the verdict.
               Renders at $149/Scale only; null at $99 and Growth by construction. */}
           {category && <CategorySection data={category} />}
+          {/* Marketplace listing history (Keepa stage 1, 2026-09-08) — same placement law:
+              advisory depth inside the findings panel, $149/Scale-with-ASINs only. */}
+          {marketplace && <MarketplaceSection data={marketplace} />}
         </div>
 
         {/* COULD NOT CONFIRM — the honest split (rendered only with content; see hasHonesty) */}

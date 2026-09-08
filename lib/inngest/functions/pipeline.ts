@@ -4,7 +4,8 @@ import { sendAdminAlert } from "@/lib/email/notify";
 import type { TrackContext, TrackOutput, TrackSignal } from "@/lib/research/contracts";
 import { type TrackKey } from "@/lib/constants/tracks";
 import { tracksForPlan, executionGroupsForPlan } from "@/lib/research/pipeline.registry";
-import { stageCategoryCompliance } from "@/lib/research/categoryStep";
+import { stageCategoryCompliance, modelWithListingCategories } from "@/lib/research/categoryStep";
+import { stageMarketplaceHistory } from "@/lib/research/keepa/marketplaceHistoryStep";
 import {
   stageResolveAttempt, stageSetRunning, stageTrack0, stageResolveIdentity, stagePersistIdentity,
   stageFindingTrack, stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize, type FindingTrackResult,
@@ -66,11 +67,24 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
     if (r.failed && tk === "supplier_identity") identityFailed = true;
   }
 
+  // Keepa marketplace history (stage 1, founder-approved 2026-09-08) — OWN STEP, the Track-6
+  // precedent applied: advisory, reported never scoring, fail-loud-non-fatal, gated implicitly
+  // by ASIN collection (single_149/scale_499 only) and by key presence (production has no key,
+  // so production runs the degrade path by construction). Runs AFTER the finding tracks because
+  // it persists INTO the track_3 row (P4.6: "feed this data into Track 3 findings").
+  const keepa = await step.run("keepa-marketplace-history", () => stageMarketplaceHistory(ictx));
+
   // Track 6 — Category Compliance (OWN STEP outside the registry, per the 2026-07-23 fork ruling;
   // plan-gated in the step). Parallel assessment: never enters trackOutputs/signals/synthesis.
   // Its own durable step so an Inngest retry re-runs it in isolation; failures are contained
   // inside the step (fail-loud-non-fatal) and can never block the vendor case.
-  await step.run("track-6-category", () => stageCategoryCompliance(ictx));
+  // Stage 1 addition: the listing's own category tree rides into Hop 1 as citable sources —
+  // ground truth about the client's ACTUAL product; Hop 2's code-decides law is unchanged.
+  await step.run("track-6-category", () =>
+    stageCategoryCompliance(ictx, keepa.listing_categories.length > 0
+      ? { model: modelWithListingCategories(keepa.listing_categories) }
+      : undefined),
+  );
 
   const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs, signals));
   const verdict = await step.run("verdict", async () => {

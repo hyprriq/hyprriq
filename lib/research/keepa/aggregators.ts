@@ -18,14 +18,25 @@ const norm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").
 export type SellerIdentity =
   | { kind: "brand_direct"; matched: string }
   | { kind: "aggregator"; matched: string }        // exact-list hit ONLY
+  | { kind: "amazon_retail" }                       // Amazon itself on the listing — probe-proven
+                                                    // observable (2026-09-08: sellerId ATVPDKIKX0DER,
+                                                    // names "Amazon.com"/"Amazon Resale"). One of the
+                                                    // founder's alternative cliff causes, observed.
   | { kind: "independent" };                        // NOT a claim of independence from the brand —
                                                     // the honest residue: no list hit, no brand match
 
+/** Amazon Retail's fixed US sellerId — measured from the 2026-09-08 probe, not recalled. */
+export const AMAZON_RETAIL_SELLER_ID = "ATVPDKIKX0DER";
+
 /** Classify one storefront name. `brand` enables the brand-direct claim; matching is
  *  containment on normalized tokens — "Thrasio LLC" hits, "Thrifty" does not. */
-export function classifySeller(sellerName: string, brand: string | null): SellerIdentity {
+export function classifySeller(sellerName: string, brand: string | null, sellerId?: string): SellerIdentity {
+  if (sellerId === AMAZON_RETAIL_SELLER_ID) return { kind: "amazon_retail" };
   const n = norm(sellerName);
   if (!n) return { kind: "independent" };
+  if (/^amazon(\s|$|\.)/.test(n + " ") && (n === "amazon" || n.startsWith("amazon com") || n.startsWith("amazon resale") || n.startsWith("amazon warehouse"))) {
+    return { kind: "amazon_retail" };
+  }
   if (brand) {
     const b = norm(brand);
     if (b && (n === b || n.includes(b) || b.includes(n))) return { kind: "brand_direct", matched: brand };
