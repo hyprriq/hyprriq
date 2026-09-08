@@ -105,6 +105,41 @@ sessions or between the planning thread, the UI/UX thread, and Fable.
 
 ---
 
+## 0-X. KEEPA STAGE 1 — the method recovered, encoded, and proven on a real case — 2026-09-08
+
+**Staged build under the founder's limited API window. NOT DEPLOYED — 5 commits local-only
+(`7e46893..6437e7c`), staging semantics throughout (local pipeline runs, .env.local key,
+production has no key so production runs the degrade path by construction).**
+
+- **PATCH 4 recovered verbatim** → `docs/KEEPA_READING_GUIDE_recovered.md` (docx found in
+  Downloads; its claimed home `D:\hyprriq\docs\` does not exist). Two same-day founder
+  amendments ride below the verbatim: cause-is-inference (the cliff ships as shape + what can
+  produce it, never "the brand enforced") and the seller-ID limits (brand-direct a claim;
+  aggregator on exact match only, never inferred from absence). Patches 1–3 spun off.
+- **The method as code**: `lib/research/keepa/` — seven-pattern classifier (thresholds cite the
+  guide; DERIVED-UNRULED constants flagged), language layer with the rulings as LOCKS
+  (HARD+ASSERTION+method-leakage from birth), 13-aggregator matcher + probe-measured
+  amazon_retail detection, quota-aware client (bounded 429 wait, honest degrade — not the
+  anthropic.ts gap).
+- **Wired the Track-6-precedent way**: stageMarketplaceHistory (own durable step, advisory,
+  never scoring — the three keepa_* keys stay firewall-inert) persists into track_3 per P4.6;
+  brand_cache's written-by-nothing columns got their FIRST writer; the listing category tree
+  rides into Track 6 Hop 1 as citable ground truth (Hop 2's code-decides law unchanged);
+  projector branch + portal + PDF parity render. ⚠ UNRULED ×3: keepa record-of-input lives in
+  brand_cache not the frozen EvidencePack; operator ASIN path checks plan eligibility but not
+  the KEEPA_LIVE form gate; all client sentences await wording ratification.
+- **MEASURED**: probe — names return (3/4), product+offers 6 tokens, seller batch 3, refill
+  1/min. Real case **AWI-2609-047** (DAS Distributors / Instant Pot / B00FLYWNYQ, single_149,
+  local run, 541s, clean): already_locked_down read with Amazon-retail identified among the
+  remaining sellers, dated monitor entry, Track 6 citing `keepa_B00FLYWNYQ` — **9 Keepa tokens
+  total**. Degrade measured: no key AND invalid key both → {available:false} + the
+  data-availability note; the case completes.
+- **⚠ Found by the run**: cost telemetry gap bitten in practice — cases/track rows carry NULL
+  cost_usd, so the case's LLM cost is unrecoverable (already on the ranked open list; now with
+  a concrete victim). Also: intake's one-ASIN-per-brand ruling means §P4.3 step 9's brand-level
+  agreement cannot fire from intake (the honest single-listing line ships); asinIntake's
+  client message says "ASINs are collected on the Scale plan" while single_149 is eligible too.
+
 ## 0-W. THE VOCABULARY BATCH — every census finding fixed, and the lock that retires the census — 2026-09-08
 
 **Founder rulings executed, all seven items + the standing question:**
