@@ -55,6 +55,11 @@ const WEIGHTS: Record<Exclude<TrackKey, "intake_scope_guard" | "sourcing_logic">
   brand_risk_assessment: {
     reseller_friendly: { points: 4 },
     keepa_stable_no_cliff: { points: 3 },
+    // ⚖ FOUNDER-RULED 2026-09-08 — THIS KEY'S SIGN IS BACKWARDS AND THE RULING IS RECORDED SO
+    // THE GATE-OPENER DOES NOT INHERIT THE CONTRADICTION: the recovered Keepa reading guide's
+    // §P4.2 row 4 WINS — a permanently low seller count is "Already Locked Down", HIGH risk;
+    // a weight key calling it favourable contradicts the ruled method. Inert today (firewall);
+    // whoever opens the Keepa scoring gate must re-sign or retire this key FIRST, by ruling.
     low_seller_count_stable: { points: 2 },
     no_enforcement_found: { points: 2 },
     map_policy_present: { points: 1 },

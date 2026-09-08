@@ -40,7 +40,9 @@ export const CATEGORY_CLIENT_SUMMARY =
 // (The ladder is deliberately two-axis: $149 buys DEPTH at 3 brands, Growth buys BREADTH at 5
 // brands without category compliance, Scale buys both. That is why $149 is engine-richer than
 // Growth and it is not a mistake either.)
-const CATEGORY_PLANS = new Set<string>(["scale_499", "single_149"]);
+// Exported 2026-09-08 for the roster lock: asinIntake's PLAN_ASIN_ELIGIBLE (client-importable
+// twin — this module cannot cross the client boundary) is test-locked to equal this set.
+export const CATEGORY_PLANS = new Set<string>(["scale_499", "single_149"]);
 
 // Live Hop-1 model adapter (mechanical — no frozen touches): proposes categories per brand from
 // the gathered sources, with the table's non-brand-keyed rows as the CATEGORY-DEFINITION AID.

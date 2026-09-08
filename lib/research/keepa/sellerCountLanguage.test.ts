@@ -4,7 +4,7 @@ import { scanForMethodLeakage } from "@/lib/research/synthesisMethodScan";
 import { readSellerCounts, type CountPoint } from "./sellerCountReading";
 import {
   sellerCountSentence, sellerIdentitySentence, brandLevelSentence, monitorEntries,
-  SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE, LISTING_UNRETRIEVABLE,
+  SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE, LISTING_UNRETRIEVABLE, UNMATCHED_BOUNDARY,
 } from "./sellerCountLanguage";
 import { classifySeller } from "./aggregators";
 
@@ -78,6 +78,33 @@ describe("the cause-is-inference ruling, enforced as a lock", () => {
     expect(s).toContain("matches Thrasio, a known marketplace aggregator");
     expect(s).toContain("not a determination of who owns it");
     expect(s.toLowerCase()).not.toContain("acquired");
+  });
+
+  it("⛔ the boundary sentence is FOUNDER-RATIFIED VERBATIM (change (c)) — never edited down", () => {
+    expect(UNMATCHED_BOUNDARY).toBe(
+      "A storefront that matches neither list is reported as unmatched — that is an observation about the storefront name, not a determination of who owns it.",
+    );
+    const s = sellerIdentitySentence([
+      { name: "Random Deals 24", identity: classifySeller("Random Deals 24", null) },
+    ])!;
+    expect(s).toContain(UNMATCHED_BOUNDARY);
+  });
+
+  it("change (b): the identity sentence LEADS with the Amazon finding, never four equal items", () => {
+    const s = sellerIdentitySentence([
+      { name: "Amazon.com", identity: classifySeller("Amazon.com", null, "ATVPDKIKX0DER") },
+      { name: "Amazon Resale", identity: classifySeller("Amazon Resale", null) },
+      { name: "Random Deals 24", identity: classifySeller("Random Deals 24", null) },
+    ])!;
+    expect(s.startsWith("Of the three storefronts observed, two are Amazon's own retail presence on the listing.")).toBe(true);
+    expect(s).toContain("Of the rest:");
+    expect(s).toContain(UNMATCHED_BOUNDARY);
+  });
+
+  it("change (a): the locked-down window carries a NUMBER, never \"recent months\"", () => {
+    const s = sellerCountSentence(READINGS.locked, null);
+    expect(s).toMatch(/across the last \d+ months/);
+    expect(s).not.toContain("recent months");
   });
 
   it("degrade copy is a data-availability note, never a finding about the supplier", () => {

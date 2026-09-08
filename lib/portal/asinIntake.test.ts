@@ -3,8 +3,9 @@
 // nothing consumes. The eligibility map + guard rules are tested so the day the flag flips,
 // behavior is already proven. ──
 import { describe, it, expect } from "vitest";
-import { validateBrandAsins, normalizeAsin, planCollectsAsins, brandCapMessage, PLAN_ASIN_ELIGIBLE, ASIN_RE } from "./asinIntake";
-import { KEEPA_LIVE, PLAN_BRAND_CAPS } from "@/lib/constants/plans";
+import { validateBrandAsins, normalizeAsin, planCollectsAsins, brandCapMessage, asinEligiblePlanNames, PLAN_ASIN_ELIGIBLE, ASIN_RE } from "./asinIntake";
+import { KEEPA_LIVE, PLAN_BRAND_CAPS, PLAN_TYPES } from "@/lib/constants/plans";
+import { CATEGORY_PLANS } from "@/lib/research/categoryStep";
 
 const BRANDS = ["Acme", "Bolt"];
 
@@ -53,5 +54,25 @@ describe("the pure pieces stay proven for the flip day", () => {
     expect(PLAN_BRAND_CAPS.single_149).toBe(3);
     expect(brandCapMessage("single_99")).toContain("up to 3 brands");
     expect(brandCapMessage("growth_279")).toContain("up to 5 brands");
+  });
+});
+
+// ── THE ROSTER LOCK (founder-ordered 2026-09-08, with the derived-message fix): the client-
+// importable eligibility map and the research-side CATEGORY_PLANS are the SAME ruling stated in
+// two boundary-separated files. This lock is why they can never drift — and why the refusal
+// message may derive from PLAN_ASIN_ELIGIBLE without retyping the tier list. ──
+describe("PLAN_ASIN_ELIGIBLE ≡ CATEGORY_PLANS (both directions) and the derived message", () => {
+  it("the eligible set equals categoryStep's CATEGORY_PLANS exactly", () => {
+    const eligible = PLAN_TYPES.filter((p) => PLAN_ASIN_ELIGIBLE[p]).sort();
+    expect(eligible).toEqual([...CATEGORY_PLANS].sort());
+  });
+
+  it("the refusal message names EVERY eligible tier — the old string said Scale only while single_149 was eligible", () => {
+    const names = asinEligiblePlanNames();
+    expect(names).toContain("Single Deep Report");
+    expect(names).toContain("Scale");
+    const check = validateBrandAsins("single_99", BRANDS, { Acme: "B0ABC12345" });
+    expect(check.ok).toBe(false);
+    if (!check.ok) expect(check.message).toContain(names);
   });
 });

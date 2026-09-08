@@ -27,10 +27,9 @@ export type SellerCountPattern =
   | "stable_unclassified"       // ⚠ NOT a guide row: stable between the lockdown band (≤3) and
                                 // row 1's floor (15+). The guide names no pattern here; claiming
                                 // one would invent. Language layer reports count + window only.
-                                // NOTE the standing tension for the founder: the Track 3 key
-                                // low_seller_count_stable (+2, "Low, stable seller count") reads
-                                // FAVORABLE while §P4.2 row 4 calls 1-3-stable HIGH risk — not
-                                // resolved here; advisory rendering asserts neither.
+                                // The low_seller_count_stable tension was RULED 2026-09-08:
+                                // §P4.2 row 4 wins (low-stable = locked down = HIGH); the key's
+                                // favorable sign is recorded as backwards in weights.ts.
   | "insufficient_history";     // honest state — not in the guide's table; absence of a reading
 
 export interface DropEvent {

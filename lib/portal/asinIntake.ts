@@ -8,7 +8,7 @@
 // (see lib/research/intakeExtras.ts for how it rides TrackContext without touching the
 // frozen contracts.ts).
 
-import { PLAN_BRAND_CAPS, brandCapForPlan, KEEPA_LIVE, type PlanType } from "@/lib/constants/plans";
+import { PLAN_BRAND_CAPS, PLAN_TYPES, PLAN_NAME, brandCapForPlan, KEEPA_LIVE, type PlanType } from "@/lib/constants/plans";
 
 // Amazon ASINs are 10 chars, alphanumeric uppercase (modern ones start B0; legacy ASINs are
 // ISBN-10s, so we accept the general 10-char form rather than hardcoding the B0 prefix).
@@ -28,6 +28,12 @@ export const PLAN_ASIN_ELIGIBLE: Record<PlanType, boolean> = {
 
 export function planCollectsAsins(plan: PlanType | null | undefined): boolean {
   return KEEPA_LIVE && !!plan && PLAN_ASIN_ELIGIBLE[plan];
+}
+
+/** The eligible tiers, NAMED — derived from the eligibility map + PLAN_NAME, never typed. */
+export function asinEligiblePlanNames(): string {
+  const names = PLAN_TYPES.filter((p) => PLAN_ASIN_ELIGIBLE[p]).map((p) => PLAN_NAME[p]);
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 export function normalizeAsin(raw: string): string {
@@ -58,7 +64,12 @@ export function validateBrandAsins(
     return {
       ok: false,
       error: "asin_not_available",
-      message: "ASINs are collected on the Scale plan — your plan researches the supplier and brands without a listing-level check.",
+      // DERIVED, not typed (founder-ordered 2026-09-08): the old string said "the Scale plan"
+      // while single_149 is eligible too — the vocabulary-drift class, on a tier boundary. This
+      // module is CLIENT-IMPORTABLE, so it derives from PLAN_ASIN_ELIGIBLE (its own rule) with
+      // names from PLAN_NAME; asinIntake.test.ts locks PLAN_ASIN_ELIGIBLE to categoryStep's
+      // CATEGORY_PLANS so the two rosters can never disagree.
+      message: `ASINs are collected on ${asinEligiblePlanNames()} — your plan researches the supplier and brands without a listing-level check.`,
     };
   }
   const cap = brandCapForPlan(plan);

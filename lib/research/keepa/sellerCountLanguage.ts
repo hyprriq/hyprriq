@@ -35,10 +35,15 @@ export function sellerCountSentence(r: SellerCountReading, priceHeld: boolean | 
       return `Third-party seller count held near ${r.current} across the observed ${r.observedDays} days — consistent with an open reseller environment for this listing.`;
     case "gradual_decline":
       return `Third-party seller count declined gradually — from a peak of ${r.peak} to ${r.current} over the observed ${r.observedDays} days. A slow decline can reflect tightening distribution or ordinary seller turnover; periodic monitoring is the practical response.`;
-    case "already_locked_down":
-      return `Third-party seller count has stayed between 1 and 3 across the recent months (currently ${r.current}). The listing shows very limited third-party presence.`;
+    case "already_locked_down": {
+      // Founder-ratified 2026-09-08 with change (a): the window gets a NUMBER — "recent months"
+      // is the vagueness the rest of the product refuses. The claim is judged over the lockdown
+      // window (≤6 months), so the stated months never exceed what the classifier actually read.
+      const months = Math.max(1, Math.round(Math.min(r.observedDays, 183) / 30));
+      return `Third-party seller count has stayed between 1 and 3 across the last ${months} months (currently ${r.current}). The listing shows very limited third-party presence.`;
+    }
     case "brand_direct_only":
-      return `One seller has held this listing consistently across the observed period. Where the storefront matches the brand, that is a brand-direct selling model on this listing.`;
+      return `One seller has held this listing consistently across the observed ${r.observedDays} days. Where the storefront matches the brand, that is a brand-direct selling model on this listing.`;
     case "volatile_unstable":
       return `Third-party seller count swung repeatedly across the observed period (peak ${r.peak}, low ${r.min}) without settling at a level — consistent with listing instability or intermittent enforcement-shaped events. The swings are the observation; no single cause is identifiable from the outside.`;
     case "rising_trend":
@@ -50,16 +55,32 @@ export function sellerCountSentence(r: SellerCountReading, priceHeld: boolean | 
   }
 }
 
+// ⛔ FOUNDER-RATIFIED VERBATIM (2026-09-08, change (c)): "It is the honest boundary on the
+// weakest part of the reading and it must never be edited down for brevity." Locked by test.
+export const UNMATCHED_BOUNDARY =
+  "A storefront that matches neither list is reported as unmatched — that is an observation about the storefront name, not a determination of who owns it.";
+
+const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five"] as const;
+const countWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
+
 export function sellerIdentitySentence(identities: { name: string; identity: SellerIdentity }[]): string | null {
   if (identities.length === 0) return null;
-  const parts = identities.map(({ name, identity }) => {
+  // Founder-ratified change (b): LEAD WITH THE FINDING — two Amazon storefronts are not two
+  // items of equal weight beside two unknowns.
+  const amazon = identities.filter(({ identity }) => identity.kind === "amazon_retail");
+  const rest = identities.filter(({ identity }) => identity.kind !== "amazon_retail");
+  const lead = amazon.length > 0
+    ? `Of the ${countWord(identities.length)} storefronts observed, ${countWord(amazon.length)} ${amazon.length === 1 ? "is" : "are"} Amazon's own retail presence on the listing.`
+    : null;
+  const parts = rest.map(({ name, identity }) => {
     if (identity.kind === "brand_direct") return `"${name}" matches the brand itself`;
     if (identity.kind === "aggregator") return `"${name}" matches ${identity.matched}, a known marketplace aggregator`;
-    if (identity.kind === "amazon_retail") return `"${name}" is the marketplace's own retail presence on the listing`;
     return `"${name}" shows no match to the brand or to known aggregator storefronts`;
   });
-  // RULED LIMIT stated in the copy itself: absence of a match is never an ownership claim.
-  return `Remaining storefronts observed: ${parts.join("; ")}. A storefront that matches neither list is reported as unmatched — that is an observation about the storefront name, not a determination of who owns it.`;
+  const restSentence = parts.length > 0
+    ? `${lead ? "Of the rest: " : "Remaining storefronts observed: "}${parts.join("; ")}.`
+    : null;
+  return [lead, restSentence, UNMATCHED_BOUNDARY].filter(Boolean).join(" ");
 }
 
 export const LISTING_UNRETRIEVABLE =
