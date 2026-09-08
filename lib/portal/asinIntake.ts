@@ -94,10 +94,11 @@ export function validateBrandAsins(
 }
 
 // ── OPERATOR-PATH VALIDATION (Keepa stage 1, 2026-09-08) — the SAME rules minus the
-// KEEPA_LIVE form gate: that flag governs what the CLIENT form renders (no field nothing
-// consumes); an operator supplying ASINs by hand is not that failure mode. Plan eligibility
-// still holds (PLAN_ASIN_ELIGIBLE — only the tiers whose engine consumes ASINs may carry them).
-// ⚠ UNRULED bypass, flagged in operatorCase.ts for founder ratification.
+// KEEPA_LIVE flag, and the flag's absence HERE is now RULED, not a bypass: the ADMIN ROUTE
+// applies KEEPA_LIVE itself (see app/api/admin/cases/run — the single-flag ruling covers every
+// Keepa-reading surface), while this validator also serves the founder-run staging script,
+// which is the ruled testing path outside that route. Plan eligibility always holds
+// (PLAN_ASIN_ELIGIBLE — only the tiers whose engine consumes ASINs may carry them).
 export function validateOperatorBrandAsins(
   plan: PlanType | null | undefined,
   brands: string[],

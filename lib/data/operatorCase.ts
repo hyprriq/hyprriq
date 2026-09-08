@@ -26,10 +26,10 @@ export interface OperatorRunInput {
   company_name: string | null;
   // ── OPERATOR ASIN INTAKE (Keepa stage 1, 2026-09-08). Validated by the route via
   // validateOperatorBrandAsins: format, brand membership, one-per-brand, PLAN_ASIN_ELIGIBLE.
-  // ⚠ UNRULED, deliberate and flagged: the operator path checks PLAN eligibility but NOT the
-  // KEEPA_LIVE form-gating flag — that flag governs what the CLIENT form renders ("no field
-  // nothing consumes"); an operator supplying ASINs by hand is not that failure mode. Founder
-  // to ratify or reverse.
+  // RULED (founder, same day): the ADMIN ROUTE gates ASIN acceptance on KEEPA_LIVE — the
+  // single-flag ruling covers every Keepa-reading surface. This FIELD stays flag-free because
+  // the founder-run staging script (scripts/run-staging-case.ts) is the ruled testing path and
+  // calls this function directly, under the founder's own keys.
   brand_asins?: Record<string, string> | null;
   // Staging-run seam (2026-09-08): create the case + audit rows but do NOT enqueue the durable
   // pipeline — the caller runs the synchronous runPipeline locally instead (same stages, one

@@ -140,6 +140,26 @@ production has no key so production runs the degrade path by construction).**
   agreement cannot fire from intake (the honest single-listing line ships); asinIntake's
   client message says "ASINs are collected on the Scale plan" while single_149 is eligible too.
 
+**0-X ADDENDUM (same day, founder's second batch):** ① wording RATIFIED with three changes
+(numeric window, lead-with-the-finding, UNMATCHED_BOUNDARY verbatim + byte-locked);
+② low_seller_count_stable RULED BACKWARDS (§P4.2 row 4 wins — recorded at the key in weights.ts
+for the gate-opener); ④ the operator route's ASIN acceptance CLOSED on KEEPA_LIVE with the WHY
+beside the if (single-flag ruling made literally true; the founder-run script stays the testing
+path); ⑤ asinIntake's refusal message DERIVED (client-boundary twin PLAN_ASIN_ELIGIBLE,
+roster-locked ≡ CATEGORY_PLANS both directions); ⑥ the submit form's ASIN block was already
+built and wired — its "Scale-only" comment was drift, its optionality is now RULED, its why-line
+is founder-worded — and **KEEPA_LIVE FLIPPED TRUE** (founder-ordered "ask for it wherever it is
+usable"; the integration landed same day). ⚠ Production's remaining switch is the PRODUCTION
+KEEPA_API_KEY — deliberately absent, so a collected ASIN produces the honest degrade note until
+the founder sets it. One real scale_499 account exists (hand-created; presumed the founder's own
+— confirm) and is the only client who can see the field while tiers stay off sale.
+
+**⚖ RECORDED (founder, 2026-09-08): WORDING RULINGS HAVE A COHORT BOUNDARY.** Persisted client
+prose does not retro-update — a wording ruling changes future reports only (the divergence law,
+one layer over; AWI-2609-047 keeps its pre-ratification strings as its true history). Correct
+behaviour, but nothing records where each ruling's boundary falls; the tracker entry dating a
+ruling is currently the only record of its cohort edge.
+
 ## 0-W. THE VOCABULARY BATCH — every census finding fixed, and the lock that retires the census — 2026-09-08
 
 **Founder rulings executed, all seven items + the standing question:**

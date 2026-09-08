@@ -1,7 +1,6 @@
-// ── ASIN intake guard (tracker §1.3) + KEEPA GATING (founder-ruled 2026-08-07): while
-// KEEPA_LIVE is false, NO plan collects ASINs — the form cannot quietly collect a field
-// nothing consumes. The eligibility map + guard rules are tested so the day the flag flips,
-// behavior is already proven. ──
+// ── ASIN intake guard (tracker §1.3) + KEEPA GATING (founder-ruled 2026-08-07; flag FLIPPED
+// 2026-09-08 with the stage-1 integration landing): eligible plans collect, ineligible plans
+// fail closed, and the roster lock below binds eligibility to categoryStep's CATEGORY_PLANS. ──
 import { describe, it, expect } from "vitest";
 import { validateBrandAsins, normalizeAsin, planCollectsAsins, brandCapMessage, asinEligiblePlanNames, PLAN_ASIN_ELIGIBLE, ASIN_RE } from "./asinIntake";
 import { KEEPA_LIVE, PLAN_BRAND_CAPS, PLAN_TYPES } from "@/lib/constants/plans";
@@ -9,31 +8,36 @@ import { CATEGORY_PLANS } from "@/lib/research/categoryStep";
 
 const BRANDS = ["Acme", "Bolt"];
 
-describe("KEEPA gating (2026-08-07) — flag first, plan second", () => {
-  it("KEEPA_LIVE is FALSE today — Keepa is scheduled, not integrated", () => {
-    expect(KEEPA_LIVE).toBe(false);
+describe("KEEPA gating — flag first, plan second (flag FLIPPED 2026-09-08)", () => {
+  it("KEEPA_LIVE is TRUE — the integration landed 2026-09-08 (stage-1 marketplace history, proven on AWI-2609-047) and the founder ordered collection", () => {
+    expect(KEEPA_LIVE).toBe(true);
   });
 
-  it("while the flag is false, NO plan collects ASINs — including the eligible ones", () => {
-    expect(planCollectsAsins("scale_499")).toBe(false);
-    expect(planCollectsAsins("single_149")).toBe(false);
+  it("with the flag on, exactly the ELIGIBLE plans collect ASINs", () => {
+    expect(planCollectsAsins("scale_499")).toBe(true);
+    expect(planCollectsAsins("single_149")).toBe(true);
     expect(planCollectsAsins("growth_279")).toBe(false);
     expect(planCollectsAsins("single_99")).toBe(false);
     expect(planCollectsAsins(null)).toBe(false);
   });
 
-  it("the ELIGIBILITY map is ready for the flip: single_149 + scale_499 only", () => {
+  it("the ELIGIBILITY map: single_149 + scale_499 only", () => {
     expect(PLAN_ASIN_ELIGIBLE).toEqual({
       single_99: false, single_149: true, growth_279: false, scale_499: true,
     });
   });
 
-  it("guard: with the flag off, providing ASINs on ANY plan is refused gracefully (fail closed)", () => {
-    for (const plan of ["scale_499", "single_149", "growth_279", "single_99"] as const) {
+  it("guard: ineligible plans providing ASINs are refused gracefully (fail closed)", () => {
+    for (const plan of ["growth_279", "single_99"] as const) {
       const r = validateBrandAsins(plan, BRANDS, { Acme: "B0ABC12345" });
       expect(r.ok, plan).toBe(false);
       if (!r.ok) expect(r.error).toBe("asin_not_available");
     }
+  });
+
+  it("eligible plans with a valid ASIN pass — one per brand, normalized", () => {
+    const r = validateBrandAsins("single_149", BRANDS, { Acme: " b0abc12345 " });
+    expect(r).toEqual({ ok: true, clean: { Acme: "B0ABC12345" } });
   });
 
   it("nothing provided → ok with clean=null regardless of flag (the column stays null)", () => {

@@ -87,8 +87,10 @@ export function SubmitForm({
   // so they become required (conditional requirement).
   const notesRequired = files.length === 0;
   const notesOk = files.length > 0 ? true : notes.trim().length > 0;
-  // ASIN intake — Scale-only progressive disclosure; the field never renders on other tiers.
-  // ASINs are OPTIONAL (UNRULED default, flagged), but a non-empty value must be a valid ASIN.
+  // ASIN intake — renders on the eligible tiers (PLAN_ASIN_ELIGIBLE, lock-bound to
+  // CATEGORY_PLANS — the old comment said "Scale-only" while single_149 was eligible: the
+  // vocabulary-drift class, in a comment). OPTIONAL is RULED (founder 2026-09-08: "Optional,
+  // never required") — a client without an ASIN still gets the inferred category as before.
   const collectsAsins = planCollectsAsins(plan);
   // $99 takes no uploads (founder-ruled 2026-08-07) — server enforces the same predicate.
   const uploadsAllowed = planAcceptsUploads(plan);
@@ -403,9 +405,11 @@ export function SubmitForm({
                       <span className="text-[14px] font-medium text-ink">
                         ASINs <span className="font-normal text-muted">(optional — one per brand)</span>
                       </span>
+                      {/* The WHY line — founder-worded 2026-09-08. */}
                       <p className="field-help text-ink-2">
-                        Enter the ASIN you&rsquo;re actually planning to buy from this supplier — the
-                        exact listing, not just any product of the brand.
+                        If you know the ASIN you&rsquo;ll be reselling, we check the marketplace&rsquo;s own
+                        category placement rather than inferring it — enter the exact listing,
+                        not just any product of the brand.
                       </p>
                       {brands.map((b) => (
                         <label key={b} className="flex items-center gap-2 text-[13px] text-ink-2">

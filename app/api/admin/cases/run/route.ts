@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getOperator, can } from "@/lib/auth/permissions";
 import { runOperatorCase, type OperatorRunDocument } from "@/lib/data/operatorCase";
-import { PLAN_CATEGORY, type PlanType } from "@/lib/constants/plans";
+import { PLAN_CATEGORY, KEEPA_LIVE, type PlanType } from "@/lib/constants/plans";
 import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 import { sniffFileType } from "@/lib/utils/fileSniff";
 import { validateOperatorBrandAsins } from "@/lib/portal/asinIntake";
@@ -56,11 +56,24 @@ export async function POST(req: Request) {
   }
 
   // ASINs (Keepa stage 1) — optional; validated with the operator-path rules (plan eligibility,
-  // format, brand membership, one per brand — the KEEPA_LIVE form gate deliberately not applied
-  // here; see the UNRULED note in operatorCase.ts).
+  // format, brand membership, one per brand).
+  //
+  // ⛔ GATED ON KEEPA_LIVE — FOUNDER-RULED 2026-09-08, AND HERE IS WHY, so nobody removes this
+  // as an operator convenience: THIS ROUTE READS KEEPA (the ASIN it accepts is consumed by the
+  // marketplace-history step), so it is one of the surfaces the single-flag ruling covers —
+  // "the SINGLE flag that gates every Keepa-dependent surface" is either true or it is not.
+  // Twice this month the defect was an operator doing what the form refuses. The founder-run
+  // staging script (scripts/run-staging-case.ts) is the testing path and DOES NOT pass through
+  // here — closing this loses nothing.
   let brandAsins: Record<string, string> | null = null;
   try {
     const rawAsins = JSON.parse(String(form.get("brand_asins") ?? "null"));
+    if (rawAsins && Object.keys(rawAsins as object).length > 0 && !KEEPA_LIVE) {
+      return NextResponse.json({
+        error: "asin_not_live",
+        message: "ASIN intake is gated on KEEPA_LIVE, which is off. The staging script is the testing path.",
+      }, { status: 400 });
+    }
     const check = validateOperatorBrandAsins(plan, brands, rawAsins);
     if (!check.ok) return NextResponse.json({ error: check.error, message: check.message }, { status: 400 });
     brandAsins = check.clean;

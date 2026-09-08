@@ -9,11 +9,17 @@ export type PlanType = "single_99" | "single_149" | "growth_279" | "scale_499";
 export const PLAN_TYPES: PlanType[] = ["single_99", "single_149", "growth_279", "scale_499"];
 
 // ── KEEPA_LIVE (founder-ruled 2026-08-07): the SINGLE flag that gates every Keepa-dependent
-// surface (today: ASIN collection on the intake form — lib/portal/asinIntake.ts). Keepa is a
-// scheduled build, not a permanent absence; while this is false NOTHING may render or collect
-// a field only Keepa consumes (the same silent-dead-field failure removed from $99 uploads).
-// Flips in exactly one place when the integration lands. ──
-export const KEEPA_LIVE = false;
+// surface (ASIN collection on the intake form — lib/portal/asinIntake.ts — and the admin run
+// route's ASIN acceptance). While false, NOTHING may render or collect a field only Keepa
+// consumes (the silent-dead-field law).
+//
+// FLIPPED TRUE 2026-09-08 (founder-ordered: "ask for it wherever it is usable") — the
+// integration landed that day: stage-1 marketplace history + Track 6 category ground truth,
+// proven on AWI-2609-047. ⚠ THE PRODUCTION KEY IS THE FOUNDER'S REMAINING SWITCH: production
+// deliberately has no KEEPA_API_KEY, so an ASIN collected there produces the honest
+// data-availability note until the founder sets the key in the Production environment. The
+// category tiers remain OFF SALE (PLANS_ON_SALE below — a separate founder lock). ──
+export const KEEPA_LIVE = true;
 
 // ── WHAT IS ON SALE (founder-locked 2026-08-22, money-surfaces ruling) — THE single source of
 // truth for sellability. single_149 and scale_499 include category compliance, category
