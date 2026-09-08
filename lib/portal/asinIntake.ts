@@ -82,6 +82,36 @@ export function validateBrandAsins(
   return { ok: true, clean };
 }
 
+// ── OPERATOR-PATH VALIDATION (Keepa stage 1, 2026-09-08) — the SAME rules minus the
+// KEEPA_LIVE form gate: that flag governs what the CLIENT form renders (no field nothing
+// consumes); an operator supplying ASINs by hand is not that failure mode. Plan eligibility
+// still holds (PLAN_ASIN_ELIGIBLE — only the tiers whose engine consumes ASINs may carry them).
+// ⚠ UNRULED bypass, flagged in operatorCase.ts for founder ratification.
+export function validateOperatorBrandAsins(
+  plan: PlanType | null | undefined,
+  brands: string[],
+  asinByBrand: Record<string, unknown> | null | undefined,
+): BrandAsinResult {
+  const entries = Object.entries(asinByBrand ?? {})
+    .map(([brand, v]) => [brand.trim(), normalizeAsin(String(v ?? ""))] as const)
+    .filter(([, asin]) => asin.length > 0);
+  if (entries.length === 0) return { ok: true, clean: null };
+  if (!plan || !PLAN_ASIN_ELIGIBLE[plan]) {
+    return { ok: false, error: "asin_plan_ineligible", message: `${plan ?? "(no plan)"} does not run the listing-level check — ASINs belong to single_149/scale_499 runs.` };
+  }
+  const cap = brandCapForPlan(plan);
+  if (entries.length > cap) return { ok: false, error: "asin_cap", message: `Up to ${cap} ASINs — one per brand.` };
+  const brandSet = new Set(brands.map((b) => b.trim().toLowerCase()));
+  const clean: Record<string, string> = {};
+  for (const [brand, asin] of entries) {
+    if (!brandSet.has(brand.toLowerCase())) return { ok: false, error: "asin_unknown_brand", message: `ASIN given for “${brand}”, which is not in the brand list.` };
+    if (!ASIN_RE.test(asin)) return { ok: false, error: "asin_format", message: `“${asin}” is not a valid ASIN (10 letters/digits).` };
+    if (clean[brand] !== undefined) return { ok: false, error: "asin_duplicate_brand", message: `More than one ASIN for “${brand}” — one per brand.` };
+    clean[brand] = asin;
+  }
+  return { ok: true, clean };
+}
+
 // Graceful at-cap explanation (entry tiers especially) — shown by the form when the brand list
 // is full. A sentence, never an error state. Cap text derives from the same constants.
 export function brandCapMessage(plan: PlanType | null | undefined): string {

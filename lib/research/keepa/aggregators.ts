@@ -34,9 +34,11 @@ export function classifySeller(sellerName: string, brand: string | null, sellerI
   if (sellerId === AMAZON_RETAIL_SELLER_ID) return { kind: "amazon_retail" };
   const n = norm(sellerName);
   if (!n) return { kind: "independent" };
-  if (/^amazon(\s|$|\.)/.test(n + " ") && (n === "amazon" || n.startsWith("amazon com") || n.startsWith("amazon resale") || n.startsWith("amazon warehouse"))) {
-    return { kind: "amazon_retail" };
-  }
+  // "amazon" as its own leading TOKEN ("Amazon.com", "Amazon Resale", "Amazon Appstore" — the
+  // staging case surfaced the third) — never a prefix inside a word ("Amazonia Goods" stays
+  // independent). Amazon reserves its brand in storefront names; the token form is the claim-safe
+  // boundary.
+  if (n === "amazon" || n.startsWith("amazon ")) return { kind: "amazon_retail" };
   if (brand) {
     const b = norm(brand);
     if (b && (n === b || n.includes(b) || b.includes(n))) return { kind: "brand_direct", matched: brand };

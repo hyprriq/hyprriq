@@ -99,4 +99,10 @@ describe("classifySeller — the ruled match rules", () => {
   it("no match ⇒ independent — the honest residue, not an ownership claim", () => {
     expect(classifySeller("Random Deals 24", "AcmeBrand").kind).toBe("independent");
   });
+  it("amazon as a leading token ⇒ amazon_retail; inside a word it never fires (staging-case find)", () => {
+    expect(classifySeller("Amazon Appstore", null).kind).toBe("amazon_retail");
+    expect(classifySeller("Amazon.com", null).kind).toBe("amazon_retail");
+    expect(classifySeller("Amazonia Goods", null).kind).toBe("independent");
+    expect(classifySeller("Anything", null, "ATVPDKIKX0DER").kind).toBe("amazon_retail");
+  });
 });

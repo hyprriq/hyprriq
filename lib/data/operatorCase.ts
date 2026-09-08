@@ -24,6 +24,17 @@ export interface OperatorRunInput {
   notes: string | null;
   client_name: string | null;          // attribution — optional, displayed where a client email would be
   company_name: string | null;
+  // ── OPERATOR ASIN INTAKE (Keepa stage 1, 2026-09-08). Validated by the route via
+  // validateOperatorBrandAsins: format, brand membership, one-per-brand, PLAN_ASIN_ELIGIBLE.
+  // ⚠ UNRULED, deliberate and flagged: the operator path checks PLAN eligibility but NOT the
+  // KEEPA_LIVE form-gating flag — that flag governs what the CLIENT form renders ("no field
+  // nothing consumes"); an operator supplying ASINs by hand is not that failure mode. Founder
+  // to ratify or reverse.
+  brand_asins?: Record<string, string> | null;
+  // Staging-run seam (2026-09-08): create the case + audit rows but do NOT enqueue the durable
+  // pipeline — the caller runs the synchronous runPipeline locally instead (same stages, one
+  // source of truth). Used by scripts/run-staging-case.ts; the admin route never sets it.
+  skip_enqueue?: boolean;
 }
 
 // ── ADMIN CLOSE-OUT (2026-08-11) — operator document upload. PRE-VETTED by the route (count cap,
@@ -106,6 +117,15 @@ export async function runOperatorCase(input: OperatorRunInput, documents: Operat
     }
   }
 
+  // ASIN persistence — same best-effort pattern as the client submit route (the column is
+  // migration-gated there too); the EVENT carries the value regardless, per intakeExtras.
+  if (input.brand_asins && Object.keys(input.brand_asins).length > 0) {
+    const { error: asinErr } = await supabaseAdmin.from("cases").update({ brand_asins: input.brand_asins }).eq("id", created.id);
+    if (asinErr) console.error("[operator-run] brand_asins persist failed (non-fatal):", asinErr.message, { case_id: created.id });
+  }
+
+  if (input.skip_enqueue) return { case_id: created.id, case_number: created.case_number, error: null };
+
   // Downstream unchanged — the SAME durable pipeline event the client submit sends.
   try {
     await inngest.send({
@@ -113,6 +133,7 @@ export async function runOperatorCase(input: OperatorRunInput, documents: Operat
       data: {
         case_id: created.id, vendor_name: input.vendor_name, vendor_website: input.vendor_website,
         brands_submitted: input.brands, marketplace: input.marketplace, plan_type: input.plan_type,
+        ...(input.brand_asins && Object.keys(input.brand_asins).length > 0 ? { brand_asins: input.brand_asins } : {}),
       },
     });
   } catch (e) {

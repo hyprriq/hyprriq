@@ -6,7 +6,8 @@ import {
   stageResolveAttempt, stageTrack0, stageResolveIdentity, stagePersistIdentity, stageFindingTrack,
   stageSynthesis, stageVerdict, stageMemoryWrite, stageFinalize,
 } from "@/lib/research/pipeline.steps";
-import { stageCategoryCompliance } from "@/lib/research/categoryStep";
+import { stageCategoryCompliance, modelWithListingCategories } from "@/lib/research/categoryStep";
+import { stageMarketplaceHistory } from "@/lib/research/keepa/marketplaceHistoryStep";
 
 // The Intelligence-OS pipeline — orchestrates the STAGES (lib/research/pipeline.steps) sequentially.
 // Layers 1→5 reach report-ready AUTONOMOUSLY (no human gate). This synchronous caller is kept for
@@ -54,11 +55,19 @@ export async function runPipeline(base: TrackContext): Promise<{ error: string |
     if (r.failed && t.track_key === "supplier_identity") identityFailed = true;
   }
 
+  // ── Keepa marketplace history (stage 1, 2026-09-08) — SAME step as the Inngest caller (one
+  // source of truth): advisory, never scoring, gated by ASIN presence + key presence, persists
+  // into the track_3 row. brand_asins rides `base` at runtime per intakeExtras. ──
+  const keepa = await stageMarketplaceHistory(ictx);
+
   // ── Track 6 — Category Compliance (OWN STEP, outside the registry per the 2026-07-23 fork
   // ruling; plan-gated in the step). PARALLEL ASSESSMENT: its output never enters trackOutputs,
   // signals, or synthesis — the engine's world does not change (the frozen inertia proof).
   // Fail-loud-non-fatal inside the step; never blocks the vendor case.
-  await stageCategoryCompliance(ictx);
+  // Stage 1: the listing's own category tree rides into Hop 1 as citable sources.
+  await stageCategoryCompliance(ictx, keepa.listing_categories.length > 0
+    ? { model: modelWithListingCategories(keepa.listing_categories) }
+    : undefined);
 
   // ── Layers 2 / 2.5 / 3 — Normalization → Graph → Intelligence (memoized synthesis) ──
   let synthesis;

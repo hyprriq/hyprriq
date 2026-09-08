@@ -5,6 +5,7 @@ import { runOperatorCase, type OperatorRunDocument } from "@/lib/data/operatorCa
 import { PLAN_CATEGORY, type PlanType } from "@/lib/constants/plans";
 import { fileCountError, planAcceptsUploads, MAX_FILE_BYTES, FILE_SIZE_MESSAGE, FILE_TYPE_MESSAGE } from "@/lib/constants/uploads";
 import { sniffFileType } from "@/lib/utils/fileSniff";
+import { validateOperatorBrandAsins } from "@/lib/portal/asinIntake";
 
 // ── ADMIN BATCH — "run a case" (permission: run_case). The operator-run intake path: the normal
 // pipeline, no credit deducted, provenance origin='operator', audited. STRUCTURALLY separate from
@@ -54,9 +55,21 @@ export async function POST(req: Request) {
     documents.push({ name: "name" in f ? String((f as File).name) : "upload", buffer, mime: sniffed.mime, kind: sniffed.kind === "pdf" ? "pdf" : "image", size: f.size });
   }
 
+  // ASINs (Keepa stage 1) — optional; validated with the operator-path rules (plan eligibility,
+  // format, brand membership, one per brand — the KEEPA_LIVE form gate deliberately not applied
+  // here; see the UNRULED note in operatorCase.ts).
+  let brandAsins: Record<string, string> | null = null;
+  try {
+    const rawAsins = JSON.parse(String(form.get("brand_asins") ?? "null"));
+    const check = validateOperatorBrandAsins(plan, brands, rawAsins);
+    if (!check.ok) return NextResponse.json({ error: check.error, message: check.message }, { status: 400 });
+    brandAsins = check.clean;
+  } catch { /* absent/invalid JSON → none */ }
+
   const r = await runOperatorCase({
     operator_id: userId,
     plan_type: plan,
+    brand_asins: brandAsins,
     vendor_name: String(form.get("vendor_name") ?? "").trim(),
     vendor_website: String(form.get("vendor_website") ?? "").trim() || null,
     brands,
