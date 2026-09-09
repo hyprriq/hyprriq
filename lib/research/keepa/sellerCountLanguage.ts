@@ -86,6 +86,13 @@ export function sellerIdentitySentence(identities: { name: string; identity: Sel
 export const LISTING_UNRETRIEVABLE =
   "This listing could not be retrieved from marketplace history, so no reading is drawn for it.";
 
+/** The degrade-path cached-category line — FOUNDER-RATIFIED WORDING 2026-09-09, date always
+ *  visible (a cached fact presented as fresh is the instrument-lying class). */
+export function cachedCategorySentence(path: string[], fetchedAt: Date): string {
+  const date = fetchedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  return `Listing history could not be obtained; the listing's category placement, as fetched on ${date}, was ${path.join(" › ")}.`;
+}
+
 export const SELLER_DATA_UNAVAILABLE =
   "Marketplace listing history could not be obtained for this case, so this advisory item is reported without it. This is a data-availability note about our research, not a finding about the supplier or the brand.";
 

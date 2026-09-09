@@ -5,11 +5,14 @@
 // non-fatal end to end. REPORTED, NEVER SCORING: nothing here touches signals, weight keys, the
 // firewall, or the verdict — the three keepa_* keys stay inert; their gate is a separate ruling.
 //
-// WHERE THE RECORD LIVES (CTO-DECIDED, ⚠ UNRULED — flagged for founder review): Keepa evidence
-// cannot ride the EvidencePack without either widening the frozen ResearchQuestion union or
-// letting a routing-only label steal serper's queries (pluginFor routes by question to the FIRST
-// capable plugin). So the input-of-record is brand_cache.keepa_data_json — the columns built for
-// exactly this in the initial schema, written by nothing until now — plus the audit_log trail.
+// WHERE THE RECORD LIVES (RULED 2026-09-09 — "approved as built; do not touch the frozen pack
+// in a time window"): Keepa evidence cannot ride the EvidencePack without either widening the
+// frozen ResearchQuestion union or letting a routing-only label steal serper's queries. So the
+// input-of-record is brand_cache.keepa_data_json + the audit_log trail.
+// ⚠ MEASURED 2026-09-09: brand_cache was FILE-FICTION — in the initial-schema file, never in
+// the live database — so this writer fail-softed on every case with a console-only witness
+// (the §0-U swallowed-error class). Migration 20260909000000 creates it in the ruled shape;
+// until the founder runs it, writes keep failing soft but now ALSO leave an audit_log row.
 //
 // DEGRADE, NEVER BREAK (founder condition): key absent / quota exhausted / API down ⇒ the
 // advisory persists SELLER_DATA_UNAVAILABLE (a data-availability note, not a finding) and the
@@ -23,8 +26,9 @@ import { parseKeepaCountCsv, readSellerCounts, priceHeldDuring, type SellerCount
 import { classifySeller } from "./aggregators";
 import {
   sellerCountSentence, sellerIdentitySentence, brandLevelSentence, monitorEntries,
-  SELLER_DATA_UNAVAILABLE, LISTING_UNRETRIEVABLE,
+  cachedCategorySentence, SELLER_DATA_UNAVAILABLE, LISTING_UNRETRIEVABLE,
 } from "./sellerCountLanguage";
+import { readCachedCategory } from "./categoryCache";
 
 // Patterns that justify spending offer+seller tokens on WHO remains (§P4.4's trigger set).
 const IDENTITY_TRIGGERS = new Set(["enforcement_cliff", "already_locked_down", "brand_direct_only"]);
@@ -51,7 +55,9 @@ export interface MarketplaceHistoryResult {
   persisted: boolean;
   reason?: string;
   keepa_tokens_spent: number;             // MEASURED from Keepa's own accounting, per the rule
-  listing_categories: { brand: string; asin: string; path: string[] }[]; // for Track 6's model aid
+  // For Track 6's model aid. `fetchedAt` present ⇒ the entry came from the DEGRADE-path cache
+  // and must be presented dated wherever it surfaces (the visible-as-cached rule).
+  listing_categories: { brand: string; asin: string; path: string[]; fetchedAt?: Date }[];
 }
 
 async function auditNote(caseId: string, note: Record<string, unknown>): Promise<void> {
@@ -81,26 +87,29 @@ async function persistIntoTrack3(caseId: string, attempt: number, block: Marketp
   return upd.error ? upd.error.message : null;
 }
 
-/** brand_cache — the columns' FIRST writer. Fail-soft: cache is a convenience, never a gate. */
-async function persistBrandCache(brand: string, product: KeepaProduct, reading: SellerCountReading): Promise<void> {
-  try {
-    const trend = reading.trendDirection === "unknown" ? null : reading.trendDirection;
-    await supabaseAdmin.from("brand_cache").upsert({
-      brand_name: brand,
-      brand_name_normalized: normalizeName(brand),
-      seller_count_current: reading.current,
-      seller_count_peak: reading.peak,
-      enforcement_cliff_detected: reading.pattern === "enforcement_cliff",
-      ...(trend ? { seller_count_trend: trend } : {}),
-      keepa_data_json: {
-        asin: product.asin, pattern: reading.pattern, points: reading.points,
-        observed_days: reading.observedDays, count_new_csv: product.countNewCsv,
-        category_tree: product.categoryTree.map((c) => c.name), fetched_at: new Date().toISOString(),
-      },
-      last_researched_at: new Date().toISOString(),
-    }, { onConflict: "brand_name_normalized" });
-  } catch (e) {
-    console.error(`[keepa] brand_cache write failed for ${brand} (non-fatal): ${e instanceof Error ? e.message : String(e)}`);
+/** brand_cache writer. Fail-soft (cache is a convenience, never a gate) — but NEVER
+ *  console-only: the §0-U lesson is that a fail-soft catch needs a second witness, so a failed
+ *  cache write also lands in audit_log. That second witness is how the file-fiction table
+ *  would have been caught on day one instead of by a probe. */
+async function persistBrandCache(caseId: string, brand: string, product: KeepaProduct, reading: SellerCountReading): Promise<void> {
+  const trend = reading.trendDirection === "unknown" ? null : reading.trendDirection;
+  const { error } = await supabaseAdmin.from("brand_cache").upsert({
+    brand_name: brand,
+    brand_name_normalized: normalizeName(brand),
+    seller_count_current: reading.current,
+    seller_count_peak: reading.peak,
+    enforcement_cliff_detected: reading.pattern === "enforcement_cliff",
+    ...(trend ? { seller_count_trend: trend } : {}),
+    keepa_data_json: {
+      asin: product.asin, pattern: reading.pattern, points: reading.points,
+      observed_days: reading.observedDays, count_new_csv: product.countNewCsv,
+      category_tree: product.categoryTree.map((c) => c.name), fetched_at: new Date().toISOString(),
+    },
+    last_researched_at: new Date().toISOString(),
+  }, { onConflict: "brand_name_normalized" });
+  if (error) {
+    console.error(`[keepa] brand_cache write failed for ${brand} (non-fatal): ${error.message}`);
+    await auditNote(caseId, { brand_cache_write_failed: true, brand, error: error.message.slice(0, 200) });
   }
 }
 
@@ -115,10 +124,27 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
 
   let tokens = 0;
   const degrade = async (reason: string): Promise<MarketplaceHistoryResult> => {
-    const block: MarketplaceHistoryBlock = { available: false, note: SELLER_DATA_UNAVAILABLE, per_brand: [], generated_at: new Date().toISOString() };
+    // ── THE CACHE'S ONE MOMENT (founder-ruled 2026-09-09: degrade path only, category only,
+    // ASIN-matched, dated). A brand we have seen before still shows the marketplace's own
+    // category placement with its fetch date visible; a miss contributes nothing — the note
+    // stands alone. Seller history is NEVER served from cache (reasoning: categoryCache.ts).
+    const per_brand: MarketplaceHistoryBrand[] = [];
+    const listing_categories: MarketplaceHistoryResult["listing_categories"] = [];
+    for (const [brand, asin] of entries) {
+      const cached = await readCachedCategory(brand, asin);
+      if (!cached) continue;
+      listing_categories.push({ brand, asin, path: cached.path, fetchedAt: cached.fetchedAt });
+      per_brand.push({
+        brand, asin,
+        sentence: cachedCategorySentence(cached.path, cached.fetchedAt),
+        identity_sentence: null, brand_level_sentence: "",
+        listing_category_path: cached.path.join(" › "), monitor: [],
+      });
+    }
+    const block: MarketplaceHistoryBlock = { available: false, note: SELLER_DATA_UNAVAILABLE, per_brand, generated_at: new Date().toISOString() };
     const err = await persistIntoTrack3(ctx.case_id, attempt, block);
-    await auditNote(ctx.case_id, { degraded: true, reason, persist_error: err });
-    return { ran: true, persisted: !err, reason, keepa_tokens_spent: tokens, listing_categories: [] };
+    await auditNote(ctx.case_id, { degraded: true, reason, persist_error: err, cached_categories: per_brand.length });
+    return { ran: true, persisted: !err, reason, keepa_tokens_spent: tokens, listing_categories };
   };
 
   if (!keepaConfigured()) return degrade("KEEPA_API_KEY not configured (production's standing state)");
@@ -186,7 +212,7 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
       listing_category_path: path.length > 0 ? path.join(" › ") : null,
       monitor: monitorEntries(asin, reading),
     });
-    await persistBrandCache(brand, product, reading);
+    await persistBrandCache(ctx.case_id, brand, product, reading);
   }
 
   const block: MarketplaceHistoryBlock = { available: true, note: null, per_brand, generated_at: new Date().toISOString() };

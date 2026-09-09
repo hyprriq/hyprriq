@@ -78,7 +78,7 @@ const liveModel: Track6Deps["model"] = async ({ brands, sources, tableAid }) => 
 // their record-of-input is brand_cache.keepa_data_json (see marketplaceHistoryStep.ts header —
 // the pack-vs-cache placement is flagged UNRULED for founder review).
 export function modelWithListingCategories(
-  listing: { brand: string; asin: string; path: string[] }[],
+  listing: { brand: string; asin: string; path: string[]; fetchedAt?: Date }[],
   inner: Track6Deps["model"] = liveModel,
 ): Track6Deps["model"] {
   if (listing.length === 0) return inner;
@@ -86,7 +86,12 @@ export function modelWithListingCategories(
     source_id: `keepa_${l.asin}`,
     title: `Amazon listing category for ${l.brand} (ASIN ${l.asin})`,
     url: `https://www.amazon.com/dp/${l.asin}`,
-    snippet: `The marketplace lists this product under: ${l.path.join(" › ")}.`,
+    // The visible-as-cached rule (founder-ruled 2026-09-09) follows the fact wherever it goes:
+    // a degrade-path cache entry carries fetchedAt and is presented DATED, past tense — a
+    // cached fact presented as fresh is the instrument-lying class.
+    snippet: l.fetchedAt
+      ? `The marketplace listed this product under: ${l.path.join(" › ")} (as fetched ${l.fetchedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}).`
+      : `The marketplace lists this product under: ${l.path.join(" › ")}.`,
   }));
   return (input) => inner({ ...input, sources: [...input.sources, ...extra] });
 }

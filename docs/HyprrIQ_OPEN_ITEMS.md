@@ -140,6 +140,27 @@ production has no key so production runs the degrade path by construction).**
   agreement cannot fire from intake (the honest single-listing line ships); asinIntake's
   client message says "ASINs are collected on the Scale plan" while single_149 is eligible too.
 
+**0-Y. THE CACHE THAT FOUND ITS TABLE MISSING — 2026-09-09.** ② built exactly as ruled (degrade
+path only · category only · ASIN-matched never brand-matched · fetched_at always in the client
+sentence, founder-ratified wording byte-locked; seller window ZERO with the reasoning recorded
+beside the code in categoryCache.ts). The visible-as-cached rule follows the fact into Track 6's
+model aid too (dated, past-tense snippet). **THE DISCOVERY, measured not assumed:
+`brand_cache` NEVER EXISTED in the live database** — it and supplier_cache are in the
+initial-schema FILE only, so stage 1's fail-soft writer failed silently on every Keepa case
+with a console-only witness (§0-U's swallowed-error class, third instance this arc). Fixes:
+migration `20260909000000` creates brand_cache in its RULED shape — born without
+cache_valid_days (no read uses a day-window under the rulings) and without aggregator_owned/
+aggregator_name (columns asserting ownership would contradict the observed-match-only ruling);
+⛔ **F RUNS IT** (read-backs in the file; until then the cache read returns null and the degrade
+note stands alone — honest, cache-less). The cache writer now leaves an audit_log row on
+failure, never console alone. Schema census: file-vs-live drift is exactly the two cache tables
+(file-fiction) plus four live-only tables from founder-run deliverable SQL (acquisition_grants,
+grant_redemptions, marketing_contacts, partner_requests) — back-fill flagged as its own task.
+supplier_cache stays uncreated (nothing writes it; creating unwritten tables is the defect).
+⚠ The only field-visible account is the founder's own test account
+(ecommerce.a@libereconline.com, scale_499, 16 credits, active subscription — founder-confirmed
+2026-09-09): the one combination that can see the ASIN field AND spend research budget.
+
 **0-X ADDENDUM (same day, founder's second batch):** ① wording RATIFIED with three changes
 (numeric window, lead-with-the-finding, UNMATCHED_BOUNDARY verbatim + byte-locked);
 ② low_seller_count_stable RULED BACKWARDS (§P4.2 row 4 wins — recorded at the key in weights.ts
