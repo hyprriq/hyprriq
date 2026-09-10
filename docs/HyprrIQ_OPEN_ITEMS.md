@@ -140,6 +140,18 @@ production has no key so production runs the degrade path by construction).**
   agreement cannot fire from intake (the honest single-listing line ships); asinIntake's
   client message says "ASINs are collected on the Scale plan" while single_149 is eligible too.
 
+**0-Y UPDATE 2026-09-10: MIGRATION RUN (founder), read-backs clean** — exactly 10 columns in
+order, no cache_valid_days, no aggregator_*, trend CHECK holds all five values, RLS enabled
+with 0 policies (service-role only), 0 rows, supplier_cache deliberately absent. **⚖ RECORDED
+AT THE FOUNDER'S INSTRUCTION — the read-before-retry rule in a new place:** his first attempt
+errored when the Supabase connection dropped mid-statement. He did NOT re-run blind — he
+checked information_schema first, found the table absent (the CREATE had not landed), and only
+then re-ran. A dropped connection leaves you not knowing whether a write happened; **the answer
+is always a query, never an assumption** — blind re-run would have errored on an existing table
+and read as a failure. Also same-day: origin/staging found 35 commits stale (the founder's
+review 500 on the Keepa case was old code meeting new data, not a data defect) — staging now
+pushes with every deploy, memorialized in session memory.
+
 **0-Y. THE CACHE THAT FOUND ITS TABLE MISSING — 2026-09-09.** ② built exactly as ruled (degrade
 path only · category only · ASIN-matched never brand-matched · fetched_at always in the client
 sentence, founder-ratified wording byte-locked; seller window ZERO with the reasoning recorded
