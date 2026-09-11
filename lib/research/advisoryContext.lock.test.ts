@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { runSynthesis, type SynthesisModels } from "@/lib/research/synthesisEngine";
 import { buildCallCPrompt } from "@/lib/research/synthesisCallC.prompt";
-import { ADVISORY_PREFIX, advisoryParagraph, stripAdvisoryWeave, type AdvisoryContext } from "@/lib/research/advisoryContext";
+import { ADVISORY_PREFIX, advisoryParagraph, stripAdvisoryWeave, stripMonitorAttribution, type AdvisoryContext } from "@/lib/research/advisoryContext";
 import { scanHard, scanAssertion } from "@/lib/utils/banned-language";
 import type { TrackOutput, EvidenceItem, TrackSignal } from "@/lib/research/contracts";
 import type { TrackKey } from "@/lib/constants/tracks";
@@ -114,6 +114,59 @@ describe("FRAMING LOCK — the founder's exact separateness, byte-locked", () =>
     const r = stripAdvisoryWeave("leading_interpretation", "A genuine wholesale operation. Authorization rests on the vendor's statements.");
     expect(r.stripped).toEqual([]);
     expect(r.text).toContain("A genuine wholesale operation.");
+  });
+});
+
+describe("MONITOR EXTENSION (founder-ruled 2026-09-11) — the hedge is the problem, not the defence", () => {
+  it("the REAL AWI-2609-048 sentence — 'may indicate the brand is restricting' — is stripped", () => {
+    const real = "The third-party seller count on the relevant Instant Pot marketplace listing, which has remained between one and three sellers over the past six months and currently stands at one — a sustained low or declining count may indicate the brand is restricting marketplace distribution, and any further reduction would be a material signal to track before and after purchase.";
+    const r = stripMonitorAttribution([real]);
+    expect(r.stripped.length).toBe(1);
+    expect(r.stripped[0].sentence).toContain("may indicate the brand is restricting");
+  });
+
+  it("the founder's complete form survives untouched — facts and the watch instruction, no cause", () => {
+    const complete = "Third-party seller count on B00FLYWNYQ — currently 1 against a 12-month peak of 7 (October 2024). Any further reduction would be a material signal to track.";
+    const r = stripMonitorAttribution([complete]);
+    expect(r.stripped).toEqual([]);
+    expect(r.entries).toEqual([complete]);
+  });
+
+  it("entries without the advisory subject are never touched, attribution verbs or not", () => {
+    const other = "Whether the brand owner publishes an authorized reseller policy — any such publication would directly affect resale viability.";
+    const r = stripMonitorAttribution([other]);
+    expect(r.entries).toEqual([other]);
+  });
+
+  it("a fused sentence loses the whole sentence — the stated cost, deterministic and audited", () => {
+    const fused = "Seller count currently stands at one, which may indicate the brand is restricting distribution and any further reduction is a signal.";
+    const r = stripMonitorAttribution([fused]);
+    expect(r.entries).toEqual([]);              // the entry emptied and dropped
+    expect(r.stripped.length).toBe(1);          // never silently
+  });
+
+  it("the engine applies the monitor guard and audits the strip", async () => {
+    const cap: Captured = { callA: [], callB: [], callBRefuter: [], callC: [] };
+    const woven = {
+      doubt_focus: "the vendor's authorization claim", rationale: "we could not independently verify this",
+      vendor_questions: ["Provide a recent distributor invoice."],
+      headline: "Established distributor", leading_interpretation: "A genuine wholesale operation.",
+      the_real_risk: "Authorization rests on the vendor's statements.", what_to_verify: [],
+      what_to_monitor: ["Seller count is currently one. A sustained low count may indicate the brand is restricting marketplace distribution."],
+    };
+    const { synthesis, artifacts } = await runSynthesis(runInput(capturingModels(cap, woven), CTX));
+    const monitor = synthesis.module_9_decision_snapshot.what_to_monitor.join(" | ");
+    expect(monitor).not.toContain("may indicate");
+    expect(monitor).toContain("Seller count is currently one.");
+    expect(artifacts.audits.some((a) => "field" in a && a.field === "what_to_monitor" && a.id === "advisory_weave")).toBe(true);
+  });
+
+  it("the prompt carries the monitor extension — deleting it fails here", () => {
+    const record = { accepted: { items: [], evidence_hash: "h" }, extension: {} } as never;
+    const { system } = buildCallCPrompt(record, [], { hypotheses: [] } as never, [], [], ["bosch"], CTX);
+    const flat = system.replace(/\s+/g, " ");
+    expect(flat).toContain("THIS INCLUDES what_to_monitor");
+    expect(flat).toContain("A hedge does not soften the attribution");
   });
 });
 

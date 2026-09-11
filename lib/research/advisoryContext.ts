@@ -51,6 +51,39 @@ const SENT_SPLIT = /(?<=[.!?])\s+/;
 
 export interface WeaveStrip { field: string; sentence: string }
 
+// ── THE MONITOR EXTENSION (founder-ruled 2026-09-11): the cause-inference ban covers
+// what_to_monitor too — "a client does not read a monitor entry as a lesser class of claim",
+// and a hedge is the problem, not the defence: "may indicate the brand is restricting" names
+// one cause and stays silent about the others, which reads as our leading hypothesis.
+//
+// The monitor guard CANNOT reuse WEAVE_RE: monitor entries legitimately carry seller-count
+// facts (that is the field's approved use). It targets the ATTRIBUTION SHAPE instead — an
+// attribution verb (hedged or bare) in a sentence whose entry carries the advisory subject.
+// ⚠ THE STATED COST (reported to the founder before shipping): sentence-level stripping means
+// a violation FUSED to a legitimate clause in one sentence loses the whole sentence, good
+// clause included. Deterministic and audited; the prompt rule is the first defence, so this
+// fires only on violations.
+const ATTRIBUTION_RE = /\b(?:may|might|could|likely|probably|possibly)\s+(?:indicat\w*|suggest\w*|mean\w*|signal\w*|imply\w*|reflect\w*)\b|\bconsistent with\b|\bpoints?\s+to\b|\b(?:indicat\w*|suggest\w*)\s+(?:that\s+)?the\s+brand\b|\bsign\s+(?:that|of)\b|\bevidence\s+(?:that|of)\s+the\s+brand\b/i;
+
+/** Enforce the cause-inference ban on what_to_monitor. Entries keep their facts; sentences
+ *  that ATTRIBUTE a cause to the advisory shape are removed and reported. An entry emptied by
+ *  the strip is dropped entirely. */
+export function stripMonitorAttribution(entries: string[]): { entries: string[]; stripped: WeaveStrip[] } {
+  const out: string[] = [];
+  const stripped: WeaveStrip[] = [];
+  for (const entry of entries) {
+    if (!WEAVE_RE.test(entry) || !ATTRIBUTION_RE.test(entry)) { out.push(entry); continue; }
+    const kept: string[] = [];
+    for (const s of entry.split(SENT_SPLIT)) {
+      if (ATTRIBUTION_RE.test(s)) stripped.push({ field: "what_to_monitor", sentence: s });
+      else kept.push(s);
+    }
+    const rebuilt = kept.join(" ").trim();
+    if (rebuilt) out.push(rebuilt);
+  }
+  return { entries: out, stripped };
+}
+
 /** Enforce the no-weave law on one verdict-reasoning field. Sentences carrying the advisory
  *  vocabulary are REMOVED and reported; the code-appended paragraph (prefix-marked) is the only
  *  form the citation may take. Deterministic, auditable, never silent. */

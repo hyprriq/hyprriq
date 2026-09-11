@@ -16,7 +16,7 @@ import type { GapThresholds } from "@/lib/research/doubtMatrix";
 import { deriveWatchConditions } from "@/lib/research/watchConditions";
 import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
-import { advisoryParagraph, stripAdvisoryWeave, type AdvisoryContext } from "@/lib/research/advisoryContext";
+import { advisoryParagraph, stripAdvisoryWeave, stripMonitorAttribution, type AdvisoryContext } from "@/lib/research/advisoryContext";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
 
@@ -163,6 +163,15 @@ export async function runSynthesis(input: SynthesisRunInput): Promise<{ synthesi
         for (const s of res.stripped) {
           advisoryAudits.push({ module: "m9", id: "advisory_weave", field: s.field, from: s.sentence.slice(0, 120), to: "(stripped)", reason: "advisory context may not be woven into verdict reasoning (framing ruling 2026-09-10)" });
         }
+      }
+    }
+    // MONITOR EXTENSION (founder-ruled 2026-09-11): the cause-inference ban covers
+    // what_to_monitor; the guard strips attribution sentences, keeps the facts, audits loud.
+    const mon = stripMonitorAttribution(c.snapshot.what_to_monitor);
+    if (mon.stripped.length > 0) {
+      c.snapshot.what_to_monitor = mon.entries;
+      for (const s of mon.stripped) {
+        advisoryAudits.push({ module: "m9", id: "advisory_weave", field: s.field, from: s.sentence.slice(0, 120), to: "(stripped)", reason: "cause attribution in a monitor entry — the cause-inference ban covers every field (extension ruling 2026-09-11)" });
       }
     }
     const para = advisoryParagraph(input.advisoryContext);
