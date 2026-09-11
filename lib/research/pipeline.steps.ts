@@ -337,6 +337,9 @@ export async function stageFindingTrack(ctx: TrackContext, n: number): Promise<F
 // case; the memo returns ONLY at the caching/ADR-008 gate, keyed on the FULL synthesis input.
 export async function stageSynthesis(
   ctx: TrackContext, trackOutputs: TrackOutput[], signals: Partial<Record<TrackKey, TrackSignal>>,
+  // The client-surface door (founder-ruled 2026-09-10): marketplace-history sentences for
+  // Call C / M8 / M9 only — the engine's inertia lock proves the verdict path never sees them.
+  advisorySentences?: { brand: string; sentence: string }[],
 ): Promise<{ synthesis: Synthesis }> {
   const normalized = normalizeEvidence(trackOutputs);
   const enriched = enrichWithGraph(normalized);
@@ -351,6 +354,9 @@ export async function stageSynthesis(
     roster: ctx.brands_submitted ?? [],
     planType: ctx.plan_type,
     signals,
+    advisoryContext: advisorySentences && advisorySentences.length > 0
+      ? { marketplace_history: advisorySentences }
+      : null,
   });
   // ── PROSE REPAIR AT GENERATION (founder-directed 2026-08-20) — the client-bound synthesis
   // columns (M9 snapshot + M8 questions) get the same repair the track prose gets, BEFORE persist.

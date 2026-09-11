@@ -7,6 +7,7 @@ import { weightFor } from "@/lib/research/weights";
 import { deriveCostLevel, deriveGapLevel, computeDoubtLevel, type GapThresholds } from "@/lib/research/doubtMatrix";
 import { buildCallCPrompt, parseCallCOutput, CALL_C_OUTPUT_SCHEMA, type ParsedCallC } from "@/lib/research/synthesisCallC.prompt";
 import type { DimensionLimitation } from "@/lib/research/synthesisCallB";
+import type { AdvisoryContext } from "@/lib/research/advisoryContext";
 import { runModel } from "@/lib/ai/runModel";
 import { isPhraseShaped, asPhrase, asSentence, hasFocusContent } from "@/lib/research/doubtFocus";
 
@@ -252,9 +253,12 @@ export async function runCallC(input: {
   verdictSentence: string;
   gapThresholds: GapThresholds;
   model?: CallCModelFn;
+  /** The client-surface door (founder-ruled 2026-09-10) — M8/what_to_monitor context only;
+   *  the prompt forbids it in verdict-reasoning prose and the engine strips any weave. */
+  advisoryContext?: AdvisoryContext | null;
 }): Promise<CallCResult> {
   const model = input.model ?? (runModel as CallCModelFn);
-  const { system, user } = buildCallCPrompt(input.record, input.assertions, input.hypotheses, input.gaps, input.limitations, input.roster);
+  const { system, user } = buildCallCPrompt(input.record, input.assertions, input.hypotheses, input.gaps, input.limitations, input.roster, input.advisoryContext ?? null);
   const empty = (parse_failed: boolean, schema_fallback: boolean, cost_usd: number): CallCResult => ({
     doubt: { doubt_level: "minimal", doubt_focus: "", rationale: "" },
     questions: [], snapshot: { headline: "", leading_interpretation: "", the_real_risk: "", what_to_verify: [], what_to_monitor: [] },

@@ -9,12 +9,14 @@ import { TRACK_REGISTRY } from "@/lib/research/pipeline.registry";
 import { assembleM1Record, type M1TrackInput } from "@/lib/research/m1Assembler";
 import { runCallA, type CallAModelFn } from "@/lib/research/synthesisCallA";
 import { runCallB, runCallBRefuter, type CallBModelFn, type RefuterResult, type DimensionLimitation, type CallBAudit } from "@/lib/research/synthesisCallB";
-import { runCallC, type CallCModelFn, type CallCAudit } from "@/lib/research/synthesisCallC";
+import { runCallC, type CallCModelFn } from "@/lib/research/synthesisCallC";
+import type { CallCAudit } from "@/lib/research/synthesisCallC";
 import type { CallAAudit } from "@/lib/research/synthesisCallA";
 import type { GapThresholds } from "@/lib/research/doubtMatrix";
 import { deriveWatchConditions } from "@/lib/research/watchConditions";
 import { certifySynthesisForVerdict } from "@/lib/research/synthesisFirewall";
 import { computeVerdict } from "@/lib/research/verdictEngine";
+import { advisoryParagraph, stripAdvisoryWeave, type AdvisoryContext } from "@/lib/research/advisoryContext";
 import { applyDocumentationNoOverride } from "@/lib/research/verdictNoOverride";
 import { applyVerdictCeiling } from "@/lib/research/verdictCeiling";
 
@@ -53,6 +55,12 @@ export interface SynthesisRunInput {
   signals: Partial<Record<TrackKey, TrackSignal>>;
   gapThresholds?: GapThresholds;
   models?: SynthesisModels;
+  /** THE CLIENT-SURFACE DOOR (founder-ruled 2026-09-10): consumed by Call C / M8 / M9 ONLY —
+   *  Call A, Call B, the refuter and the verdict path never receive it (inertia-locked).
+   *  MEMO NOTE: memoization is DISABLED (Q4(b)); if the evidence-hash memo is ever revived,
+   *  this field MUST join its key — a hit that ignores it serves a snapshot written blind to
+   *  a fact the input carried. */
+  advisoryContext?: AdvisoryContext | null;
 }
 
 export interface SynthesisArtifacts {
@@ -132,11 +140,38 @@ export async function runSynthesis(input: SynthesisRunInput): Promise<{ synthesi
   const previewVerdict = applyVerdictCeiling({ verdict: noOverride.verdict }, input.signals).verdict;
 
   // CALL C — M7 + M8 + M9 + brand_evidence_status (the matrix owns doubt_level; the shapes own M9).
+  // THE ONE CALL THAT RECEIVES advisoryContext (founder-ruled 2026-09-10) — everything above
+  // this line ran without it, and the preview verdict was computed before it existed here.
   const c = await runCallC({
     record, assertions: a.assertions, hypotheses: b.hypotheses, gaps: b.gaps, limitations: b.limitations,
     trackQuestions, roster: input.roster, verdictSentence: VERDICT_SENTENCES[previewVerdict],
     gapThresholds: thresholds, model: input.models?.callC,
+    advisoryContext: input.advisoryContext ?? null,
   });
+
+  // ── THE FRAMING RULING, ENFORCED IN CODE (founder, 2026-09-10): the advisory citation is
+  // code-appended with its separateness in the sentence; a model-woven reference inside the
+  // verdict-reasoning prose is STRIPPED and AUDITED, never shipped. "The moment it reads as
+  // reasoning, we can produce a report whose narrative describes a collapse while the verdict
+  // says Source Clear." ──
+  const advisoryAudits: CallCAudit[] = [];
+  if (input.advisoryContext) {
+    for (const field of ["headline", "leading_interpretation", "the_real_risk"] as const) {
+      const res = stripAdvisoryWeave(field, c.snapshot[field]);
+      if (res.stripped.length > 0) {
+        c.snapshot[field] = res.text;
+        for (const s of res.stripped) {
+          advisoryAudits.push({ module: "m9", id: "advisory_weave", field: s.field, from: s.sentence.slice(0, 120), to: "(stripped)", reason: "advisory context may not be woven into verdict reasoning (framing ruling 2026-09-10)" });
+        }
+      }
+    }
+    const para = advisoryParagraph(input.advisoryContext);
+    if (para) {
+      c.snapshot.leading_interpretation = c.snapshot.leading_interpretation
+        ? `${c.snapshot.leading_interpretation}\n\n${para}`
+        : para;
+    }
+  }
 
   const extension: M1RecordExtension = record.extension;
 
@@ -168,7 +203,7 @@ export async function runSynthesis(input: SynthesisRunInput): Promise<{ synthesi
     artifacts: {
       refuter,
       limitations: b.limitations,
-      audits: [...a.audits, ...b.audits, ...c.audits],
+      audits: [...a.audits, ...b.audits, ...c.audits, ...advisoryAudits],
       parse_failures: { call_a: a.parse_failed, call_b: b.parse_failed, call_b_refuter: refuter.parse_failed, call_c: c.parse_failed },
       cost_usd: a.cost_usd + b.cost_usd + refuter.cost_usd + c.cost_usd,
     },

@@ -86,7 +86,7 @@ export async function pipelineHandler({ event, step }: { event: { data: TrackCon
       : undefined),
   );
 
-  const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs, signals));
+  const { synthesis } = await step.run("synthesis", () => stageSynthesis(ctx, trackOutputs, signals, keepa.advisory_sentences));
   const verdict = await step.run("verdict", async () => {
     const v = stageVerdict(signals, synthesis);
     // S-0 — certification audits are an anomaly record (the firewall clamped something an

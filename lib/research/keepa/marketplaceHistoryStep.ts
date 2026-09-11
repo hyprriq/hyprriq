@@ -58,6 +58,10 @@ export interface MarketplaceHistoryResult {
   // For Track 6's model aid. `fetchedAt` present ⇒ the entry came from the DEGRADE-path cache
   // and must be presented dated wherever it surfaces (the visible-as-cached rule).
   listing_categories: { brand: string; asin: string; path: string[]; fetchedAt?: Date }[];
+  /** The client-surface door (founder-ruled 2026-09-10): the ratified per-brand sentences for
+   *  synthesis Call C's advisory context. Present ONLY on a live (non-degraded) read — a
+   *  degrade note is a data-availability statement, not a marketplace fact for M9 to cite. */
+  advisory_sentences: { brand: string; sentence: string }[];
 }
 
 async function auditNote(caseId: string, note: Record<string, unknown>): Promise<void> {
@@ -119,7 +123,7 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
   if (entries.length === 0) {
     // No ASINs = plans that never collect them, or a client who provided none. Nothing renders —
     // the same absent-not-empty law as the category section.
-    return { ran: false, persisted: false, reason: "no_asins", keepa_tokens_spent: 0, listing_categories: [] };
+    return { ran: false, persisted: false, reason: "no_asins", keepa_tokens_spent: 0, listing_categories: [], advisory_sentences: [] };
   }
 
   let tokens = 0;
@@ -144,7 +148,7 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
     const block: MarketplaceHistoryBlock = { available: false, note: SELLER_DATA_UNAVAILABLE, per_brand, generated_at: new Date().toISOString() };
     const err = await persistIntoTrack3(ctx.case_id, attempt, block);
     await auditNote(ctx.case_id, { degraded: true, reason, persist_error: err, cached_categories: per_brand.length });
-    return { ran: true, persisted: !err, reason, keepa_tokens_spent: tokens, listing_categories };
+    return { ran: true, persisted: !err, reason, keepa_tokens_spent: tokens, listing_categories, advisory_sentences: [] };
   };
 
   if (!keepaConfigured()) return degrade("KEEPA_API_KEY not configured (production's standing state)");
@@ -188,6 +192,10 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
 
   const per_brand: MarketplaceHistoryBrand[] = [];
   const listing_categories: MarketplaceHistoryResult["listing_categories"] = [];
+  // Advisory sentences for Call C (the client-surface door): PATTERN-BEARING readings only —
+  // insufficient_history and unretrievable listings are honest states, not marketplace facts
+  // worth an M9 citation.
+  const advisory_sentences: MarketplaceHistoryResult["advisory_sentences"] = [];
   for (const { brand, asin, product, reading } of readings) {
     if (!product || !reading) {
       per_brand.push({
@@ -202,9 +210,11 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
     const priceHeld = reading.drop ? priceHeldDuring(parseKeepaCountCsv(product.priceNewCsv), reading.drop) : null;
     const path = product.categoryTree.map((c) => c.name);
     if (path.length > 0) listing_categories.push({ brand, asin, path });
+    const sentence = sellerCountSentence(reading, priceHeld);
+    if (reading.pattern !== "insufficient_history") advisory_sentences.push({ brand, sentence });
     per_brand.push({
       brand, asin,
-      sentence: sellerCountSentence(reading, priceHeld),
+      sentence,
       identity_sentence: identityByAsin.get(asin) ?? null,
       // ONE ASIN per brand at intake (ruled 2026-07-28) ⇒ step 9's brand-level agreement cannot
       // fire from intake alone; the honest single-listing line ships (recorded in the tracker).
@@ -219,8 +229,8 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
   const err = await persistIntoTrack3(ctx.case_id, attempt, block);
   if (err) {
     await auditNote(ctx.case_id, { persist_failed: true, error: err });
-    return { ran: true, persisted: false, reason: err, keepa_tokens_spent: tokens, listing_categories };
+    return { ran: true, persisted: false, reason: err, keepa_tokens_spent: tokens, listing_categories, advisory_sentences };
   }
   await auditNote(ctx.case_id, { persisted: true, brands: per_brand.length, keepa_tokens_spent: tokens });
-  return { ran: true, persisted: true, keepa_tokens_spent: tokens, listing_categories };
+  return { ran: true, persisted: true, keepa_tokens_spent: tokens, listing_categories, advisory_sentences };
 }
