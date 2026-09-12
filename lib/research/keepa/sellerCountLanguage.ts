@@ -2,12 +2,21 @@
 //
 // FOUNDER RULING 2026-09-08 (recorded in docs/KEEPA_READING_GUIDE_recovered.md): whatever ships
 // says "seller count fell sharply in this window, and here is what can produce that shape" —
-// NEVER "the brand enforced". Show the pattern, name what it does not prove. §P4.2's report-
-// language column supplies the structure; its causal clauses are superseded by that ruling.
+// NEVER "the brand enforced". Show the pattern, name what it does not prove.
+//
+// FOUNDER REFRAMING 2026-09-12 ("the facts are right; the writing is a data dump with a
+// disclaimer attached") — three laws applied to every pattern:
+//   1. THE FINDING GETS SAID FIRST — what the measurement amounts to, then the numbers.
+//   2. STOREFRONTS ARE GROUPED BY KIND, never listed as equal-weight items with a repeated
+//      clause per row.
+//   3. The cause-is-inference close stays; the locked boundary sentence stays BYTE-EXACT.
+// Small counts are written as words (the founder's ratified exemplar: "between one and three",
+// "a twelve-month peak of seven").
 //
 // ⚠ EVERY SENTENCE HERE IS PROPOSED CLIENT COPY, UNRULED until the founder ratifies the exact
-// wording (client copy is founder-ruled by standing law). Held to scanHard + scanAssertion +
-// the method-leakage scanner by sellerCountLanguage.test.ts from birth.
+// wording (client copy is founder-ruled by standing law; the 2026-09-08 set was ratified, this
+// 2026-09-12 rewrite awaits its ratification and DOES NOT DEPLOY before it). Held to scanHard +
+// scanAssertion + the method-leakage scanner from birth.
 
 import type { SellerCountReading, DropEvent } from "./sellerCountReading";
 import type { SellerIdentity } from "./aggregators";
@@ -15,72 +24,104 @@ import type { SellerIdentity } from "./aggregators";
 const month = (d: Date): string =>
   d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 
-// The shape-not-cause sentence, used wherever a sharp fall is described. One definition.
+const COUNT_WORDS = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+  "nineteen", "twenty",
+] as const;
+const countWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
+/** A paired comparison mixes registers badly ("from 39 to four") — words only when BOTH fit. */
+const pairWords = (a: number, b: number): [string, string] =>
+  a <= 20 && b <= 20 ? [countWord(a), countWord(b)] : [String(a), String(b)];
+
+// The shape-not-cause sentence for the CLIFF, one definition (ruled 2026-09-08).
 export const WHAT_PRODUCES_THIS_SHAPE =
   "Several different events can produce this shape — brand enforcement activity, an exclusivity arrangement, sellers losing their supply, or the marketplace itself entering the listing. The pattern is the observation; the cause is not visible from the outside.";
+
+// The founder's close for sustained-low readings (his 2026-09-12 exemplar, near-verbatim).
+export const SUSTAINED_LOW_CLOSE =
+  "Several things can produce a sustained low count. This is what the listing shows, not why.";
 
 function dropSentence(drop: DropEvent, priceHeld: boolean | null): string {
   const price =
     priceHeld === true ? " while the listed price held roughly level"
     : priceHeld === false ? " while the listed price also fell"
     : "";
-  return `Third-party seller count fell from ${drop.from} to ${drop.to} across ${drop.days} days, ending ${month(drop.endDate)},${price}.`;
+  const [from, to] = pairWords(drop.from, drop.to);
+  return `Seller count fell from ${from} to ${to} across ${drop.days} days, ending ${month(drop.endDate)},${price}.`;
+}
+
+/** The true twelve-month peak clause — peak12, never the all-history peak (the 047/048 monitor
+ *  line said "12-month peak" over an all-history date; found 2026-09-12, fixed at the reading). */
+function peakClause(r: SellerCountReading): string {
+  return r.peak12 != null && r.current != null && r.peak12 > r.current
+    ? `, against a twelve-month peak of ${countWord(r.peak12)}`
+    : "";
 }
 
 export function sellerCountSentence(r: SellerCountReading, priceHeld: boolean | null): string {
   switch (r.pattern) {
     case "enforcement_cliff":
-      return `${dropSentence(r.drop!, priceHeld)} ${WHAT_PRODUCES_THIS_SHAPE}`;
+      return `This listing's third-party sellers left fast. ${dropSentence(r.drop!, priceHeld)} ${WHAT_PRODUCES_THIS_SHAPE}`;
     case "open_market_stable_high":
-      return `Third-party seller count held near ${r.current} across the observed ${r.observedDays} days — consistent with an open reseller environment for this listing.`;
-    case "gradual_decline":
-      return `Third-party seller count declined gradually — from a peak of ${r.peak} to ${r.current} over the observed ${r.observedDays} days. A slow decline can reflect tightening distribution or ordinary seller turnover; periodic monitoring is the practical response.`;
+      return `This listing shows an open reseller environment. Seller count has held near ${countWord(r.current!)} across the observed ${r.observedDays} days, with no significant drops.`;
+    case "gradual_decline": {
+      const [from, to] = pairWords(r.peak!, r.current!);
+      return `This listing's third-party presence is thinning. Seller count declined from ${from} to ${to} over the observed ${r.observedDays} days. A slow decline can reflect tightening distribution or ordinary seller turnover; periodic monitoring is the practical response.`;
+    }
     case "already_locked_down": {
-      // Founder-ratified 2026-09-08 with change (a): the window gets a NUMBER — "recent months"
-      // is the vagueness the rest of the product refuses. The claim is judged over the lockdown
-      // window (≤6 months), so the stated months never exceed what the classifier actually read.
+      // Founder's 2026-09-12 exemplar, followed clause for clause. The months number stays
+      // (his 2026-09-08 change (a)): judged over the lockdown window, never beyond what was read.
       const months = Math.max(1, Math.round(Math.min(r.observedDays, 183) / 30));
-      return `Third-party seller count has stayed between 1 and 3 across the last ${months} months (currently ${r.current}). The listing shows very limited third-party presence.`;
+      return `This listing has very little third-party presence. Seller count has stayed between one and three over the last ${countWord(months)} months and currently stands at ${countWord(r.current!)}${peakClause(r)}. ${SUSTAINED_LOW_CLOSE}`;
     }
     case "brand_direct_only":
-      return `One seller has held this listing consistently across the observed ${r.observedDays} days. Where the storefront matches the brand, that is a brand-direct selling model on this listing.`;
-    case "volatile_unstable":
-      return `Third-party seller count swung repeatedly across the observed period (peak ${r.peak}, low ${r.min}) without settling at a level — consistent with listing instability or intermittent enforcement-shaped events. The swings are the observation; no single cause is identifiable from the outside.`;
-    case "rising_trend":
-      return `Third-party seller count rose across the observed period (from around ${r.min} toward ${r.current}), suggesting distribution that is widening rather than tightening. No enforcement-shaped drop appears in this window.`;
+      return `This listing is sold by a single storefront. One seller has held it across the observed ${r.observedDays} days; where that storefront matches the brand, this is a brand-direct selling model. ${SUSTAINED_LOW_CLOSE}`;
+    case "volatile_unstable": {
+      const [peak, low] = pairWords(r.peak!, r.min!);
+      return `This listing's seller count has not settled. It swung repeatedly across the observed period (peak ${peak}, low ${low}) without holding a level. The swings are the observation; no single cause is identifiable from the outside.`;
+    }
+    case "rising_trend": {
+      const [from, to] = pairWords(r.min!, r.current!);
+      return `This listing's third-party presence is widening. Seller count rose from around ${from} toward ${to} across the observed period. No enforcement-shaped drop appears in this window.`;
+    }
     case "stable_unclassified":
-      return `Third-party seller count held near ${r.current} across the observed ${r.observedDays} days. This level matches none of the named marketplace patterns; the numbers are reported for your own read.`;
+      return `This listing's seller count has been steady at a middle level. It held near ${countWord(r.current!)} across the observed ${r.observedDays} days; this level matches none of the named marketplace patterns, so the numbers are reported for your own read.`;
     case "insufficient_history":
       return "This listing's seller-count history is too short to support a reading. No conclusion is drawn from it.";
   }
 }
 
-// ⛔ FOUNDER-RATIFIED VERBATIM (2026-09-08, change (c)): "It is the honest boundary on the
-// weakest part of the reading and it must never be edited down for brevity." Locked by test.
+// ⛔ FOUNDER-RATIFIED VERBATIM (2026-09-08, change (c)) AND RE-CONFIRMED BYTE-EXACT in the
+// 2026-09-12 reframing ruling: "The boundary sentence stays byte-exact — it is already locked
+// and must not be reworded." Locked by test.
 export const UNMATCHED_BOUNDARY =
   "A storefront that matches neither list is reported as unmatched — that is an observation about the storefront name, not a determination of who owns it.";
 
-const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five"] as const;
-const countWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
-
+/** GROUPED identity sentence (founder reframing 2026-09-12: say the SHAPE — never four items of
+ *  equal weight, never the same clause repeated per storefront). */
 export function sellerIdentitySentence(identities: { name: string; identity: SellerIdentity }[]): string | null {
   if (identities.length === 0) return null;
-  // Founder-ratified change (b): LEAD WITH THE FINDING — two Amazon storefronts are not two
-  // items of equal weight beside two unknowns.
-  const amazon = identities.filter(({ identity }) => identity.kind === "amazon_retail");
-  const rest = identities.filter(({ identity }) => identity.kind !== "amazon_retail");
-  const lead = amazon.length > 0
-    ? `Of the ${countWord(identities.length)} storefronts observed, ${countWord(amazon.length)} ${amazon.length === 1 ? "is" : "are"} Amazon's own retail presence on the listing.`
-    : null;
-  const parts = rest.map(({ name, identity }) => {
-    if (identity.kind === "brand_direct") return `"${name}" matches the brand itself`;
-    if (identity.kind === "aggregator") return `"${name}" matches ${identity.matched}, a known marketplace aggregator`;
-    return `"${name}" shows no match to the brand or to known aggregator storefronts`;
-  });
-  const restSentence = parts.length > 0
-    ? `${lead ? "Of the rest: " : "Remaining storefronts observed: "}${parts.join("; ")}.`
-    : null;
-  return [lead, restSentence, UNMATCHED_BOUNDARY].filter(Boolean).join(" ");
+  const by = (kind: SellerIdentity["kind"]) => identities.filter(({ identity }) => identity.kind === kind);
+  const amazon = by("amazon_retail");
+  const brand = by("brand_direct");
+  const aggregator = by("aggregator");
+  const unmatched = by("independent");
+
+  const clauses: string[] = [];
+  if (amazon.length > 0) clauses.push(`${countWord(amazon.length)} ${amazon.length === 1 ? "is" : "are"} Amazon's own retail presence`);
+  if (brand.length > 0) clauses.push(`${countWord(brand.length)} ${brand.length === 1 ? "matches" : "match"} the brand itself`);
+  if (aggregator.length > 0) {
+    const names = [...new Set(aggregator.map(({ identity }) => (identity.kind === "aggregator" ? identity.matched : "")))].filter(Boolean);
+    clauses.push(`${countWord(aggregator.length)} ${aggregator.length === 1 ? "matches" : "match"} ${names.join(" and ")}, a known marketplace aggregator${names.length > 1 ? "s" : ""}`);
+  }
+  if (unmatched.length > 0) {
+    clauses.push(`${amazon.length + brand.length + aggregator.length > 0 ? `the remaining ${countWord(unmatched.length)}` : countWord(unmatched.length)} ${unmatched.length === 1 ? "matches" : "match"} neither the brand name nor any known aggregator storefront`);
+  }
+  const lead = `Of the ${countWord(identities.length)} storefront${identities.length === 1 ? "" : "s"} observed, ${clauses.join("; ")}.`;
+  // The locked boundary rides ONLY when an unmatched storefront exists — it is the honest
+  // boundary on that class, not a footer for every list.
+  return unmatched.length > 0 ? `${lead} ${UNMATCHED_BOUNDARY}` : lead;
 }
 
 export const LISTING_UNRETRIEVABLE =
@@ -103,11 +144,14 @@ export function brandLevelSentence(agreement: "brand_level" | "asin_specific" | 
   return "One listing was readable for this brand; the observation is that listing's story and is not extended to the brand.";
 }
 
-/** Dated, concrete monitoring entries (founder-approved 2026-09-08: stage 1, not a nice-to-have). */
+/** Dated, concrete monitoring entries. The peak is peak12 — honestly twelve-month — since the
+ *  2026-09-12 find that the old line labeled an all-history peak "12-month". */
 export function monitorEntries(asin: string, r: SellerCountReading): string[] {
   if (r.pattern === "insufficient_history" || r.current == null) return [];
   const base = `Third-party seller count on ${asin} — currently ${r.current}`;
-  const peak = r.peak != null && r.peakDate ? ` against a 12-month peak of ${r.peak} (${month(r.peakDate)})` : "";
+  const peak = r.peak12 != null && r.peak12Date && r.peak12 > r.current
+    ? ` against a twelve-month peak of ${r.peak12} (${month(r.peak12Date)})`
+    : "";
   if (r.pattern === "enforcement_cliff" || r.pattern === "gradual_decline") {
     return [`${base}${peak}. Watch whether the count recovers or continues to fall.`];
   }

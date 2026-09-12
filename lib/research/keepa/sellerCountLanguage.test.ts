@@ -62,6 +62,7 @@ describe("seller-count language — the gates, from birth (own-voice: both tiers
 describe("the cause-is-inference ruling, enforced as a lock", () => {
   it("the cliff sentence names the shape and what it does not prove — never the cause as fact", () => {
     const s = sellerCountSentence(READINGS.cliff, true);
+    expect(s).toContain("This listing's third-party sellers left fast.");
     expect(s).toContain("fell from 39 to 4");
     expect(s).toContain("cause is not visible");
     // The superseded P4.2 causal clause can never return:
@@ -96,14 +97,17 @@ describe("the cause-is-inference ruling, enforced as a lock", () => {
       { name: "Amazon Resale", identity: classifySeller("Amazon Resale", null) },
       { name: "Random Deals 24", identity: classifySeller("Random Deals 24", null) },
     ])!;
-    expect(s.startsWith("Of the three storefronts observed, two are Amazon's own retail presence on the listing.")).toBe(true);
-    expect(s).toContain("Of the rest:");
+    // Reframed 2026-09-12: GROUPED by kind, the shape said once — never a repeated clause per row.
+    expect(s.startsWith("Of the three storefronts observed, two are Amazon's own retail presence; the remaining one matches neither the brand name nor any known aggregator storefront.")).toBe(true);
+    expect(s).not.toContain("Of the rest:");
     expect(s).toContain(UNMATCHED_BOUNDARY);
   });
 
   it("change (a): the locked-down window carries a NUMBER, never \"recent months\"", () => {
     const s = sellerCountSentence(READINGS.locked, null);
-    expect(s).toMatch(/across the last \d+ months/);
+    // Reframed 2026-09-12 to the founder's exemplar: finding first, worded window, worded counts.
+    expect(s.startsWith("This listing has very little third-party presence.")).toBe(true);
+    expect(s).toContain("over the last six months");
     expect(s).not.toContain("recent months");
   });
 

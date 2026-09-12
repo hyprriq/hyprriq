@@ -44,6 +44,12 @@ export interface SellerCountReading {
   current: number | null;
   peak: number | null;
   peakDate: Date | null;
+  /** §P4.3 step 6: "the highest seller count in the past 12 months" — the CLIENT-facing peak.
+   *  `peak`/`peakDate` above are all-observed-history (the classifier's baseline); 047/048's
+   *  monitor line said "12-month peak" while citing an all-history date — found 2026-09-12
+   *  during the framing rewrite. Client sentences use THESE fields, honestly windowed. */
+  peak12: number | null;
+  peak12Date: Date | null;
   min: number | null;
   drop: DropEvent | null;       // the largest qualifying drop, when one exists
   trendDirection: "increasing" | "stable" | "decreasing" | "volatile" | "unknown";
@@ -135,10 +141,13 @@ function within(points: CountPoint[], days: number): CountPoint[] {
  *  high → (low-and-stable folds into locked-down or reads as stable at its own level). */
 export function readSellerCounts(all: CountPoint[]): SellerCountReading {
   const observedDays = all.length >= 2 ? (all[all.length - 1].date.getTime() - all[0].date.getTime()) / MS_DAY : 0;
+  const last365 = within(all, 365);
   const base: Omit<SellerCountReading, "pattern"> = {
     current: all.length ? all[all.length - 1].count : null,
     peak: all.length ? Math.max(...all.map((p) => p.count)) : null,
     peakDate: all.length ? all.reduce((m, p) => (p.count > m.count ? p : m)).date : null,
+    peak12: last365.length ? Math.max(...last365.map((p) => p.count)) : null,
+    peak12Date: last365.length ? last365.reduce((m, p) => (p.count > m.count ? p : m)).date : null,
     min: all.length ? Math.min(...all.map((p) => p.count)) : null,
     drop: null,
     trendDirection: "unknown",
