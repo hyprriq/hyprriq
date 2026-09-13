@@ -169,6 +169,9 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
   // seller batch for ALL triggered ASINs together.
   const triggered = readings.filter((r) => r.reading && IDENTITY_TRIGGERS.has(r.reading.pattern));
   const identityByAsin = new Map<string, string | null>();
+  // Founder change 2 (2026-09-13): brand_direct_only speaks DEFINITELY — matched, not matched,
+  // or identity-not-obtainable. null = the offers/names lookup did not complete for this ASIN.
+  const brandMatchByAsin = new Map<string, boolean | null>();
   if (triggered.length > 0) {
     const withOffers = await fetchProducts(triggered.map((t) => t.asin), { withOffers: true });
     if (withOffers.available) {
@@ -184,6 +187,7 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
             identity: classifySeller(names.data[id] ?? "", t?.brand ?? null, id),
           }));
           identityByAsin.set(p.asin, sellerIdentitySentence(identities));
+          brandMatchByAsin.set(p.asin, identities.some((x) => x.identity.kind === "brand_direct"));
         }
       }
       // names unavailable → identity sentences simply absent; the pattern sentence stands alone.
@@ -210,7 +214,7 @@ export async function stageMarketplaceHistory(ctx: TrackContextWithIntake): Prom
     const priceHeld = reading.drop ? priceHeldDuring(parseKeepaCountCsv(product.priceNewCsv), reading.drop) : null;
     const path = product.categoryTree.map((c) => c.name);
     if (path.length > 0) listing_categories.push({ brand, asin, path });
-    const sentence = sellerCountSentence(reading, priceHeld);
+    const sentence = sellerCountSentence(reading, priceHeld, brandMatchByAsin.get(asin) ?? null);
     if (reading.pattern !== "insufficient_history") advisory_sentences.push({ brand, sentence });
     per_brand.push({
       brand, asin,

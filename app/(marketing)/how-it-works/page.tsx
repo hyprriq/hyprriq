@@ -20,7 +20,7 @@ import { uploadPlanNames } from "@/lib/content/planFacts";
 export const metadata: Metadata = {
   title: "How It Works | HyprrIQ Supplier Reports",
   description:
-    "Submit a supplier and the brands they claim. HyprrIQ assesses five areas and returns one written verdict within 24 hours, on every plan.",
+    `Submit a supplier and the brands they claim. HyprrIQ assesses five areas and returns one written verdict within ${CASE_SLA_HOURS} hours, on every plan.`,
   alternates: { canonical: "/how-it-works" },
 };
 

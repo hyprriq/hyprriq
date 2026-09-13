@@ -30,7 +30,7 @@ import { VERDICT_SCALE_ORDER } from "@/lib/content/reportCopy";
 export const metadata: Metadata = {
   title: "Pricing | HyprrIQ",
   description:
-    "A single supplier report is $99. Growth is $279 a month for buyers assessing continuously. Every plan delivers in 24 hours, on the same fixed method.",
+    `A single supplier report is $99. Growth is $279 a month for buyers assessing continuously. Every plan delivers in ${CASE_SLA_HOURS} hours, on the same fixed method.`,
   alternates: { canonical: "/pricing" },
 };
 

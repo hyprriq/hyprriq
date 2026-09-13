@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, H2, P, UL } from "@/components/marketing/legal-page";
 import { COMPANY } from "@/lib/content/legal";
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 
 // ── TERMS OF SERVICE — TRANSCRIBED VERBATIM from HyprrIQ_LEGAL_PAGES_FINAL.md (LOCKED copy,
 // founder 2026-08-21). Do not author, edit, tighten or improve here — wording concerns go in
@@ -136,7 +137,7 @@ export default function TermsPage() {
           expire at renewal
         </li>
         <li>
-          <b>Delivery target: within 24 hours of submission</b>, all plans
+          <b>Delivery target: within {CASE_SLA_HOURS} hours of submission</b>, all plans
         </li>
         <li>
           <b>Submitting new research requires an active plan or an available credit</b>

@@ -10,6 +10,7 @@
 
 import { AREAS } from "@/lib/content/whatWeCheck";
 import { CHIP_DEF_VERIFIED_CLAUSE, CHIP_DEF_ASSESSED_CLAUSE } from "@/lib/content/reportCopy";
+import { CASE_SLA_HOURS } from "@/lib/constants/plans";
 
 export type FaqItem = { q: string; a: string };
 export type FaqGroup = { heading: string; items: FaqItem[] };
@@ -30,7 +31,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: "How long does it take?",
-        a: "24 hours, on every plan. That is not a premium tier or an upgrade — it is the delivery commitment on a single report and on a monthly plan equally.",
+        a: `${CASE_SLA_HOURS} hours, on every plan. That is not a premium tier or an upgrade — it is the delivery commitment on a single report and on a monthly plan equally.`,
       },
       {
         q: "How do I know two reports are consistent?",

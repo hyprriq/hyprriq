@@ -35,7 +35,7 @@ import { ASSESSMENT_AREA_KEYS } from "@/lib/constants/tracks";
 export const metadata: Metadata = {
   title: "HyprrIQ — Know who you're buying from, before the money leaves",
   description:
-    "Send us a supplier and the brands they claim. We research them and return a written report within 24 hours — one verdict, the evidence behind it, and a straight list of what we could not confirm.",
+    `Send us a supplier and the brands they claim. We research them and return a written report within ${CASE_SLA_HOURS} hours — one verdict, the evidence behind it, and a straight list of what we could not confirm.`,
   alternates: { canonical: "/" },
 };
 

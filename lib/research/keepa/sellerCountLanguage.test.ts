@@ -28,7 +28,9 @@ const READINGS = {
 function allSentences(): string[] {
   const out: string[] = [SELLER_DATA_UNAVAILABLE, WHAT_PRODUCES_THIS_SHAPE, LISTING_UNRETRIEVABLE];
   for (const r of Object.values(READINGS)) {
-    for (const held of [true, false, null] as const) out.push(sellerCountSentence(r, held));
+    for (const held of [true, false, null] as const) {
+      for (const matched of [true, false, null] as const) out.push(sellerCountSentence(r, held, matched));
+    }
     out.push(...monitorEntries("B0EXAMPLE01", r));
   }
   for (const a of ["brand_level", "asin_specific", "single_asin"] as const) out.push(brandLevelSentence(a, 3));
@@ -113,6 +115,25 @@ describe("the cause-is-inference ruling, enforced as a lock", () => {
 
   it("degrade copy is a data-availability note, never a finding about the supplier", () => {
     expect(SELLER_DATA_UNAVAILABLE).toContain("not a finding about the supplier");
+  });
+
+  it("change 1 (2026-09-13): the price clause carries its MEANING — and only when a price fact rendered", () => {
+    expect(sellerCountSentence(READINGS.cliff, true)).toContain("Sellers leaving while the price holds is a different shape from sellers leaving a price war.");
+    expect(sellerCountSentence(READINGS.cliff, false)).toContain("a different shape from sellers leaving a price war");
+    expect(sellerCountSentence(READINGS.cliff, null)).not.toContain("price war");
+  });
+
+  it("change 2 (2026-09-13): brand-direct is DEFINITE in all three knowledge states — never 'where it matches'", () => {
+    const matched = sellerCountSentence(READINGS.direct, null, true);
+    const notMatched = sellerCountSentence(READINGS.direct, null, false);
+    const unknown = sellerCountSentence(READINGS.direct, null, null);
+    expect(matched).toContain("that storefront matches the brand");
+    expect(notMatched).toContain("does not match the brand name");
+    expect(unknown).toContain("could not be obtained");
+    for (const s of [matched, notMatched, unknown]) expect(s).not.toContain("where that storefront matches");
+    // A confirmed match explains its own shape — the cause-mystery close does not ride it.
+    expect(matched).not.toContain("Several things can produce");
+    expect(notMatched).toContain("Several things can produce");
   });
 });
 

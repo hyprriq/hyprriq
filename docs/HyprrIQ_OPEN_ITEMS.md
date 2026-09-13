@@ -140,6 +140,30 @@ production has no key so production runs the degrade path by construction).**
   agreement cannot fire from intake (the honest single-listing line ships); asinIntake's
   client message says "ASINs are collected on the Scale plan" while single_149 is eligible too.
 
+**0-Z. A NEW DEFECT CLASS, NAMED — 2026-09-13 (founder-ruled, from the peak find):** *"A LABEL
+THAT DESCRIBES A WINDOW THE VALUE DOES NOT COME FROM. Nothing in the pipeline was wrong; the
+number was real and the sentence around it was false."* THE RULE: **when a client sentence names
+a window, a unit or a period, something must assert the value was computed over it.** This class
+is invisible to every existing gate — banned language, internal tokens, vocabulary derivation —
+because every word is legitimate. Found instance: 047/048's monitor line said "12-month peak of
+7 (October 2024)" — an all-history peak wearing a twelve-month label; fixed at the reading
+(`peak12`/`peak12Date`, §P4.3 step 6's own words). **THE SWEEP (founder-ordered, run before
+deploy):** every client sentence naming a window/period was audited against its computation
+source. Verified honest: change-request 7-day (DB trigger `delivered_at + 7 days`, live-checked:
+16/16 delivered cases populated); retention 12-month/30-day (delete_after set on 3/3 live files;
+the sweep function exists, founder-gated OFF — the founder's own flag, known); dormancy 24-month
+(same sweep); "over the last six months" and "across the observed N days" in the Keepa language
+(claims scoped to the windows the classifier actually reads). FIXED in the same pass: five
+client surfaces HARDCODED "24 hours" (home + /how-it-works metadata, /pricing subtitle, /terms
+delivery clause, /faq answer) while the deadline derives from CASE_SLA_HOURS — the homepage's
+own departure-1 law ("a correct hardcoded value is still a defect") applied to the sites that
+slipped it; all five now interpolate the constant. Noted, out of class: the invoice "Within the
+last 365 days" callout is client guidance, not a computed value (staleness is handled at the
+research layer); legal windows (45-day CCPA, 14-day refund, 12-month liability) are commitments,
+not computations. **Also same day: the reframed marketplace block RATIFIED with two changes**
+(the price discriminator's meaning on the cliff; brand-direct definite in all three knowledge
+states), boundary-only-when-unmatched and number style ratified as built.
+
 **0-Y UPDATE 2026-09-10: MIGRATION RUN (founder), read-backs clean** — exactly 10 columns in
 order, no cache_valid_days, no aggregator_*, trend CHECK holds all five values, RLS enabled
 with 0 policies (service-role only), 0 rows, supplier_cache deliberately absent. **⚖ RECORDED

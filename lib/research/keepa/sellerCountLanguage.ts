@@ -13,10 +13,12 @@
 // Small counts are written as words (the founder's ratified exemplar: "between one and three",
 // "a twelve-month peak of seven").
 //
-// ⚠ EVERY SENTENCE HERE IS PROPOSED CLIENT COPY, UNRULED until the founder ratifies the exact
-// wording (client copy is founder-ruled by standing law; the 2026-09-08 set was ratified, this
-// 2026-09-12 rewrite awaits its ratification and DOES NOT DEPLOY before it). Held to scanHard +
-// scanAssertion + the method-leakage scanner from birth.
+// ⚖ RATIFIED (founder, 2026-09-13) with two changes, both applied: (1) the cliff carries the
+// price discriminator's MEANING (PRICE_DISCRIMINATOR below); (2) brand-direct speaks DEFINITELY
+// in all three knowledge states. Ruling 3 same day: the boundary rides only where unmatched
+// storefronts exist. Ruling 4: number style as built (words for small counts; numerals when a
+// paired comparison would otherwise mix). Held to scanHard + scanAssertion + method-leakage
+// from birth; future wording edits are founder rulings, not rewords.
 
 import type { SellerCountReading, DropEvent } from "./sellerCountReading";
 import type { SellerIdentity } from "./aggregators";
@@ -42,13 +44,21 @@ export const WHAT_PRODUCES_THIS_SHAPE =
 export const SUSTAINED_LOW_CLOSE =
   "Several things can produce a sustained low count. This is what the listing shows, not why.";
 
+// FOUNDER-RATIFIED ADDITION 2026-09-13 (change 1): the price qualifier's MEANING — "a reader
+// cannot use a fact whose relevance is unexplained." The discriminator from the classifier
+// (priceHeldDuring), in the client's language. Rides whenever a price clause rendered — it is
+// what makes the clause usable in either direction; absent when price data was insufficient.
+export const PRICE_DISCRIMINATOR =
+  "Sellers leaving while the price holds is a different shape from sellers leaving a price war.";
+
 function dropSentence(drop: DropEvent, priceHeld: boolean | null): string {
   const price =
     priceHeld === true ? " while the listed price held roughly level"
     : priceHeld === false ? " while the listed price also fell"
     : "";
   const [from, to] = pairWords(drop.from, drop.to);
-  return `Seller count fell from ${from} to ${to} across ${drop.days} days, ending ${month(drop.endDate)},${price}.`;
+  const discriminator = priceHeld === null ? "" : ` ${PRICE_DISCRIMINATOR}`;
+  return `Seller count fell from ${from} to ${to} across ${drop.days} days, ending ${month(drop.endDate)},${price}.${discriminator}`;
 }
 
 /** The true twelve-month peak clause — peak12, never the all-history peak (the 047/048 monitor
@@ -59,7 +69,15 @@ function peakClause(r: SellerCountReading): string {
     : "";
 }
 
-export function sellerCountSentence(r: SellerCountReading, priceHeld: boolean | null): string {
+/** `brandDirectMatched` (brand_direct_only pattern only, founder change 2, 2026-09-13):
+ *  "either it matched or it did not — do not hedge which one happened." true = the storefront
+ *  matched the brand; false = it did not; null = storefront identity was not obtainable, and
+ *  THAT is stated definitely instead. */
+export function sellerCountSentence(
+  r: SellerCountReading,
+  priceHeld: boolean | null,
+  brandDirectMatched: boolean | null = null,
+): string {
   switch (r.pattern) {
     case "enforcement_cliff":
       return `This listing's third-party sellers left fast. ${dropSentence(r.drop!, priceHeld)} ${WHAT_PRODUCES_THIS_SHAPE}`;
@@ -75,8 +93,19 @@ export function sellerCountSentence(r: SellerCountReading, priceHeld: boolean | 
       const months = Math.max(1, Math.round(Math.min(r.observedDays, 183) / 30));
       return `This listing has very little third-party presence. Seller count has stayed between one and three over the last ${countWord(months)} months and currently stands at ${countWord(r.current!)}${peakClause(r)}. ${SUSTAINED_LOW_CLOSE}`;
     }
-    case "brand_direct_only":
-      return `This listing is sold by a single storefront. One seller has held it across the observed ${r.observedDays} days; where that storefront matches the brand, this is a brand-direct selling model. ${SUSTAINED_LOW_CLOSE}`;
+    case "brand_direct_only": {
+      // Definite in all three states (founder change 2): the match, the non-match, or the
+      // definite statement that identity was not obtainable. Never "where it matches".
+      if (brandDirectMatched === true) {
+        // A confirmed brand storefront explains its own shape — the cause-mystery close would
+        // undercut a definite match, so it does not ride here.
+        return `This listing is brand-direct: one storefront has held it across the observed ${r.observedDays} days, and that storefront matches the brand.`;
+      }
+      if (brandDirectMatched === false) {
+        return `This listing is sold by a single storefront, and that storefront does not match the brand name. One seller has held it across the observed ${r.observedDays} days. ${SUSTAINED_LOW_CLOSE}`;
+      }
+      return `This listing is sold by a single storefront. One seller has held it across the observed ${r.observedDays} days; the storefront's identity could not be obtained from marketplace data. ${SUSTAINED_LOW_CLOSE}`;
+    }
     case "volatile_unstable": {
       const [peak, low] = pairWords(r.peak!, r.min!);
       return `This listing's seller count has not settled. It swung repeatedly across the observed period (peak ${peak}, low ${low}) without holding a level. The swings are the observation; no single cause is identifiable from the outside.`;
@@ -119,8 +148,9 @@ export function sellerIdentitySentence(identities: { name: string; identity: Sel
     clauses.push(`${amazon.length + brand.length + aggregator.length > 0 ? `the remaining ${countWord(unmatched.length)}` : countWord(unmatched.length)} ${unmatched.length === 1 ? "matches" : "match"} neither the brand name nor any known aggregator storefront`);
   }
   const lead = `Of the ${countWord(identities.length)} storefront${identities.length === 1 ? "" : "s"} observed, ${clauses.join("; ")}.`;
-  // The locked boundary rides ONLY when an unmatched storefront exists — it is the honest
-  // boundary on that class, not a footer for every list.
+  // FOUNDER-RATIFIED 2026-09-13 (ruling 3): the locked boundary rides ONLY when an unmatched
+  // storefront exists — "a boundary qualifying a class that is not present reads as boilerplate,
+  // and boilerplate teaches readers to skip the paragraph the one time it matters."
   return unmatched.length > 0 ? `${lead} ${UNMATCHED_BOUNDARY}` : lead;
 }
 
